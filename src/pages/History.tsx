@@ -19,6 +19,7 @@ const History = () => {
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
   const [trendStats, setTrendStats] = useState({
     totalWorkouts: 0,
     avgDuration: 0,
@@ -33,6 +34,17 @@ const History = () => {
     }
     loadSessions();
   }, [user, navigate]);
+
+  useEffect(() => {
+    // Only show loading screen if data takes longer than 200ms to load
+    const timer = setTimeout(() => {
+      if (loading) {
+        setShowLoading(true);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const loadSessions = async () => {
     try {
@@ -80,7 +92,7 @@ const History = () => {
     return sessions.some(session => isSameDay(new Date(session.date), day));
   };
 
-  if (loading) {
+  if (showLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-muted-foreground">Loading...</div>

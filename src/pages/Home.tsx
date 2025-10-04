@@ -19,6 +19,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
   useScrollPosition();
 
   useEffect(() => {
@@ -28,6 +29,17 @@ const Home = () => {
     }
     loadTemplates();
   }, [user, navigate]);
+
+  useEffect(() => {
+    // Only show loading screen if data takes longer than 200ms to load
+    const timer = setTimeout(() => {
+      if (loading) {
+        setShowLoading(true);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const loadTemplates = async () => {
     try {
@@ -50,7 +62,7 @@ const Home = () => {
     navigate("/auth");
   };
 
-  if (loading) {
+  if (showLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-muted-foreground">Loading...</div>
