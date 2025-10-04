@@ -37,17 +37,7 @@ const History = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (!loading) {
-      setShowLoading(false);
-      return;
-    }
-
-    // Only show loading screen if data takes longer than 200ms to load
-    const timer = setTimeout(() => {
-      setShowLoading(true);
-    }, 200);
-
-    return () => clearTimeout(timer);
+    setShowLoading(loading);
   }, [loading]);
 
   const loadSessions = async () => {
