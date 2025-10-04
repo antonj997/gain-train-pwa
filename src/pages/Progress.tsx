@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Activity } from "lucide-react";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 
 interface ExerciseProgress {
   exerciseName: string;
@@ -17,6 +18,7 @@ const Progress = () => {
   const navigate = useNavigate();
   const [progress, setProgress] = useState<ExerciseProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  useScrollPosition();
 
   useEffect(() => {
     if (!user) {
