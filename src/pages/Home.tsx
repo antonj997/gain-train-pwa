@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Play, LogOut, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 
 interface WorkoutTemplate {
   id: string;
@@ -18,6 +19,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
+  useScrollPosition();
 
   useEffect(() => {
     if (!user) {
@@ -70,18 +72,20 @@ const Home = () => {
       </div>
 
       {/* Quick Start */}
-      <Card className="bg-gradient-to-br from-primary to-accent border-0">
-        <CardContent className="pt-6">
-          <Button
-            size="lg"
-            className="w-full bg-background text-foreground hover:bg-background/90"
-            onClick={() => navigate("/workout/new")}
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Start New Workout
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="p-[2px] rounded-lg bg-gradient-to-br from-primary to-accent">
+        <Card className="border-0">
+          <CardContent className="pt-6">
+            <Button
+              size="lg"
+              className="w-full bg-background text-foreground hover:bg-background/90"
+              onClick={() => navigate("/workout/new")}
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Start New Workout
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Saved Templates */}
       <div>
@@ -107,8 +111,8 @@ const Home = () => {
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{template.name}</CardTitle>
-                    <Button size="icon" variant="ghost">
+                    <CardTitle className="text-lg flex items-center">{template.name}</CardTitle>
+                    <Button size="icon" variant="ghost" className="flex items-center justify-center">
                       <Play className="h-4 w-4" />
                     </Button>
                   </div>

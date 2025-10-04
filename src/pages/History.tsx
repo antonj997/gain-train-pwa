@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistanceToNow, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay } from "date-fns";
 import { Calendar, Dumbbell, TrendingUp, Clock, Target } from "lucide-react";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 
 interface WorkoutSession {
   id: string;
@@ -23,6 +24,7 @@ const History = () => {
     avgDuration: 0,
     totalSets: 0,
   });
+  useScrollPosition();
 
   useEffect(() => {
     if (!user) {
