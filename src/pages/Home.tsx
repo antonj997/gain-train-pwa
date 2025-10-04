@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Play, LogOut, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface WorkoutTemplate {
   id: string;
@@ -65,14 +66,6 @@ const Home = () => {
     navigate("/auth");
   };
 
-  if (showLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 pb-20">
       {/* Welcome Section */}
@@ -105,7 +98,9 @@ const Home = () => {
       {/* Saved Templates */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Your Workout Plans</h2>
-        {templates.length === 0 ? (
+        {showLoading ? (
+          <LoadingSpinner text="Loading your workout plans..." />
+        ) : templates.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Dumbbell className="h-12 w-12 text-muted-foreground mb-4" />
