@@ -62,6 +62,21 @@ This project is built with:
 
 ## How can I deploy this project?
 
+**Option 1: Deploy to GitHub Pages (Recommended)**
+
+This project is configured to automatically deploy to GitHub Pages. To enable it:
+
+1. Go to your repository settings on GitHub
+2. Navigate to "Pages" in the left sidebar
+3. Under "Build and deployment", select "Source" as "GitHub Actions"
+4. Push to the `main` branch or manually trigger the workflow
+
+Once deployed, your app will be available at: `https://antonj997.github.io/iron-log-pwa/`
+
+The deployment workflow automatically builds and deploys your app whenever you push changes to the main branch.
+
+**Option 2: Deploy via Lovable**
+
 Simply open [Lovable](https://lovable.dev/projects/7791df49-3b29-49b9-b630-a86b448e7304) and click on Share -> Publish.
 
 ## Can I connect a custom domain to my Lovable project?
