@@ -15,5 +15,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: process.env.GITHUB_PAGES === "true" ? "/gain-train-pwa/" : "/",
+  base: process.env.GITHUB_PAGES === "true" ? "/GainTrain/" : "/",
 }));
