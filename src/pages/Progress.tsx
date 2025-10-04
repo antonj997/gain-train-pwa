@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Activity } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface ExerciseProgress {
   exerciseName: string;
@@ -96,8 +97,9 @@ const Progress = () => {
 
   if (showLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="space-y-6 pb-20">
+        <h1 className="text-3xl font-bold">Your Progress</h1>
+        <LoadingSpinner text="Loading your progress..." />
       </div>
     );
   }

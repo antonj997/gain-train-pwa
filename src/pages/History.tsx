@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDistanceToNow, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay } from "date-fns";
 import { Calendar, Dumbbell, TrendingUp, Clock, Target } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface WorkoutSession {
   id: string;
@@ -95,119 +96,117 @@ const History = () => {
     return sessions.some(session => isSameDay(new Date(session.date), day));
   };
 
-  if (showLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 pb-20">
       <h1 className="text-3xl font-bold">Workout History</h1>
 
-      {sessions.length > 0 && (
-        <>
-          {/* Trend Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <TrendingUp className="h-5 w-5 mx-auto mb-2 text-primary" />
-                  <div className="text-2xl font-bold">{trendStats.totalWorkouts}</div>
-                  <p className="text-xs text-muted-foreground">Workouts</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <Clock className="h-5 w-5 mx-auto mb-2 text-accent" />
-                  <div className="text-2xl font-bold">{trendStats.avgDuration}</div>
-                  <p className="text-xs text-muted-foreground">Avg. Min</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <Target className="h-5 w-5 mx-auto mb-2 text-success" />
-                  <div className="text-2xl font-bold">{trendStats.totalSets}</div>
-                  <p className="text-xs text-muted-foreground">Total Sets</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Week Calendar */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">This Week</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-2">
-                {getWeekDays().map((day, index) => {
-                  const hasWorkout = hasWorkoutOnDay(day);
-                  return (
-                    <div key={index} className="text-center">
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {format(day, "EEE")}
-                      </div>
-                      <div
-                        className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium ${
-                          hasWorkout
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {format(day, "d")}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
-
-      {sessions.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-center">
-              No workouts yet. Start your first workout to see it here!
-            </p>
-          </CardContent>
-        </Card>
+      {showLoading ? (
+        <LoadingSpinner text="Loading your workout history..." />
       ) : (
-        <div className="space-y-3">
-          {sessions.map((session) => (
-            <Card key={session.id} className="hover:bg-accent/5 transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{session.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(session.date), {
-                        addSuffix: true,
-                      })}
-                    </p>
-                  </div>
-                  <Dumbbell className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              {session.duration && (
+        <>
+          {sessions.length > 0 && (
+            <>
+              {/* Trend Stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <TrendingUp className="h-5 w-5 mx-auto mb-2 text-primary" />
+                      <div className="text-2xl font-bold">{trendStats.totalWorkouts}</div>
+                      <p className="text-xs text-muted-foreground">Workouts</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <Clock className="h-5 w-5 mx-auto mb-2 text-accent" />
+                      <div className="text-2xl font-bold">{trendStats.avgDuration}</div>
+                      <p className="text-xs text-muted-foreground">Avg. Min</p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <Target className="h-5 w-5 mx-auto mb-2 text-success" />
+                      <div className="text-2xl font-bold">{trendStats.totalSets}</div>
+                      <p className="text-xs text-muted-foreground">Total Sets</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Week Calendar */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">This Week</CardTitle>
+                </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Duration: {session.duration} minutes
-                  </p>
+                  <div className="grid grid-cols-7 gap-2">
+                    {getWeekDays().map((day, index) => {
+                      const hasWorkout = hasWorkoutOnDay(day);
+                      return (
+                        <div key={index} className="text-center">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            {format(day, "EEE")}
+                          </div>
+                          <div
+                            className={`aspect-square rounded-lg flex items-center justify-center text-sm font-medium ${
+                              hasWorkout
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-muted-foreground"
+                            }`}
+                          >
+                            {format(day, "d")}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </CardContent>
-              )}
+              </Card>
+            </>
+          )}
+
+          {sessions.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-muted-foreground text-center">
+                  No workouts yet. Start your first workout to see it here!
+                </p>
+              </CardContent>
             </Card>
-          ))}
-        </div>
+          ) : (
+            <div className="space-y-3">
+              {sessions.map((session) => (
+                <Card key={session.id} className="hover:bg-accent/5 transition-colors">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{session.name}</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {formatDistanceToNow(new Date(session.date), {
+                            addSuffix: true,
+                          })}
+                        </p>
+                      </div>
+                      <Dumbbell className="h-5 w-5 text-primary" />
+                    </div>
+                  </CardHeader>
+                  {session.duration && (
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Duration: {session.duration} minutes
+                      </p>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
