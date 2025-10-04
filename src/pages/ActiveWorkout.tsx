@@ -9,6 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Plus, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import ExerciseSelector from "@/components/ExerciseSelector";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ExerciseSet {
   exerciseName: string;
@@ -23,6 +31,9 @@ const ActiveWorkout = () => {
   const [exercises, setExercises] = useState<ExerciseSet[]>([]);
   const [showExerciseSelector, setShowExerciseSelector] = useState(false);
   const [startTime] = useState(Date.now());
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [completionName, setCompletionName] = useState("");
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -97,12 +108,17 @@ const ActiveWorkout = () => {
     setExercises(exercises.filter((_, i) => i !== exerciseIndex));
   };
 
-  const completeWorkout = async (saveAsTemplate: boolean) => {
+  const initiateComplete = (asTemplate: boolean) => {
     if (exercises.length === 0) {
       toast.error("Add at least one exercise to complete the workout");
       return;
     }
+    setCompletionName(workoutName);
+    setSaveAsTemplate(asTemplate);
+    setShowCompleteDialog(true);
+  };
 
+  const completeWorkout = async () => {
     try {
       const duration = Math.floor((Date.now() - startTime) / 1000 / 60);
 
@@ -111,7 +127,7 @@ const ActiveWorkout = () => {
         .insert({
           user_id: user!.id,
           template_id: templateId !== "new" ? templateId : null,
-          name: workoutName,
+          name: completionName || workoutName,
           duration,
         })
         .select()
@@ -136,7 +152,7 @@ const ActiveWorkout = () => {
           .from("workout_templates")
           .insert({
             user_id: user!.id,
-            name: workoutName,
+            name: completionName || workoutName,
           })
           .select()
           .single();
@@ -153,6 +169,7 @@ const ActiveWorkout = () => {
       }
 
       toast.success("Workout completed!");
+      setShowCompleteDialog(false);
       navigate("/");
     } catch (error: any) {
       toast.error("Failed to save workout");
@@ -250,7 +267,7 @@ const ActiveWorkout = () => {
           <Button
             size="lg"
             className="w-full bg-accent hover:bg-accent/90"
-            onClick={() => completeWorkout(false)}
+            onClick={() => initiateComplete(false)}
           >
             <Check className="mr-2 h-5 w-5" />
             Complete Workout
@@ -260,7 +277,7 @@ const ActiveWorkout = () => {
               size="lg"
               variant="outline"
               className="w-full"
-              onClick={() => completeWorkout(true)}
+              onClick={() => initiateComplete(true)}
             >
               Complete & Save as Template
             </Button>
@@ -273,6 +290,37 @@ const ActiveWorkout = () => {
         onClose={() => setShowExerciseSelector(false)}
         onSelect={addExercise}
       />
+
+      <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete Workout</DialogTitle>
+            <DialogDescription>
+              Give your workout a name to save it to your history.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="workout-name">Workout Name</Label>
+              <Input
+                id="workout-name"
+                value={completionName}
+                onChange={(e) => setCompletionName(e.target.value)}
+                placeholder="Enter workout name"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCompleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={completeWorkout}>
+              <Check className="mr-2 h-4 w-4" />
+              Complete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

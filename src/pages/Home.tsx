@@ -103,7 +103,7 @@ const Home = () => {
               <Card
                 key={template.id}
                 className="hover:bg-accent/5 transition-colors cursor-pointer"
-                onClick={() => navigate(`/workout/template/${template.id}`)}
+                onClick={() => navigate(`/workout/${template.id}`)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
