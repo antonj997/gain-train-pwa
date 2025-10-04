@@ -1,7 +1,7 @@
 {
-  "name": "IronLog - Workout Tracker",
-  "short_name": "IronLog",
-  "description": "Simple and powerful workout tracking app",
+  "name": "Gain Train - Workout Tracker",
+  "short_name": "GT",
+  "description": "All aboard the progress log",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

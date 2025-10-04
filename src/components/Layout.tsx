@@ -27,7 +27,7 @@ const Layout = ({ children }: LayoutProps) => {
             <div className="bg-primary p-2 rounded-lg">
               <Dumbbell className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg">IronLog</span>
+            <span className="font-bold text-lg">Gain Train</span>
           </div>
           <Button
             variant="ghost"
