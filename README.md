@@ -71,7 +71,7 @@ This project is configured to automatically deploy to GitHub Pages. To enable it
 3. Under "Build and deployment", select "Source" as "GitHub Actions"
 4. Push to the `main` branch or manually trigger the workflow
 
-Once deployed, your app will be available at: `https://antonj997.github.io/gain-train-pwa/`
+Once deployed, your app will be available at: `https://antonj997.github.io/GainTrain/`
 
 The deployment workflow automatically builds and deploys your app whenever you push changes to the main branch.
 

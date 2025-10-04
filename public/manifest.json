@@ -2,7 +2,7 @@
   "name": "Gain Train - Workout Tracker",
   "short_name": "GT",
   "description": "All aboard the progress log",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#9333ea",
