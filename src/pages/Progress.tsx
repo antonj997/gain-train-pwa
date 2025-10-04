@@ -18,6 +18,7 @@ const Progress = () => {
   const navigate = useNavigate();
   const [progress, setProgress] = useState<ExerciseProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
   useScrollPosition();
 
   useEffect(() => {
@@ -27,6 +28,17 @@ const Progress = () => {
     }
     loadProgress();
   }, [user, navigate]);
+
+  useEffect(() => {
+    // Only show loading screen if data takes longer than 200ms to load
+    const timer = setTimeout(() => {
+      if (loading) {
+        setShowLoading(true);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const loadProgress = async () => {
     try {
@@ -79,7 +91,7 @@ const Progress = () => {
     }
   };
 
-  if (loading) {
+  if (showLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="text-muted-foreground">Loading...</div>
