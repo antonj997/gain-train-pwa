@@ -11,7 +11,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem("iron-log-theme");
+    const stored = localStorage.getItem("gain-train-theme");
     return (stored as Theme) || "light";
   });
 
@@ -19,7 +19,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-    localStorage.setItem("iron-log-theme", theme);
+    localStorage.setItem("gain-train-theme", theme);
   }, [theme]);
 
   const toggleTheme = () => {

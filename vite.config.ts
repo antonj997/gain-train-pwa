@@ -15,5 +15,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  base: process.env.GITHUB_PAGES === "true" ? "/iron-log-pwa/" : "/",
+  base: process.env.GITHUB_PAGES === "true" ? "/gain-train-pwa/" : "/",
 }));
