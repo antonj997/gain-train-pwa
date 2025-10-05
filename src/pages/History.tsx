@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDistanceToNow, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay } from "date-fns";
-import { Calendar, Dumbbell, TrendingUp, Clock, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { formatDistanceToNow, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay, addWeeks, subWeeks } from "date-fns";
+import { Calendar, Dumbbell, TrendingUp, Clock, Target, ChevronLeft, ChevronRight } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -15,12 +17,26 @@ interface WorkoutSession {
   duration: number | null;
 }
 
+interface WorkoutSet {
+  exercise_name: string;
+  set_number: number;
+  reps: number;
+  weight: number | null;
+}
+
+interface WorkoutDetail {
+  session: WorkoutSession;
+  sets: WorkoutSet[];
+}
+
 const History = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
+  const [selectedWeek, setSelectedWeek] = useState(new Date());
+  const [selectedWorkout, setSelectedWorkout] = useState<WorkoutDetail | null>(null);
   const [trendStats, setTrendStats] = useState({
     totalWorkouts: 0,
     avgDuration: 0,
@@ -76,14 +92,67 @@ const History = () => {
   };
 
   const getWeekDays = () => {
-    const now = new Date();
-    const start = startOfWeek(now, { weekStartsOn: 1 });
-    const end = endOfWeek(now, { weekStartsOn: 1 });
+    const start = startOfWeek(selectedWeek, { weekStartsOn: 1 });
+    const end = endOfWeek(selectedWeek, { weekStartsOn: 1 });
     return eachDayOfInterval({ start, end });
   };
 
   const hasWorkoutOnDay = (day: Date) => {
     return sessions.some(session => isSameDay(new Date(session.date), day));
+  };
+
+  const getWeekSessions = () => {
+    const start = startOfWeek(selectedWeek, { weekStartsOn: 1 });
+    const end = endOfWeek(selectedWeek, { weekStartsOn: 1 });
+    return sessions.filter(session => {
+      const sessionDate = new Date(session.date);
+      return sessionDate >= start && sessionDate <= end;
+    });
+  };
+
+  const handlePreviousWeek = () => {
+    setSelectedWeek(prev => subWeeks(prev, 1));
+  };
+
+  const handleNextWeek = () => {
+    setSelectedWeek(prev => addWeeks(prev, 1));
+  };
+
+  const loadWorkoutDetails = async (sessionId: string) => {
+    try {
+      const { data: sessionData } = await supabase
+        .from("workout_sessions")
+        .select("*")
+        .eq("id", sessionId)
+        .single();
+
+      const { data: setsData } = await supabase
+        .from("workout_sets")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("exercise_name")
+        .order("set_number");
+
+      if (sessionData && setsData) {
+        setSelectedWorkout({
+          session: sessionData,
+          sets: setsData,
+        });
+      }
+    } catch (error) {
+      console.error("Error loading workout details:", error);
+    }
+  };
+
+  const groupSetsByExercise = (sets: WorkoutSet[]) => {
+    const grouped: { [key: string]: WorkoutSet[] } = {};
+    sets.forEach(set => {
+      if (!grouped[set.exercise_name]) {
+        grouped[set.exercise_name] = [];
+      }
+      grouped[set.exercise_name].push(set);
+    });
+    return grouped;
   };
 
   return (
@@ -130,7 +199,19 @@ const History = () => {
               {/* Week Calendar */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">This Week</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base">
+                      {format(startOfWeek(selectedWeek, { weekStartsOn: 1 }), "MMM d")} - {format(endOfWeek(selectedWeek, { weekStartsOn: 1 }), "MMM d, yyyy")}
+                    </CardTitle>
+                    <div className="flex gap-2">
+                      <Button size="icon" variant="ghost" onClick={handlePreviousWeek}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={handleNextWeek}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-7 gap-2">
@@ -170,8 +251,12 @@ const History = () => {
             </Card>
           ) : (
             <div className="space-y-3">
-              {sessions.map((session) => (
-                <Card key={session.id} className="hover:bg-accent/5 transition-colors">
+              {getWeekSessions().map((session) => (
+                <Card 
+                  key={session.id} 
+                  className="hover:bg-accent/5 transition-colors cursor-pointer"
+                  onClick={() => loadWorkoutDetails(session.id)}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div>
@@ -196,6 +281,38 @@ const History = () => {
               ))}
             </div>
           )}
+
+          {/* Workout Details Dialog */}
+          <Dialog open={!!selectedWorkout} onOpenChange={() => setSelectedWorkout(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{selectedWorkout?.session.name}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                {selectedWorkout && (
+                  <>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(selectedWorkout.session.date), "MMMM d, yyyy")}
+                      {selectedWorkout.session.duration && ` • ${selectedWorkout.session.duration} min`}
+                    </div>
+                    {Object.entries(groupSetsByExercise(selectedWorkout.sets)).map(([exercise, sets]) => (
+                      <div key={exercise} className="space-y-2">
+                        <h4 className="font-medium">{exercise}</h4>
+                        <div className="text-sm space-y-1">
+                          {sets.map((set) => (
+                            <div key={set.set_number} className="flex justify-between text-muted-foreground">
+                              <span>Set {set.set_number}</span>
+                              <span>{set.reps} reps × {set.weight || 0} kg</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </>
       )}
     </div>

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Activity } from "lucide-react";
+import { TrendingUp, Activity, TrendingDown, Minus } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
@@ -12,6 +12,8 @@ interface ExerciseProgress {
   totalSets: number;
   maxWeight: number;
   lastWorkout: string;
+  volumeHistory: number[];
+  trend: "up" | "down" | "stable";
 }
 
 const Progress = () => {
@@ -39,7 +41,8 @@ const Progress = () => {
       const { data: sessions } = await supabase
         .from("workout_sessions")
         .select("id, date")
-        .order("date", { ascending: false });
+        .order("date", { ascending: false })
+        .limit(10);
 
       if (!sessions || sessions.length === 0) {
         setLoading(false);
@@ -49,8 +52,9 @@ const Progress = () => {
       const sessionIds = sessions.map((s) => s.id);
       const { data: sets } = await supabase
         .from("workout_sets")
-        .select("exercise_name, weight, session_id")
-        .in("session_id", sessionIds);
+        .select("exercise_name, weight, reps, session_id")
+        .in("session_id", sessionIds)
+        .order("session_id", { ascending: false });
 
       if (!sets) {
         setLoading(false);
@@ -59,22 +63,45 @@ const Progress = () => {
 
       const exerciseMap = new Map<string, ExerciseProgress>();
 
-      sets.forEach((set) => {
-        const existing = exerciseMap.get(set.exercise_name);
-        const session = sessions.find((s) => s.id === set.session_id);
+      // Group sets by exercise and session
+      const exerciseSessions = new Map<string, Map<string, number>>();
 
-        if (!existing) {
-          exerciseMap.set(set.exercise_name, {
-            exerciseName: set.exercise_name,
-            totalSets: 1,
-            maxWeight: set.weight || 0,
-            lastWorkout: session?.date || "",
-          });
-        } else {
-          existing.totalSets++;
-          existing.maxWeight = Math.max(existing.maxWeight, set.weight || 0);
-          exerciseMap.set(set.exercise_name, existing);
+      sets.forEach((set) => {
+        const volume = (set.weight || 0) * set.reps;
+        
+        if (!exerciseSessions.has(set.exercise_name)) {
+          exerciseSessions.set(set.exercise_name, new Map());
         }
+        
+        const sessionVolumes = exerciseSessions.get(set.exercise_name)!;
+        const currentVolume = sessionVolumes.get(set.session_id) || 0;
+        sessionVolumes.set(set.session_id, currentVolume + volume);
+      });
+
+      // Calculate progress for each exercise
+      exerciseSessions.forEach((sessionVolumes, exerciseName) => {
+        const volumes = Array.from(sessionVolumes.values()).slice(0, 10);
+        const exerciseSets = sets.filter(s => s.exercise_name === exerciseName);
+        const maxWeight = Math.max(...exerciseSets.map(s => s.weight || 0));
+        const lastSession = sessions.find(s => s.id === exerciseSets[0].session_id);
+        
+        // Calculate trend (compare last 3 to previous 3)
+        let trend: "up" | "down" | "stable" = "stable";
+        if (volumes.length >= 3) {
+          const recent = volumes.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
+          const previous = volumes.slice(3, 6).reduce((a, b) => a + b, 0) / Math.min(3, volumes.length - 3);
+          if (recent > previous * 1.05) trend = "up";
+          else if (recent < previous * 0.95) trend = "down";
+        }
+
+        exerciseMap.set(exerciseName, {
+          exerciseName,
+          totalSets: exerciseSets.length,
+          maxWeight,
+          lastWorkout: lastSession?.date || "",
+          volumeHistory: volumes,
+          trend,
+        });
       });
 
       setProgress(Array.from(exerciseMap.values()));
@@ -109,28 +136,47 @@ const Progress = () => {
         </Card>
       ) : (
         <div className="space-y-3">
-          {progress.map((exercise) => (
-            <Card key={exercise.exerciseName}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">
-                    {exercise.exerciseName}
-                  </CardTitle>
-                  <Activity className="h-5 w-5 text-accent" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Sets:</span>
-                  <span className="font-medium">{exercise.totalSets}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Max Weight:</span>
-                  <span className="font-medium">{exercise.maxWeight} kg</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {progress.map((exercise) => {
+            const maxVolume = Math.max(...exercise.volumeHistory);
+            const TrendIcon = exercise.trend === "up" ? TrendingUp : exercise.trend === "down" ? TrendingDown : Minus;
+            const trendColor = exercise.trend === "up" ? "text-success" : exercise.trend === "down" ? "text-destructive" : "text-muted-foreground";
+            
+            return (
+              <Card key={exercise.exerciseName}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg">
+                      {exercise.exerciseName}
+                    </CardTitle>
+                    <TrendIcon className={`h-5 w-5 ${trendColor}`} />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total Sets:</span>
+                    <span className="font-medium">{exercise.totalSets}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Max Weight:</span>
+                    <span className="font-medium">{exercise.maxWeight} kg</span>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">Volume Trend (Last 10)</span>
+                    <div className="flex gap-1 items-end h-12">
+                      {exercise.volumeHistory.map((volume, idx) => (
+                        <div
+                          key={idx}
+                          className="flex-1 bg-primary rounded-t transition-all"
+                          style={{ height: `${(volume / maxVolume) * 100}%` }}
+                          title={`${volume.toFixed(0)} kg`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
