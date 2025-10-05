@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDistanceToNow, startOfWeek, endOfWeek, eachDayOfInterval, format, isSameDay, addWeeks, subWeeks } from "date-fns";
-import { Calendar, Dumbbell, TrendingUp, Clock, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, Dumbbell, TrendingUp, Clock, Target, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { useToast } from "@/hooks/use-toast";
 
 interface WorkoutSession {
   id: string;
@@ -25,6 +26,7 @@ interface WorkoutSet {
 }
 
 interface WorkoutDetail {
+  id: string;
   session: WorkoutSession;
   sets: WorkoutSet[];
 }
@@ -32,6 +34,7 @@ interface WorkoutDetail {
 const History = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [sessions, setSessions] = useState<WorkoutSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
@@ -135,12 +138,39 @@ const History = () => {
 
       if (sessionData && setsData) {
         setSelectedWorkout({
+          id: sessionId,
           session: sessionData,
           sets: setsData,
         });
       }
     } catch (error) {
       console.error("Error loading workout details:", error);
+    }
+  };
+
+  const handleDeleteWorkout = async (sessionId: string) => {
+    try {
+      const { error } = await supabase
+        .from("workout_sessions")
+        .delete()
+        .eq("id", sessionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Workout deleted",
+        description: "Your workout has been removed from history.",
+      });
+
+      setSelectedWorkout(null);
+      loadSessions();
+    } catch (error) {
+      console.error("Error deleting workout:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete workout. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -286,7 +316,17 @@ const History = () => {
           <Dialog open={!!selectedWorkout} onOpenChange={() => setSelectedWorkout(null)}>
             <DialogContent className="max-w-md">
               <DialogHeader>
-                <DialogTitle>{selectedWorkout?.session.name}</DialogTitle>
+                <div className="flex items-center justify-between pr-6">
+                  <DialogTitle>{selectedWorkout?.session.name}</DialogTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => selectedWorkout && handleDeleteWorkout(selectedWorkout.id)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                </div>
               </DialogHeader>
               <div className="space-y-4">
                 {selectedWorkout && (

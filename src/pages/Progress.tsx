@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { LineChart, Line, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
 
 interface ExerciseProgress {
   exerciseName: string;
@@ -170,7 +170,9 @@ const Progress = () => {
                       <div className="h-16 relative">
                         <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded" />
                         <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chartData}>
+                          <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                            <XAxis dataKey="idx" hide />
+                            <YAxis hide domain={['auto', 'auto']} />
                             <Line 
                               type="monotone" 
                               dataKey="volume" 
