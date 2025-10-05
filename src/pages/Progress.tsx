@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Activity, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { LineChart, Line, ResponsiveContainer } from "recharts";
 
 interface ExerciseProgress {
   exerciseName: string;
@@ -104,7 +105,9 @@ const Progress = () => {
         });
       });
 
-      setProgress(Array.from(exerciseMap.values()));
+      // Sort by most frequently performed (totalSets) descending
+      const sortedProgress = Array.from(exerciseMap.values()).sort((a, b) => b.totalSets - a.totalSets);
+      setProgress(sortedProgress);
     } catch (error) {
       console.error("Error loading progress:", error);
     } finally {
@@ -137,9 +140,10 @@ const Progress = () => {
       ) : (
         <div className="space-y-3">
           {progress.map((exercise) => {
-            const maxVolume = Math.max(...exercise.volumeHistory);
             const TrendIcon = exercise.trend === "up" ? TrendingUp : exercise.trend === "down" ? TrendingDown : Minus;
             const trendColor = exercise.trend === "up" ? "text-success" : exercise.trend === "down" ? "text-destructive" : "text-muted-foreground";
+            const showTrend = exercise.volumeHistory.length >= 10;
+            const chartData = exercise.volumeHistory.map((volume, idx) => ({ volume, idx })).reverse();
             
             return (
               <Card key={exercise.exerciseName}>
@@ -148,7 +152,7 @@ const Progress = () => {
                     <CardTitle className="text-lg">
                       {exercise.exerciseName}
                     </CardTitle>
-                    <TrendIcon className={`h-5 w-5 ${trendColor}`} />
+                    {showTrend && <TrendIcon className={`h-5 w-5 ${trendColor}`} />}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -160,19 +164,25 @@ const Progress = () => {
                     <span className="text-muted-foreground">Max Weight:</span>
                     <span className="font-medium">{exercise.maxWeight} kg</span>
                   </div>
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Volume Trend (Last 10)</span>
-                    <div className="flex gap-1 items-end h-12">
-                      {exercise.volumeHistory.map((volume, idx) => (
-                        <div
-                          key={idx}
-                          className="flex-1 bg-primary rounded-t transition-all"
-                          style={{ height: `${(volume / maxVolume) * 100}%` }}
-                          title={`${volume.toFixed(0)} kg`}
-                        />
-                      ))}
+                  {showTrend && (
+                    <div className="space-y-2">
+                      <span className="text-sm text-muted-foreground">Volume Trend (Last 10)</span>
+                      <div className="h-16 relative">
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded" />
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <Line 
+                              type="monotone" 
+                              dataKey="volume" 
+                              stroke="hsl(var(--primary))" 
+                              strokeWidth={2}
+                              dot={false}
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             );

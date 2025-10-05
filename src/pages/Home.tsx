@@ -62,7 +62,7 @@ const Home = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Welcome Back!</h1>
-          <p className="text-muted-foreground">Ready to train?</p>
+          <p className="text-muted-foreground">All aboard the gain train!</p>
         </div>
         <Button variant="ghost" size="icon" onClick={handleSignOut}>
           <LogOut className="h-5 w-5" />

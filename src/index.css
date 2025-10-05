@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 4%;
 
-    --primary: 262 83% 58%;
+    --primary: 225 83% 58%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 220 14% 96%;
@@ -37,7 +37,7 @@ All colors MUST be HSL.
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 262 83% 58%;
+    --ring: 225 83% 58%;
 
     --radius: 0.75rem;
   }
@@ -52,7 +52,7 @@ All colors MUST be HSL.
     --popover: 240 8% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 225 83% 58%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 4% 16%;
@@ -72,7 +72,7 @@ All colors MUST be HSL.
 
     --border: 240 4% 16%;
     --input: 240 4% 16%;
-    --ring: 262 83% 58%;
+    --ring: 225 83% 58%;
   }
 }
 
@@ -83,5 +83,31 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Scrollbar styling for dark mode */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-border;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
   }
 }
