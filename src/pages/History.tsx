@@ -56,6 +56,12 @@ const History = () => {
   }, [user, navigate]);
 
   useEffect(() => {
+    if (sessions.length > 0) {
+      calculateWeekStats();
+    }
+  }, [selectedWeek, sessions]);
+
+  useEffect(() => {
     setShowLoading(loading);
   }, [loading]);
 
@@ -68,30 +74,39 @@ const History = () => {
 
       if (error) throw error;
       setSessions(data || []);
-
-      // Calculate trend stats from last 5 workouts
-      if (data && data.length > 0) {
-        const last5 = data.slice(0, 5);
-        const totalDuration = last5.reduce((sum, s) => sum + (s.duration || 0), 0);
-        
-        // Get total sets from last 5 workouts
-        const sessionIds = last5.map(s => s.id);
-        const { data: setsData } = await supabase
-          .from("workout_sets")
-          .select("id")
-          .in("session_id", sessionIds);
-
-        setTrendStats({
-          totalWorkouts: last5.length,
-          avgDuration: Math.round(totalDuration / last5.length),
-          totalSets: setsData?.length || 0,
-        });
-      }
     } catch (error) {
       console.error("Error loading sessions:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const calculateWeekStats = async () => {
+    const weekSessions = getWeekSessions();
+    
+    if (weekSessions.length === 0) {
+      setTrendStats({
+        totalWorkouts: 0,
+        avgDuration: 0,
+        totalSets: 0,
+      });
+      return;
+    }
+
+    const totalDuration = weekSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
+    
+    // Get total sets from week sessions
+    const sessionIds = weekSessions.map(s => s.id);
+    const { data: setsData } = await supabase
+      .from("workout_sets")
+      .select("id")
+      .in("session_id", sessionIds);
+
+    setTrendStats({
+      totalWorkouts: weekSessions.length,
+      avgDuration: weekSessions.length > 0 ? Math.round(totalDuration / weekSessions.length) : 0,
+      totalSets: setsData?.length || 0,
+    });
   };
 
   const getWeekDays = () => {

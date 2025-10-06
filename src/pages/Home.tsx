@@ -128,33 +128,31 @@ const Home = () => {
                 className="hover:bg-accent/5 transition-colors"
               >
                 <CardHeader className="pb-3 pt-3">
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <Button 
+                      size="icon" 
+                      variant="ghost"
+                      onClick={() => navigate(`/workout/${template.id}`)}
+                    >
+                      <Play className="h-4 w-4" />
+                    </Button>
                     <CardTitle 
                       className="text-lg cursor-pointer flex-1"
                       onClick={() => navigate(`/workout/${template.id}`)}
                     >
                       {template.name}
                     </CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        size="icon" 
-                        variant="ghost"
-                        onClick={() => navigate(`/workout/${template.id}`)}
-                      >
-                        <Play className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setTemplateToDelete(template.id);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTemplateToDelete(template.id);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </CardHeader>
               </Card>
