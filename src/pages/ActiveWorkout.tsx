@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Check, X } from "lucide-react";
+import { Plus, Check, X, Copy } from "lucide-react";
 import { toast } from "sonner";
 import ExerciseSelector from "@/components/ExerciseSelector";
 import {
@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ExerciseSet {
   exerciseName: string;
@@ -93,6 +94,13 @@ const ActiveWorkout = () => {
     setExercises(newExercises);
   };
 
+  const duplicateSet = (exerciseIndex: number, setIndex: number) => {
+    const newExercises = [...exercises];
+    const setToDuplicate = newExercises[exerciseIndex].sets[setIndex];
+    newExercises[exerciseIndex].sets.push({ ...setToDuplicate });
+    setExercises(newExercises);
+  };
+
   const updateSet = (
     exerciseIndex: number,
     setIndex: number,
@@ -108,13 +116,13 @@ const ActiveWorkout = () => {
     setExercises(exercises.filter((_, i) => i !== exerciseIndex));
   };
 
-  const initiateComplete = (asTemplate: boolean) => {
+  const initiateComplete = () => {
     if (exercises.length === 0) {
       toast.error("Add at least one exercise to complete the workout");
       return;
     }
     setCompletionName(workoutName);
-    setSaveAsTemplate(asTemplate);
+    setSaveAsTemplate(false);
     setShowCompleteDialog(true);
   };
 
@@ -203,7 +211,7 @@ const ActiveWorkout = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {exercise.sets.map((set, setIndex) => (
-              <div key={setIndex} className="flex items-center gap-3">
+              <div key={setIndex} className="flex items-center gap-2">
                 <span className="text-sm font-medium w-8">#{setIndex + 1}</span>
                 <div className="flex-1 space-y-1">
                   <Label className="text-xs">Reps</Label>
@@ -238,6 +246,14 @@ const ActiveWorkout = () => {
                     step="0.5"
                   />
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => duplicateSet(exerciseIndex, setIndex)}
+                  className="mt-5"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
               </div>
             ))}
             <Button
@@ -262,28 +278,20 @@ const ActiveWorkout = () => {
         Add Exercise
       </Button>
 
-      <div className="fixed bottom-20 left-0 right-0 p-4 bg-background border-t">
-        <div className="container space-y-2">
-          <Button
-            size="lg"
-            className="w-full bg-accent hover:bg-accent/90"
-            onClick={() => initiateComplete(false)}
-          >
-            <Check className="mr-2 h-5 w-5" />
-            Complete Workout
-          </Button>
-          {(!templateId || templateId === "new") && exercises.length > 0 && (
+      {exercises.length > 0 && (
+        <div className="fixed bottom-20 left-0 right-0 p-4 bg-background border-t">
+          <div className="container">
             <Button
               size="lg"
-              variant="outline"
-              className="w-full"
-              onClick={() => initiateComplete(true)}
+              className="w-full bg-accent hover:bg-accent/90"
+              onClick={initiateComplete}
             >
-              Complete & Save as Template
+              <Check className="mr-2 h-5 w-5" />
+              Complete Workout
             </Button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       <ExerciseSelector
         open={showExerciseSelector}
@@ -309,6 +317,21 @@ const ActiveWorkout = () => {
                 placeholder="Enter workout name"
               />
             </div>
+            {(!templateId || templateId === "new") && (
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="save-template"
+                  checked={saveAsTemplate}
+                  onCheckedChange={(checked) => setSaveAsTemplate(checked as boolean)}
+                />
+                <Label
+                  htmlFor="save-template"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Save as template
+                </Label>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCompleteDialog(false)}>

@@ -12,7 +12,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem("gain-train-theme");
-    return (stored as Theme) || "light";
+    return (stored as Theme) || "dark";
   });
 
   useEffect(() => {

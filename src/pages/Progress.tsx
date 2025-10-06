@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
@@ -142,7 +142,7 @@ const Progress = () => {
           {progress.map((exercise) => {
             const TrendIcon = exercise.trend === "up" ? TrendingUp : exercise.trend === "down" ? TrendingDown : Minus;
             const trendColor = exercise.trend === "up" ? "text-success" : exercise.trend === "down" ? "text-destructive" : "text-muted-foreground";
-            const showTrend = exercise.volumeHistory.length >= 10;
+            const showChart = exercise.volumeHistory.length >= 5;
             const chartData = exercise.volumeHistory.map((volume, idx) => ({ volume, idx })).reverse();
             
             return (
@@ -152,7 +152,7 @@ const Progress = () => {
                     <CardTitle className="text-lg">
                       {exercise.exerciseName}
                     </CardTitle>
-                    {showTrend && <TrendIcon className={`h-5 w-5 ${trendColor}`} />}
+                    {showChart && <TrendIcon className={`h-5 w-5 ${trendColor}`} />}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -164,7 +164,7 @@ const Progress = () => {
                     <span className="text-muted-foreground">Max Weight:</span>
                     <span className="font-medium">{exercise.maxWeight} kg</span>
                   </div>
-                  {showTrend && (
+                  {showChart ? (
                     <div className="space-y-2">
                       <span className="text-sm text-muted-foreground">Volume Trend (Last 10)</span>
                       <div className="h-16 relative">
@@ -182,6 +182,18 @@ const Progress = () => {
                             />
                           </LineChart>
                         </ResponsiveContainer>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="flex flex-col items-center justify-center py-6 text-center">
+                        <BarChart3 className="h-12 w-12 text-muted-foreground/30 mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          Complete 5 workouts to see progression
+                        </p>
+                        <p className="text-xs text-muted-foreground/60 mt-1">
+                          {exercise.volumeHistory.length}/5 completed
+                        </p>
                       </div>
                     </div>
                   )}

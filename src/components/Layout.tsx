@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Dumbbell, Home, History, TrendingUp, Moon, Sun } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
+import { Dumbbell, Home, History, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import HamburgerMenu from "@/components/HamburgerMenu";
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,7 +10,6 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
-  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
@@ -29,18 +28,7 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
             <span className="font-bold text-lg">Gain Train</span>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-            className="rounded-full"
-          >
-            {theme === "light" ? (
-              <Moon className="h-5 w-5" />
-            ) : (
-              <Sun className="h-5 w-5" />
-            )}
-          </Button>
+          <HamburgerMenu />
         </div>
       </header>
 

@@ -300,13 +300,11 @@ const History = () => {
                       <Dumbbell className="h-5 w-5 text-primary" />
                     </div>
                   </CardHeader>
-                  {session.duration && (
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        Duration: {session.duration} minutes
-                      </p>
-                    </CardContent>
-                  )}
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Duration: {session.duration ? (session.duration === 0 ? "< 1 min" : `${session.duration} min`) : "Unknown"}
+                    </p>
+                  </CardContent>
                 </Card>
               ))}
             </div>

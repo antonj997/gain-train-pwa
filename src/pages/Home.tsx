@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Play, LogOut, Dumbbell } from "lucide-react";
+import { Plus, Play, Dumbbell } from "lucide-react";
 import { toast } from "sonner";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -16,7 +16,7 @@ interface WorkoutTemplate {
 }
 
 const Home = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,28 +51,18 @@ const Home = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
-  };
-
   return (
     <div className="space-y-6 pb-20">
       {/* Welcome Section */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Welcome Back!</h1>
-          <p className="text-muted-foreground">All aboard the gain train!</p>
-        </div>
-        <Button variant="ghost" size="icon" onClick={handleSignOut}>
-          <LogOut className="h-5 w-5" />
-        </Button>
+      <div>
+        <h1 className="text-3xl font-bold">Welcome Back!</h1>
+        <p className="text-muted-foreground">All aboard the gain train!</p>
       </div>
 
       {/* Quick Start */}
       <Button
         size="lg"
-        className="w-full relative p-[2px] bg-gradient-to-br from-primary to-accent rounded-lg h-auto"
+        className="w-full relative p-[2px] bg-gradient-to-br from-[hsl(270,83%,58%)] to-[hsl(225,83%,58%)] rounded-lg h-auto"
         onClick={() => navigate("/workout/new")}
       >
         <span className="flex items-center justify-center w-full bg-background text-foreground hover:bg-background/90 rounded-md px-6 py-3 transition-colors">
