@@ -127,8 +127,8 @@ const Home = () => {
                 key={template.id}
                 className="hover:bg-accent/5 transition-colors"
               >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
+                <CardHeader className="pb-3 pt-3">
+                  <div className="flex items-center justify-between gap-2">
                     <CardTitle 
                       className="text-lg cursor-pointer flex-1"
                       onClick={() => navigate(`/workout/${template.id}`)}

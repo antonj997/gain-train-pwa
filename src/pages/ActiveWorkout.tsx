@@ -97,53 +97,47 @@ const SortableExerciseCard = ({
       </CardHeader>
       <CardContent className="space-y-3">
         {exercise.sets.map((set, setIndex) => (
-          <div key={setIndex} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground w-8">#{setIndex + 1}</span>
-              <Input
-                type="number"
-                placeholder="Reps"
-                value={set.reps || ""}
-                onChange={(e) => onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)}
-                className="flex-1"
-                min="0"
-              />
+          <div key={setIndex} className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground px-1">#{setIndex + 1}</span>
+            <Input
+              type="number"
+              placeholder="Reps"
+              value={set.reps || ""}
+              onChange={(e) => onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)}
+              className="flex-1"
+              min="0"
+            />
+            <div className="relative flex-1">
               <Input
                 type="number"
                 placeholder={set.isBodyweight ? "Extra Weight" : "Weight"}
                 value={set.weight || ""}
                 onChange={(e) => onUpdateSet(setIndex, "weight", parseFloat(e.target.value) || 0)}
-                className="flex-1"
+                className="pr-14"
                 min="0"
                 step="0.5"
               />
-            </div>
-            <div className="flex items-center gap-2 pl-10">
               <Button
                 variant={set.isBodyweight ? "default" : "outline"}
                 size="sm"
                 onClick={() => onToggleBodyweight(setIndex)}
-                className="flex-1"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-11 px-0"
               >
                 BW
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onDuplicateSet(setIndex)}
-                className="flex-1"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onRemoveSet(setIndex)}
-                className="flex-1"
-              >
-                <span className="text-lg font-light">−</span>
-              </Button>
             </div>
+            <button
+              onClick={() => onDuplicateSet(setIndex)}
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => onRemoveSet(setIndex)}
+              className="p-2 hover:bg-accent rounded-md transition-colors"
+            >
+              <span className="text-xl font-light">−</span>
+            </button>
           </div>
         ))}
         <Button variant="outline" size="sm" className="w-full" onClick={onAddSet}>

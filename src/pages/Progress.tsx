@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Activity, BarChart3 } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Scatter, Bar, ComposedChart } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Scatter, Bar, ComposedChart, Tooltip, CartesianGrid } from "recharts";
 import { useTheme } from "@/contexts/ThemeContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface SetData {
   weight: number;
@@ -45,6 +46,7 @@ const Progress = () => {
   const [progress, setProgress] = useState<ExerciseProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
+  const [selectedExercise, setSelectedExercise] = useState<ExerciseProgress | null>(null);
   useScrollPosition();
 
   useEffect(() => {
@@ -300,7 +302,10 @@ const Progress = () => {
                   {exercise.weeklyData.length > 0 ? (
                     <div className="space-y-2">
                       <span className="text-sm text-muted-foreground">Estimated 1RM Progress</span>
-                      <div className="h-20 relative">
+                      <div 
+                        className="h-16 relative rounded-lg bg-gradient-to-b from-primary/5 to-transparent cursor-pointer hover:from-primary/10 transition-all"
+                        onClick={() => setSelectedExercise(exercise)}
+                      >
                         <ResponsiveContainer width="100%" height="100%">
                           <ComposedChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
                             <defs>
@@ -357,6 +362,113 @@ const Progress = () => {
             );
           })}
         </div>
+      )}
+
+      {/* Detailed Chart Dialog */}
+      {selectedExercise && (
+        <Dialog open={!!selectedExercise} onOpenChange={() => setSelectedExercise(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{selectedExercise.exerciseName}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center justify-around text-center">
+                <div>
+                  <div className="text-2xl font-bold">{selectedExercise.latestE1RM.toFixed(1)} kg</div>
+                  <div className="text-xs text-muted-foreground">Current e1RM</div>
+                </div>
+                <div>
+                  <div className={`text-2xl font-bold ${selectedExercise.delta7Day > 0 ? 'text-success' : selectedExercise.delta7Day < 0 ? 'text-destructive' : ''}`}>
+                    {selectedExercise.delta7Day > 0 ? '+' : ''}{selectedExercise.delta7Day.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">7-day change</div>
+                </div>
+                <div>
+                  <div className={`text-2xl font-bold ${selectedExercise.delta30Day > 0 ? 'text-success' : selectedExercise.delta30Day < 0 ? 'text-destructive' : ''}`}>
+                    {selectedExercise.delta30Day > 0 ? '+' : ''}{selectedExercise.delta30Day.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">30-day change</div>
+                </div>
+              </div>
+              
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart 
+                    data={selectedExercise.weeklyData.map((week, idx) => ({
+                      week: new Date(week.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                      e1rm: week.topE1RM,
+                      avg: selectedExercise.rollingAverage[idx],
+                      volume: week.volume / 100,
+                      isPR: week.isPR,
+                    }))}
+                    margin={{ top: 10, right: 10, bottom: 30, left: 10 }}
+                  >
+                    <defs>
+                      <linearGradient id="detailGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                      </linearGradient>
+                      <linearGradient id="detailGradientLight" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(220, 15%, 60%)" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="hsl(220, 15%, 90%)" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                    <XAxis 
+                      dataKey="week" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      domain={["auto", "auto"]}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px',
+                      }}
+                    />
+                    <Bar dataKey="volume" fill="hsl(var(--muted))" opacity={0.3} />
+                    <Line
+                      type="monotone"
+                      dataKey="avg"
+                      stroke="hsl(var(--muted-foreground))"
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="4-week avg"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="e1rm"
+                      stroke={theme === "light" ? "url(#detailGradientLight)" : "url(#detailGradient)"}
+                      strokeWidth={3}
+                      dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+                      name="e1RM"
+                    />
+                    <Scatter
+                      data={selectedExercise.weeklyData.map((week, idx) => week.isPR ? {
+                        week: new Date(week.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                        e1rm: week.topE1RM,
+                      } : null).filter(Boolean)}
+                      dataKey="e1rm"
+                      fill="hsl(var(--success))"
+                      shape="circle"
+                      r={6}
+                      name="PR"
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
