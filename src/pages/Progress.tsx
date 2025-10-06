@@ -3,19 +3,38 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus, BarChart3 } from "lucide-react";
+import { TrendingUp, Activity, BarChart3 } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Scatter, Bar, ComposedChart } from "recharts";
+
+interface SetData {
+  weight: number;
+  reps: number;
+  date: string;
+}
 
 interface ExerciseProgress {
   exerciseName: string;
-  totalSets: number;
-  maxWeight: number;
-  lastWorkout: string;
-  volumeHistory: number[];
-  trend: "up" | "down" | "stable";
+  latestE1RM: number;
+  delta7Day: number;
+  delta30Day: number;
+  weeklyData: {
+    week: string;
+    weekStart: Date;
+    topE1RM: number;
+    volume: number;
+    isPR: boolean;
+  }[];
+  rollingAverage: number[];
 }
+
+// Epley formula: e1RM = weight × (1 + reps/30)
+// Cap reps at 10 to avoid overestimation
+const calculateE1RM = (weight: number, reps: number): number => {
+  const cappedReps = Math.min(reps, 10);
+  return weight * (1 + cappedReps / 30);
+};
 
 const Progress = () => {
   const { user } = useAuth();
@@ -42,8 +61,7 @@ const Progress = () => {
       const { data: sessions } = await supabase
         .from("workout_sessions")
         .select("id, date")
-        .order("date", { ascending: false })
-        .limit(10);
+        .order("date", { ascending: false });
 
       if (!sessions || sessions.length === 0) {
         setLoading(false);
@@ -62,51 +80,130 @@ const Progress = () => {
         return;
       }
 
-      const exerciseMap = new Map<string, ExerciseProgress>();
+      // Create session date map
+      const sessionDateMap = new Map(sessions.map((s) => [s.id, s.date]));
 
-      // Group sets by exercise and session
-      const exerciseSessions = new Map<string, Map<string, number>>();
+      // Group sets by exercise
+      const exerciseMap = new Map<string, SetData[]>();
 
       sets.forEach((set) => {
-        const volume = (set.weight || 0) * set.reps;
-        
-        if (!exerciseSessions.has(set.exercise_name)) {
-          exerciseSessions.set(set.exercise_name, new Map());
-        }
-        
-        const sessionVolumes = exerciseSessions.get(set.exercise_name)!;
-        const currentVolume = sessionVolumes.get(set.session_id) || 0;
-        sessionVolumes.set(set.session_id, currentVolume + volume);
-      });
+        const date = sessionDateMap.get(set.session_id);
+        if (!date) return;
 
-      // Calculate progress for each exercise
-      exerciseSessions.forEach((sessionVolumes, exerciseName) => {
-        const volumes = Array.from(sessionVolumes.values()).slice(0, 10);
-        const exerciseSets = sets.filter(s => s.exercise_name === exerciseName);
-        const maxWeight = Math.max(...exerciseSets.map(s => s.weight || 0));
-        const lastSession = sessions.find(s => s.id === exerciseSets[0].session_id);
-        
-        // Calculate trend (compare last 3 to previous 3)
-        let trend: "up" | "down" | "stable" = "stable";
-        if (volumes.length >= 3) {
-          const recent = volumes.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
-          const previous = volumes.slice(3, 6).reduce((a, b) => a + b, 0) / Math.min(3, volumes.length - 3);
-          if (recent > previous * 1.05) trend = "up";
-          else if (recent < previous * 0.95) trend = "down";
+        if (!exerciseMap.has(set.exercise_name)) {
+          exerciseMap.set(set.exercise_name, []);
         }
 
-        exerciseMap.set(exerciseName, {
-          exerciseName,
-          totalSets: exerciseSets.length,
-          maxWeight,
-          lastWorkout: lastSession?.date || "",
-          volumeHistory: volumes,
-          trend,
+        exerciseMap.get(set.exercise_name)!.push({
+          weight: set.weight || 0,
+          reps: set.reps,
+          date,
         });
       });
 
-      // Sort by most frequently performed (totalSets) descending
-      const sortedProgress = Array.from(exerciseMap.values()).sort((a, b) => b.totalSets - a.totalSets);
+      const progressData: ExerciseProgress[] = [];
+
+      exerciseMap.forEach((setData, exerciseName) => {
+        // Only show exercises with at least 5 workouts
+        if (setData.length < 5) {
+          return;
+        }
+
+        // Calculate e1RM for each set
+        const setsWithE1RM = setData.map((set) => ({
+          ...set,
+          e1rm: calculateE1RM(set.weight, set.reps),
+          date: new Date(set.date),
+        }));
+
+        // Calculate recent max e1RM for warm-up exclusion threshold (50% cutoff)
+        const recentSets = setsWithE1RM.slice(0, 30);
+        const recentMaxE1RM = Math.max(...recentSets.map((s) => s.e1rm));
+        const warmupThreshold = recentMaxE1RM * 0.5;
+
+        // Filter out warm-up sets
+        const workingSets = setsWithE1RM.filter((s) => s.e1rm >= warmupThreshold);
+
+        if (workingSets.length === 0) return;
+
+        // Group by week
+        const weeklyMap = new Map<string, { topE1RM: number; volume: number; weekStart: Date }>();
+
+        workingSets.forEach((set) => {
+          // Get Monday of the week
+          const weekStart = new Date(set.date);
+          const day = weekStart.getDay();
+          const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+          weekStart.setDate(diff);
+          weekStart.setHours(0, 0, 0, 0);
+
+          const weekKey = weekStart.toISOString().split("T")[0];
+
+          if (!weeklyMap.has(weekKey)) {
+            weeklyMap.set(weekKey, { topE1RM: 0, volume: 0, weekStart });
+          }
+
+          const week = weeklyMap.get(weekKey)!;
+          week.topE1RM = Math.max(week.topE1RM, set.e1rm);
+          week.volume += set.weight * set.reps;
+        });
+
+        // Convert to array and sort by date
+        const weeklyData = Array.from(weeklyMap.entries())
+          .map(([week, data]) => ({
+            week,
+            weekStart: data.weekStart,
+            topE1RM: data.topE1RM,
+            volume: data.volume,
+            isPR: false,
+          }))
+          .sort((a, b) => a.weekStart.getTime() - b.weekStart.getTime());
+
+        // Mark PRs
+        let maxE1RM = 0;
+        weeklyData.forEach((week) => {
+          if (week.topE1RM > maxE1RM) {
+            week.isPR = true;
+            maxE1RM = week.topE1RM;
+          }
+        });
+
+        // Calculate 4-week rolling average
+        const rollingAverage: number[] = [];
+        for (let i = 0; i < weeklyData.length; i++) {
+          const start = Math.max(0, i - 3);
+          const windowData = weeklyData.slice(start, i + 1);
+          const avg = windowData.reduce((sum, w) => sum + w.topE1RM, 0) / windowData.length;
+          rollingAverage.push(avg);
+        }
+
+        // Calculate deltas
+        const latestE1RM = weeklyData[weeklyData.length - 1]?.topE1RM || 0;
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+        const e1rm7DaysAgo =
+          weeklyData.find((w) => w.weekStart <= sevenDaysAgo)?.topE1RM || latestE1RM;
+        const e1rm30DaysAgo =
+          weeklyData.find((w) => w.weekStart <= thirtyDaysAgo)?.topE1RM || latestE1RM;
+
+        const delta7Day = latestE1RM - e1rm7DaysAgo;
+        const delta30Day = latestE1RM - e1rm30DaysAgo;
+
+        progressData.push({
+          exerciseName,
+          latestE1RM,
+          delta7Day,
+          delta30Day,
+          weeklyData,
+          rollingAverage,
+        });
+      });
+
+      // Sort by latest e1RM descending
+      const sortedProgress = progressData.sort((a, b) => b.latestE1RM - a.latestE1RM);
       setProgress(sortedProgress);
     } catch (error) {
       console.error("Error loading progress:", error);
@@ -133,70 +230,110 @@ const Progress = () => {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <TrendingUp className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground text-center">
-              Complete workouts to track your progress over time!
+              Complete at least 5 workouts per exercise to track your progress!
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
           {progress.map((exercise) => {
-            const TrendIcon = exercise.trend === "up" ? TrendingUp : exercise.trend === "down" ? TrendingDown : Minus;
-            const trendColor = exercise.trend === "up" ? "text-success" : exercise.trend === "down" ? "text-destructive" : "text-muted-foreground";
-            const showChart = exercise.volumeHistory.length >= 5;
-            const chartData = exercise.volumeHistory.map((volume, idx) => ({ volume, idx })).reverse();
-            
+            const chartData = exercise.weeklyData.map((week, idx) => ({
+              week: week.week,
+              e1rm: week.topE1RM,
+              avg: exercise.rollingAverage[idx],
+              volume: week.volume / 100, // Scale down for visibility
+              isPR: week.isPR,
+            }));
+
+            const prData = chartData.filter((d) => d.isPR);
+
             return (
               <Card key={exercise.exerciseName}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg">
-                      {exercise.exerciseName}
-                    </CardTitle>
-                    {showChart && <TrendIcon className={`h-5 w-5 ${trendColor}`} />}
+                    <div className="flex-1">
+                      <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
+                      <div className="flex items-center gap-4 mt-2 text-sm">
+                        <div className="flex items-center gap-1">
+                          <Activity className="h-4 w-4 text-primary" />
+                          <span className="font-semibold">{exercise.latestE1RM.toFixed(1)} kg</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>
+                            7d:{" "}
+                            <span
+                              className={
+                                exercise.delta7Day > 0
+                                  ? "text-success"
+                                  : exercise.delta7Day < 0
+                                  ? "text-destructive"
+                                  : ""
+                              }
+                            >
+                              {exercise.delta7Day > 0 ? "+" : ""}
+                              {exercise.delta7Day.toFixed(1)}
+                            </span>
+                          </span>
+                          <span>
+                            30d:{" "}
+                            <span
+                              className={
+                                exercise.delta30Day > 0
+                                  ? "text-success"
+                                  : exercise.delta30Day < 0
+                                  ? "text-destructive"
+                                  : ""
+                              }
+                            >
+                              {exercise.delta30Day > 0 ? "+" : ""}
+                              {exercise.delta30Day.toFixed(1)}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Total Sets:</span>
-                    <span className="font-medium">{exercise.totalSets}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Max Weight:</span>
-                    <span className="font-medium">{exercise.maxWeight} kg</span>
-                  </div>
-                  {showChart ? (
-                    <div className="space-y-2">
-                      <span className="text-sm text-muted-foreground">Volume Trend (Last 10)</span>
-                      <div className="h-16 relative">
-                        <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent rounded" />
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                            <XAxis dataKey="idx" hide />
-                            <YAxis hide domain={['auto', 'auto']} />
-                            <Line 
-                              type="monotone" 
-                              dataKey="volume" 
-                              stroke="hsl(var(--primary))" 
-                              strokeWidth={2}
-                              dot={false}
-                            />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
+                  <div className="space-y-2">
+                    <span className="text-sm text-muted-foreground">Estimated 1RM Progress</span>
+                    <div className="h-32 relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ComposedChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                          <defs>
+                            <linearGradient id={`gradient-${exercise.exerciseName}`} x1="0" y1="1" x2="0" y2="0">
+                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="week" hide />
+                          <YAxis hide domain={["auto", "auto"]} />
+                          <Bar dataKey="volume" fill="hsl(var(--muted))" opacity={0.3} />
+                          <Line
+                            type="monotone"
+                            dataKey="avg"
+                            stroke="hsl(var(--muted-foreground))"
+                            strokeWidth={1}
+                            strokeDasharray="3 3"
+                            dot={false}
+                          />
+                          <Line
+                            type="monotone"
+                            dataKey="e1rm"
+                            stroke={`url(#gradient-${exercise.exerciseName})`}
+                            strokeWidth={2}
+                            dot={false}
+                          />
+                          <Scatter
+                            data={prData}
+                            dataKey="e1rm"
+                            fill="hsl(var(--success))"
+                            shape="circle"
+                          />
+                        </ComposedChart>
+                      </ResponsiveContainer>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="flex flex-col items-center justify-center py-6 text-center">
-                        <BarChart3 className="h-12 w-12 text-muted-foreground/30 mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                          Complete 5 workouts to see progression
-                        </p>
-                        <p className="text-xs text-muted-foreground/60 mt-1">
-                          {exercise.volumeHistory.length}/5 completed
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
               </Card>
             );

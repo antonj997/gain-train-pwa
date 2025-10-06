@@ -6,8 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Check, X, Copy } from "lucide-react";
+import { Plus, Check, X, Copy, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import ExerciseSelector from "@/components/ExerciseSelector";
 import {
   Dialog,
@@ -20,9 +37,128 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface ExerciseSet {
+  id: string;
   exerciseName: string;
-  sets: { reps: number; weight: number }[];
+  sets: { reps: number; weight: number; isBodyweight: boolean }[];
 }
+
+interface SortableExerciseCardProps {
+  exercise: ExerciseSet;
+  exerciseIndex: number;
+  onRemove: () => void;
+  onAddSet: () => void;
+  onDuplicateSet: (setIndex: number) => void;
+  onRemoveSet: (setIndex: number) => void;
+  onUpdateSet: (setIndex: number, field: "reps" | "weight", value: number) => void;
+  onToggleBodyweight: (setIndex: number) => void;
+}
+
+const SortableExerciseCard = ({
+  exercise,
+  exerciseIndex,
+  onRemove,
+  onAddSet,
+  onDuplicateSet,
+  onRemoveSet,
+  onUpdateSet,
+  onToggleBodyweight,
+}: SortableExerciseCardProps) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exercise.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card ref={setNodeRef} style={style}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 flex-1">
+            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+              <GripVertical className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onRemove}>
+            Remove
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {exercise.sets.map((set, setIndex) => (
+          <div key={setIndex} className="flex items-center gap-2">
+            <span className="text-sm font-medium w-8">#{setIndex + 1}</span>
+            <div className="flex-1 space-y-1">
+              <Label className="text-xs">Reps</Label>
+              <Input
+                type="number"
+                value={set.reps || ""}
+                onChange={(e) =>
+                  onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)
+                }
+                min="0"
+              />
+            </div>
+            <div className="flex-1 space-y-1">
+              <Label className="text-xs">
+                {set.isBodyweight ? "Extra Weight (kg)" : "Weight (kg)"}
+              </Label>
+              <Input
+                type="number"
+                value={set.weight || ""}
+                onChange={(e) =>
+                  onUpdateSet(setIndex, "weight", parseFloat(e.target.value) || 0)
+                }
+                min="0"
+                step="0.5"
+              />
+            </div>
+            <div className="flex flex-col gap-1 mt-5">
+              <Button
+                variant={set.isBodyweight ? "default" : "outline"}
+                size="icon"
+                onClick={() => onToggleBodyweight(setIndex)}
+                title="Toggle bodyweight"
+                className="h-8 w-8"
+              >
+                <span className="text-xs font-bold">BW</span>
+              </Button>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onDuplicateSet(setIndex)}
+              className="mt-5"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onRemoveSet(setIndex)}
+              className="mt-5 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <Button variant="outline" size="sm" className="w-full" onClick={onAddSet}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Set
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
 
 const ActiveWorkout = () => {
   const { templateId } = useParams();
@@ -35,6 +171,13 @@ const ActiveWorkout = () => {
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [completionName, setCompletionName] = useState("");
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (!user) {
@@ -70,8 +213,9 @@ const ActiveWorkout = () => {
       setWorkoutName(template.name);
       setExercises(
         templateExercises.map((ex) => ({
+          id: crypto.randomUUID(),
           exerciseName: ex.exercise_name,
-          sets: [{ reps: 0, weight: 0 }],
+          sets: [{ reps: 0, weight: 0, isBodyweight: false }],
         }))
       );
     } catch (error: any) {
@@ -80,17 +224,29 @@ const ActiveWorkout = () => {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setExercises((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
   const addExercise = (exerciseName: string) => {
     setExercises([
       ...exercises,
-      { exerciseName, sets: [{ reps: 0, weight: 0 }] },
+      { id: crypto.randomUUID(), exerciseName, sets: [{ reps: 0, weight: 0, isBodyweight: false }] },
     ]);
     setShowExerciseSelector(false);
   };
 
   const addSet = (exerciseIndex: number) => {
     const newExercises = [...exercises];
-    newExercises[exerciseIndex].sets.push({ reps: 0, weight: 0 });
+    newExercises[exerciseIndex].sets.push({ reps: 0, weight: 0, isBodyweight: false });
     setExercises(newExercises);
   };
 
@@ -98,6 +254,16 @@ const ActiveWorkout = () => {
     const newExercises = [...exercises];
     const setToDuplicate = newExercises[exerciseIndex].sets[setIndex];
     newExercises[exerciseIndex].sets.push({ ...setToDuplicate });
+    setExercises(newExercises);
+  };
+
+  const removeSet = (exerciseIndex: number, setIndex: number) => {
+    const newExercises = [...exercises];
+    if (newExercises[exerciseIndex].sets.length === 1) {
+      toast.error("Cannot remove the last set. Remove the exercise instead.");
+      return;
+    }
+    newExercises[exerciseIndex].sets.splice(setIndex, 1);
     setExercises(newExercises);
   };
 
@@ -109,6 +275,13 @@ const ActiveWorkout = () => {
   ) => {
     const newExercises = [...exercises];
     newExercises[exerciseIndex].sets[setIndex][field] = value;
+    setExercises(newExercises);
+  };
+
+  const toggleBodyweight = (exerciseIndex: number, setIndex: number) => {
+    const newExercises = [...exercises];
+    newExercises[exerciseIndex].sets[setIndex].isBodyweight = 
+      !newExercises[exerciseIndex].sets[setIndex].isBodyweight;
     setExercises(newExercises);
   };
 
@@ -195,79 +368,32 @@ const ActiveWorkout = () => {
         </div>
       </div>
 
-      {exercises.map((exercise, exerciseIndex) => (
-        <Card key={exerciseIndex}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeExercise(exerciseIndex)}
-              >
-                Remove
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {exercise.sets.map((set, setIndex) => (
-              <div key={setIndex} className="flex items-center gap-2">
-                <span className="text-sm font-medium w-8">#{setIndex + 1}</span>
-                <div className="flex-1 space-y-1">
-                  <Label className="text-xs">Reps</Label>
-                  <Input
-                    type="number"
-                    value={set.reps || ""}
-                    onChange={(e) =>
-                      updateSet(
-                        exerciseIndex,
-                        setIndex,
-                        "reps",
-                        parseInt(e.target.value) || 0
-                      )
-                    }
-                    min="0"
-                  />
-                </div>
-                <div className="flex-1 space-y-1">
-                  <Label className="text-xs">Weight (kg)</Label>
-                  <Input
-                    type="number"
-                    value={set.weight || ""}
-                    onChange={(e) =>
-                      updateSet(
-                        exerciseIndex,
-                        setIndex,
-                        "weight",
-                        parseFloat(e.target.value) || 0
-                      )
-                    }
-                    min="0"
-                    step="0.5"
-                  />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => duplicateSet(exerciseIndex, setIndex)}
-                  className="mt-5"
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => addSet(exerciseIndex)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Set
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={exercises.map((ex) => ex.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          {exercises.map((exercise, exerciseIndex) => (
+            <SortableExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              exerciseIndex={exerciseIndex}
+              onRemove={() => removeExercise(exerciseIndex)}
+              onAddSet={() => addSet(exerciseIndex)}
+              onDuplicateSet={(setIndex) => duplicateSet(exerciseIndex, setIndex)}
+              onRemoveSet={(setIndex) => removeSet(exerciseIndex, setIndex)}
+              onUpdateSet={(setIndex, field, value) =>
+                updateSet(exerciseIndex, setIndex, field, value)
+              }
+              onToggleBodyweight={(setIndex) => toggleBodyweight(exerciseIndex, setIndex)}
+            />
+          ))}
+        </SortableContext>
+      </DndContext>
 
       <Button
         variant="outline"
