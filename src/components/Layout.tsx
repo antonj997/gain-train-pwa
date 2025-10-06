@@ -36,7 +36,7 @@ const Layout = ({ children }: LayoutProps) => {
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">{children}</main>
 
       {/* Bottom Navigation */}
-      <nav className="sticky bottom-0 w-full border-t bg-card" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <nav className="fixed bottom-0 w-full border-t bg-card z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="container flex justify-around py-2">
           {navItems.map((item) => {
             const Icon = item.icon;

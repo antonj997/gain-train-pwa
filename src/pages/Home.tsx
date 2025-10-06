@@ -4,10 +4,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Play, Dumbbell } from "lucide-react";
+import { Plus, Play, Dumbbell, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface WorkoutTemplate {
   id: string;
@@ -21,6 +31,8 @@ const Home = () => {
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
   useScrollPosition();
 
   useEffect(() => {
@@ -48,6 +60,27 @@ const Home = () => {
       toast.error("Failed to load workout templates");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteTemplate = async () => {
+    if (!templateToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("workout_templates")
+        .delete()
+        .eq("id", templateToDelete);
+
+      if (error) throw error;
+
+      toast.success("Workout plan deleted");
+      loadTemplates();
+    } catch (error: any) {
+      toast.error("Failed to delete workout plan");
+    } finally {
+      setDeleteDialogOpen(false);
+      setTemplateToDelete(null);
     }
   };
 
@@ -92,15 +125,36 @@ const Home = () => {
             {templates.map((template) => (
               <Card
                 key={template.id}
-                className="hover:bg-accent/5 transition-colors cursor-pointer"
-                onClick={() => navigate(`/workout/${template.id}`)}
+                className="hover:bg-accent/5 transition-colors"
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{template.name}</CardTitle>
-                    <Button size="icon" variant="ghost">
-                      <Play className="h-4 w-4" />
-                    </Button>
+                    <CardTitle 
+                      className="text-lg cursor-pointer flex-1"
+                      onClick={() => navigate(`/workout/${template.id}`)}
+                    >
+                      {template.name}
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        size="icon" 
+                        variant="ghost"
+                        onClick={() => navigate(`/workout/${template.id}`)}
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTemplateToDelete(template.id);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -108,6 +162,21 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Workout Plan</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this workout plan? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTemplate}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

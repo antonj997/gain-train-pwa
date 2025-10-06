@@ -7,6 +7,7 @@ import { TrendingUp, Activity, BarChart3 } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Scatter, Bar, ComposedChart } from "recharts";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SetData {
   weight: number;
@@ -19,6 +20,7 @@ interface ExerciseProgress {
   latestE1RM: number;
   delta7Day: number;
   delta30Day: number;
+  uniqueDates: number;
   weeklyData: {
     week: string;
     weekStart: Date;
@@ -39,6 +41,7 @@ const calculateE1RM = (weight: number, reps: number): number => {
 const Progress = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [progress, setProgress] = useState<ExerciseProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoading, setShowLoading] = useState(false);
@@ -104,10 +107,8 @@ const Progress = () => {
       const progressData: ExerciseProgress[] = [];
 
       exerciseMap.forEach((setData, exerciseName) => {
-        // Only show exercises with at least 5 workouts
-        if (setData.length < 5) {
-          return;
-        }
+        // Calculate unique workout dates to determine if we should show charts
+        const uniqueDates = new Set(setData.map(s => s.date)).size;
 
         // Calculate e1RM for each set
         const setsWithE1RM = setData.map((set) => ({
@@ -197,8 +198,9 @@ const Progress = () => {
           latestE1RM,
           delta7Day,
           delta30Day,
-          weeklyData,
-          rollingAverage,
+          uniqueDates,
+          weeklyData: uniqueDates >= 5 ? weeklyData : [],
+          rollingAverage: uniqueDates >= 5 ? rollingAverage : [],
         });
       });
 
@@ -295,45 +297,61 @@ const Progress = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <span className="text-sm text-muted-foreground">Estimated 1RM Progress</span>
-                    <div className="h-32 relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                          <defs>
-                            <linearGradient id={`gradient-${exercise.exerciseName}`} x1="0" y1="1" x2="0" y2="0">
-                              <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-                              <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="week" hide />
-                          <YAxis hide domain={["auto", "auto"]} />
-                          <Bar dataKey="volume" fill="hsl(var(--muted))" opacity={0.3} />
-                          <Line
-                            type="monotone"
-                            dataKey="avg"
-                            stroke="hsl(var(--muted-foreground))"
-                            strokeWidth={1}
-                            strokeDasharray="3 3"
-                            dot={false}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="e1rm"
-                            stroke={`url(#gradient-${exercise.exerciseName})`}
-                            strokeWidth={2}
-                            dot={false}
-                          />
-                          <Scatter
-                            data={prData}
-                            dataKey="e1rm"
-                            fill="hsl(var(--success))"
-                            shape="circle"
-                          />
-                        </ComposedChart>
-                      </ResponsiveContainer>
+                  {exercise.weeklyData.length > 0 ? (
+                    <div className="space-y-2">
+                      <span className="text-sm text-muted-foreground">Estimated 1RM Progress</span>
+                      <div className="h-20 relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ComposedChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                            <defs>
+                              <linearGradient id={`gradient-${exercise.exerciseName}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
+                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
+                              </linearGradient>
+                              <linearGradient id={`gradient-light-${exercise.exerciseName}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(220, 15%, 60%)" stopOpacity={0.5} />
+                                <stop offset="100%" stopColor="hsl(220, 15%, 90%)" stopOpacity={0.05} />
+                              </linearGradient>
+                            </defs>
+                            <XAxis dataKey="week" hide />
+                            <YAxis hide domain={["auto", "auto"]} />
+                            <Bar dataKey="volume" fill="hsl(var(--muted))" opacity={0.3} />
+                            <Line
+                              type="monotone"
+                              dataKey="avg"
+                              stroke="hsl(var(--muted-foreground))"
+                              strokeWidth={1}
+                              strokeDasharray="3 3"
+                              dot={false}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="e1rm"
+                              stroke={theme === "light" ? `url(#gradient-light-${exercise.exerciseName})` : `url(#gradient-${exercise.exerciseName})`}
+                              strokeWidth={2}
+                              dot={false}
+                            />
+                            <Scatter
+                              data={prData}
+                              dataKey="e1rm"
+                              fill="hsl(var(--success))"
+                              shape="circle"
+                            />
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <BarChart3 className="h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        Complete 5 workouts to see progression
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {5 - exercise.uniqueDates} more to go
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );

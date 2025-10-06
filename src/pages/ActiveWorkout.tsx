@@ -79,15 +79,17 @@ const SortableExerciseCard = ({
   };
 
   return (
-    <Card ref={setNodeRef} style={style}>
-      <CardHeader>
+    <Card ref={setNodeRef} style={style} className="relative">
+      <div 
+        {...attributes} 
+        {...listeners} 
+        className="absolute right-3 top-3 cursor-grab active:cursor-grabbing p-2 opacity-50 hover:opacity-100 transition-opacity touch-none"
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </div>
+      <CardHeader className="pr-14">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-1">
-            <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-              <GripVertical className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
-          </div>
+          <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
           <Button variant="ghost" size="sm" onClick={onRemove}>
             Remove
           </Button>
@@ -95,60 +97,53 @@ const SortableExerciseCard = ({
       </CardHeader>
       <CardContent className="space-y-3">
         {exercise.sets.map((set, setIndex) => (
-          <div key={setIndex} className="flex items-center gap-2">
-            <span className="text-sm font-medium w-8">#{setIndex + 1}</span>
-            <div className="flex-1 space-y-1">
-              <Label className="text-xs">Reps</Label>
+          <div key={setIndex} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground w-8">#{setIndex + 1}</span>
               <Input
                 type="number"
+                placeholder="Reps"
                 value={set.reps || ""}
-                onChange={(e) =>
-                  onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)
-                }
+                onChange={(e) => onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)}
+                className="flex-1"
                 min="0"
               />
-            </div>
-            <div className="flex-1 space-y-1">
-              <Label className="text-xs">
-                {set.isBodyweight ? "Extra Weight (kg)" : "Weight (kg)"}
-              </Label>
               <Input
                 type="number"
+                placeholder={set.isBodyweight ? "Extra Weight" : "Weight"}
                 value={set.weight || ""}
-                onChange={(e) =>
-                  onUpdateSet(setIndex, "weight", parseFloat(e.target.value) || 0)
-                }
+                onChange={(e) => onUpdateSet(setIndex, "weight", parseFloat(e.target.value) || 0)}
+                className="flex-1"
                 min="0"
                 step="0.5"
               />
             </div>
-            <div className="flex flex-col gap-1 mt-5">
+            <div className="flex items-center gap-2 pl-10">
               <Button
                 variant={set.isBodyweight ? "default" : "outline"}
-                size="icon"
+                size="sm"
                 onClick={() => onToggleBodyweight(setIndex)}
-                title="Toggle bodyweight"
-                className="h-8 w-8"
+                className="flex-1"
               >
-                <span className="text-xs font-bold">BW</span>
+                BW
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDuplicateSet(setIndex)}
+                className="flex-1"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onRemoveSet(setIndex)}
+                className="flex-1"
+              >
+                <span className="text-lg font-light">−</span>
               </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onDuplicateSet(setIndex)}
-              className="mt-5"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onRemoveSet(setIndex)}
-              className="mt-5 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
         ))}
         <Button variant="outline" size="sm" className="w-full" onClick={onAddSet}>
@@ -405,11 +400,11 @@ const ActiveWorkout = () => {
       </Button>
 
       {exercises.length > 0 && (
-        <div className="fixed bottom-20 left-0 right-0 p-4 bg-background border-t">
+        <div className="fixed bottom-24 left-0 right-0 p-4 bg-background border-t pointer-events-none">
           <div className="container">
             <Button
               size="lg"
-              className="w-full bg-accent hover:bg-accent/90"
+              className="w-full bg-accent hover:bg-accent/90 pointer-events-auto"
               onClick={initiateComplete}
             >
               <Check className="mr-2 h-5 w-5" />
