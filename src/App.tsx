@@ -12,12 +12,42 @@ import ActiveWorkout from "./pages/ActiveWorkout";
 import History from "./pages/History";
 import Progress from "./pages/Progress";
 import NotFound from "./pages/NotFound";
+import { useEffect } from "react";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import { Capacitor } from "@capacitor/core";
 
 const queryClient = new QueryClient();
+
+const StatusBarManager = () => {
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const updateStatusBar = () => {
+        const isDark = document.documentElement.classList.contains('dark');
+        StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light });
+        StatusBar.setBackgroundColor({ 
+          color: isDark ? '#0a0a0f' : '#ffffff' 
+        });
+      };
+
+      updateStatusBar();
+      
+      const observer = new MutationObserver(updateStatusBar);
+      observer.observe(document.documentElement, { 
+        attributes: true, 
+        attributeFilter: ['class'] 
+      });
+
+      return () => observer.disconnect();
+    }
+  }, []);
+
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
+      <StatusBarManager />
       <AuthProvider>
         <TooltipProvider>
           <Toaster />

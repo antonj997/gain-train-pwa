@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Check, X, Copy, Trash2, GripVertical } from "lucide-react";
+import { Plus, Check, X, Copy, Trash2, GripVertical, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -111,17 +111,17 @@ const SortableExerciseCard = ({
                 placeholder="Reps"
                 value={set.reps || ""}
                 onChange={(e) => onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)}
-                className="w-[110px]"
+                className="w-[100px]"
                 min="0"
                 disabled={isDragging}
               />
-              <div className="relative w-[110px]">
+              <div className="relative w-[100px]">
                 <Input
                   type="number"
-                  placeholder={set.isBodyweight ? "Extra Weight" : "Weight"}
+                  placeholder={set.isBodyweight ? "Extra" : "Weight"}
                   value={set.weight || ""}
                   onChange={(e) => onUpdateSet(setIndex, "weight", parseFloat(e.target.value) || 0)}
-                  className="pr-12"
+                  className="pr-11"
                   min="0"
                   step="0.5"
                   disabled={isDragging}
@@ -129,7 +129,7 @@ const SortableExerciseCard = ({
                 <button
                   onClick={() => onToggleBodyweight(setIndex)}
                   disabled={isDragging}
-                  className={`absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2 text-xs font-medium rounded transition-colors ${
+                  className={`absolute right-0.5 top-1/2 -translate-y-1/2 h-8 w-9 text-xs font-medium rounded transition-colors ${
                     set.isBodyweight 
                       ? "bg-primary text-primary-foreground" 
                       : "text-muted-foreground hover:text-foreground"
@@ -181,6 +181,7 @@ const ActiveWorkout = () => {
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [completionName, setCompletionName] = useState("");
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -310,6 +311,9 @@ const ActiveWorkout = () => {
   };
 
   const completeWorkout = async () => {
+    if (isCompleting) return;
+    
+    setIsCompleting(true);
     try {
       const duration = Math.floor((Date.now() - startTime) / 1000 / 60);
 
@@ -364,6 +368,8 @@ const ActiveWorkout = () => {
       navigate("/");
     } catch (error: any) {
       toast.error("Failed to save workout");
+    } finally {
+      setIsCompleting(false);
     }
   };
 
@@ -459,6 +465,7 @@ const ActiveWorkout = () => {
                   id="save-template"
                   checked={saveAsTemplate}
                   onCheckedChange={(checked) => setSaveAsTemplate(checked as boolean)}
+                  className="rounded-sm"
                 />
                 <Label
                   htmlFor="save-template"
@@ -469,13 +476,22 @@ const ActiveWorkout = () => {
               </div>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCompleteDialog(false)}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCompleteDialog(false)} disabled={isCompleting}>
               Cancel
             </Button>
-            <Button onClick={completeWorkout}>
-              <Check className="mr-2 h-4 w-4" />
-              Complete
+            <Button onClick={completeWorkout} disabled={isCompleting}>
+              {isCompleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Completing...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Complete
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
