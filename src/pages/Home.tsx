@@ -129,13 +129,6 @@ const Home = () => {
               >
                 <CardHeader className="pb-3 pt-3">
                   <div className="flex items-center gap-3">
-                    <Button 
-                      size="icon" 
-                      variant="ghost"
-                      onClick={() => navigate(`/workout/${template.id}`)}
-                    >
-                      <Play className="h-4 w-4" />
-                    </Button>
                     <CardTitle 
                       className="text-lg cursor-pointer flex-1"
                       onClick={() => navigate(`/workout/${template.id}`)}

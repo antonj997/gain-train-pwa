@@ -255,47 +255,56 @@ const Progress = () => {
               <Card key={exercise.exerciseName}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
-                      <div className="flex items-center gap-4 mt-2 text-sm">
-                        <div className="flex items-center gap-1">
-                          <Activity className="h-4 w-4 text-primary" />
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
+                    <div className="flex items-center gap-4 mt-2 text-sm flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <Activity className="h-4 w-4 text-primary" />
+                        <div className="flex flex-col">
                           <span className="font-semibold">{exercise.latestE1RM.toFixed(1)} kg</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>
-                            7d:{" "}
-                            <span
-                              className={
-                                exercise.delta7Day > 0
-                                  ? "text-success"
-                                  : exercise.delta7Day < 0
-                                  ? "text-destructive"
-                                  : ""
-                              }
-                            >
-                              {exercise.delta7Day > 0 ? "+" : ""}
-                              {exercise.delta7Day.toFixed(1)}
-                            </span>
-                          </span>
-                          <span>
-                            30d:{" "}
-                            <span
-                              className={
-                                exercise.delta30Day > 0
-                                  ? "text-success"
-                                  : exercise.delta30Day < 0
-                                  ? "text-destructive"
-                                  : ""
-                              }
-                            >
-                              {exercise.delta30Day > 0 ? "+" : ""}
-                              {exercise.delta30Day.toFixed(1)}
-                            </span>
-                          </span>
+                          <span className="text-xs text-muted-foreground">Current e1RM</span>
                         </div>
                       </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold text-success">
+                          {Math.max(...exercise.weeklyData.map(w => w.topE1RM)).toFixed(1)} kg
+                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-xs text-muted-foreground">PR</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col text-xs">
+                        <span className="text-muted-foreground">7d change:</span>
+                        <span
+                          className={
+                            exercise.delta7Day > 0
+                              ? "text-success font-medium"
+                              : exercise.delta7Day < 0
+                              ? "text-destructive font-medium"
+                              : "font-medium"
+                          }
+                        >
+                          {exercise.delta7Day > 0 ? "+" : ""}
+                          {exercise.delta7Day.toFixed(1)} kg
+                        </span>
+                      </div>
+                      <div className="flex flex-col text-xs">
+                        <span className="text-muted-foreground">30d change:</span>
+                        <span
+                          className={
+                            exercise.delta30Day > 0
+                              ? "text-success font-medium"
+                              : exercise.delta30Day < 0
+                              ? "text-destructive font-medium"
+                              : "font-medium"
+                          }
+                        >
+                          {exercise.delta30Day > 0 ? "+" : ""}
+                          {exercise.delta30Day.toFixed(1)} kg
+                        </span>
+                      </div>
                     </div>
+                  </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">

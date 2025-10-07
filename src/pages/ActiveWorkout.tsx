@@ -88,34 +88,23 @@ const SortableExerciseCard = ({
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </div>
       <CardHeader className="pr-14">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={onRemove}
-            disabled={isDragging}
-            className="pointer-events-auto"
-          >
-            Remove
-          </Button>
-        </div>
+        <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {exercise.sets.map((set, setIndex) => (
           <div key={setIndex} className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">#{setIndex + 1}</span>
+              <span className="text-sm text-muted-foreground px-1">#{setIndex + 1}</span>
               <Input
                 type="number"
                 placeholder="Reps"
                 value={set.reps || ""}
                 onChange={(e) => onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)}
-                className="w-[100px]"
+                className="w-[90px]"
                 min="0"
                 disabled={isDragging}
               />
-              <div className="relative w-[100px]">
+              <div className="relative w-[110px]">
                 <Input
                   type="number"
                   placeholder={set.isBodyweight ? "Extra" : "Weight"}
@@ -413,7 +402,7 @@ const ActiveWorkout = () => {
 
       <Button
         variant="outline"
-        className="w-full"
+        className="w-full mb-8"
         onClick={() => setShowExerciseSelector(true)}
       >
         <Plus className="h-4 w-4 mr-2" />
@@ -421,7 +410,7 @@ const ActiveWorkout = () => {
       </Button>
 
       {exercises.length > 0 && (
-        <div className="fixed bottom-24 left-0 right-0 p-4 bg-background border-t pointer-events-none">
+        <div className="fixed bottom-28 left-0 right-0 p-4 bg-background border-t pointer-events-none">
           <div className="container">
             <Button
               size="lg"

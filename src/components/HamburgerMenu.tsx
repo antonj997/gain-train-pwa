@@ -28,7 +28,7 @@ const HamburgerMenu = () => {
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="w-80">
         <SheetHeader>
           <SheetTitle>Settings</SheetTitle>
         </SheetHeader>
