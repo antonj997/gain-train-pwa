@@ -87,7 +87,7 @@ const Home = () => {
   return (
     <div className="space-y-6 pb-20">
       {/* Welcome Section */}
-      <div>
+      <div className="mt-2">
         <h1 className="text-3xl font-bold">Welcome Back!</h1>
         <p className="text-muted-foreground">All aboard the gain train!</p>
       </div>

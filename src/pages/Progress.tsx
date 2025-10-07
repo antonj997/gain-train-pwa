@@ -22,6 +22,7 @@ interface ExerciseProgress {
   delta7Day: number;
   delta30Day: number;
   uniqueDates: number;
+  maxWeight: number;
   weeklyData: {
     week: string;
     weekStart: Date;
@@ -195,12 +196,16 @@ const Progress = () => {
         const delta7Day = latestE1RM - e1rm7DaysAgo;
         const delta30Day = latestE1RM - e1rm30DaysAgo;
 
+        // Calculate max weight across all sets
+        const maxWeight = Math.max(...workingSets.map(s => s.weight));
+
         progressData.push({
           exerciseName,
           latestE1RM,
           delta7Day,
           delta30Day,
           uniqueDates,
+          maxWeight,
           weeklyData: uniqueDates >= 5 ? weeklyData : [],
           rollingAverage: uniqueDates >= 5 ? rollingAverage : [],
         });
@@ -254,69 +259,66 @@ const Progress = () => {
             return (
               <Card key={exercise.exerciseName}>
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
-                    <div className="flex items-center gap-4 mt-2 text-sm flex-wrap">
-                      <div className="flex items-center gap-1">
-                        <Activity className="h-4 w-4 text-primary" />
-                        <div className="flex flex-col">
-                          <span className="font-semibold">{exercise.latestE1RM.toFixed(1)} kg</span>
-                          <span className="text-xs text-muted-foreground">Current e1RM</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="font-semibold text-success">
-                          {Math.max(...exercise.weeklyData.map(w => w.topE1RM)).toFixed(1)} kg
-                        </span>
-                        <div className="flex flex-col">
-                          <span className="text-xs text-muted-foreground">PR</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col text-xs">
-                        <span className="text-muted-foreground">7d change:</span>
-                        <span
-                          className={
-                            exercise.delta7Day > 0
-                              ? "text-success font-medium"
-                              : exercise.delta7Day < 0
-                              ? "text-destructive font-medium"
-                              : "font-medium"
-                          }
-                        >
-                          {exercise.delta7Day > 0 ? "+" : ""}
-                          {exercise.delta7Day.toFixed(1)} kg
-                        </span>
-                      </div>
-                      <div className="flex flex-col text-xs">
-                        <span className="text-muted-foreground">30d change:</span>
-                        <span
-                          className={
-                            exercise.delta30Day > 0
-                              ? "text-success font-medium"
-                              : exercise.delta30Day < 0
-                              ? "text-destructive font-medium"
-                              : "font-medium"
-                          }
-                        >
-                          {exercise.delta30Day > 0 ? "+" : ""}
-                          {exercise.delta30Day.toFixed(1)} kg
-                        </span>
+                  <CardTitle className="text-lg mb-3">{exercise.exerciseName}</CardTitle>
+                  <div className="grid grid-cols-4 gap-3 text-center">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Current e1RM</div>
+                      <div className="flex items-center justify-center gap-1">
+                        <Activity className="h-3 w-3 text-primary" />
+                        <span className="font-semibold text-sm">{exercise.latestE1RM.toFixed(1)} kg</span>
                       </div>
                     </div>
-                  </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">PR</div>
+                      <span className="font-semibold text-sm text-success">
+                        {exercise.maxWeight > 0 ? `${exercise.maxWeight.toFixed(1)} kg` : "-"}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">7d Change</div>
+                      <span
+                        className={`font-semibold text-sm ${
+                          exercise.delta7Day > 0
+                            ? "text-success"
+                            : exercise.delta7Day < 0
+                            ? "text-destructive"
+                            : ""
+                        }`}
+                      >
+                        {exercise.delta7Day > 0 ? "+" : ""}
+                        {exercise.delta7Day.toFixed(1)} kg
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">30d Change</div>
+                      <span
+                        className={`font-semibold text-sm ${
+                          exercise.delta30Day > 0
+                            ? "text-success"
+                            : exercise.delta30Day < 0
+                            ? "text-destructive"
+                            : ""
+                        }`}
+                      >
+                        {exercise.delta30Day > 0 ? "+" : ""}
+                        {exercise.delta30Day.toFixed(1)} kg
+                      </span>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {exercise.weeklyData.length > 0 ? (
                     <div className="space-y-2">
-                      <span className="text-sm text-muted-foreground">Estimated 1RM Progress</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Estimated 1RM Progress</span>
+                        <span className="text-xs text-muted-foreground">Click to expand</span>
+                      </div>
                       <div 
-                        className="h-16 relative rounded-lg bg-gradient-to-b from-primary/5 to-transparent cursor-pointer hover:from-primary/10 transition-all"
+                        className="h-32 relative rounded-lg border bg-card cursor-pointer hover:bg-accent/5 transition-all p-2"
                         onClick={() => setSelectedExercise(exercise)}
                       >
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={chartData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
+                          <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
                             <defs>
                               <linearGradient id={`gradient-${exercise.exerciseName}`} x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
@@ -327,29 +329,54 @@ const Progress = () => {
                                 <stop offset="100%" stopColor="hsl(220, 15%, 90%)" stopOpacity={0.05} />
                               </linearGradient>
                             </defs>
-                            <XAxis dataKey="week" hide />
-                            <YAxis hide domain={["auto", "auto"]} />
-                            <Bar dataKey="volume" fill="hsl(var(--muted))" opacity={0.3} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
+                            <XAxis 
+                              dataKey="week" 
+                              stroke="hsl(var(--muted-foreground))"
+                              fontSize={10}
+                              tickLine={false}
+                            />
+                            <YAxis 
+                              stroke="hsl(var(--muted-foreground))"
+                              fontSize={10}
+                              domain={["auto", "auto"]}
+                              tickLine={false}
+                              width={30}
+                            />
+                            <Tooltip 
+                              contentStyle={{
+                                backgroundColor: 'hsl(var(--popover))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                              }}
+                              labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+                            />
+                            <Bar dataKey="volume" fill="hsl(var(--muted))" opacity={0.2} name="Volume (x100)" />
                             <Line
                               type="monotone"
                               dataKey="avg"
                               stroke="hsl(var(--muted-foreground))"
-                              strokeWidth={1}
+                              strokeWidth={1.5}
                               strokeDasharray="3 3"
                               dot={false}
+                              name="4-week avg"
                             />
                             <Line
                               type="monotone"
                               dataKey="e1rm"
                               stroke={theme === "light" ? `url(#gradient-light-${exercise.exerciseName})` : `url(#gradient-${exercise.exerciseName})`}
-                              strokeWidth={2}
-                              dot={false}
+                              strokeWidth={2.5}
+                              dot={{ fill: 'hsl(var(--primary))', r: 3 }}
+                              name="Estimated 1RM"
                             />
                             <Scatter
                               data={prData}
                               dataKey="e1rm"
                               fill="hsl(var(--success))"
                               shape="circle"
+                              r={5}
+                              name="PR"
                             />
                           </ComposedChart>
                         </ResponsiveContainer>
