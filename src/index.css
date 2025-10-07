@@ -166,12 +166,25 @@ All colors MUST be HSL.
  * Solution: Use CSS pointer media query to disable hover effects on touch-only devices
  */
 @media (hover: none) and (pointer: coarse) {
-  /* Remove hover background and color changes on touch devices */
+  /* Remove hover background changes on touch devices */
   .hover\:bg-accent:hover {
     background-color: transparent !important;
   }
   
+  /* On touch devices, prevent hover from changing text color */
+  /* For buttons with text-primary class, keep primary color on hover */
+  .text-primary.hover\:text-accent-foreground:hover {
+    color: hsl(var(--primary)) !important;
+  }
+  
+  /* For buttons with text-muted-foreground class, keep muted color on hover */
+  .text-muted-foreground.hover\:text-accent-foreground:hover {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+  
+  /* General fallback: don't change color on hover for elements without specific text color */
   .hover\:text-accent-foreground:hover {
+    /* Inherit to keep whatever color was set before */
     color: inherit !important;
   }
   
