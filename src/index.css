@@ -139,3 +139,37 @@ All colors MUST be HSL.
     @apply bg-muted-foreground;
   }
 }
+
+/* 
+ * Fix for stuck hover effects on mobile/touch devices
+ * On touch devices, tapping a button activates :hover and it stays active
+ * until you tap something else, which is not the desired UX.
+ * 
+ * Solution: Use CSS pointer media query to disable hover effects on touch-only devices
+ */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover background and color changes on touch devices */
+  .hover\:bg-accent:hover {
+    background-color: transparent !important;
+  }
+  
+  .hover\:text-accent-foreground:hover {
+    color: inherit !important;
+  }
+  
+  .hover\:bg-primary\/90:hover {
+    background-color: hsl(var(--primary)) !important;
+  }
+  
+  .hover\:bg-destructive\/90:hover {
+    background-color: hsl(var(--destructive)) !important;
+  }
+  
+  .hover\:bg-secondary\/80:hover {
+    background-color: hsl(var(--secondary)) !important;
+  }
+  
+  .hover\:underline:hover {
+    text-decoration: none !important;
+  }
+}
