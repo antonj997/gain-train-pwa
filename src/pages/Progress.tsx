@@ -262,35 +262,44 @@ const Progress = () => {
                   <CardTitle className="text-lg mb-3">{exercise.exerciseName}</CardTitle>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <div className="text-xs text-muted-foreground mb-1">PR</div>
-                      <span className="font-semibold text-sm text-success">
+                      <div className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                        <TrendingUp className="h-3 w-3" style={{ color: 'hsl(280, 70%, 60%)' }} />
+                        <span>PR</span>
+                      </div>
+                      <span className="font-semibold text-sm" style={{ color: 'hsl(280, 70%, 60%)' }}>
                         {exercise.maxWeight > 0 ? `${exercise.maxWeight.toFixed(1)} kg` : "-"}
                       </span>
                     </div>
                     <div>
-                      <div className="text-xs text-muted-foreground mb-1">e1RM</div>
-                      <div className="flex items-center justify-center gap-1">
-                        <Activity className="h-3 w-3 text-primary" />
-                        <span className="font-semibold text-sm">{exercise.latestE1RM.toFixed(1)} kg</span>
+                      <div className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                        <Activity className="h-3 w-3 text-success" />
+                        <span>e1RM</span>
                       </div>
+                      <span className="font-semibold text-sm text-success">{exercise.latestE1RM.toFixed(1)} kg</span>
                     </div>
                     <div>
-                      <div className="text-xs text-muted-foreground mb-1">30d</div>
-                      <div className="flex items-center justify-center gap-1">
-                        <TrendingUp className="h-3 w-3 text-primary" />
-                        <span
-                          className={`font-semibold text-sm ${
-                            exercise.delta30Day > 0
-                              ? "text-success"
-                              : exercise.delta30Day < 0
-                              ? "text-destructive"
-                              : ""
-                          }`}
-                        >
-                          {exercise.delta30Day > 0 ? "+" : ""}
-                          {exercise.delta30Day.toFixed(1)} kg
-                        </span>
+                      <div className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
+                        <TrendingUp className={`h-3 w-3 ${
+                          exercise.delta30Day > 0
+                            ? "text-success"
+                            : exercise.delta30Day < 0
+                            ? "text-destructive"
+                            : "text-muted-foreground"
+                        }`} />
+                        <span>30d</span>
                       </div>
+                      <span
+                        className={`font-semibold text-sm ${
+                          exercise.delta30Day > 0
+                            ? "text-success"
+                            : exercise.delta30Day < 0
+                            ? "text-destructive"
+                            : ""
+                        }`}
+                      >
+                        {exercise.delta30Day > 0 ? "+" : ""}
+                        {exercise.delta30Day.toFixed(1)} kg
+                      </span>
                     </div>
                   </div>
                 </CardHeader>
@@ -321,9 +330,9 @@ const Progress = () => {
                             <Line
                               type="monotone"
                               dataKey="e1rm"
-                              stroke="hsl(var(--primary))"
+                              stroke="hsl(var(--success))"
                               strokeWidth={2.5}
-                              dot={{ fill: 'hsl(var(--primary))', r: 3 }}
+                              dot={{ fill: 'hsl(var(--success))', r: 3 }}
                               name="e1RM"
                             />
                           </LineChart>
