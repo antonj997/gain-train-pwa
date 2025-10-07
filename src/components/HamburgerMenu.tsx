@@ -26,7 +26,7 @@ const HamburgerMenu = () => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full">
+        <Button variant="ghost" size="icon" className="rounded-full focus-visible:ring-0 focus-visible:ring-offset-0">
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>

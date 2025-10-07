@@ -45,7 +45,7 @@ const Layout = ({ children }: LayoutProps) => {
               <Link key={item.path} to={item.path}>
                 <Button
                   variant="ghost"
-                  className={`flex flex-col items-center gap-1 h-auto py-2 ${
+                  className={`flex flex-col items-center gap-1 h-auto py-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${
                     isActive ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
