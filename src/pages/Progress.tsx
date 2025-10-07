@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Activity, BarChart3 } from "lucide-react";
+import { TrendingUp, Activity, BarChart3, Trophy } from "lucide-react";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Scatter, Bar, ComposedChart, Tooltip, CartesianGrid } from "recharts";
@@ -263,7 +263,7 @@ const Progress = () => {
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <div className="text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1">
-                        <TrendingUp className="h-3 w-3" style={{ color: 'hsl(280, 70%, 60%)' }} />
+                        <Trophy className="h-3 w-3" style={{ color: 'hsl(280, 70%, 60%)' }} />
                         <span>PR</span>
                       </div>
                       <span className="font-semibold text-sm" style={{ color: 'hsl(280, 70%, 60%)' }}>
@@ -322,8 +322,8 @@ const Progress = () => {
                           <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                             <defs>
                               <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
-                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                                <stop offset="0%" stopColor="hsl(var(--background))" stopOpacity={0.3} />
+                                <stop offset="100%" stopColor="hsl(220, 15%, 55%)" stopOpacity={0.15} />
                               </linearGradient>
                             </defs>
                             <rect width="100%" height="100%" fill="url(#chartGradient)" rx="8" />

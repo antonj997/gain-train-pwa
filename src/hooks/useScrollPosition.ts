@@ -9,11 +9,18 @@ export const useScrollPosition = () => {
   const scrollRef = useRef<number>(0);
 
   useEffect(() => {
-    // Restore scroll position when component mounts
-    const savedPosition = scrollPositions.get(location.pathname) || 0;
-    window.scrollTo(0, savedPosition);
+    // Prevent browser's automatic scroll restoration
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
 
-    // Save scroll position when component unmounts or route changes
+    // Small delay to ensure DOM is ready before restoring scroll
+    const timer = setTimeout(() => {
+      const savedPosition = scrollPositions.get(location.pathname) || 0;
+      window.scrollTo(0, savedPosition);
+    }, 0);
+
+    // Save scroll position when scrolling
     const handleScroll = () => {
       scrollRef.current = window.scrollY;
     };
@@ -21,6 +28,7 @@ export const useScrollPosition = () => {
     window.addEventListener("scroll", handleScroll);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener("scroll", handleScroll);
       scrollPositions.set(location.pathname, scrollRef.current);
     };

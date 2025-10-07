@@ -100,11 +100,11 @@ const SortableExerciseCard = ({
                 placeholder="Reps"
                 value={set.reps || ""}
                 onChange={(e) => onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)}
-                className="w-[90px]"
+                className="w-[70px]"
                 min="0"
                 disabled={isDragging}
               />
-              <div className="relative w-[110px]">
+              <div className="relative w-[130px]">
                 <Input
                   type="number"
                   placeholder={set.isBodyweight ? "Extra" : "Weight"}
