@@ -80,10 +80,37 @@ All colors MUST be HSL.
   * {
     @apply border-border;
     -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
   }
 
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Additional tap highlight prevention for buttons and interactive elements */
+  button,
+  a,
+  [role="button"],
+  [role="link"],
+  [role="menuitem"],
+  [role="tab"] {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    tap-highlight-color: transparent;
+    outline: none;
+  }
+  
+  /* Ensure focus styles are still visible for accessibility when using keyboard */
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 
   /* Scrollbar styling for dark mode */
