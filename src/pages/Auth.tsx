@@ -20,11 +20,19 @@ const Auth = () => {
 
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
-    if (savedEmail) {
+    const savedPassword = localStorage.getItem("rememberedPassword");
+    if (savedEmail && savedPassword) {
       setEmail(savedEmail);
+      setPassword(savedPassword);
       setRememberMe(true);
+      // Auto-login
+      signIn(savedEmail, savedPassword).then(({ error }) => {
+        if (!error) {
+          navigate("/");
+        }
+      });
     }
-  }, []);
+  }, [signIn, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,10 +46,12 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        if (rememberMe) {
+        if (isLogin && rememberMe) {
           localStorage.setItem("rememberedEmail", email);
+          localStorage.setItem("rememberedPassword", password);
         } else {
           localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberedPassword");
         }
         toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
         navigate("/");

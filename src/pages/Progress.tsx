@@ -260,14 +260,7 @@ const Progress = () => {
               <Card key={exercise.exerciseName}>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg mb-3">{exercise.exerciseName}</CardTitle>
-                  <div className="grid grid-cols-4 gap-3 text-center">
-                    <div>
-                      <div className="text-xs text-muted-foreground mb-1">Current e1RM</div>
-                      <div className="flex items-center justify-center gap-1">
-                        <Activity className="h-3 w-3 text-primary" />
-                        <span className="font-semibold text-sm">{exercise.latestE1RM.toFixed(1)} kg</span>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
                       <div className="text-xs text-muted-foreground mb-1">PR</div>
                       <span className="font-semibold text-sm text-success">
@@ -275,110 +268,58 @@ const Progress = () => {
                       </span>
                     </div>
                     <div>
-                      <div className="text-xs text-muted-foreground mb-1">7d Change</div>
-                      <span
-                        className={`font-semibold text-sm ${
-                          exercise.delta7Day > 0
-                            ? "text-success"
-                            : exercise.delta7Day < 0
-                            ? "text-destructive"
-                            : ""
-                        }`}
-                      >
-                        {exercise.delta7Day > 0 ? "+" : ""}
-                        {exercise.delta7Day.toFixed(1)} kg
-                      </span>
+                      <div className="text-xs text-muted-foreground mb-1">e1RM</div>
+                      <div className="flex items-center justify-center gap-1">
+                        <Activity className="h-3 w-3 text-primary" />
+                        <span className="font-semibold text-sm">{exercise.latestE1RM.toFixed(1)} kg</span>
+                      </div>
                     </div>
                     <div>
-                      <div className="text-xs text-muted-foreground mb-1">30d Change</div>
-                      <span
-                        className={`font-semibold text-sm ${
-                          exercise.delta30Day > 0
-                            ? "text-success"
-                            : exercise.delta30Day < 0
-                            ? "text-destructive"
-                            : ""
-                        }`}
-                      >
-                        {exercise.delta30Day > 0 ? "+" : ""}
-                        {exercise.delta30Day.toFixed(1)} kg
-                      </span>
+                      <div className="text-xs text-muted-foreground mb-1">30d</div>
+                      <div className="flex items-center justify-center gap-1">
+                        <TrendingUp className="h-3 w-3 text-primary" />
+                        <span
+                          className={`font-semibold text-sm ${
+                            exercise.delta30Day > 0
+                              ? "text-success"
+                              : exercise.delta30Day < 0
+                              ? "text-destructive"
+                              : ""
+                          }`}
+                        >
+                          {exercise.delta30Day > 0 ? "+" : ""}
+                          {exercise.delta30Day.toFixed(1)} kg
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {exercise.weeklyData.length > 0 ? (
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-muted-foreground">Estimated 1RM Progress</span>
+                      <div className="flex items-center justify-end">
                         <span className="text-xs text-muted-foreground">Click to expand</span>
                       </div>
                       <div 
-                        className="h-32 relative rounded-lg border bg-card cursor-pointer hover:bg-accent/5 transition-all p-2"
+                        className="h-32 relative rounded-lg cursor-pointer hover:opacity-90 transition-all"
                         onClick={() => setSelectedExercise(exercise)}
+                        style={{
+                          background: theme === "light" 
+                            ? "linear-gradient(135deg, hsl(220, 15%, 95%) 0%, hsl(220, 15%, 98%) 100%)"
+                            : "linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0.05) 100%)"
+                        }}
                       >
                         <ResponsiveContainer width="100%" height="100%">
-                          <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 20, left: 0 }}>
-                            <defs>
-                              <linearGradient id={`gradient-${exercise.exerciseName}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.8} />
-                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.1} />
-                              </linearGradient>
-                              <linearGradient id={`gradient-light-${exercise.exerciseName}`} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="hsl(220, 15%, 60%)" stopOpacity={0.5} />
-                                <stop offset="100%" stopColor="hsl(220, 15%, 90%)" stopOpacity={0.05} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
-                            <XAxis 
-                              dataKey="week" 
-                              stroke="hsl(var(--muted-foreground))"
-                              fontSize={10}
-                              tickLine={false}
-                            />
-                            <YAxis 
-                              stroke="hsl(var(--muted-foreground))"
-                              fontSize={10}
-                              domain={["auto", "auto"]}
-                              tickLine={false}
-                              width={30}
-                            />
-                            <Tooltip 
-                              contentStyle={{
-                                backgroundColor: 'hsl(var(--popover))',
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                              }}
-                              labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
-                            />
-                            <Bar dataKey="volume" fill="hsl(var(--muted))" opacity={0.2} name="Volume (x100)" />
-                            <Line
-                              type="monotone"
-                              dataKey="avg"
-                              stroke="hsl(var(--muted-foreground))"
-                              strokeWidth={1.5}
-                              strokeDasharray="3 3"
-                              dot={false}
-                              name="4-week avg"
-                            />
+                          <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                             <Line
                               type="monotone"
                               dataKey="e1rm"
-                              stroke={theme === "light" ? `url(#gradient-light-${exercise.exerciseName})` : `url(#gradient-${exercise.exerciseName})`}
+                              stroke="hsl(var(--primary))"
                               strokeWidth={2.5}
                               dot={{ fill: 'hsl(var(--primary))', r: 3 }}
-                              name="Estimated 1RM"
+                              name="e1RM"
                             />
-                            <Scatter
-                              data={prData}
-                              dataKey="e1rm"
-                              fill="hsl(var(--success))"
-                              shape="circle"
-                              r={5}
-                              name="PR"
-                            />
-                          </ComposedChart>
+                          </LineChart>
                         </ResponsiveContainer>
                       </div>
                     </div>
@@ -408,22 +349,24 @@ const Progress = () => {
               <DialogTitle>{selectedExercise.exerciseName}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              <div className="text-sm text-muted-foreground mb-4">
+                <strong>e1RM</strong> (estimated 1-rep max) is calculated using the Epley formula: weight × (1 + reps/30). 
+                This metric helps track your strength progress over time.
+              </div>
               <div className="flex items-center justify-around text-center">
                 <div>
-                  <div className="text-2xl font-bold">{selectedExercise.latestE1RM.toFixed(1)} kg</div>
-                  <div className="text-xs text-muted-foreground">Current e1RM</div>
+                  <div className="text-2xl font-bold text-success">{selectedExercise.maxWeight > 0 ? `${selectedExercise.maxWeight.toFixed(1)} kg` : "-"}</div>
+                  <div className="text-xs text-muted-foreground">PR</div>
                 </div>
                 <div>
-                  <div className={`text-2xl font-bold ${selectedExercise.delta7Day > 0 ? 'text-success' : selectedExercise.delta7Day < 0 ? 'text-destructive' : ''}`}>
-                    {selectedExercise.delta7Day > 0 ? '+' : ''}{selectedExercise.delta7Day.toFixed(1)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">7-day change</div>
+                  <div className="text-2xl font-bold">{selectedExercise.latestE1RM.toFixed(1)} kg</div>
+                  <div className="text-xs text-muted-foreground">e1RM</div>
                 </div>
                 <div>
                   <div className={`text-2xl font-bold ${selectedExercise.delta30Day > 0 ? 'text-success' : selectedExercise.delta30Day < 0 ? 'text-destructive' : ''}`}>
                     {selectedExercise.delta30Day > 0 ? '+' : ''}{selectedExercise.delta30Day.toFixed(1)}
                   </div>
-                  <div className="text-xs text-muted-foreground">30-day change</div>
+                  <div className="text-xs text-muted-foreground">30-day</div>
                 </div>
               </div>
               
