@@ -17,6 +17,8 @@ const HamburgerMenu = () => {
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
+    localStorage.removeItem("rememberedEmail");
+    localStorage.removeItem("rememberedPassword");
     await signOut();
     navigate("/auth");
   };

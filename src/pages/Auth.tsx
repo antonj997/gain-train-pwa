@@ -15,6 +15,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [autoLoggingIn, setAutoLoggingIn] = useState(false);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -22,13 +23,16 @@ const Auth = () => {
     const savedEmail = localStorage.getItem("rememberedEmail");
     const savedPassword = localStorage.getItem("rememberedPassword");
     if (savedEmail && savedPassword) {
-      setEmail(savedEmail);
-      setPassword(savedPassword);
-      setRememberMe(true);
+      setAutoLoggingIn(true);
       // Auto-login
       signIn(savedEmail, savedPassword).then(({ error }) => {
         if (!error) {
           navigate("/");
+        } else {
+          setAutoLoggingIn(false);
+          setEmail(savedEmail);
+          setPassword(savedPassword);
+          setRememberMe(true);
         }
       });
     }
@@ -62,6 +66,10 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  if (autoLoggingIn) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-accent/5 to-background p-4">

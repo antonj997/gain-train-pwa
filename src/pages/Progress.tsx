@@ -311,6 +311,13 @@ const Progress = () => {
                       >
                         <ResponsiveContainer width="100%" height="100%">
                           <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
+                            <defs>
+                              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
+                                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                              </linearGradient>
+                            </defs>
+                            <rect width="100%" height="100%" fill="url(#chartGradient)" rx="8" />
                             <Line
                               type="monotone"
                               dataKey="e1rm"
