@@ -454,7 +454,6 @@ const ActiveWorkout = () => {
                   id="save-template"
                   checked={saveAsTemplate}
                   onCheckedChange={(checked) => setSaveAsTemplate(checked as boolean)}
-                  className="rounded-sm"
                 />
                 <Label
                   htmlFor="save-template"
