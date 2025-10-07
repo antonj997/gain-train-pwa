@@ -83,7 +83,7 @@ const SortableExerciseCard = ({
       <div 
         {...attributes} 
         {...listeners} 
-        className="absolute right-3 top-3 cursor-grab active:cursor-grabbing p-2 opacity-50 hover:opacity-100 transition-opacity touch-none"
+        className="absolute right-3 top-3 cursor-grab active:cursor-grabbing p-2 opacity-50 md:hover:opacity-100 transition-opacity touch-none"
       >
         <GripVertical className="h-5 w-5 text-muted-foreground" />
       </div>
@@ -121,7 +121,7 @@ const SortableExerciseCard = ({
                   className={`absolute right-0.5 top-1/2 -translate-y-1/2 h-8 w-9 text-xs font-medium rounded transition-colors ${
                     set.isBodyweight 
                       ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground md:hover:text-foreground"
                   } disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   BW
@@ -130,14 +130,14 @@ const SortableExerciseCard = ({
               <button
                 onClick={() => onDuplicateSet(setIndex)}
                 disabled={isDragging}
-                className="p-2 hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 md:hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Copy className="h-4 w-4" />
               </button>
               <button
                 onClick={() => onRemoveSet(setIndex)}
                 disabled={isDragging}
-                className="p-2 hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 md:hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span className="text-xl font-light">−</span>
               </button>
@@ -414,7 +414,7 @@ const ActiveWorkout = () => {
           <div className="container">
             <Button
               size="lg"
-              className="w-full bg-accent hover:bg-accent/90 pointer-events-auto"
+              className="w-full bg-accent md:hover:bg-accent/90 pointer-events-auto"
               onClick={initiateComplete}
             >
               <Check className="mr-2 h-5 w-5" />

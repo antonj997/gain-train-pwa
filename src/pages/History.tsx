@@ -299,7 +299,7 @@ const History = () => {
               {getWeekSessions().map((session) => (
                 <Card 
                   key={session.id} 
-                  className="hover:bg-accent/5 transition-colors cursor-pointer"
+                  className="md:hover:bg-accent/5 transition-colors cursor-pointer"
                   onClick={() => loadWorkoutDetails(session.id)}
                 >
                   <CardHeader className="pb-3">
@@ -335,7 +335,7 @@ const History = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => selectedWorkout && handleDeleteWorkout(selectedWorkout.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    className="text-destructive md:hover:text-destructive md:hover:bg-destructive/10"
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>

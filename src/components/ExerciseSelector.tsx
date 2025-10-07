@@ -94,7 +94,7 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
                   </div>
                 )}
                 <button
-                  className="w-full px-4 py-3 text-left hover:bg-accent/5 transition-colors"
+                  className="w-full px-4 py-3 text-left md:hover:bg-accent/5 transition-colors"
                   onClick={() => handleSelect(exercise.name)}
                 >
                   <span>{exercise.name}</span>

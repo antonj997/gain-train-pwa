@@ -49,7 +49,7 @@ const HamburgerMenu = () => {
           </Button>
           <Button
             variant="outline"
-            className="w-full justify-start text-destructive hover:text-destructive"
+            className="w-full justify-start text-destructive md:hover:text-destructive"
             onClick={handleSignOut}
           >
             <LogOut className="h-5 w-5 mr-2" />

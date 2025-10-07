@@ -310,7 +310,7 @@ const Progress = () => {
                         <span className="text-xs text-muted-foreground">Click to expand</span>
                       </div>
                       <div 
-                        className="h-32 relative rounded-lg cursor-pointer hover:opacity-90 transition-all"
+                        className="h-32 relative rounded-lg cursor-pointer md:hover:opacity-90 transition-all"
                         onClick={() => setSelectedExercise(exercise)}
                         style={{
                           background: theme === "light" 

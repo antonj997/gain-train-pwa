@@ -98,7 +98,7 @@ const Home = () => {
         className="w-full relative p-[2px] bg-gradient-to-br from-[hsl(270,83%,58%)] to-[hsl(225,83%,58%)] rounded-lg h-auto"
         onClick={() => navigate("/workout/new")}
       >
-        <span className="flex items-center justify-center w-full bg-background text-foreground hover:bg-background/90 rounded-md px-6 py-3 transition-colors">
+        <span className="flex items-center justify-center w-full bg-background text-foreground md:hover:bg-background/90 rounded-md px-6 py-3 transition-colors">
           <Plus className="mr-2 h-5 w-5" />
           Start New Workout
         </span>
@@ -125,7 +125,7 @@ const Home = () => {
             {templates.map((template) => (
               <Card
                 key={template.id}
-                className="hover:bg-accent/5 transition-colors"
+                className="md:hover:bg-accent/5 transition-colors"
               >
                 <CardHeader className="pb-3 pt-3">
                   <div className="flex items-center gap-3">
