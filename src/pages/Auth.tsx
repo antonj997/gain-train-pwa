@@ -112,7 +112,6 @@ const Auth = () => {
                   id="remember-me"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                  className="rounded-sm"
                 />
                 <Label
                   htmlFor="remember-me"
