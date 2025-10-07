@@ -172,4 +172,13 @@ All colors MUST be HSL.
   .hover\:underline:hover {
     text-decoration: none !important;
   }
+  
+  /* Remove active state effects on touch devices to prevent white icon flash */
+  .active\:bg-sidebar-accent:active {
+    background-color: transparent !important;
+  }
+  
+  .active\:text-sidebar-accent-foreground:active {
+    color: inherit !important;
+  }
 }
