@@ -11,6 +11,7 @@ import Auth from "./pages/Auth";
 import ActiveWorkout from "./pages/ActiveWorkout";
 import History from "./pages/History";
 import Progress from "./pages/Progress";
+import MyExercises from "./pages/MyExercises";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 import { StatusBar, Style } from "@capacitor/status-bar";
@@ -59,6 +60,7 @@ const App = () => (
               <Route path="/workout/:templateId" element={<Layout><ActiveWorkout /></Layout>} />
               <Route path="/history" element={<Layout><History /></Layout>} />
               <Route path="/progress" element={<Layout><Progress /></Layout>} />
+              <Route path="/my-exercises" element={<Layout><MyExercises /></Layout>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
