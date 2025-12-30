@@ -75,10 +75,12 @@ const Progress = () => {
       }
 
       const sessionIds = sessions.map((s) => s.id);
+      // Only fetch working sets for progression tracking (exclude warmup and winddown)
       const { data: sets } = await supabase
         .from("workout_sets")
-        .select("exercise_name, weight, reps, session_id")
+        .select("exercise_name, weight, reps, session_id, section")
         .in("session_id", sessionIds)
+        .eq("section", "working")
         .order("session_id", { ascending: false });
 
       if (!sets) {

@@ -23,6 +23,7 @@ interface WorkoutSet {
   set_number: number;
   reps: number;
   weight: number | null;
+  section: string;
 }
 
 interface WorkoutDetail {
@@ -30,6 +31,12 @@ interface WorkoutDetail {
   session: WorkoutSession;
   sets: WorkoutSet[];
 }
+
+const SECTION_LABELS: Record<string, string> = {
+  warmup: "Warm-up",
+  working: "Working Sets",
+  winddown: "Wind-down",
+};
 
 const History = () => {
   const { user } = useAuth();
@@ -189,15 +196,51 @@ const History = () => {
     }
   };
 
-  const groupSetsByExercise = (sets: WorkoutSet[]) => {
-    const grouped: { [key: string]: WorkoutSet[] } = {};
+  const groupSetsBySection = (sets: WorkoutSet[]) => {
+    const sections: Record<string, Record<string, WorkoutSet[]>> = {
+      warmup: {},
+      working: {},
+      winddown: {},
+    };
+
     sets.forEach(set => {
-      if (!grouped[set.exercise_name]) {
-        grouped[set.exercise_name] = [];
+      const section = set.section || "working";
+      if (!sections[section]) {
+        sections[section] = {};
       }
-      grouped[set.exercise_name].push(set);
+      if (!sections[section][set.exercise_name]) {
+        sections[section][set.exercise_name] = [];
+      }
+      sections[section][set.exercise_name].push(set);
     });
-    return grouped;
+
+    return sections;
+  };
+
+  const renderSectionSets = (sectionSets: Record<string, WorkoutSet[]>, sectionKey: string) => {
+    const exerciseNames = Object.keys(sectionSets);
+    if (exerciseNames.length === 0) return null;
+
+    return (
+      <div key={sectionKey} className="space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+          {SECTION_LABELS[sectionKey] || sectionKey}
+        </h3>
+        {exerciseNames.map((exercise) => (
+          <div key={exercise} className="space-y-2">
+            <h4 className="font-medium">{exercise}</h4>
+            <div className="text-sm space-y-1">
+              {sectionSets[exercise].map((set) => (
+                <div key={set.set_number} className="flex justify-between text-muted-foreground">
+                  <span>Set {set.set_number}</span>
+                  <span>{set.reps} reps × {set.weight || 0} kg</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -327,7 +370,7 @@ const History = () => {
 
           {/* Workout Details Dialog */}
           <Dialog open={!!selectedWorkout} onOpenChange={() => setSelectedWorkout(null)}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <div className="flex items-center justify-between pr-6">
                   <DialogTitle>{selectedWorkout?.session.name}</DialogTitle>
@@ -341,26 +384,23 @@ const History = () => {
                   </Button>
                 </div>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {selectedWorkout && (
                   <>
                     <div className="text-sm text-muted-foreground">
                       {format(new Date(selectedWorkout.session.date), "MMMM d, yyyy")}
                       {selectedWorkout.session.duration && ` • ${selectedWorkout.session.duration} min`}
                     </div>
-                    {Object.entries(groupSetsByExercise(selectedWorkout.sets)).map(([exercise, sets]) => (
-                      <div key={exercise} className="space-y-2">
-                        <h4 className="font-medium">{exercise}</h4>
-                        <div className="text-sm space-y-1">
-                          {sets.map((set) => (
-                            <div key={set.set_number} className="flex justify-between text-muted-foreground">
-                              <span>Set {set.set_number}</span>
-                              <span>{set.reps} reps × {set.weight || 0} kg</span>
-                            </div>
-                          ))}
+                    {(() => {
+                      const sectionedSets = groupSetsBySection(selectedWorkout.sets);
+                      return (
+                        <div className="space-y-6">
+                          {renderSectionSets(sectionedSets.warmup, "warmup")}
+                          {renderSectionSets(sectionedSets.working, "working")}
+                          {renderSectionSets(sectionedSets.winddown, "winddown")}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })()}
                   </>
                 )}
               </div>
