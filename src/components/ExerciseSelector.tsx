@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,17 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search, Plus, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 interface Exercise {
   id: string;
@@ -23,15 +33,34 @@ interface ExerciseSelectorProps {
   onSelect: (exerciseName: string) => void;
 }
 
+const FOCUS_AREAS = [
+  "Chest",
+  "Back",
+  "Shoulders",
+  "Arms",
+  "Legs",
+  "Core",
+  "Cardio",
+  "Other",
+];
+
 const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) => {
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    note: "",
+  });
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       loadExercises();
+      setShowCreateForm(false);
     }
   }, [open]);
 
@@ -42,7 +71,6 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
         )
       : exercises;
     
-    // Sort by category for grouping
     const sorted = [...filtered].sort((a, b) => {
       const catA = a.category || "Other";
       const catB = b.category || "Other";
@@ -67,60 +95,161 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
     setSearchTerm("");
   };
 
-  const handleCreateExercise = () => {
-    onClose();
-    navigate("/my-exercises");
+  const handleCreateExercise = async () => {
+    if (!formData.name.trim()) {
+      toast.error("Exercise name is required");
+      return;
+    }
+    if (!formData.category) {
+      toast.error("Focus area is required");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("exercises").insert({
+        name: formData.name.trim(),
+        category: formData.category,
+        note: formData.note.trim() || null,
+        user_id: user?.id,
+      });
+
+      if (error) throw error;
+      
+      toast.success("Exercise created");
+      setFormData({ name: "", category: "", note: "" });
+      setShowCreateForm(false);
+      loadExercises();
+    } catch (error: any) {
+      toast.error("Failed to create exercise");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Select Exercise</DialogTitle>
-        </DialogHeader>
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search exercises..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-          onClick={handleCreateExercise}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create Custom Exercise
-        </Button>
-        <div className="flex-1 overflow-y-auto">
-          {filteredExercises.map((exercise, idx) => {
-            const prevCategory = idx > 0 ? filteredExercises[idx - 1].category : null;
-            const currentCategory = exercise.category || "Other";
-            const showCategoryHeader = currentCategory !== prevCategory;
-            
-            return (
-              <div key={exercise.id}>
-                {showCategoryHeader && (
-                  <div className="px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    {currentCategory}
-                  </div>
-                )}
-                <button
-                  className="w-full px-4 py-3 text-left md:hover:bg-accent/5 transition-colors"
-                  onClick={() => handleSelect(exercise.name)}
+          <DialogTitle>
+            {showCreateForm ? (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => setShowCreateForm(false)}
                 >
-                  <span>{exercise.name}</span>
-                </button>
-                {idx < filteredExercises.length - 1 && (
-                  <div className="border-b border-border" />
-                )}
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+                Create Exercise
               </div>
-            );
-          })}
-        </div>
+            ) : (
+              "Select Exercise"
+            )}
+          </DialogTitle>
+        </DialogHeader>
+
+        {showCreateForm ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name *</Label>
+              <Input
+                id="name"
+                placeholder="Exercise name"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Focus Area *</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, category: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select focus area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FOCUS_AREAS.map((area) => (
+                    <SelectItem key={area} value={area}>
+                      {area}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="note">Note</Label>
+              <Textarea
+                id="note"
+                placeholder="Optional notes about this exercise..."
+                value={formData.note}
+                onChange={(e) =>
+                  setFormData({ ...formData, note: e.target.value })
+                }
+                rows={3}
+              />
+            </div>
+            <Button
+              className="w-full"
+              onClick={handleCreateExercise}
+              disabled={saving}
+            >
+              {saving ? "Creating..." : "Create Exercise"}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search exercises..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => setShowCreateForm(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Custom Exercise
+            </Button>
+            <div className="flex-1 overflow-y-auto">
+              {filteredExercises.map((exercise, idx) => {
+                const prevCategory = idx > 0 ? filteredExercises[idx - 1].category : null;
+                const currentCategory = exercise.category || "Other";
+                const showCategoryHeader = currentCategory !== prevCategory;
+                
+                return (
+                  <div key={exercise.id}>
+                    {showCategoryHeader && (
+                      <div className="px-2 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        {currentCategory}
+                      </div>
+                    )}
+                    <button
+                      className="w-full px-4 py-3 text-left md:hover:bg-accent/5 transition-colors"
+                      onClick={() => handleSelect(exercise.name)}
+                    >
+                      <span>{exercise.name}</span>
+                    </button>
+                    {idx < filteredExercises.length - 1 && (
+                      <div className="border-b border-border" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
