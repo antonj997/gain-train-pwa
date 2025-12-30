@@ -1,4 +1,4 @@
-import { Menu, Moon, Sun, LogOut } from "lucide-react";
+import { Menu, Moon, Sun, LogOut, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -6,6 +6,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +36,16 @@ const HamburgerMenu = () => {
           <SheetTitle>Settings</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-4 mt-6">
+          <SheetClose asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => navigate("/my-exercises")}
+            >
+              <Dumbbell className="h-5 w-5 mr-2" />
+              My Exercises
+            </Button>
+          </SheetClose>
           <Button
             variant="outline"
             className="w-full justify-start"

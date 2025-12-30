@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -8,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 
 interface Exercise {
   id: string;
@@ -23,6 +24,7 @@ interface ExerciseSelectorProps {
 }
 
 const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) => {
+  const navigate = useNavigate();
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,6 +67,11 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
     setSearchTerm("");
   };
 
+  const handleCreateExercise = () => {
+    onClose();
+    navigate("/my-exercises");
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[80vh] flex flex-col">
@@ -80,6 +87,14 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
             className="pl-9"
           />
         </div>
+        <Button
+          variant="outline"
+          className="w-full justify-start"
+          onClick={handleCreateExercise}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Create Custom Exercise
+        </Button>
         <div className="flex-1 overflow-y-auto">
           {filteredExercises.map((exercise, idx) => {
             const prevCategory = idx > 0 ? filteredExercises[idx - 1].category : null;
