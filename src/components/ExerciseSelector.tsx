@@ -234,6 +234,14 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
                 className="pl-9"
               />
             </div>
+            <Button
+              variant="outline"
+              className="w-full justify-start"
+              onClick={() => setShowCreateForm(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Custom Exercise
+            </Button>
             <div className="flex-shrink-0 relative">
               <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
               <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
@@ -253,14 +261,6 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
                 </div>
               </div>
             </div>
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setShowCreateForm(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Custom Exercise
-            </Button>
             <div className="flex-1 overflow-y-auto">
               {filteredExercises.map((exercise, idx) => {
                 const prevCategory = idx > 0 ? filteredExercises[idx - 1].category : null;
