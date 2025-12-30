@@ -49,6 +49,7 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -61,15 +62,26 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
     if (open) {
       loadExercises();
       setShowCreateForm(false);
+      setActiveFilters([]);
     }
   }, [open]);
 
   useEffect(() => {
-    const filtered = searchTerm
-      ? exercises.filter((ex) =>
-          ex.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : exercises;
+    let filtered = exercises;
+    
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter((ex) =>
+        ex.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Filter by active focus areas
+    if (activeFilters.length > 0) {
+      filtered = filtered.filter((ex) =>
+        activeFilters.includes(ex.category || "Other")
+      );
+    }
     
     const sorted = [...filtered].sort((a, b) => {
       const catA = a.category || "Other";
@@ -79,7 +91,15 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
     });
     
     setFilteredExercises(sorted);
-  }, [searchTerm, exercises]);
+  }, [searchTerm, exercises, activeFilters]);
+
+  const toggleFilter = (area: string) => {
+    setActiveFilters((prev) =>
+      prev.includes(area)
+        ? prev.filter((f) => f !== area)
+        : [...prev, area]
+    );
+  };
 
   const loadExercises = async () => {
     const { data } = await supabase
@@ -213,6 +233,21 @@ const ExerciseSelector = ({ open, onClose, onSelect }: ExerciseSelectorProps) =>
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
               />
+            </div>
+            <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
+              <div className="flex gap-2 pb-2 min-w-max">
+                {FOCUS_AREAS.map((area) => (
+                  <Button
+                    key={area}
+                    variant={activeFilters.includes(area) ? "default" : "outline"}
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => toggleFilter(area)}
+                  >
+                    {area}
+                  </Button>
+                ))}
+              </div>
             </div>
             <Button
               variant="outline"
