@@ -117,6 +117,7 @@ export type Database = {
           exercise_name: string
           id: string
           reps: number
+          section: string
           session_id: string
           set_number: number
           weight: number | null
@@ -126,6 +127,7 @@ export type Database = {
           exercise_name: string
           id?: string
           reps: number
+          section?: string
           session_id: string
           set_number: number
           weight?: number | null
@@ -135,6 +137,7 @@ export type Database = {
           exercise_name?: string
           id?: string
           reps?: number
+          section?: string
           session_id?: string
           set_number?: number
           weight?: number | null

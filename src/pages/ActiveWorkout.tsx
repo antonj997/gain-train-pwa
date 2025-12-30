@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Check, X, Copy, Trash2, GripVertical, Loader2 } from "lucide-react";
+import { Plus, Check, X, Copy, GripVertical, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -35,11 +35,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
+type WorkoutSection = "warmup" | "working" | "winddown";
 
 interface ExerciseSet {
   id: string;
   exerciseName: string;
   sets: { reps: number; weight: number; isBodyweight: boolean }[];
+  section: WorkoutSection;
 }
 
 interface SortableExerciseCardProps {
@@ -159,6 +167,12 @@ const SortableExerciseCard = ({
   );
 };
 
+const SECTION_CONFIG: Record<WorkoutSection, { title: string; description: string }> = {
+  warmup: { title: "Warm-up", description: "Light exercises to prepare your body" },
+  working: { title: "Working Sets", description: "Your main training exercises" },
+  winddown: { title: "Wind-down", description: "Cool-down and stretching" },
+};
+
 const ActiveWorkout = () => {
   const { templateId } = useParams();
   const { user } = useAuth();
@@ -166,11 +180,17 @@ const ActiveWorkout = () => {
   const [workoutName, setWorkoutName] = useState("");
   const [exercises, setExercises] = useState<ExerciseSet[]>([]);
   const [showExerciseSelector, setShowExerciseSelector] = useState(false);
+  const [activeSection, setActiveSection] = useState<WorkoutSection>("working");
   const [startTime] = useState(Date.now());
   const [showCompleteDialog, setShowCompleteDialog] = useState(false);
   const [completionName, setCompletionName] = useState("");
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<WorkoutSection, boolean>>({
+    warmup: true,
+    working: true,
+    winddown: true,
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -216,12 +236,17 @@ const ActiveWorkout = () => {
           id: crypto.randomUUID(),
           exerciseName: ex.exercise_name,
           sets: [{ reps: 0, weight: 0, isBodyweight: false }],
+          section: "working" as WorkoutSection,
         }))
       );
     } catch (error: any) {
       toast.error("Failed to load workout template");
       navigate("/");
     }
+  };
+
+  const getExercisesBySection = (section: WorkoutSection) => {
+    return exercises.filter((ex) => ex.section === section);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -239,9 +264,19 @@ const ActiveWorkout = () => {
   const addExercise = (exerciseName: string) => {
     setExercises([
       ...exercises,
-      { id: crypto.randomUUID(), exerciseName, sets: [{ reps: 0, weight: 0, isBodyweight: false }] },
+      { 
+        id: crypto.randomUUID(), 
+        exerciseName, 
+        sets: [{ reps: 0, weight: 0, isBodyweight: false }],
+        section: activeSection,
+      },
     ]);
     setShowExerciseSelector(false);
+  };
+
+  const openExerciseSelector = (section: WorkoutSection) => {
+    setActiveSection(section);
+    setShowExerciseSelector(true);
   };
 
   const addSet = (exerciseIndex: number) => {
@@ -289,6 +324,13 @@ const ActiveWorkout = () => {
     setExercises(exercises.filter((_, i) => i !== exerciseIndex));
   };
 
+  const toggleSection = (section: WorkoutSection) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
+  };
+
   const initiateComplete = () => {
     if (exercises.length === 0) {
       toast.error("Add at least one exercise to complete the workout");
@@ -327,6 +369,7 @@ const ActiveWorkout = () => {
             set_number: i + 1,
             reps: exercise.sets[i].reps,
             weight: exercise.sets[i].weight,
+            section: exercise.section,
           });
         }
       }
@@ -343,10 +386,12 @@ const ActiveWorkout = () => {
 
         if (templateError) throw templateError;
 
-        for (let i = 0; i < exercises.length; i++) {
+        // Only save working sets as template exercises
+        const workingExercises = exercises.filter((ex) => ex.section === "working");
+        for (let i = 0; i < workingExercises.length; i++) {
           await supabase.from("template_exercises").insert({
             template_id: newTemplate.id,
-            exercise_name: exercises[i].exerciseName,
+            exercise_name: workingExercises[i].exerciseName,
             order_index: i,
           });
         }
@@ -362,8 +407,82 @@ const ActiveWorkout = () => {
     }
   };
 
+  const renderSection = (section: WorkoutSection) => {
+    const sectionExercises = getExercisesBySection(section);
+    const config = SECTION_CONFIG[section];
+    const isExpanded = expandedSections[section];
+
+    return (
+      <Collapsible key={section} open={isExpanded} onOpenChange={() => toggleSection(section)}>
+        <div className="space-y-3">
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center justify-between w-full text-left py-2 group">
+              <div>
+                <h2 className="text-lg font-semibold">{config.title}</h2>
+                {sectionExercises.length === 0 && (
+                  <p className="text-xs text-muted-foreground">{config.description}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {sectionExercises.length > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    {sectionExercises.length} exercise{sectionExercises.length !== 1 ? "s" : ""}
+                  </span>
+                )}
+                {isExpanded ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </button>
+          </CollapsibleTrigger>
+          
+          <CollapsibleContent className="space-y-3">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={sectionExercises.map((ex) => ex.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {sectionExercises.map((exercise) => {
+                  const globalIndex = exercises.findIndex((ex) => ex.id === exercise.id);
+                  return (
+                    <SortableExerciseCard
+                      key={exercise.id}
+                      exercise={exercise}
+                      exerciseIndex={globalIndex}
+                      onRemove={() => removeExercise(globalIndex)}
+                      onAddSet={() => addSet(globalIndex)}
+                      onDuplicateSet={(setIndex) => duplicateSet(globalIndex, setIndex)}
+                      onRemoveSet={(setIndex) => removeSet(globalIndex, setIndex)}
+                      onUpdateSet={(setIndex, field, value) =>
+                        updateSet(globalIndex, setIndex, field, value)
+                      }
+                      onToggleBodyweight={(setIndex) => toggleBodyweight(globalIndex, setIndex)}
+                    />
+                  );
+                })}
+              </SortableContext>
+            </DndContext>
+
+            <button
+              onClick={() => openExerciseSelector(section)}
+              className="flex items-center justify-center w-full py-3 border-2 border-dashed border-muted-foreground/30 rounded-lg text-muted-foreground md:hover:border-muted-foreground/50 md:hover:text-foreground transition-colors"
+            >
+              <Plus className="h-5 w-5" />
+            </button>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+    );
+  };
+
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-6 pb-24">
       <div className="sticky top-16 z-10 bg-background pb-4">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">{workoutName}</h1>
@@ -373,41 +492,7 @@ const ActiveWorkout = () => {
         </div>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={exercises.map((ex) => ex.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {exercises.map((exercise, exerciseIndex) => (
-            <SortableExerciseCard
-              key={exercise.id}
-              exercise={exercise}
-              exerciseIndex={exerciseIndex}
-              onRemove={() => removeExercise(exerciseIndex)}
-              onAddSet={() => addSet(exerciseIndex)}
-              onDuplicateSet={(setIndex) => duplicateSet(exerciseIndex, setIndex)}
-              onRemoveSet={(setIndex) => removeSet(exerciseIndex, setIndex)}
-              onUpdateSet={(setIndex, field, value) =>
-                updateSet(exerciseIndex, setIndex, field, value)
-              }
-              onToggleBodyweight={(setIndex) => toggleBodyweight(exerciseIndex, setIndex)}
-            />
-          ))}
-        </SortableContext>
-      </DndContext>
-
-      <Button
-        variant="outline"
-        className="w-full mb-8"
-        onClick={() => setShowExerciseSelector(true)}
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add Exercise
-      </Button>
+      {(["warmup", "working", "winddown"] as WorkoutSection[]).map(renderSection)}
 
       {exercises.length > 0 && (
         <div className="fixed bottom-28 left-0 right-0 p-4 bg-background border-t pointer-events-none">
@@ -459,7 +544,7 @@ const ActiveWorkout = () => {
                   htmlFor="save-template"
                   className="text-sm font-normal cursor-pointer"
                 >
-                  Save as template
+                  Save as template (working sets only)
                 </Label>
               </div>
             )}
