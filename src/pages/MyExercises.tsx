@@ -43,7 +43,7 @@ interface Exercise {
   user_id: string | null;
 }
 
-const BODY_PARTS = [
+const FOCUS_AREAS = [
   "Chest",
   "Back",
   "Shoulders",
@@ -139,7 +139,7 @@ const MyExercises = () => {
       return;
     }
     if (!formData.category) {
-      toast.error("Body part is required");
+      toast.error("Focus area is required");
       return;
     }
 
@@ -287,7 +287,7 @@ const MyExercises = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="category">Body Part *</Label>
+              <Label htmlFor="category">Focus Area *</Label>
               <Select
                 value={formData.category}
                 onValueChange={(value) =>
@@ -295,12 +295,12 @@ const MyExercises = () => {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select body part" />
+                  <SelectValue placeholder="Select focus area" />
                 </SelectTrigger>
                 <SelectContent>
-                  {BODY_PARTS.map((part) => (
-                    <SelectItem key={part} value={part}>
-                      {part}
+                  {FOCUS_AREAS.map((area) => (
+                    <SelectItem key={area} value={area}>
+                      {area}
                     </SelectItem>
                   ))}
                 </SelectContent>
