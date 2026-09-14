@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { readAccount } from "@/data/database";
 import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
 import {
@@ -13,6 +14,7 @@ import {
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 export default function Layout() {
+  useVisualViewport();
   const { state, error, syncing, online, ready } = useData();
   const { user, account } = useAuth();
   const path = useLocation().pathname;

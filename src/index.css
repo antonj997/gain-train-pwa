@@ -755,3 +755,123 @@ summary {
     transition: none !important;
   }
 }
+
+/* Keep Safari's native controls and flex/grid children inside their columns. */
+label,
+.stack,
+.stack > *,
+.details-grid > *,
+.app-dialog > *,
+.editor-heading > div,
+.exercise-heading > div,
+.resume-card > span,
+.exercise-choice > span,
+.history-set > strong {
+  min-width: 0;
+}
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+input[type="date"],
+input[type="month"],
+input[type="time"] {
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  text-align: left;
+}
+input::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+input::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
+}
+h1,
+h2,
+h3,
+.resume-card strong,
+.history-set strong,
+.exercise-choice strong,
+.settings-card p {
+  overflow-wrap: anywhere;
+}
+.list-card > svg,
+.resume-card > svg,
+.exercise-choice > svg {
+  flex-shrink: 0;
+}
+.details-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* All dialogs, including nested exercise pickers, fit above the keyboard. */
+.app-dialog,
+.app-dialog.detail-dialog,
+.app-dialog.picker-dialog {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--viewport-top, 0px) + var(--viewport-height, 100dvh) / 2);
+  transform: translate(-50%, -50%);
+  width: min(512px, calc(100% - 24px));
+  max-height: calc(
+    var(--viewport-height, 100dvh) - 32px - env(safe-area-inset-top) -
+      env(safe-area-inset-bottom)
+  );
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: 20px;
+  -webkit-overflow-scrolling: touch;
+  grid-template-columns: minmax(0, 1fr);
+}
+.app-dialog > * {
+  flex-shrink: 0;
+}
+.app-dialog .picker-list {
+  flex: 1 1 auto;
+}
+.app-dialog [id^="radix-"] {
+  overflow-wrap: anywhere;
+}
+.app-dialog h2 {
+  padding-inline: 24px;
+}
+[data-keyboard-open] .bottom-nav,
+[data-keyboard-open] .workout-footer {
+  display: none;
+}
+@media (max-width: 639px) {
+  .app-dialog {
+    padding: 20px 16px;
+  }
+  .load-label select,
+  .set-meta select,
+  .file-label input {
+    font-size: 16px;
+  }
+  .set-meta {
+    flex-wrap: wrap;
+  }
+  .sync-line {
+    flex-wrap: wrap;
+  }
+}
+@media (min-width: 640px) {
+  .details-grid {
+    grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+  }
+}
+
+.app-dialog.picker-dialog {
+  gap: 12px;
+}
+.app-dialog .picker-list {
+  min-height: 40px;
+}
