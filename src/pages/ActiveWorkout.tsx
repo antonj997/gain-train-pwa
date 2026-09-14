@@ -60,6 +60,19 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
     0,
   );
   const total = w.exercises.reduce((n, e) => n + e.sets.length, 0);
+  const fromRoutine =
+    !!w.routineId ||
+    Object.values(state.records).some(
+      (record) =>
+        record.kind === "routine" &&
+        !record.deleted &&
+        record.payload.name === w.name &&
+        "exercises" in record.payload &&
+        record.payload.exercises.length === w.exercises.length &&
+        record.payload.exercises.every(
+          (ex, index) => ex.exerciseId === w.exercises[index]?.exerciseId,
+        ),
+    );
   function persist(next: Workout) {
     setW(next);
     setSaved(false);
@@ -122,12 +135,6 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
     const old = w.exercises;
     change({ ...w, exercises: old.filter((e) => e.id !== ex.id) });
     setMenu(null);
-    toast("Exercise removed", {
-      action: {
-        label: "Undo",
-        onClick: () => change({ ...w, exercises: old }),
-      },
-    });
   };
   const move = (index: number, step: number) => {
     const items = [...w.exercises];
@@ -162,7 +169,7 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
     };
     try {
       await save(id, "workout", next);
-      if (routine)
+      if (routine && !fromRoutine)
         try {
           await save(crypto.randomUUID(), "routine", {
             name: next.name,
@@ -269,6 +276,7 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
             <button
               className="icon-button"
               aria-label={"Options for " + ex.name}
+              aria-expanded={menu === ex.id}
               onClick={() => setMenu(menu === ex.id ? null : ex.id)}
             >
               <MoreHorizontal size={23} />
@@ -298,26 +306,36 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
               </button>
             </div>
           )}
-          <label className="load-label">
-            Load type
-            <select
-              value={ex.sets[0]?.load || "weight"}
-              onChange={(e) =>
-                update({
-                  ...ex,
-                  sets: ex.sets.map((s) => ({
-                    ...s,
-                    load: e.target.value as WorkoutSet["load"],
-                    done: false,
-                  })),
-                })
-              }
-            >
-              <option value="weight">Weight (kg)</option>
-              <option value="bodyweight">Bodyweight</option>
-              <option value="assisted">Assisted (kg)</option>
-            </select>
-          </label>
+          {menu === ex.id ? (
+            <label className="load-label">
+              Load type
+              <select
+                value={ex.sets[0]?.load || "weight"}
+                onChange={(e) =>
+                  update({
+                    ...ex,
+                    sets: ex.sets.map((s) => ({
+                      ...s,
+                      load: e.target.value as WorkoutSet["load"],
+                      done: false,
+                    })),
+                  })
+                }
+              >
+                <option value="weight">Weight (kg)</option>
+                <option value="bodyweight">Bodyweight</option>
+                <option value="assisted">Assisted (kg)</option>
+              </select>
+            </label>
+          ) : (
+            <p className="small-note">
+              {ex.sets[0]?.load === "bodyweight"
+                ? "Bodyweight"
+                : ex.sets[0]?.load === "assisted"
+                  ? "Assisted (kg)"
+                  : "Weight (kg)"}
+            </p>
+          )}
           <div className="set-labels">
             <span>Set</span>
             <span>{ex.sets[0]?.load === "assisted" ? "Assist kg" : "kg"}</span>
@@ -328,6 +346,7 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
           {ex.sets.map((s, i) => (
             <SetRow
               editing={initial.status === "completed"}
+              showOptions={menu === ex.id}
               key={s.id}
               set={s}
               index={i}
@@ -344,11 +363,7 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
                 })
               }
               onRemove={() => {
-                const old = ex;
                 update({ ...ex, sets: ex.sets.filter((x) => x.id !== s.id) });
-                toast("Set removed", {
-                  action: { label: "Undo", onClick: () => update(old) },
-                });
               }}
             />
           ))}
@@ -416,8 +431,12 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
           {completed} of {total} sets done
         </span>
         <button
-          className="primary"
-          disabled={!completed || !saved || failed}
+          className={
+            completed > 0 && completed === total
+              ? "primary finish-ready"
+              : "secondary finish-pending"
+          }
+          disabled={!saved || failed}
           onClick={() => setFinish(true)}
         >
           {initial.status === "completed" ? "Save changes" : "Finish workout"}
@@ -437,17 +456,30 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
               {total > completed ? " Unchecked sets will be left out." : ""}
             </DialogDescription>
           </DialogHeader>
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={routine}
-              onChange={(e) => setRoutine(e.target.checked)}
-            />
-            Save as a routine for next time
-          </label>
+          {completed < total && (
+            <p className="completion-warning" role="alert">
+              {total - completed} sets are not completed. Only checked sets will
+              be saved; the remaining sets will be left out.
+            </p>
+          )}
+          {!completed && (
+            <p className="completion-warning">
+              Complete at least one set before saving this workout.
+            </p>
+          )}
+          {!fromRoutine && (
+            <label className="check-label">
+              <input
+                type="checkbox"
+                checked={routine}
+                onChange={(e) => setRoutine(e.target.checked)}
+              />
+              Save as a routine for next time
+            </label>
+          )}
           <button
             className="primary"
-            disabled={finishing}
+            disabled={finishing || !completed}
             onClick={() => void complete()}
           >
             {finishing ? "Saving…" : "Save workout"}

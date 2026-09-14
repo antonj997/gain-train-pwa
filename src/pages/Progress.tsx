@@ -8,7 +8,8 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, ChevronDown } from "lucide-react";
+import { metricChange } from "@/data/summary";
 import { Link } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import { progressFor, baseline } from "@/data/analytics";
@@ -25,7 +26,7 @@ export default function Progress() {
     String(cutoff.getDate()).padStart(2, "0"),
   ].join("-");
   return (
-    <div className="stack">
+    <div className="stack progress-page">
       <h1>Progress</h1>
       {items.length > 0 && (
         <input
@@ -39,10 +40,28 @@ export default function Progress() {
         .filter((x) => x.name.toLowerCase().includes(search.toLowerCase()))
         .map((item) => {
           const latest = item.points.at(-1)!,
-            previous = item.points.at(-2),
-            base = baseline(item.points, cutoffDate);
-          const weighted = item.points.every((p) => p.e1rm !== null);
-          const points = item.points.map((p) => ({
+            previous = item.points.at(-2);
+          const weighted = latest.e1rm !== null;
+          const comparable = item.points.filter(
+            (p) =>
+              p.set.load === latest.set.load &&
+              (weighted
+                ? p.e1rm !== null
+                : latest.set.load === "bodyweight" ||
+                  p.set.weight === latest.set.weight),
+          );
+          const base = baseline(comparable, cutoffDate);
+          const best = Math.max(
+            ...comparable.map((p) => (weighted ? p.e1rm! : p.set.reps!)),
+          );
+          const latestValue = weighted ? latest.e1rm : latest.set.reps;
+          const previousComparable = comparable.at(-2);
+          const previousValue = previousComparable
+            ? weighted
+              ? previousComparable.e1rm
+              : previousComparable.set.reps
+            : null;
+          const points = comparable.map((p) => ({
             date: p.date,
             value: weighted ? p.e1rm : p.set.reps,
           }));
@@ -57,6 +76,36 @@ export default function Progress() {
                     ? "Previous: " + labelSet(previous.set)
                     : "First session logged. A starting point to build on."}
                 </p>
+              </div>
+              <div className="metrics-grid progress-metrics">
+                <div className="metric">
+                  <span>{weighted ? "Best est. 1RM" : "Best reps"}</span>
+                  <strong>
+                    {best.toFixed(weighted ? 1 : 0)}
+                    {weighted ? " kg" : ""}
+                  </strong>
+                  <small>
+                    {latestValue === best
+                      ? "At your best"
+                      : `${(best - (latestValue ?? 0)).toFixed(weighted ? 1 : 0)} ${weighted ? "kg" : "reps"} from best`}
+                  </small>
+                </div>
+                <div className="metric">
+                  <span>Latest change</span>
+                  <strong>
+                    {metricChange(latestValue, previousValue, weighted ? 1 : 0)}
+                  </strong>
+                  <small>
+                    {weighted ? "kg · vs prior" : "reps · same load"}
+                  </small>
+                </div>
+                <div className="metric">
+                  <span>Sessions · 30 days</span>
+                  <strong>
+                    {item.points.filter((p) => p.date > cutoffDate).length}
+                  </strong>
+                  <small>{item.points.length} total</small>
+                </div>
               </div>
               {points.length > 1 ? (
                 <div
@@ -106,7 +155,7 @@ export default function Progress() {
                 </div>
               ) : (
                 <p className="small-note">
-                  Your chart starts after your next session.
+                  Your chart starts after your next comparable session.
                 </p>
               )}
               {weighted && (
@@ -123,12 +172,19 @@ export default function Progress() {
               )}
               {!weighted && (
                 <p className="small-note">
-                  Reps per best recorded set. Compare the same load type and
-                  weight; assisted weight is not lifted weight.
+                  Best-set reps at the same load as your latest session.
+                  Assisted weight is not lifted weight.
                 </p>
               )}
               <details>
-                <summary>Session details</summary>
+                <summary className="session-summary">
+                  Session details
+                  <ChevronDown
+                    size={18}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </summary>
                 {[...item.points].reverse().map((p, i) => (
                   <div className="history-set" key={i}>
                     <span>{p.date}</span>

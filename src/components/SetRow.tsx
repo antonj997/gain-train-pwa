@@ -2,6 +2,7 @@ import { Check, Minus } from "lucide-react";
 import { type WorkoutSet, validSet } from "@/data/model";
 export default function SetRow({
   editing = false,
+  showOptions = false,
   set,
   index,
   name,
@@ -10,6 +11,7 @@ export default function SetRow({
   onRemove,
 }: {
   editing?: boolean;
+  showOptions?: boolean;
   set: WorkoutSet;
   index: number;
   name: string;
@@ -80,20 +82,30 @@ export default function SetRow({
       </div>
       <div className="set-meta">
         <span>{previous ? "Last: " + previous : "No previous set"}</span>
-        <select
-          aria-label={name + " set " + (index + 1) + " type"}
-          value={set.section}
-          onChange={(e) =>
-            onChange({
-              ...set,
-              section: e.target.value as WorkoutSet["section"],
-            })
-          }
-        >
-          <option value="working">Working set</option>
-          <option value="warmup">Warm-up</option>
-          <option value="winddown">Cool-down</option>
-        </select>
+        {showOptions ? (
+          <select
+            aria-label={name + " set " + (index + 1) + " type"}
+            value={set.section}
+            onChange={(e) =>
+              onChange({
+                ...set,
+                section: e.target.value as WorkoutSet["section"],
+              })
+            }
+          >
+            <option value="working">Working set</option>
+            <option value="warmup">Warm-up</option>
+            <option value="winddown">Cool-down</option>
+          </select>
+        ) : (
+          <span>
+            {set.section === "warmup"
+              ? "Warm-up"
+              : set.section === "winddown"
+                ? "Cool-down"
+                : "Working set"}
+          </span>
+        )}
       </div>
     </div>
   );

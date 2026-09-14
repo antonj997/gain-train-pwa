@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Search, Check, Star, Plus } from "lucide-react";
 import {
   Dialog,
@@ -10,7 +10,6 @@ import {
 import { useData } from "@/contexts/DataContext";
 import { catalogue, categories } from "@/data/catalogue";
 import { type CustomExercise, type Workout } from "@/data/model";
-import { toast } from "sonner";
 export default function ExercisePicker({
   open,
   onClose,
@@ -21,6 +20,7 @@ export default function ExercisePicker({
   onAdd: (items: { id: string; name: string }[]) => void;
 }) {
   const { state, save } = useData();
+  const titleRef = useRef<HTMLHeadingElement>(null);
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
     [filter, setFilter] = useState("All"),
@@ -94,7 +94,6 @@ export default function ExercisePicker({
     });
     onAdd([{ id, name: name.trim() }]);
     close();
-    toast.success("Exercise added");
   };
   return (
     <Dialog
@@ -103,9 +102,15 @@ export default function ExercisePicker({
         if (!v) close();
       }}
     >
-      <DialogContent className="picker-dialog">
+      <DialogContent
+        className="picker-dialog"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          titleRef.current?.focus();
+        }}
+      >
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle ref={titleRef} tabIndex={-1} className="picker-title">
             {creating ? "Create exercise" : "Add exercises"}
           </DialogTitle>
           <DialogDescription>
@@ -152,7 +157,6 @@ export default function ExercisePicker({
             <div className="search-field">
               <Search size={19} />
               <input
-                autoFocus
                 aria-label="Search exercises"
                 placeholder="Search exercises"
                 value={search}

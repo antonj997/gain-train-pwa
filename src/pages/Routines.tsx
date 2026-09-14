@@ -62,6 +62,7 @@ export default function Routines() {
               onClick={async () => {
                 const id = crypto.randomUUID();
                 await save(id, "workout", {
+                  routineId: r.id,
                   ...(r.payload as Routine),
                   date: today(),
                   duration: null,

@@ -19,6 +19,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", theme === "dark" ? "#0d1016" : "#f5f6f9");
     localStorage.setItem("gain-train-theme", theme);
   }, [theme]);
 

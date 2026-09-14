@@ -892,3 +892,216 @@ h3,
   flex-shrink: 0;
   gap: 2px;
 }
+
+/* Compact layouts retain full-size touch targets. */
+:root {
+  color-scheme: light;
+}
+:root.dark {
+  color-scheme: dark;
+}
+.finish-ready {
+  background: #168044;
+  color: #fff;
+  border-color: #168044;
+}
+.finish-ready:hover {
+  background: #116837;
+}
+.finish-pending {
+  background: transparent;
+}
+.completion-warning {
+  padding: 12px;
+  border: 1px solid hsl(var(--destructive) / 0.4);
+  border-radius: 10px;
+  color: var(--ink);
+  background: hsl(var(--destructive) / 0.08);
+  font-size: 14px;
+}
+.search-field:focus-within {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+.search-field input:focus,
+.search-field input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.search-field > svg {
+  flex-shrink: 0;
+}
+.picker-title:focus {
+  outline: none;
+}
+.history-page,
+.home-page,
+.progress-page {
+  gap: 14px;
+}
+.home-page .page-title {
+  margin-bottom: 0;
+}
+.home-page h1 {
+  font-size: clamp(23px, 5vw, 30px);
+}
+.home-page .resume-card,
+.home-page .list-card {
+  padding: 12px 14px;
+}
+.home-page .resume-card strong {
+  font-size: 18px;
+}
+.home-page .large {
+  min-height: 48px;
+  padding: 10px 16px;
+}
+.home-page .section-heading {
+  margin-bottom: 8px;
+}
+.home-page .empty-card {
+  padding: 16px;
+  gap: 10px;
+}
+.history-filter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 12px;
+}
+.history-filter > label {
+  min-width: 0;
+  font-size: 12px;
+}
+.history-filter > button {
+  min-height: 48px;
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.metric {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.metric > span,
+.metric small {
+  font-size: 11px;
+  color: var(--soft);
+}
+.metric strong {
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.history-week .section-heading {
+  margin: 4px 0 6px;
+}
+.history-week h2 {
+  font-size: 14px;
+}
+.history-week .list-card {
+  padding: 10px 12px;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.history-week .history-date {
+  flex: 0 0 48px;
+  font-size: 12px;
+  color: var(--soft);
+}
+.history-week .history-name {
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+.history-week strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.history-week small {
+  font-size: 12px;
+  color: var(--soft);
+}
+.progress-card {
+  padding: 14px;
+  gap: 10px;
+}
+.progress-card h2 {
+  font-size: 18px;
+}
+.progress-card .performance > strong {
+  font-size: 22px;
+}
+.progress-card .chart {
+  height: 145px;
+}
+.progress-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.progress-metrics .metric {
+  padding: 8px;
+}
+.progress-metrics strong {
+  font-size: 16px;
+}
+.session-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.session-summary::-webkit-details-marker {
+  display: none;
+}
+.session-summary svg {
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+details[open] > .session-summary svg {
+  transform: rotate(180deg);
+}
+@media (min-width: 640px) {
+  .history-page > .metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 359px) {
+  .progress-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .progress-metrics .metric:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.history-page > .metrics-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.history-page .metric {
+  padding: 8px;
+}
+.stats-help {
+  font-size: 11px;
+  color: var(--soft);
+}
+.stats-help summary {
+  cursor: pointer;
+  min-height: 32px;
+}
+@media (max-width: 359px) {
+  .history-page > .metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

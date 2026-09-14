@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import ActiveWorkout from "@/pages/ActiveWorkout";
@@ -14,6 +14,25 @@ import Routines from "@/pages/Routines";
 import MyExercises from "@/pages/MyExercises";
 import NotFound from "@/pages/NotFound";
 const Progress = lazy(() => import("@/pages/Progress"));
+function AppToaster() {
+  const { theme } = useTheme();
+  return (
+    <Toaster
+      theme={theme}
+      position="bottom-center"
+      offset="calc(88px + env(safe-area-inset-bottom))"
+      mobileOffset="calc(88px + env(safe-area-inset-bottom))"
+      closeButton
+      toastOptions={{
+        style: {
+          background: "var(--surface)",
+          color: "var(--ink)",
+          border: "1px solid var(--line)",
+        },
+      }}
+    />
+  );
+}
 function AccountApp() {
   const { account } = useAuth();
   return (
@@ -43,7 +62,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <AccountApp />
-        <Toaster richColors position="top-center" closeButton />
+        <AppToaster />
       </AuthProvider>
     </ThemeProvider>
   );

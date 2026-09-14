@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { readAccount } from "@/data/database";
 import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
@@ -7,6 +7,7 @@ import {
   History,
   TrendingUp,
   Settings,
+  X,
   Cloud,
   CloudOff,
   RefreshCw,
@@ -18,6 +19,10 @@ export default function Layout() {
   const { state, error, syncing, online, ready } = useData();
   const { user, account } = useAuth();
   const path = useLocation().pathname;
+  const returnPath = useRef("/");
+  useEffect(() => {
+    if (path !== "/settings") returnPath.current = path;
+  }, [path]);
   const [phoneLogAvailable, setPhoneLogAvailable] = useState(false);
   useEffect(() => {
     let active = true;
@@ -51,8 +56,12 @@ export default function Layout() {
           <Dumbbell size={23} />
           <span>Gain Train</span>
         </Link>
-        <Link to="/settings" className="icon-button" aria-label="Settings">
-          <Settings size={21} />
+        <Link
+          to={path === "/settings" ? returnPath.current : "/settings"}
+          className="icon-button"
+          aria-label={path === "/settings" ? "Close settings" : "Settings"}
+        >
+          {path === "/settings" ? <X size={21} /> : <Settings size={21} />}
         </Link>
       </header>
       <div className="sync-line" role="status">

@@ -24,9 +24,10 @@ export default function Home() {
       (b.payload as Workout).date.localeCompare((a.payload as Workout).date),
     );
   const routines = records.filter((r) => r.kind === "routine");
-  const start = async (past = false, routine?: Routine) => {
+  const start = async (past = false, routine?: Routine, routineId?: string) => {
     const id = crypto.randomUUID();
     await save(id, "workout", {
+      routineId,
       name: routine?.name || "Workout",
       date: today(),
       duration: null,
@@ -39,7 +40,7 @@ export default function Home() {
     navigate("/workout/" + id);
   };
   return (
-    <div className="stack">
+    <div className="stack home-page">
       <div className="page-title">
         <div>
           <p className="eyebrow">
@@ -82,7 +83,7 @@ export default function Home() {
             <button
               className="list-card"
               key={r.id}
-              onClick={() => void start(false, r.payload as Routine)}
+              onClick={() => void start(false, r.payload as Routine, r.id)}
             >
               <span>
                 <strong>{r.payload.name}</strong>

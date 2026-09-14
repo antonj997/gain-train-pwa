@@ -14,6 +14,7 @@ export const exerciseSchema = z.object({
   sets: z.array(setSchema).max(100),
 });
 export const workoutSchema = z.object({
+  routineId: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(100),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   duration: z.number().int().min(0).max(1440).nullable(),
