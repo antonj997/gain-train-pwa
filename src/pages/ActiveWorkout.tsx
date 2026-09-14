@@ -1,576 +1,462 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plus, Check, X, Copy, GripVertical, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  ArrowLeft,
+  Plus,
+  MoreHorizontal,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
+import { useData } from "@/contexts/DataContext";
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import ExerciseSelector from "@/components/ExerciseSelector";
+  type Workout,
+  type Exercise,
+  type WorkoutSet,
+  newSet,
+  today,
+  validSet,
+  labelSet,
+} from "@/data/model";
+import ExercisePicker from "@/components/ExercisePicker";
+import SetRow from "@/components/SetRow";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-
-type WorkoutSection = "warmup" | "working" | "winddown";
-
-interface ExerciseSet {
-  id: string;
-  exerciseName: string;
-  sets: { reps: number; weight: number; isBodyweight: boolean }[];
-  section: WorkoutSection;
-}
-
-interface SortableExerciseCardProps {
-  exercise: ExerciseSet;
-  exerciseIndex: number;
-  onRemove: () => void;
-  onAddSet: () => void;
-  onDuplicateSet: (setIndex: number) => void;
-  onRemoveSet: (setIndex: number) => void;
-  onUpdateSet: (setIndex: number, field: "reps" | "weight", value: number) => void;
-  onToggleBodyweight: (setIndex: number) => void;
-}
-
-const SortableExerciseCard = ({
-  exercise,
-  exerciseIndex,
-  onRemove,
-  onAddSet,
-  onDuplicateSet,
-  onRemoveSet,
-  onUpdateSet,
-  onToggleBodyweight,
-}: SortableExerciseCardProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: exercise.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <Card ref={setNodeRef} style={style} className="relative">
-      <div 
-        {...attributes} 
-        {...listeners} 
-        className="absolute right-3 top-3 cursor-grab active:cursor-grabbing p-2 opacity-50 md:hover:opacity-100 transition-opacity touch-none"
-      >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
+export default function ActiveWorkout() {
+  const { id } = useParams();
+  const { state } = useData();
+  const doc = id ? state.records[id] : null;
+  if (!doc || doc.deleted)
+    return (
+      <div className="empty">
+        <h1>Workout not found</h1>
+        <Link to="/">Back to workouts</Link>
       </div>
-      <CardHeader className="pr-14">
-        <CardTitle className="text-lg">{exercise.exerciseName}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {exercise.sets.map((set, setIndex) => (
-          <div key={setIndex} className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground px-1">#{setIndex + 1}</span>
-              <Input
-                type="number"
-                placeholder="Reps"
-                value={set.reps || ""}
-                onChange={(e) => onUpdateSet(setIndex, "reps", parseInt(e.target.value) || 0)}
-                className="w-[70px]"
-                min="0"
-                disabled={isDragging}
-              />
-              <div className="relative w-[130px]">
-                <Input
-                  type="number"
-                  placeholder={set.isBodyweight ? "Extra" : "Weight"}
-                  value={set.weight || ""}
-                  onChange={(e) => onUpdateSet(setIndex, "weight", parseFloat(e.target.value) || 0)}
-                  className="pr-11"
-                  min="0"
-                  step="0.5"
-                  disabled={isDragging}
-                />
-                <button
-                  onClick={() => onToggleBodyweight(setIndex)}
-                  disabled={isDragging}
-                  className={`absolute right-0.5 top-1/2 -translate-y-1/2 h-8 w-9 text-xs font-medium rounded transition-colors ${
-                    set.isBodyweight 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground md:hover:text-foreground"
-                  } disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  BW
-                </button>
-              </div>
+    );
+  return <Editor key={id} id={id!} initial={doc.payload as Workout} />;
+}
+function Editor({ id, initial }: { id: string; initial: Workout }) {
+  const { state, save } = useData(),
+    navigate = useNavigate();
+  const [w, setW] = useState(initial),
+    [picker, setPicker] = useState(false),
+    [finish, setFinish] = useState(false),
+    [saved, setSaved] = useState(true),
+    [failed, setFailed] = useState(false),
+    [menu, setMenu] = useState<string | null>(null),
+    [routine, setRoutine] = useState(false),
+    [finishing, setFinishing] = useState(false),
+    [discard, setDiscard] = useState(false);
+  const queue = useRef(Promise.resolve()),
+    count = useRef(0);
+  const completed = w.exercises.reduce(
+    (n, e) => n + e.sets.filter((s) => s.done && validSet(s)).length,
+    0,
+  );
+  const total = w.exercises.reduce((n, e) => n + e.sets.length, 0);
+  function persist(next: Workout) {
+    setW(next);
+    setSaved(false);
+    setFailed(false);
+    const version = ++count.current;
+    queue.current = queue.current
+      .catch(() => {})
+      .then(() => save(id, "workout", next))
+      .then(() => {
+        if (version === count.current) setSaved(true);
+      })
+      .catch(() => {
+        setFailed(true);
+      });
+  }
+  function change(next: Workout) {
+    persist({ ...next, status: initial.status });
+  }
+  const history = Object.values(state.records)
+    .filter(
+      (r) =>
+        r.id !== id &&
+        !r.deleted &&
+        r.kind === "workout" &&
+        (r.payload as Workout).status === "completed" &&
+        (r.payload as Workout).date <= w.date,
+    )
+    .sort((a, b) =>
+      (b.payload as Workout).date.localeCompare((a.payload as Workout).date),
+    );
+  const last = (exerciseId: string) =>
+    history
+      .flatMap((r) => (r.payload as Workout).exercises)
+      .find((e) => e.exerciseId === exerciseId);
+  const add = (items: { id: string; name: string }[]) => {
+    change({
+      ...w,
+      exercises: [
+        ...w.exercises,
+        ...items.map((item) => {
+          const prev = last(item.id);
+          return {
+            id: crypto.randomUUID(),
+            exerciseId: item.id,
+            name: item.name,
+            sets: prev?.sets.filter((s) => s.done).map((s) => newSet(s)) || [
+              newSet(),
+            ],
+          };
+        }),
+      ],
+    });
+  };
+  const update = (ex: Exercise) =>
+    change({
+      ...w,
+      exercises: w.exercises.map((e) => (e.id === ex.id ? ex : e)),
+    });
+  const remove = (ex: Exercise) => {
+    const old = w.exercises;
+    change({ ...w, exercises: old.filter((e) => e.id !== ex.id) });
+    setMenu(null);
+    toast("Exercise removed", {
+      action: {
+        label: "Undo",
+        onClick: () => change({ ...w, exercises: old }),
+      },
+    });
+  };
+  const move = (index: number, step: number) => {
+    const items = [...w.exercises];
+    [items[index], items[index + step]] = [items[index + step], items[index]];
+    change({ ...w, exercises: items });
+  };
+  const complete = async () => {
+    if (finishing) return;
+    setFinishing(true);
+    await queue.current;
+    if (failed) {
+      setFinishing(false);
+      return;
+    }
+    const next: Workout = {
+      ...w,
+      status: "completed",
+      duration:
+        w.duration ??
+        (w.startedAt
+          ? Math.min(
+              1440,
+              Math.max(0, Math.floor((Date.now() - w.startedAt) / 60000)),
+            )
+          : null),
+      exercises: w.exercises
+        .map((e) => ({
+          ...e,
+          sets: e.sets.filter((s) => s.done && validSet(s)),
+        }))
+        .filter((e) => e.sets.length),
+    };
+    try {
+      await save(id, "workout", next);
+      if (routine)
+        try {
+          await save(crypto.randomUUID(), "routine", {
+            name: next.name,
+            exercises: next.exercises.map((e) => ({
+              ...e,
+              sets: e.sets.map((s) => ({ ...s, done: false })),
+            })),
+          });
+        } catch {
+          toast.error(
+            "Workout saved, but the routine could not be saved. Create it from History later.",
+          );
+        }
+      toast.success("Workout saved on this phone");
+      navigate("/history?workout=" + id);
+    } catch {
+      toast.error("Could not finish. Your draft is still here.");
+    } finally {
+      setFinishing(false);
+    }
+  };
+  return (
+    <div className="workout-editor stack">
+      <div className="editor-heading">
+        <Link
+          to="/"
+          className="icon-button"
+          aria-label="Save and leave workout"
+        >
+          <ArrowLeft size={23} />
+        </Link>
+        <div>
+          <h1>{w.name}</h1>
+          <span className={failed ? "error-text" : "muted"} role="status">
+            {failed
+              ? "Not saved. Keep this screen open."
+              : saved
+                ? initial.status === "completed"
+                  ? "Changes saved on this phone"
+                  : "Draft saved on this phone"
+                : "Saving…"}
+          </span>
+        </div>
+      </div>
+      <details
+        className="workout-details"
+        open={w.startedAt === null || undefined}
+      >
+        <summary>Workout details · {w.date}</summary>
+        <div className="details-grid">
+          <label>
+            Name
+            <input
+              value={w.name}
+              maxLength={100}
+              onChange={(e) => {
+                const name = e.target.value;
+                setW({ ...w, name });
+                if (name.trim()) change({ ...w, name });
+              }}
+              onBlur={() => {
+                if (!w.name.trim()) change({ ...w, name: "Workout" });
+              }}
+            />
+          </label>
+          <label>
+            Date
+            <input
+              type="date"
+              value={w.date}
+              max={today()}
+              onChange={(e) => {
+                if (e.target.value) change({ ...w, date: e.target.value });
+              }}
+            />
+          </label>
+          <label>
+            Duration (optional, minutes)
+            <input
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max="1440"
+              placeholder={w.startedAt ? "Automatic timer" : "Not recorded"}
+              value={w.duration ?? ""}
+              onChange={(e) =>
+                change({
+                  ...w,
+                  duration:
+                    e.target.value === "" ? null : Number(e.target.value),
+                })
+              }
+            />
+          </label>
+        </div>
+      </details>
+      {w.exercises.map((ex, ei) => (
+        <section className="exercise-card" key={ex.id}>
+          <div className="exercise-heading">
+            <div>
+              <span className="eyebrow">EXERCISE {ei + 1}</span>
+              <h2>{ex.name}</h2>
+            </div>
+            <button
+              className="icon-button"
+              aria-label={"Options for " + ex.name}
+              onClick={() => setMenu(menu === ex.id ? null : ex.id)}
+            >
+              <MoreHorizontal size={23} />
+            </button>
+          </div>
+          {menu === ex.id && (
+            <div className="exercise-actions">
               <button
-                onClick={() => onDuplicateSet(setIndex)}
-                disabled={isDragging}
-                className="p-2 md:hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="secondary"
+                disabled={ei === 0}
+                onClick={() => move(ei, -1)}
               >
-                <Copy className="h-4 w-4" />
+                <ArrowUp size={17} />
+                Up
               </button>
               <button
-                onClick={() => onRemoveSet(setIndex)}
-                disabled={isDragging}
-                className="p-2 md:hover:bg-accent rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="secondary"
+                disabled={ei === w.exercises.length - 1}
+                onClick={() => move(ei, 1)}
               >
-                <span className="text-xl font-light">−</span>
+                <ArrowDown size={17} />
+                Down
+              </button>
+              <button className="secondary danger" onClick={() => remove(ex)}>
+                <Trash2 size={17} />
+                Remove
               </button>
             </div>
+          )}
+          <label className="load-label">
+            Load type
+            <select
+              value={ex.sets[0]?.load || "weight"}
+              onChange={(e) =>
+                update({
+                  ...ex,
+                  sets: ex.sets.map((s) => ({
+                    ...s,
+                    load: e.target.value as WorkoutSet["load"],
+                    done: false,
+                  })),
+                })
+              }
+            >
+              <option value="weight">Weight (kg)</option>
+              <option value="bodyweight">Bodyweight</option>
+              <option value="assisted">Assisted (kg)</option>
+            </select>
+          </label>
+          <div className="set-labels">
+            <span>Set</span>
+            <span>{ex.sets[0]?.load === "assisted" ? "Assist kg" : "kg"}</span>
+            <span>Reps</span>
+            <span>Done</span>
+            <span />
           </div>
-        ))}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="w-full" 
-          onClick={onAddSet}
-          disabled={isDragging}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Set
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
-
-const SECTION_CONFIG: Record<WorkoutSection, { title: string; description: string }> = {
-  warmup: { title: "Warm-up", description: "Light exercises to prepare your body" },
-  working: { title: "Working Sets", description: "Your main training exercises" },
-  winddown: { title: "Wind-down", description: "Cool-down and stretching" },
-};
-
-const ActiveWorkout = () => {
-  const { templateId } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [workoutName, setWorkoutName] = useState("");
-  const [exercises, setExercises] = useState<ExerciseSet[]>([]);
-  const [showExerciseSelector, setShowExerciseSelector] = useState(false);
-  const [activeSection, setActiveSection] = useState<WorkoutSection>("working");
-  const [startTime] = useState(Date.now());
-  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
-  const [completionName, setCompletionName] = useState("");
-  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Record<WorkoutSection, boolean>>({
-    warmup: true,
-    working: true,
-    winddown: true,
-  });
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-
-    if (templateId && templateId !== "new") {
-      loadTemplate();
-    } else {
-      setWorkoutName("Quick Workout");
-    }
-  }, [templateId, user, navigate]);
-
-  const loadTemplate = async () => {
-    try {
-      const { data: template, error: templateError } = await supabase
-        .from("workout_templates")
-        .select("name")
-        .eq("id", templateId)
-        .single();
-
-      if (templateError) throw templateError;
-
-      const { data: templateExercises, error: exercisesError } = await supabase
-        .from("template_exercises")
-        .select("exercise_name")
-        .eq("template_id", templateId)
-        .order("order_index");
-
-      if (exercisesError) throw exercisesError;
-
-      setWorkoutName(template.name);
-      setExercises(
-        templateExercises.map((ex) => ({
-          id: crypto.randomUUID(),
-          exerciseName: ex.exercise_name,
-          sets: [{ reps: 0, weight: 0, isBodyweight: false }],
-          section: "working" as WorkoutSection,
-        }))
-      );
-    } catch (error: any) {
-      toast.error("Failed to load workout template");
-      navigate("/");
-    }
-  };
-
-  const getExercisesBySection = (section: WorkoutSection) => {
-    return exercises.filter((ex) => ex.section === section);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setExercises((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
-  };
-
-  const addExercise = (exerciseName: string) => {
-    setExercises([
-      ...exercises,
-      { 
-        id: crypto.randomUUID(), 
-        exerciseName, 
-        sets: [{ reps: 0, weight: 0, isBodyweight: false }],
-        section: activeSection,
-      },
-    ]);
-    setShowExerciseSelector(false);
-  };
-
-  const openExerciseSelector = (section: WorkoutSection) => {
-    setActiveSection(section);
-    setShowExerciseSelector(true);
-  };
-
-  const addSet = (exerciseIndex: number) => {
-    const newExercises = [...exercises];
-    newExercises[exerciseIndex].sets.push({ reps: 0, weight: 0, isBodyweight: false });
-    setExercises(newExercises);
-  };
-
-  const duplicateSet = (exerciseIndex: number, setIndex: number) => {
-    const newExercises = [...exercises];
-    const setToDuplicate = newExercises[exerciseIndex].sets[setIndex];
-    newExercises[exerciseIndex].sets.push({ ...setToDuplicate });
-    setExercises(newExercises);
-  };
-
-  const removeSet = (exerciseIndex: number, setIndex: number) => {
-    const newExercises = [...exercises];
-    if (newExercises[exerciseIndex].sets.length === 1) {
-      toast.error("Cannot remove the last set. Remove the exercise instead.");
-      return;
-    }
-    newExercises[exerciseIndex].sets.splice(setIndex, 1);
-    setExercises(newExercises);
-  };
-
-  const updateSet = (
-    exerciseIndex: number,
-    setIndex: number,
-    field: "reps" | "weight",
-    value: number
-  ) => {
-    const newExercises = [...exercises];
-    newExercises[exerciseIndex].sets[setIndex][field] = value;
-    setExercises(newExercises);
-  };
-
-  const toggleBodyweight = (exerciseIndex: number, setIndex: number) => {
-    const newExercises = [...exercises];
-    newExercises[exerciseIndex].sets[setIndex].isBodyweight = 
-      !newExercises[exerciseIndex].sets[setIndex].isBodyweight;
-    setExercises(newExercises);
-  };
-
-  const removeExercise = (exerciseIndex: number) => {
-    setExercises(exercises.filter((_, i) => i !== exerciseIndex));
-  };
-
-  const toggleSection = (section: WorkoutSection) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
-  const initiateComplete = () => {
-    if (exercises.length === 0) {
-      toast.error("Add at least one exercise to complete the workout");
-      return;
-    }
-    setCompletionName(workoutName);
-    setSaveAsTemplate(false);
-    setShowCompleteDialog(true);
-  };
-
-  const completeWorkout = async () => {
-    if (isCompleting) return;
-    
-    setIsCompleting(true);
-    try {
-      const duration = Math.floor((Date.now() - startTime) / 1000 / 60);
-
-      const { data: session, error: sessionError } = await supabase
-        .from("workout_sessions")
-        .insert({
-          user_id: user!.id,
-          template_id: templateId !== "new" ? templateId : null,
-          name: completionName || workoutName,
-          duration,
-        })
-        .select()
-        .single();
-
-      if (sessionError) throw sessionError;
-
-      for (const exercise of exercises) {
-        for (let i = 0; i < exercise.sets.length; i++) {
-          await supabase.from("workout_sets").insert({
-            session_id: session.id,
-            exercise_name: exercise.exerciseName,
-            set_number: i + 1,
-            reps: exercise.sets[i].reps,
-            weight: exercise.sets[i].weight,
-            section: exercise.section,
-          });
-        }
-      }
-
-      if (saveAsTemplate && (!templateId || templateId === "new")) {
-        const { data: newTemplate, error: templateError } = await supabase
-          .from("workout_templates")
-          .insert({
-            user_id: user!.id,
-            name: completionName || workoutName,
-          })
-          .select()
-          .single();
-
-        if (templateError) throw templateError;
-
-        // Only save working sets as template exercises
-        const workingExercises = exercises.filter((ex) => ex.section === "working");
-        for (let i = 0; i < workingExercises.length; i++) {
-          await supabase.from("template_exercises").insert({
-            template_id: newTemplate.id,
-            exercise_name: workingExercises[i].exerciseName,
-            order_index: i,
-          });
-        }
-      }
-
-      toast.success("Workout completed!");
-      setShowCompleteDialog(false);
-      navigate("/");
-    } catch (error: any) {
-      toast.error("Failed to save workout");
-    } finally {
-      setIsCompleting(false);
-    }
-  };
-
-  const renderSection = (section: WorkoutSection) => {
-    const sectionExercises = getExercisesBySection(section);
-    const config = SECTION_CONFIG[section];
-    const isExpanded = expandedSections[section];
-
-    return (
-      <Collapsible key={section} open={isExpanded} onOpenChange={() => toggleSection(section)}>
-        <div className="space-y-3">
-          <CollapsibleTrigger asChild>
-            <button className="flex items-center justify-between w-full text-left py-2 group">
-              <div>
-                <h2 className="text-lg font-semibold">{config.title}</h2>
-                {sectionExercises.length === 0 && (
-                  <p className="text-xs text-muted-foreground">{config.description}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {sectionExercises.length > 0 && (
-                  <span className="text-sm text-muted-foreground">
-                    {sectionExercises.length} exercise{sectionExercises.length !== 1 ? "s" : ""}
-                  </span>
-                )}
-                {isExpanded ? (
-                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                )}
-              </div>
-            </button>
-          </CollapsibleTrigger>
-          
-          <CollapsibleContent className="space-y-3">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sectionExercises.map((ex) => ex.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {sectionExercises.map((exercise) => {
-                  const globalIndex = exercises.findIndex((ex) => ex.id === exercise.id);
-                  return (
-                    <SortableExerciseCard
-                      key={exercise.id}
-                      exercise={exercise}
-                      exerciseIndex={globalIndex}
-                      onRemove={() => removeExercise(globalIndex)}
-                      onAddSet={() => addSet(globalIndex)}
-                      onDuplicateSet={(setIndex) => duplicateSet(globalIndex, setIndex)}
-                      onRemoveSet={(setIndex) => removeSet(globalIndex, setIndex)}
-                      onUpdateSet={(setIndex, field, value) =>
-                        updateSet(globalIndex, setIndex, field, value)
-                      }
-                      onToggleBodyweight={(setIndex) => toggleBodyweight(globalIndex, setIndex)}
-                    />
-                  );
-                })}
-              </SortableContext>
-            </DndContext>
-
-            <button
-              onClick={() => openExerciseSelector(section)}
-              className="flex items-center justify-center w-full py-3 border-2 border-dashed border-muted-foreground/30 rounded-lg text-muted-foreground md:hover:border-muted-foreground/50 md:hover:text-foreground transition-colors"
-            >
-              <Plus className="h-5 w-5" />
-            </button>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
-    );
-  };
-
-  return (
-    <div className="space-y-6 pb-24">
-      <div className="sticky top-16 z-10 bg-background pb-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">{workoutName}</h1>
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      {(["warmup", "working", "winddown"] as WorkoutSection[]).map(renderSection)}
-
-      {exercises.length > 0 && (
-        <div className="fixed bottom-28 left-0 right-0 p-4 bg-background border-t pointer-events-none">
-          <div className="container">
-            <Button
-              size="lg"
-              className="w-full bg-accent md:hover:bg-accent/90 pointer-events-auto"
-              onClick={initiateComplete}
-            >
-              <Check className="mr-2 h-5 w-5" />
-              Complete Workout
-            </Button>
-          </div>
+          {ex.sets.map((s, i) => (
+            <SetRow
+              editing={initial.status === "completed"}
+              key={s.id}
+              set={s}
+              index={i}
+              name={ex.name}
+              previous={
+                last(ex.exerciseId)?.sets[i]
+                  ? labelSet(last(ex.exerciseId)!.sets[i])
+                  : undefined
+              }
+              onChange={(next) =>
+                update({
+                  ...ex,
+                  sets: ex.sets.map((x) => (x.id === s.id ? next : x)),
+                })
+              }
+              onRemove={() => {
+                const old = ex;
+                update({ ...ex, sets: ex.sets.filter((x) => x.id !== s.id) });
+                toast("Set removed", {
+                  action: { label: "Undo", onClick: () => update(old) },
+                });
+              }}
+            />
+          ))}
+          <button
+            className="add-set"
+            onClick={() =>
+              update({ ...ex, sets: [...ex.sets, newSet(ex.sets.at(-1))] })
+            }
+          >
+            <Plus size={18} />
+            Add set
+          </button>
+        </section>
+      ))}
+      {!w.exercises.length && (
+        <div className="empty-card">
+          <h2>
+            {w.startedAt ? "Let's log your first set" : "What did you train?"}
+          </h2>
+          <p>
+            Add your exercises. Previous weights and reps will be suggested when
+            available.
+          </p>
         </div>
       )}
-
-      <ExerciseSelector
-        open={showExerciseSelector}
-        onClose={() => setShowExerciseSelector(false)}
-        onSelect={addExercise}
-      />
-
-      <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+      <button className="secondary large" onClick={() => setPicker(true)}>
+        <Plus size={21} />
+        Add exercises
+      </button>
+      <button className="text-button danger" onClick={() => setDiscard(true)}>
+        Discard workout
+      </button>
+      <Dialog open={discard} onOpenChange={setDiscard}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Complete Workout</DialogTitle>
+            <DialogTitle>Discard this workout?</DialogTitle>
             <DialogDescription>
-              Give your workout a name to save it to your history.
+              This removes the workout from your log. You can undo it
+              immediately afterwards.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="workout-name">Workout Name</Label>
-              <Input
-                id="workout-name"
-                value={completionName}
-                onChange={(e) => setCompletionName(e.target.value)}
-                placeholder="Enter workout name"
-              />
-            </div>
-            {(!templateId || templateId === "new") && (
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="save-template"
-                  checked={saveAsTemplate}
-                  onCheckedChange={(checked) => setSaveAsTemplate(checked as boolean)}
-                />
-                <Label
-                  htmlFor="save-template"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Save as template (working sets only)
-                </Label>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowCompleteDialog(false)} disabled={isCompleting}>
-              Cancel
-            </Button>
-            <Button onClick={completeWorkout} disabled={isCompleting}>
-              {isCompleting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Completing...
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Complete
-                </>
-              )}
-            </Button>
-          </DialogFooter>
+          <button className="secondary" onClick={() => setDiscard(false)}>
+            Keep workout
+          </button>
+          <button
+            className="secondary danger"
+            onClick={async () => {
+              await queue.current;
+              await save(id, "workout", w, true);
+              navigate("/");
+              toast("Workout discarded", {
+                action: {
+                  label: "Undo",
+                  onClick: () => void save(id, "workout", w),
+                },
+              });
+            }}
+          >
+            Discard workout
+          </button>
+        </DialogContent>
+      </Dialog>
+      <div className="workout-footer">
+        <span>
+          {completed} of {total} sets done
+        </span>
+        <button
+          className="primary"
+          disabled={!completed || !saved || failed}
+          onClick={() => setFinish(true)}
+        >
+          {initial.status === "completed" ? "Save changes" : "Finish workout"}
+        </button>
+      </div>
+      <ExercisePicker
+        open={picker}
+        onClose={() => setPicker(false)}
+        onAdd={add}
+      />
+      <Dialog open={finish} onOpenChange={setFinish}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Finish {w.name}?</DialogTitle>
+            <DialogDescription>
+              {completed} completed sets will be saved.
+              {total > completed ? " Unchecked sets will be left out." : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <label className="check-label">
+            <input
+              type="checkbox"
+              checked={routine}
+              onChange={(e) => setRoutine(e.target.checked)}
+            />
+            Save as a routine for next time
+          </label>
+          <button
+            className="primary"
+            disabled={finishing}
+            onClick={() => void complete()}
+          >
+            {finishing ? "Saving…" : "Save workout"}
+          </button>
+          <button className="secondary" onClick={() => setFinish(false)}>
+            Keep logging
+          </button>
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-export default ActiveWorkout;
+}

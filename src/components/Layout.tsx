@@ -1,64 +1,125 @@
-import { ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Dumbbell, Home, History, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import HamburgerMenu from "@/components/HamburgerMenu";
-
-interface LayoutProps {
-  children: ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
-  const location = useLocation();
-
-  const navItems = [
-    { icon: Home, label: "Home", path: "/" },
-    { icon: History, label: "History", path: "/history" },
-    { icon: TrendingUp, label: "Progress", path: "/progress" },
-  ];
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary p-2 rounded-lg">
-              <Dumbbell className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="font-bold text-lg">Gain Train</span>
-          </div>
-          <HamburgerMenu />
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 pt-6 pb-24">{children}</main>
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 w-full border-t bg-card z-50" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="container flex justify-around py-2">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <Link key={item.path} to={item.path}>
-                <Button
-                  variant="ghost"
-                  className={`flex flex-col items-center gap-1 h-auto py-2 focus-visible:ring-0 focus-visible:ring-offset-0 ${
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs">{item.label}</span>
-                </Button>
-              </Link>
+import { useEffect, useState } from "react";
+import { readAccount } from "@/data/database";
+import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
+import {
+  Dumbbell,
+  History,
+  TrendingUp,
+  Settings,
+  Cloud,
+  CloudOff,
+  RefreshCw,
+} from "lucide-react";
+import { useData } from "@/contexts/DataContext";
+import { useAuth } from "@/contexts/AuthContext";
+export default function Layout() {
+  const { state, error, syncing, online, ready } = useData();
+  const { user, account } = useAuth();
+  const path = useLocation().pathname;
+  const [phoneLogAvailable, setPhoneLogAvailable] = useState(false);
+  useEffect(() => {
+    let active = true;
+    if (user)
+      void readAccount("phone")
+        .then((phone) => {
+          if (active)
+            setPhoneLogAvailable(
+              Object.values(phone.records).some(
+                (r) => !r.deleted && !state.records[r.id],
+              ),
             );
-          })}
+        })
+        .catch(() => {});
+    else setPhoneLogAvailable(false);
+    return () => {
+      active = false;
+    };
+  }, [user, state.records]);
+  useEffect(() => {
+    window.dispatchEvent(new Event("gain-route-change"));
+  }, [path]);
+  const conflicts = Object.values(state.records).filter(
+    (r) => r.conflict,
+  ).length;
+  const dirty = Object.values(state.records).filter((r) => r.dirty).length;
+  return (
+    <div className="app-shell">
+      <header className="app-header">
+        <Link to="/" className="brand">
+          <Dumbbell size={23} />
+          <span>Gain Train</span>
+        </Link>
+        <Link to="/settings" className="icon-button" aria-label="Settings">
+          <Settings size={21} />
+        </Link>
+      </header>
+      <div className="sync-line" role="status">
+        {syncing ? (
+          <>
+            <RefreshCw size={14} className="animate-spin" />
+            Syncing…
+          </>
+        ) : !user ? (
+          <>
+            <CloudOff size={14} />
+            {account === "phone" ? "Saved on this phone" : "Offline account"}
+            <Link to="/auth">Sign in to sync</Link>
+          </>
+        ) : dirty ? (
+          <>
+            <CloudOff size={14} />
+            {online
+              ? "Saved on phone · " + dirty + " pending"
+              : "Offline · saved on phone"}
+          </>
+        ) : (
+          <>
+            <Cloud size={14} />
+            Synced
+          </>
+        )}
+      </div>
+      {conflicts > 0 && (
+        <div className="notice">
+          <Link to="/settings">
+            {conflicts} changes need your choice before syncing
+          </Link>
         </div>
-      </nav>
+      )}
+      {phoneLogAvailable && (
+        <div className="notice">
+          <Link to="/settings">
+            Your phone log is ready to copy to this account. Open Settings.
+          </Link>
+        </div>
+      )}
+      {error && (
+        <div className="notice" role="alert">
+          {error}
+          <Link to="/settings">View sync</Link>
+        </div>
+      )}
+      <main>
+        {ready ? (
+          <Outlet />
+        ) : (
+          <p className="empty">Opening your workout log…</p>
+        )}
+      </main>
+      {!path.startsWith("/workout/") && (
+        <nav className="bottom-nav" aria-label="Main navigation">
+          {[
+            { to: "/", title: "Workout", Icon: Dumbbell },
+            { to: "/history", title: "History", Icon: History },
+            { to: "/progress", title: "Progress", Icon: TrendingUp },
+          ].map(({ to, title, Icon }) => (
+            <NavLink key={to} to={to} end>
+              <Icon size={21} />
+              <span>{title}</span>
+            </NavLink>
+          ))}
+        </nav>
+      )}
     </div>
   );
-};
-
-export default Layout;
+}

@@ -1,3 +1,4 @@
+import animate from "tailwindcss-animate";
 import type { Config } from "tailwindcss";
 
 export default {
@@ -92,7 +93,7 @@ export default {
     },
   },
   plugins: [
-    require("tailwindcss-animate"),
+    animate,
     function({ addVariant }) {
       // Add 'hover-hover' variant that only applies on devices with hover capability
       addVariant('hover-hover', '@media (hover: hover) and (pointer: fine)');

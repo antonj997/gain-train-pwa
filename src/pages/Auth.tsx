@@ -1,153 +1,111 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dumbbell } from "lucide-react";
-import { toast } from "sonner";
-
-const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
-  const [autoLoggingIn, setAutoLoggingIn] = useState(false);
-  const { signIn, signUp } = useAuth();
-  const navigate = useNavigate();
-
+export default function Auth() {
+  const { user } = useAuth(),
+    navigate = useNavigate();
+  const [signup, setSignup] = useState(false),
+    [email, setEmail] = useState(""),
+    [password, setPassword] = useState(""),
+    [busy, setBusy] = useState(false),
+    [message, setMessage] = useState("");
   useEffect(() => {
-    const savedEmail = localStorage.getItem("rememberedEmail");
-    const savedPassword = localStorage.getItem("rememberedPassword");
-    if (savedEmail && savedPassword) {
-      setAutoLoggingIn(true);
-      // Auto-login
-      signIn(savedEmail, savedPassword).then(({ error }) => {
-        if (!error) {
-          navigate("/");
-        } else {
-          setAutoLoggingIn(false);
-          setEmail(savedEmail);
-          setPassword(savedPassword);
-          setRememberMe(true);
-        }
-      });
-    }
-  }, [signIn, navigate]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+    if (user) navigate("/");
+  }, [user, navigate]);
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-
+    if (!supabase) return;
+    setBusy(true);
+    setMessage("");
     try {
-      const { error } = isLogin
-        ? await signIn(email, password)
-        : await signUp(email, password);
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        if (isLogin && rememberMe) {
-          localStorage.setItem("rememberedEmail", email);
-          localStorage.setItem("rememberedPassword", password);
-        } else {
-          localStorage.removeItem("rememberedEmail");
-          localStorage.removeItem("rememberedPassword");
-        }
-        toast.success(isLogin ? "Welcome back!" : "Account created successfully!");
-        navigate("/");
-      }
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred");
+      const { data, error } = signup
+        ? await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: new URL(
+                import.meta.env.BASE_URL,
+                location.origin,
+              ).href,
+            },
+          })
+        : await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      if (data.session) navigate("/");
+      else
+        setMessage(
+          "Check your email to confirm your account, then sign in here.",
+        );
+    } catch (e) {
+      setMessage(
+        e instanceof Error ? e.message : "Could not sign in. Please try again.",
+      );
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
-
-  if (autoLoggingIn) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-accent/5 to-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="bg-primary p-3 rounded-2xl">
-              <Dumbbell className="h-8 w-8 text-primary-foreground" />
-            </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">
-            {isLogin ? "Welcome Back" : "Create Account"}
-          </CardTitle>
-          <CardDescription>
-            {isLogin
-              ? "Sign in to track your workouts"
-              : "Start your fitness journey today"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            {isLogin && (
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember-me"
-                  checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                />
-                <Label
-                  htmlFor="remember-me"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Remember me
-                </Label>
-              </div>
-            )}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Loading..." : isLogin ? "Sign In" : "Sign Up"}
-            </Button>
-          </form>
-          <div className="mt-4 text-center text-sm">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-primary md:hover:underline"
-            >
-              {isLogin
-                ? "Don't have an account? Sign up"
-                : "Already have an account? Sign in"}
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="auth-page stack">
+      <Link to="/">← Back to your workouts</Link>
+      <h1>
+        {signup ? "Keep your progress with you" : "Sync your workout log"}
+      </h1>
+      <p>
+        Sign in to back up your workouts and access them on another device. You
+        can keep logging on this phone without signing in.
+      </p>
+      {supabase ? (
+        <form className="stack" onSubmit={(e) => void submit(e)}>
+          <label>
+            Email
+            <input
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </label>
+          <label>
+            Password
+            <input
+              type="password"
+              autoComplete={signup ? "new-password" : "current-password"}
+              minLength={signup ? 8 : 1}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+          <button className="primary" disabled={busy}>
+            {busy ? "Please wait…" : signup ? "Create account" : "Sign in"}
+          </button>
+        </form>
+      ) : (
+        <p className="notice">
+          Cloud sync is not configured. Your phone log still works.
+        </p>
+      )}
+      {message && (
+        <p role="status" className="notice">
+          {message}
+        </p>
+      )}
+      <button
+        className="text-button"
+        onClick={() => {
+          setSignup(!signup);
+          setMessage("");
+        }}
+      >
+        {signup
+          ? "Already have an account? Sign in"
+          : "New here? Create an account"}
+      </button>
+      <Link className="secondary" to="/">
+        Continue on this phone
+      </Link>
     </div>
   );
-};
-
-export default Auth;
+}

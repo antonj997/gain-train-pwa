@@ -1,175 +1,132 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Play, Dumbbell, Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { useScrollPosition } from "@/hooks/useScrollPosition";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { suggestedExercises } from "@/data/start";
+import { Link, useNavigate } from "react-router-dom";
+import { Plus, Play, ChevronRight } from "lucide-react";
+import { useData } from "@/contexts/DataContext";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-
-interface WorkoutTemplate {
-  id: string;
-  name: string;
-  created_at: string;
-}
-
-const Home = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showLoading, setShowLoading] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [templateToDelete, setTemplateToDelete] = useState<string | null>(null);
-  useScrollPosition();
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    loadTemplates();
-  }, [user, navigate]);
-
-  useEffect(() => {
-    setShowLoading(loading);
-  }, [loading]);
-
-  const loadTemplates = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("workout_templates")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setTemplates(data || []);
-    } catch (error: any) {
-      toast.error("Failed to load workout templates");
-    } finally {
-      setLoading(false);
-    }
+  today,
+  repeatExercises,
+  type Workout,
+  type Routine,
+} from "@/data/model";
+export default function Home() {
+  const { state, save } = useData(),
+    navigate = useNavigate();
+  const records = Object.values(state.records).filter((r) => !r.deleted);
+  const drafts = records.filter(
+    (r) => r.kind === "workout" && (r.payload as Workout).status === "draft",
+  );
+  const recent = records
+    .filter(
+      (r) =>
+        r.kind === "workout" && (r.payload as Workout).status === "completed",
+    )
+    .sort((a, b) =>
+      (b.payload as Workout).date.localeCompare((a.payload as Workout).date),
+    );
+  const routines = records.filter((r) => r.kind === "routine");
+  const start = async (past = false, routine?: Routine) => {
+    const id = crypto.randomUUID();
+    await save(id, "workout", {
+      name: routine?.name || "Workout",
+      date: today(),
+      duration: null,
+      startedAt: past ? null : Date.now(),
+      status: "draft",
+      exercises: routine
+        ? suggestedExercises(routine.exercises, Object.values(state.records))
+        : [],
+    });
+    navigate("/workout/" + id);
   };
-
-  const handleDeleteTemplate = async () => {
-    if (!templateToDelete) return;
-
-    try {
-      const { error } = await supabase
-        .from("workout_templates")
-        .delete()
-        .eq("id", templateToDelete);
-
-      if (error) throw error;
-
-      toast.success("Workout plan deleted");
-      loadTemplates();
-    } catch (error: any) {
-      toast.error("Failed to delete workout plan");
-    } finally {
-      setDeleteDialogOpen(false);
-      setTemplateToDelete(null);
-    }
-  };
-
   return (
-    <div className="space-y-6 pb-20">
-      {/* Welcome Section */}
-      <div className="mt-2">
-        <h1 className="text-3xl font-bold">Welcome Back!</h1>
-        <p className="text-muted-foreground">All aboard the gain train!</p>
+    <div className="stack">
+      <div className="page-title">
+        <div>
+          <p className="eyebrow">
+            {new Date().toLocaleDateString(undefined, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+          <h1>Ready for your next set?</h1>
+        </div>
       </div>
-
-      {/* Quick Start */}
-      <Button
-        size="lg"
-        className="w-full relative p-[2px] bg-gradient-to-br from-[hsl(270,83%,58%)] to-[hsl(225,83%,58%)] rounded-lg h-auto"
-        onClick={() => navigate("/workout/new")}
-      >
-        <span className="flex items-center justify-center w-full bg-background text-foreground md:hover:bg-background/90 rounded-md px-6 py-3 transition-colors">
-          <Plus className="mr-2 h-5 w-5" />
-          Start New Workout
-        </span>
-      </Button>
-
-      {/* Saved Templates */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Your Workout Plans</h2>
-        {showLoading ? (
-          <LoadingSpinner text="Loading your workout plans..." />
-        ) : templates.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Dumbbell className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-center mb-4">
-                No workout plans yet.
-                <br />
-                Create your first workout to get started!
-              </p>
-            </CardContent>
-          </Card>
+      {drafts.map((r) => (
+        <Link key={r.id} to={"/workout/" + r.id} className="resume-card">
+          <span>
+            <small>IN PROGRESS</small>
+            <strong>{r.payload.name}</strong>
+            <span>
+              {(r.payload as Workout).exercises.length} exercises · Resume where
+              you left off
+            </span>
+          </span>
+          <Play size={24} />
+        </Link>
+      ))}
+      <button className="primary large" onClick={() => void start()}>
+        <Plus size={21} />
+        Start workout
+      </button>
+      <button className="text-button" onClick={() => void start(true)}>
+        Log a past workout
+      </button>
+      <section>
+        <div className="section-heading">
+          <h2>Your routines</h2>
+          <Link to="/routines">Manage</Link>
+        </div>
+        {routines.length ? (
+          routines.map((r) => (
+            <button
+              className="list-card"
+              key={r.id}
+              onClick={() => void start(false, r.payload as Routine)}
+            >
+              <span>
+                <strong>{r.payload.name}</strong>
+                <small>
+                  {(r.payload as Routine).exercises.length} exercises
+                </small>
+              </span>
+              <Play size={19} />
+            </button>
+          ))
         ) : (
-          <div className="space-y-3">
-            {templates.map((template) => (
-              <Card
-                key={template.id}
-                className="md:hover:bg-accent/5 transition-colors"
-              >
-                <CardHeader className="pb-3 pt-3">
-                  <div className="flex items-center gap-3">
-                    <CardTitle 
-                      className="text-lg cursor-pointer flex-1"
-                      onClick={() => navigate(`/workout/${template.id}`)}
-                    >
-                      {template.name}
-                    </CardTitle>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTemplateToDelete(template.id);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
+          <div className="empty-card">
+            <h3>A routine makes next time easier</h3>
+            <p>
+              Save a workout as a routine after finishing, or create one now.
+            </p>
+            <Link className="secondary" to="/routines">
+              Create a routine
+            </Link>
           </div>
         )}
-      </div>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Workout Plan</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this workout plan? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTemplate}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      </section>
+      {recent.length > 0 && (
+        <section>
+          <div className="section-heading">
+            <h2>Last workout</h2>
+            <Link to="/history">View all</Link>
+          </div>
+          <Link className="list-card" to={"/history?workout=" + recent[0].id}>
+            <span>
+              <strong>{recent[0].payload.name}</strong>
+              <small>
+                {(recent[0].payload as Workout).date} ·{" "}
+                {(recent[0].payload as Workout).exercises.reduce(
+                  (n, e) => n + e.sets.filter((s) => s.done).length,
+                  0,
+                )}{" "}
+                sets
+              </small>
+            </span>
+            <ChevronRight size={20} />
+          </Link>
+        </section>
+      )}
     </div>
   );
-};
-
-export default Home;
+}

@@ -1,70 +1,76 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-
-interface AuthContextType {
+type Auth = {
   user: User | null;
-  session: Session | null;
-  signUp: (email: string, password: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  account: string;
+  ready: boolean;
   signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-
+};
+const Context = createContext<Auth | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null),
+    [account, setAccount] = useState(
+      () => localStorage.getItem("gt-account") || "phone",
+    ),
+    [ready, setReady] = useState(false);
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    localStorage.removeItem("rememberedPassword");
+    localStorage.removeItem("rememberedEmail");
+    if (!supabase) {
+      setReady(true);
+      return;
+    }
+    let active = true;
+    const update = (u: User | null) => {
+      if (!active) return;
+      setUser(u);
+      if (u) {
+        localStorage.setItem("gt-account", u.id);
+        setAccount(u.id);
       }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      setReady(true);
+    };
+    const timeout = setTimeout(() => setReady(true), 4000);
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === "SIGNED_OUT" && navigator.onLine) {
+        localStorage.removeItem("gt-account");
+        setAccount("phone");
+      }
+      update(s?.user ?? null);
     });
-
-    return () => subscription.unsubscribe();
+    supabase.auth
+      .getSession()
+      .then(({ data }) => update(data.session?.user ?? null))
+      .catch(() => setReady(true));
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
-
-  const signUp = async (email: string, password: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: redirectUrl },
-    });
-    return { error };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
-  };
-
   const signOut = async () => {
-    await supabase.auth.signOut();
+    await supabase?.auth.signOut({ scope: "local" });
+    localStorage.removeItem("gt-account");
+    setUser(null);
+    setAccount("phone");
   };
-
   return (
-    <AuthContext.Provider value={{ user, session, signUp, signIn, signOut }}>
+    <Context.Provider value={{ user, account, ready, signOut }}>
       {children}
-    </AuthContext.Provider>
+    </Context.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+}
+export function useAuth() {
+  const c = useContext(Context);
+  if (!c) throw Error("Auth provider missing");
+  return c;
+}

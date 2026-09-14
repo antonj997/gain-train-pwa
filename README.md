@@ -1,88 +1,49 @@
-# Welcome to your Lovable project
+# Gain Train
 
-## Project info
+A phone-first workout log: start or resume a workout, enter sets, and review progress. Use **Log a past workout** for an earlier session. Routines and previous set values make repeat workouts faster.
 
-**URL**: https://lovable.dev/projects/7791df49-3b29-49b9-b630-a86b448e7304
+Live app: https://antonj997.github.io/gain-train-pwa/
 
-## How can I edit this code?
+## Offline and sync
 
-There are several ways of editing your application.
+Open the app once with a connection to cache it, then add it to your home screen. Drafts and finished workouts save to IndexedDB on your device before any network request. Sign in for cloud sync. If you started without an account, Settings lets you copy that phone log into your signed-in account.
 
-**Use Lovable**
+Sync retries while the app is open, when a connection returns, and when you return to the app. A closed mobile app cannot guarantee immediate background sync. Conflicting device edits are preserved for an explicit choice in Settings. Export a backup before clearing browser data.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7791df49-3b29-49b9-b630-a86b448e7304) and start prompting.
+## Run locally
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requires Node 22 or newer.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm ci
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The committed .env contains only the public Supabase URL and browser-safe publishable key. Never add a service-role key to frontend configuration.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+npm run typecheck
+npm test
+npm run lint
+npm run build
+```
 
-**Use GitHub Codespaces**
+The optional cloud integration test uses QA_EMAIL and QA_PASSWORD for a disposable confirmed test account. It is skipped when those variables are absent.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Hosting and database
 
-## What technologies are used for this project?
+Pushing main deploys to GitHub Pages through the existing Actions workflow. It sets GITHUB_PAGES=true to use /gain-train-pwa/ as the application base path.
 
-This project is built with:
+The replacement Supabase project is opecaiznqmgbsezmtnhb in antonj997's Org, on Free. Its active schema is in supabase/migrations/20260913181407_offline_record_sync.sql. This migration has already been applied to that project. Older migrations describe the retired Lovable database and remain for reference; the replacement project uses gain_records and gain_sync_receipts. No historical data could be recovered from the unavailable original database.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Each workout and its sets sync atomically as one document. Ownership policies isolate accounts. Operation receipts make retries idempotent; revision checks detect conflicts; soft deletion and ordered change cursors support disconnected devices. The app never caches authenticated Supabase HTTP responses in the service worker.
 
-## How can I deploy this project?
+GitHub Pages and Supabase Free have no recurring charge within their free limits. Supabase may pause an inactive Free project; restore it in your own dashboard. Local logging continues. Default Supabase email delivery is restricted to organization members; configure your own SMTP provider before inviting unrelated users. Confirmation URLs are configured for the live app.
 
-**Option 1: Deploy to GitHub Pages (Recommended)**
+References: https://supabase.com/pricing and https://supabase.com/docs/guides/auth/auth-smtp
 
-This project is configured to automatically deploy to GitHub Pages. To enable it:
+## Review status
 
-1. Go to your repository settings on GitHub
-2. Navigate to "Pages" in the left sidebar
-3. Under "Build and deployment", select "Source" as "GitHub Actions"
-4. Push to the `main` branch or manually trigger the workflow
+Verified: typecheck, production build, eight automated persistence/sync tests, real-server retry test, database ownership and validation assertions, and browser walkthroughs including draft reload, bodyweight, routines, History and Progress. Production app startup and Progress also worked with the local web server stopped (cached assets).
 
-Once deployed, your app will be available at: `https://antonj997.github.io/GainTrain/`
-
-The deployment workflow automatically builds and deploys your app whenever you push changes to the main branch.
-
-**Option 2: Deploy via Lovable**
-
-Simply open [Lovable](https://lovable.dev/projects/7791df49-3b29-49b9-b630-a86b448e7304) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The independent usability agent completed part of round one and reported editing/deletion friction, which was improved. It hit the account usage limit before producing a numeric score. The owner requested prioritizing publication for hands-on testing; no score or completed retest is claimed.
