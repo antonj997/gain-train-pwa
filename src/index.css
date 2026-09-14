@@ -875,3 +875,20 @@ h3,
 .app-dialog .picker-list {
   min-height: 40px;
 }
+.routine-exercise {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.routine-exercise > strong {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.routine-exercise-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 2px;
+}

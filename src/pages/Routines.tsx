@@ -1,7 +1,7 @@
 import { suggestedExercises } from "@/data/start";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Play, Trash2, Pencil } from "lucide-react";
+import { Plus, Play, Trash2, Pencil, ArrowUp, ArrowDown } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 import { type Routine, newSet, repeatExercises, today } from "@/data/model";
 import ExercisePicker from "@/components/ExercisePicker";
@@ -21,6 +21,20 @@ export default function Routines() {
   const records = Object.values(state.records).filter(
     (r) => r.kind === "routine" && !r.deleted,
   );
+  const moveExercise = (id: string, direction: -1 | 1) => {
+    setEdit((current) => {
+      if (!current) return current;
+      const exercises = [...current.data.exercises];
+      const index = exercises.findIndex((exercise) => exercise.id === id);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= exercises.length) return current;
+      [exercises[index], exercises[target]] = [
+        exercises[target],
+        exercises[index],
+      ];
+      return { ...current, data: { ...current.data, exercises } };
+    });
+  };
   return (
     <div className="stack">
       <h1>Routines</h1>
@@ -99,8 +113,8 @@ export default function Routines() {
           <DialogHeader>
             <DialogTitle>Edit routine</DialogTitle>
             <DialogDescription>
-              Choose exercises. Your last weights and reps are available while
-              logging.
+              Choose exercises and use the arrows to change their order. Your
+              last weights and reps are available while logging.
             </DialogDescription>
           </DialogHeader>
           {edit && (
@@ -118,26 +132,46 @@ export default function Routines() {
                   }
                 />
               </label>
-              {edit.data.exercises.map((ex) => (
-                <div className="history-set" key={ex.id}>
+              {edit.data.exercises.map((ex, index) => (
+                <div className="routine-exercise" key={ex.id}>
                   <strong>{ex.name}</strong>
-                  <button
-                    className="icon-button"
-                    aria-label={"Remove " + ex.name}
-                    onClick={() =>
-                      setEdit({
-                        ...edit,
-                        data: {
-                          ...edit.data,
-                          exercises: edit.data.exercises.filter(
-                            (e) => e.id !== ex.id,
-                          ),
-                        },
-                      })
-                    }
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  <div className="routine-exercise-actions">
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label={"Move " + ex.name + " up"}
+                      disabled={index === 0}
+                      onClick={() => moveExercise(ex.id, -1)}
+                    >
+                      <ArrowUp size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label={"Move " + ex.name + " down"}
+                      disabled={index === edit.data.exercises.length - 1}
+                      onClick={() => moveExercise(ex.id, 1)}
+                    >
+                      <ArrowDown size={18} />
+                    </button>
+                    <button
+                      className="icon-button"
+                      aria-label={"Remove " + ex.name}
+                      onClick={() =>
+                        setEdit({
+                          ...edit,
+                          data: {
+                            ...edit.data,
+                            exercises: edit.data.exercises.filter(
+                              (e) => e.id !== ex.id,
+                            ),
+                          },
+                        })
+                      }
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
               ))}
               <button className="secondary" onClick={() => setPicker(true)}>
