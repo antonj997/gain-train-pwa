@@ -88,3 +88,15 @@ test("routine origin survives validation while old workouts remain valid", () =>
     routineId,
   );
 });
+test("long history ranges clamp month ends and compare equal-length periods", () => {
+  const six = historyPeriod("6m", "2026-08-31");
+  assert.equal(six.start, "2026-03-01");
+  assert.equal(six.end, "2026-08-31");
+  assert.equal(six.days, 184);
+  assert.equal(six.previousEnd, "2026-02-28");
+  assert.equal(six.previousDays, six.days);
+  const year = historyPeriod("12m", "2024-02-29");
+  assert.equal(year.start, "2023-03-01");
+  assert.equal(year.days, 366);
+  assert.equal(year.previousDays, 366);
+});

@@ -36,6 +36,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const toggleTheme = () => {
     clearTimeout(fadeTimer.current);
     document.documentElement.classList.add("theme-fading");
+    // Commit transition styles before React applies the next theme's colors.
+    void document.documentElement.offsetWidth;
     fadeTimer.current = setTimeout(
       () => document.documentElement.classList.remove("theme-fading"),
       700,

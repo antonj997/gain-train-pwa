@@ -1,3 +1,4 @@
+import HistoryDatePicker from "@/components/HistoryDatePicker";
 import {
   historyPeriod,
   summarize,
@@ -120,20 +121,7 @@ export default function History() {
         <h1>History</h1>
         <span className="muted">{records.length} workouts</span>
       </div>
-      <label>
-        Month
-        <div className={"month-picker " + (!month ? "rolling-period" : "")}>
-          <input
-            type="month"
-            aria-label="History month"
-            aria-description="Leave blank for the last 30 days"
-            max={today().slice(0, 7)}
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-          />
-          {!month && <span aria-hidden="true">Last 30 days</span>}
-        </div>
-      </label>
+      <HistoryDatePicker value={month} onChange={setMonth} />
       <p className="small-note">
         {period.start} – {period.end}
       </p>

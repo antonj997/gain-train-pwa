@@ -41,6 +41,28 @@ export function shiftDate(date: string, days: number) {
   return dateKey(new Date(dateAt(date).getTime() + days * dayMs));
 }
 export function historyPeriod(month: string, now: string) {
+  if (month === "6m" || month === "12m") {
+    const date = dateAt(now);
+    const count = month === "6m" ? 6 : 12;
+    const target = new Date(
+      Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - count, 1),
+    );
+    const lastDay = new Date(
+      Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
+    ).getUTCDate();
+    target.setUTCDate(Math.min(date.getUTCDate(), lastDay));
+    const start = shiftDate(dateKey(target), 1);
+    const days =
+      Math.round((date.getTime() - dateAt(start).getTime()) / dayMs) + 1;
+    return {
+      start,
+      end: now,
+      days,
+      previousStart: shiftDate(start, -days),
+      previousEnd: shiftDate(start, -1),
+      previousDays: days,
+    };
+  }
   if (!month) {
     const start = shiftDate(now, -29);
     return {

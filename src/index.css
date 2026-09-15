@@ -1304,3 +1304,63 @@ select {
       box-shadow 0.65s ease;
   }
 }
+
+.date-picker-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.date-picker-trigger {
+  width: 100%;
+  justify-content: space-between;
+  text-align: left;
+  font-weight: 400;
+}
+.date-presets,
+.date-months {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.date-presets button {
+  font-size: 13px;
+  padding: 10px 6px;
+  line-height: 1.4;
+}
+.date-months button {
+  min-height: 46px;
+  padding: 8px;
+}
+.date-year {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+h1,
+h2,
+h3,
+.settings-disclosure summary strong,
+.settings-disclosure summary svg {
+  color: var(--ink);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-fading h1,
+  html.theme-fading h2,
+  html.theme-fading h3,
+  html.theme-fading strong,
+  html.theme-fading summary,
+  html.theme-fading svg {
+    transition:
+      color 0.65s ease,
+      fill 0.65s ease,
+      stroke 0.65s ease,
+      transform 0.15s ease;
+  }
+  html.theme-fading .theme-switch svg {
+    transition:
+      opacity 0.5s,
+      transform 0.65s;
+  }
+}
