@@ -1,4 +1,38 @@
-import { type Workout, validSet } from "./model";
+import { type Workout, type RecordDoc, validSet } from "./model";
+import { progressFor } from "./analytics";
+
+export function improvementRate(
+  records: RecordDoc[],
+  start: string,
+  end: string,
+) {
+  let compared = 0,
+    improved = 0;
+  for (const exercise of progressFor(records)) {
+    const points = exercise.points.filter((point) => point.date <= end);
+    const latest = points.at(-1);
+    if (!latest || latest.date < start) continue;
+    const weighted = latest.e1rm !== null;
+    const comparable = points.filter(
+      (point) =>
+        point.set.load === latest.set.load &&
+        (weighted
+          ? point.e1rm !== null
+          : latest.set.load === "bodyweight" ||
+            point.set.weight === latest.set.weight),
+    );
+    const baseline =
+      comparable.filter((point) => point.date < start).at(-1) ?? comparable[0];
+    if (!baseline || baseline === latest) continue;
+    compared++;
+    if (
+      (weighted ? latest.e1rm! : latest.set.reps!) >
+      (weighted ? baseline.e1rm! : baseline.set.reps!)
+    )
+      improved++;
+  }
+  return compared ? (improved / compared) * 100 : null;
+}
 
 const dayMs = 86400000;
 const dateAt = (date: string) => new Date(date + "T00:00:00Z");

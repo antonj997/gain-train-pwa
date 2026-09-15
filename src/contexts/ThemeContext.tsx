@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 
 type Theme = "light" | "dark";
 
@@ -25,7 +25,21 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("gain-train-theme", theme);
   }, [theme]);
 
+  const fadeTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(
+    () => () => {
+      clearTimeout(fadeTimer.current);
+      document.documentElement.classList.remove("theme-fading");
+    },
+    [],
+  );
   const toggleTheme = () => {
+    clearTimeout(fadeTimer.current);
+    document.documentElement.classList.add("theme-fading");
+    fadeTimer.current = setTimeout(
+      () => document.documentElement.classList.remove("theme-fading"),
+      700,
+    );
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
   };
 

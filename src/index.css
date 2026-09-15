@@ -1065,11 +1065,11 @@ h3,
 .session-summary::-webkit-details-marker {
   display: none;
 }
-.session-summary svg {
+.session-summary > svg {
   flex-shrink: 0;
   transition: transform 0.15s;
 }
-details[open] > .session-summary svg {
+details[open] > .session-summary > svg {
   transform: rotate(180deg);
 }
 @media (min-width: 640px) {
@@ -1256,4 +1256,51 @@ select {
 .load-label select,
 .set-meta select {
   padding-right: 36px;
+}
+
+.month-picker {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+.month-picker > span {
+  position: absolute;
+  inset-inline-start: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-weight: 400;
+}
+.rolling-period:not(:focus-within) input::-webkit-datetime-edit {
+  color: transparent;
+}
+.rolling-period:focus-within > span {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-fading body,
+  html.theme-fading .app-shell,
+  html.theme-fading .app-header,
+  html.theme-fading .bottom-nav,
+  html.theme-fading main,
+  html.theme-fading section,
+  html.theme-fading details,
+  html.theme-fading .metric,
+  html.theme-fading input,
+  html.theme-fading select,
+  html.theme-fading button:not(.theme-switch),
+  html.theme-fading a,
+  html.theme-fading .app-dialog,
+  html.theme-fading .workout-footer,
+  html.theme-fading h1,
+  html.theme-fading h2,
+  html.theme-fading p,
+  html.theme-fading small,
+  html.theme-fading span:not(.theme-orb):not(.theme-stars):not(.theme-horizon) {
+    transition:
+      background-color 0.65s ease,
+      color 0.65s ease,
+      border-color 0.65s ease,
+      box-shadow 0.65s ease;
+  }
 }

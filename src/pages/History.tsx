@@ -3,6 +3,7 @@ import {
   summarize,
   weekStart,
   metricChange,
+  improvementRate,
 } from "@/data/summary";
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -60,29 +61,6 @@ export default function History() {
   const weeks = [
     ...new Set(filtered.map((r) => weekStart((r.payload as Workout).date))),
   ];
-  const currentMonth = new Date(today().slice(0, 7) + "-01T12:00:00");
-  const oldestMonth = records.length
-    ? (records.at(-1)!.payload as Workout).date.slice(0, 7)
-    : today().slice(0, 7);
-  const oldest = new Date(oldestMonth + "-01T12:00:00");
-  const monthCount = Math.max(
-    12,
-    (currentMonth.getFullYear() - oldest.getFullYear()) * 12 +
-      currentMonth.getMonth() -
-      oldest.getMonth() +
-      1,
-  );
-  const months = Array.from({ length: monthCount }, (_, index) => {
-    const date = new Date(
-      currentMonth.getFullYear(),
-      currentMonth.getMonth() - index,
-      1,
-      12,
-    );
-    return (
-      date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0")
-    );
-  });
   const metrics = [
     {
       label: "Workouts / week",
@@ -97,10 +75,11 @@ export default function History() {
       decimals: 0,
     },
     {
-      label: "Total volume · kg",
-      value: current.volume,
-      prior: previous.volume,
+      label: "Exercises improving",
+      value: improvementRate(records, period.start, period.end),
+      prior: improvementRate(records, period.previousStart, period.previousEnd),
       decimals: 0,
+      suffix: "%",
     },
   ];
   const selected = records.find((r) => r.id === params.get("workout"));
@@ -143,21 +122,17 @@ export default function History() {
       </div>
       <label>
         Month
-        <select
-          aria-label="History month"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-        >
-          <option value="">Last 30 days</option>
-          {months.map((value) => (
-            <option key={value} value={value}>
-              {new Date(value + "-01T12:00:00").toLocaleDateString(undefined, {
-                month: "long",
-                year: "numeric",
-              })}
-            </option>
-          ))}
-        </select>
+        <div className={"month-picker " + (!month ? "rolling-period" : "")}>
+          <input
+            type="month"
+            aria-label="History month"
+            aria-description="Leave blank for the last 30 days"
+            max={today().slice(0, 7)}
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+          />
+          {!month && <span aria-hidden="true">Last 30 days</span>}
+        </div>
       </label>
       <p className="small-note">
         {period.start} – {period.end}
@@ -169,10 +144,13 @@ export default function History() {
             <strong>
               {metric.value === null
                 ? "—"
-                : metric.value.toFixed(metric.decimals)}
+                : metric.value.toFixed(metric.decimals) + (metric.suffix ?? "")}
             </strong>
             <small>
               {metricChange(metric.value, metric.prior, metric.decimals)}
+              {metric.suffix && metric.value !== null && metric.prior !== null
+                ? " pp"
+                : ""}
             </small>
           </div>
         ))}
@@ -185,8 +163,12 @@ export default function History() {
         <p className="small-note">
           Arrows show the change from the previous period. Duration averages
           exclude workouts without a recorded duration. Weekly frequency
-          includes weeks without workouts. Volume is weight × reps for completed
-          weighted sets; bodyweight and assisted sets are excluded.
+          includes weeks without workouts. Exercises improving compares your
+          latest performance with the last session before this period, or the
+          first session within it. Only exercises with comparable working sets
+          count: estimated strength for weighted sets of 1–10 reps, otherwise
+          reps at the same load. A dash means there is not enough data.
+          Percentage changes are in percentage points (pp).
         </p>
       </details>
       {weeks.map((week) => (
