@@ -113,7 +113,10 @@ export function summarize(workouts: Workout[], days: number) {
       0,
     ),
     workouts: workouts.length,
-    perWeek: (workouts.length * 7) / days,
+    perWeek: workouts.length
+      ? workouts.length /
+        new Set(workouts.map((workout) => weekStart(workout.date))).size
+      : 0,
     duration: durations.length
       ? durations.reduce((sum, value) => sum + value, 0) / durations.length
       : null,

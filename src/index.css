@@ -1364,3 +1364,57 @@ h3,
       transform 0.65s;
   }
 }
+
+/* Explicit colors prevent nested inherited transitions from lagging behind headings. */
+.app-header .brand > span,
+.app-header > .icon-button,
+.app-header > .icon-button > svg {
+  color: var(--ink);
+}
+
+/* Use one animation clock for primary text, including nested header controls. */
+@keyframes ink-to-dark {
+  from {
+    color: #172033;
+  }
+  to {
+    color: #f0f3fa;
+  }
+}
+@keyframes ink-to-light {
+  from {
+    color: #f0f3fa;
+  }
+  to {
+    color: #172033;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html.theme-fading
+    :is(
+      h1,
+      h2,
+      h3,
+      .brand > span,
+      .app-header > .icon-button,
+      .app-header > .icon-button > svg,
+      .settings-disclosure summary strong,
+      .settings-disclosure summary svg
+    ) {
+    transition-property: background-color, border-color, box-shadow, transform;
+    animation: ink-to-light 0.65s ease both;
+  }
+  html.dark.theme-fading
+    :is(
+      h1,
+      h2,
+      h3,
+      .brand > span,
+      .app-header > .icon-button,
+      .app-header > .icon-button > svg,
+      .settings-disclosure summary strong,
+      .settings-disclosure summary svg
+    ) {
+    animation-name: ink-to-dark;
+  }
+}

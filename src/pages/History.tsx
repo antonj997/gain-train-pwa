@@ -150,13 +150,14 @@ export default function History() {
         </summary>
         <p className="small-note">
           Arrows show the change from the previous period. Duration averages
-          exclude workouts without a recorded duration. Weekly frequency
-          includes weeks without workouts. Exercises improving compares your
-          latest performance with the last session before this period, or the
-          first session within it. Only exercises with comparable working sets
-          count: estimated strength for weighted sets of 1–10 reps, otherwise
-          reps at the same load. A dash means there is not enough data.
-          Percentage changes are in percentage points (pp).
+          exclude workouts without a recorded duration. Weekly frequency counts
+          only Monday–Sunday weeks with at least one workout in the selected
+          period. Exercises improving compares your latest performance with the
+          last session before this period, or the first session within it. Only
+          exercises with comparable working sets count: estimated strength for
+          weighted sets of 1–10 reps, otherwise reps at the same load. A dash
+          means there is not enough data. Percentage changes are in percentage
+          points (pp).
         </p>
       </details>
       {weeks.map((week) => (

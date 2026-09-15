@@ -67,7 +67,17 @@ test("summary excludes missing durations and unchecked sets, counts zero-minute 
     })),
   };
   assert.equal(summarize([assisted], 30).volume, 0);
-  assert.equal(summary.perWeek, 0.7);
+  assert.equal(summary.perWeek, 3);
+  assert.equal(
+    summarize([workout, { ...workout, date: "2026-08-03" }], 60).perWeek,
+    1,
+  );
+  assert.equal(
+    summarize([workout, workout, { ...workout, date: "2026-08-03" }], 60)
+      .perWeek,
+    1.5,
+  );
+  assert.equal(summarize([], 30).perWeek, 0);
   assert.equal(summarize([], 30).duration, null);
   assert.equal(metricChange(null, 20), "No comparison");
   assert.equal(metricChange(1.04, 1, 1), "→ No change");
