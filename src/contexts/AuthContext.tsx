@@ -7,11 +7,13 @@ import {
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { eraseAccount } from "@/data/database";
 type Auth = {
   user: User | null;
   account: string;
   ready: boolean;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 const Context = createContext<Auth | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -63,8 +65,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setAccount("phone");
   };
+  const deleteAccount = async () => {
+    if (!user || !supabase || !navigator.onLine)
+      throw Error(
+        "Connect to the internet and sign in to delete your account.",
+      );
+    const id = user.id;
+    const { data, error } = await supabase.functions.invoke("delete-account", {
+      body: { confirmation: "DELETE" },
+    });
+    if (error || !data?.deleted)
+      throw Error(
+        "Could not delete your account. Sign in again and retry. Your account may still exist.",
+      );
+    try {
+      await eraseAccount(id);
+    } finally {
+      await signOut();
+    }
+  };
   return (
-    <Context.Provider value={{ user, account, ready, signOut }}>
+    <Context.Provider value={{ user, account, ready, signOut, deleteAccount }}>
       {children}
     </Context.Provider>
   );

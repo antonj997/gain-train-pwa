@@ -58,6 +58,15 @@ test("summary excludes missing durations and unchecked sets, counts zero-minute 
   assert.equal(summary.duration, 30);
   assert.equal(summary.minutes, 60);
   assert.equal(summary.sets, 3);
+  assert.equal(summary.volume, 300);
+  const assisted = {
+    ...workout,
+    exercises: workout.exercises.map((ex) => ({
+      ...ex,
+      sets: ex.sets.map((set) => ({ ...set, load: "assisted" as const })),
+    })),
+  };
+  assert.equal(summarize([assisted], 30).volume, 0);
   assert.equal(summary.perWeek, 0.7);
   assert.equal(summarize([], 30).duration, null);
   assert.equal(metricChange(null, 20), "No comparison");

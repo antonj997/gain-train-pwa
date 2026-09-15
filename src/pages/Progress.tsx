@@ -77,120 +77,133 @@ export default function Progress() {
                     : "First session logged. A starting point to build on."}
                 </p>
               </div>
-              <div className="metrics-grid progress-metrics">
-                <div className="metric">
-                  <span>{weighted ? "Best est. 1RM" : "Best reps"}</span>
-                  <strong>
-                    {best.toFixed(weighted ? 1 : 0)}
-                    {weighted ? " kg" : ""}
-                  </strong>
-                  <small>
-                    {latestValue === best
-                      ? "At your best"
-                      : `${(best - (latestValue ?? 0)).toFixed(weighted ? 1 : 0)} ${weighted ? "kg" : "reps"} from best`}
-                  </small>
-                </div>
-                <div className="metric">
-                  <span>Latest change</span>
-                  <strong>
-                    {metricChange(latestValue, previousValue, weighted ? 1 : 0)}
-                  </strong>
-                  <small>
-                    {weighted ? "kg · vs prior" : "reps · same load"}
-                  </small>
-                </div>
-                <div className="metric">
-                  <span>Sessions · 30 days</span>
-                  <strong>
-                    {item.points.filter((p) => p.date > cutoffDate).length}
-                  </strong>
-                  <small>{item.points.length} total</small>
-                </div>
-              </div>
-              {points.length > 1 ? (
-                <div
-                  className="chart"
-                  role="img"
-                  aria-label={
-                    item.name + " progress over " + points.length + " sessions"
-                  }
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart
-                      data={points}
-                      margin={{ top: 10, right: 15, left: -12, bottom: 0 }}
-                    >
-                      <CartesianGrid vertical={false} stroke="var(--line)" />
-                      <XAxis
-                        dataKey="date"
-                        tickFormatter={(d) => d.slice(5)}
-                        minTickGap={24}
-                        tick={{ fill: "var(--soft)", fontSize: 12 }}
-                      />
-                      <YAxis
-                        domain={["auto", "auto"]}
-                        tick={{ fill: "var(--soft)", fontSize: 12 }}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          background: "var(--surface)",
-                          border: "1px solid var(--line)",
-                          borderRadius: 10,
-                        }}
-                        labelFormatter={(s) => String(s)}
-                        formatter={(value) => [
-                          Number(value).toFixed(weighted ? 1 : 0),
-                          weighted ? "Estimated 1RM (kg)" : "Reps",
-                        ]}
-                      />
-                      <Line
-                        dataKey="value"
-                        stroke="var(--blue)"
-                        strokeWidth={3}
-                        dot={{ r: 4 }}
-                        isAnimationActive={false}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <p className="small-note">
-                  Your chart starts after your next comparable session.
-                </p>
-              )}
-              {weighted && (
-                <p className="small-note">
-                  Estimated strength (1RM)
-                  {base !== null && latest.e1rm !== null
-                    ? " · " +
-                      (latest.e1rm - base >= 0 ? "+" : "") +
-                      (latest.e1rm - base).toFixed(1) +
-                      " kg vs 30 days ago"
-                    : ""}
-                  . Estimate uses sets of 1–10 reps.
-                </p>
-              )}
-              {!weighted && (
-                <p className="small-note">
-                  Best-set reps at the same load as your latest session.
-                  Assisted weight is not lifted weight.
-                </p>
-              )}
               <details>
                 <summary className="session-summary">
-                  Session details
+                  Details
                   <ChevronDown
                     size={18}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </summary>
-                {[...item.points].reverse().map((p, i) => (
-                  <div className="history-set" key={i}>
-                    <span>{p.date}</span>
-                    <strong>{labelSet(p.set)}</strong>
+                <div className="progress-details stack">
+                  {" "}
+                  <div className="metrics-grid progress-metrics">
+                    <div className="metric">
+                      <span>{weighted ? "Best est. 1RM" : "Best reps"}</span>
+                      <strong>
+                        {best.toFixed(weighted ? 1 : 0)}
+                        {weighted ? " kg" : ""}
+                      </strong>
+                      <small>
+                        {latestValue === best
+                          ? "At your best"
+                          : `${(best - (latestValue ?? 0)).toFixed(weighted ? 1 : 0)} ${weighted ? "kg" : "reps"} from best`}
+                      </small>
+                    </div>
+                    <div className="metric">
+                      <span>Latest change</span>
+                      <strong>
+                        {metricChange(
+                          latestValue,
+                          previousValue,
+                          weighted ? 1 : 0,
+                        )}
+                      </strong>
+                      <small>
+                        {weighted ? "kg · vs prior" : "reps · same load"}
+                      </small>
+                    </div>
+                    <div className="metric">
+                      <span>Sessions · 30 days</span>
+                      <strong>
+                        {item.points.filter((p) => p.date > cutoffDate).length}
+                      </strong>
+                      <small>{item.points.length} total</small>
+                    </div>
                   </div>
-                ))}
+                  {points.length > 1 ? (
+                    <div
+                      className="chart"
+                      role="img"
+                      aria-label={
+                        item.name +
+                        " progress over " +
+                        points.length +
+                        " sessions"
+                      }
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart
+                          data={points}
+                          margin={{ top: 10, right: 15, left: -12, bottom: 0 }}
+                        >
+                          <CartesianGrid
+                            vertical={false}
+                            stroke="var(--line)"
+                          />
+                          <XAxis
+                            dataKey="date"
+                            tickFormatter={(d) => d.slice(5)}
+                            minTickGap={24}
+                            tick={{ fill: "var(--soft)", fontSize: 12 }}
+                          />
+                          <YAxis
+                            domain={["auto", "auto"]}
+                            tick={{ fill: "var(--soft)", fontSize: 12 }}
+                          />
+                          <Tooltip
+                            contentStyle={{
+                              background: "var(--surface)",
+                              border: "1px solid var(--line)",
+                              borderRadius: 10,
+                            }}
+                            labelFormatter={(s) => String(s)}
+                            formatter={(value) => [
+                              Number(value).toFixed(weighted ? 1 : 0),
+                              weighted ? "Estimated 1RM (kg)" : "Reps",
+                            ]}
+                          />
+                          <Line
+                            dataKey="value"
+                            stroke="var(--blue)"
+                            strokeWidth={3}
+                            dot={{ r: 4 }}
+                            isAnimationActive={false}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <p className="small-note">
+                      Your chart starts after your next comparable session.
+                    </p>
+                  )}
+                  {weighted && (
+                    <p className="small-note">
+                      Estimated strength (1RM)
+                      {base !== null && latest.e1rm !== null
+                        ? " · " +
+                          (latest.e1rm - base >= 0 ? "+" : "") +
+                          (latest.e1rm - base).toFixed(1) +
+                          " kg vs 30 days ago"
+                        : ""}
+                      . Estimate uses sets of 1–10 reps.
+                    </p>
+                  )}
+                  {!weighted && (
+                    <p className="small-note">
+                      Best-set reps at the same load as your latest session.
+                      Assisted weight is not lifted weight.
+                    </p>
+                  )}
+                  {[...item.points].reverse().map((p, i) => (
+                    <div className="history-set" key={i}>
+                      <span>{p.date}</span>
+                      <strong>{labelSet(p.set)}</strong>
+                    </div>
+                  ))}
+                </div>{" "}
               </details>
             </section>
           );

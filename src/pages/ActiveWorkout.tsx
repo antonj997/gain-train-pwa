@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  ChevronDown,
   Plus,
   MoreHorizontal,
   ArrowUp,
@@ -218,7 +219,10 @@ function Editor({ id, initial }: { id: string; initial: Workout }) {
         className="workout-details"
         open={w.startedAt === null || undefined}
       >
-        <summary>Workout details · {w.date}</summary>
+        <summary className="session-summary">
+          Workout details · {w.date}
+          <ChevronDown size={18} />
+        </summary>
         <div className="details-grid">
           <label>
             Name

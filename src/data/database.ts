@@ -9,6 +9,11 @@ function db() {
   }));
 }
 export async function readAccount(account: string) {
+  if (
+    typeof localStorage !== "undefined" &&
+    localStorage.getItem("gt-deleted-" + account)
+  )
+    return emptyState();
   const d = await db();
   return new Promise<LocalState>((resolve, reject) => {
     const r = d.transaction("accounts").objectStore("accounts").get(account);
@@ -28,6 +33,11 @@ export async function transact(
     let next: LocalState;
     r.onsuccess = () => {
       try {
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("gt-deleted-" + account)
+        )
+          throw Error("This account was deleted.");
         next = r.result ?? emptyState();
         change(next);
         store.put(next, account);
@@ -40,5 +50,15 @@ export async function transact(
     tx.onerror = () => reject(tx.error);
     tx.onabort = () =>
       reject(tx.error ?? Error("Could not save on this device."));
+  });
+}
+export async function eraseAccount(account: string) {
+  localStorage.setItem("gt-deleted-" + account, "true");
+  const d = await db();
+  await new Promise<void>((resolve, reject) => {
+    const tx = d.transaction("accounts", "readwrite");
+    tx.objectStore("accounts").delete(account);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
   });
 }

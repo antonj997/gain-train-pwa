@@ -51,6 +51,11 @@ export function summarize(workouts: Workout[], days: number) {
     .flatMap((w) => w.exercises.flatMap((ex) => ex.sets))
     .filter((set) => set.done && validSet(set));
   return {
+    volume: sets.reduce(
+      (sum, set) =>
+        sum + (set.load === "weight" ? (set.weight ?? 0) * (set.reps ?? 0) : 0),
+      0,
+    ),
     workouts: workouts.length,
     perWeek: (workouts.length * 7) / days,
     duration: durations.length

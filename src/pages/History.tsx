@@ -12,6 +12,7 @@ import {
   Trash2,
   Pencil,
   CalendarDays,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/DataContext";
@@ -59,13 +60,30 @@ export default function History() {
   const weeks = [
     ...new Set(filtered.map((r) => weekStart((r.payload as Workout).date))),
   ];
+  const currentMonth = new Date(today().slice(0, 7) + "-01T12:00:00");
+  const oldestMonth = records.length
+    ? (records.at(-1)!.payload as Workout).date.slice(0, 7)
+    : today().slice(0, 7);
+  const oldest = new Date(oldestMonth + "-01T12:00:00");
+  const monthCount = Math.max(
+    12,
+    (currentMonth.getFullYear() - oldest.getFullYear()) * 12 +
+      currentMonth.getMonth() -
+      oldest.getMonth() +
+      1,
+  );
+  const months = Array.from({ length: monthCount }, (_, index) => {
+    const date = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() - index,
+      1,
+      12,
+    );
+    return (
+      date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0")
+    );
+  });
   const metrics = [
-    {
-      label: "Workouts",
-      value: current.workouts,
-      prior: previous.workouts,
-      decimals: 0,
-    },
     {
       label: "Workouts / week",
       value: current.perWeek,
@@ -79,21 +97,9 @@ export default function History() {
       decimals: 0,
     },
     {
-      label: "Training time · min",
-      value: current.minutes,
-      prior: previous.minutes,
-      decimals: 0,
-    },
-    {
-      label: "Completed sets",
-      value: current.sets,
-      prior: previous.sets,
-      decimals: 0,
-    },
-    {
-      label: "Working sets",
-      value: current.workingSets,
-      prior: previous.workingSets,
+      label: "Total volume · kg",
+      value: current.volume,
+      prior: previous.volume,
       decimals: 0,
     },
   ];
@@ -135,24 +141,24 @@ export default function History() {
         <h1>History</h1>
         <span className="muted">{records.length} workouts</span>
       </div>
-      <div className="history-filter">
-        <button
-          className={month ? "secondary" : "primary"}
-          onClick={() => setMonth("")}
+      <label>
+        Month
+        <select
+          aria-label="History month"
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
         >
-          Last 30 days
-        </button>
-        <label>
-          Choose month
-          <input
-            type="month"
-            aria-label="History month"
-            max={today().slice(0, 7)}
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-          />
-        </label>
-      </div>
+          <option value="">Last 30 days</option>
+          {months.map((value) => (
+            <option key={value} value={value}>
+              {new Date(value + "-01T12:00:00").toLocaleDateString(undefined, {
+                month: "long",
+                year: "numeric",
+              })}
+            </option>
+          ))}
+        </select>
+      </label>
       <p className="small-note">
         {period.start} – {period.end}
       </p>
@@ -172,13 +178,15 @@ export default function History() {
         ))}
       </div>
       <details className="stats-help">
-        <summary>
+        <summary className="session-summary">
           Compared with {period.previousStart} – {period.previousEnd}
+          <ChevronDown size={18} />
         </summary>
         <p className="small-note">
           Arrows show the change from the previous period. Duration averages
           exclude workouts without a recorded duration. Weekly frequency
-          includes weeks without workouts.
+          includes weeks without workouts. Volume is weight × reps for completed
+          weighted sets; bodyweight and assisted sets are excluded.
         </p>
       </details>
       {weeks.map((week) => (
