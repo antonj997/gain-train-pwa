@@ -44,5 +44,18 @@ export default defineConfig({
     }),
   ],
   resolve: { alias: { "@": path.resolve(__dirname, "src") } },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (/node_modules\/(recharts|d3-|react-smooth)/.test(id))
+            return "charts";
+          if (id.includes("node_modules/@supabase/")) return "cloud";
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(id))
+            return "react";
+        },
+      },
+    },
+  },
   server: { host: "127.0.0.1", port: 8082 },
 });

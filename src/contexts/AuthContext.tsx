@@ -8,10 +8,19 @@ import {
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { eraseAccount } from "@/data/database";
+import {
+  RECOVERY_STORAGE_KEY,
+  RECOVERY_USER_KEY,
+  recoveryRequested,
+  recoveredSessionMatches,
+} from "@/lib/authRecovery";
 type Auth = {
   user: User | null;
   account: string;
   ready: boolean;
+  passwordRecovery: boolean;
+  recoveredSession: boolean;
+  finishPasswordRecovery: () => void;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
 };
@@ -21,7 +30,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [account, setAccount] = useState(
       () => localStorage.getItem("gt-account") || "phone",
     ),
-    [ready, setReady] = useState(false);
+    [ready, setReady] = useState(false),
+    [passwordRecovery, setPasswordRecovery] = useState(
+      () =>
+        recoveryRequested(location.href) ||
+        sessionStorage.getItem(RECOVERY_STORAGE_KEY) === "true",
+    );
+  const [recoveryUserId, setRecoveryUserId] = useState(() =>
+    sessionStorage.getItem(RECOVERY_USER_KEY),
+  );
+  const finishPasswordRecovery = () => {
+    sessionStorage.removeItem(RECOVERY_STORAGE_KEY);
+    sessionStorage.removeItem(RECOVERY_USER_KEY);
+    setRecoveryUserId(null);
+    setPasswordRecovery(false);
+  };
   useEffect(() => {
     localStorage.removeItem("rememberedPassword");
     localStorage.removeItem("rememberedEmail");
@@ -43,9 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, s) => {
+      if (event === "PASSWORD_RECOVERY") {
+        const recoveredId = s?.user.id ?? null;
+        setRecoveryUserId(recoveredId);
+        if (recoveredId) sessionStorage.setItem(RECOVERY_USER_KEY, recoveredId);
+        sessionStorage.setItem(RECOVERY_STORAGE_KEY, "true");
+        setPasswordRecovery(true);
+      }
       if (event === "SIGNED_OUT" && navigator.onLine) {
         localStorage.removeItem("gt-account");
         setAccount("phone");
+        finishPasswordRecovery();
       }
       update(s?.user ?? null);
     });
@@ -64,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("gt-account");
     setUser(null);
     setAccount("phone");
+    finishPasswordRecovery();
   };
   const deleteAccount = async () => {
     if (!user || !supabase || !navigator.onLine)
@@ -85,7 +117,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   return (
-    <Context.Provider value={{ user, account, ready, signOut, deleteAccount }}>
+    <Context.Provider
+      value={{
+        user,
+        account,
+        ready,
+        passwordRecovery,
+        recoveredSession: recoveredSessionMatches(recoveryUserId, user?.id),
+        finishPasswordRecovery,
+        signOut,
+        deleteAccount,
+      }}
+    >
       {children}
     </Context.Provider>
   );

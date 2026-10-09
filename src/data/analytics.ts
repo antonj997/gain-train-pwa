@@ -4,34 +4,77 @@ import {
   type WorkoutSet,
   validSet,
 } from "./model";
+import { sortWorkoutsNewest } from "./workouts";
 export function estimate(s: WorkoutSet) {
-  return s.load === "weight" && s.weight && s.reps && s.reps <= 10
+  return s.measure !== "seconds" &&
+    validSet(s) &&
+    s.load === "weight" &&
+    s.weight &&
+    s.reps &&
+    s.reps <= 10
     ? s.weight * (1 + s.reps / 30)
     : null;
+}
+export function comparableSets(a: WorkoutSet, b: WorkoutSet) {
+  if (
+    a.load !== b.load ||
+    a.section !== b.section ||
+    (a.measure ?? "reps") !== (b.measure ?? "reps")
+  )
+    return false;
+  const aEstimate = estimate(a),
+    bEstimate = estimate(b);
+  return aEstimate !== null || bEstimate !== null
+    ? aEstimate !== null && bEstimate !== null
+    : a.load === "bodyweight" || a.weight === b.weight;
 }
 export function progressFor(records: RecordDoc[]) {
   const map = new Map<
     string,
     {
       name: string;
-      points: { date: string; set: WorkoutSet; e1rm: number | null }[];
+      points: {
+        date: string;
+        workoutId: string;
+        set: WorkoutSet;
+        e1rm: number | null;
+      }[];
     }
   >();
-  for (const record of records) {
+  const sessions = [...records]
+    .filter((r) => r.kind === "workout" && !r.deleted)
+    .sort(sortWorkoutsNewest)
+    .reverse();
+  for (const record of sessions) {
     if (record.kind !== "workout" || record.deleted) continue;
     const w = record.payload as Workout;
     if (w.status !== "completed") continue;
+    const grouped = new Map<string, { name: string; sets: WorkoutSet[] }>();
     for (const ex of w.exercises) {
+      const group = grouped.get(ex.exerciseId) ?? { name: ex.name, sets: [] };
+      group.sets.push(...ex.sets);
+      grouped.set(ex.exerciseId, group);
+    }
+    for (const [exerciseId, ex] of grouped) {
       const sets = ex.sets.filter(
         (s) => s.done && s.section === "working" && validSet(s),
       );
       if (!sets.length) continue;
-      const top = [...sets].sort(
-        (a, b) => (estimate(b) ?? b.reps ?? 0) - (estimate(a) ?? a.reps ?? 0),
-      )[0];
-      const item = map.get(ex.exerciseId) ?? { name: ex.name, points: [] };
-      item.points.push({ date: w.date, set: top, e1rm: estimate(top) });
-      map.set(ex.exerciseId, item);
+      const latestProfile = sets.at(-1)!;
+      const top = sets
+        .filter((s) => comparableSets(s, latestProfile))
+        .sort(
+          (a, b) => (estimate(b) ?? b.reps ?? 0) - (estimate(a) ?? a.reps ?? 0),
+        )[0];
+      const item = map.get(exerciseId) ?? { name: ex.name, points: [] };
+      item.name = ex.name;
+      item.points.push({
+        date: w.date,
+        workoutId: record.id,
+        set: top,
+        e1rm: estimate(top),
+      });
+      map.set(exerciseId, item);
     }
   }
   return [...map.entries()]

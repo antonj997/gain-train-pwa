@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T18:41:05Z",
+  "title": "Design System: Gain Train",
+  "extensions": {
+    "colorMeta": {
+      "blue": {
+        "role": "primary",
+        "displayName": "Original blue"
+      },
+      "blue-dark": {
+        "role": "primary",
+        "displayName": "Dark-theme blue"
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Cool light-grey page"
+      },
+      "background-dark": {
+        "role": "neutral",
+        "displayName": "Deep navy page"
+      },
+      "completed": {
+        "role": "semantic",
+        "displayName": "Completed-set green"
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Body",
+        "purpose": "Existing Inter-first system sans stack."
+      },
+      "title": {
+        "displayName": "Page title",
+        "purpose": "Main page heading; Home and editor retain their observed size overrides."
+      },
+      "set-value": {
+        "displayName": "Set value",
+        "purpose": "Centered performance entry with tabular numerals."
+      }
+    },
+    "shadows": [
+      {
+        "name": "theme-track-inset",
+        "value": "inset 0 2px 5px #0004",
+        "purpose": "Original day/night switch track."
+      },
+      {
+        "name": "theme-orb",
+        "value": "0 2px 6px #0003",
+        "purpose": "Original night-mode orb."
+      },
+      {
+        "name": "theme-sun-glow",
+        "value": "0 0 18px #ffe698",
+        "purpose": "Original day-mode orb."
+      },
+      {
+        "name": "theme-horizon-glow",
+        "value": "0 -5px 18px #ffc976",
+        "purpose": "Original day-mode horizon."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-background",
+        "value": "background 0.15s",
+        "purpose": "Original button hover feedback."
+      },
+      {
+        "name": "theme-transition",
+        "value": "0.65s ease",
+        "purpose": "Original theme fade; disabled with reduced motion."
+      },
+      {
+        "name": "theme-orb-travel",
+        "value": "0.65s cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "purpose": "Original day/night orb travel."
+      },
+      {
+        "name": "settle-check",
+        "value": "140ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Retained completion check from scale 0.8 to 1; disabled with reduced motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "desktop-min",
+        "value": "640px"
+      },
+      {
+        "name": "narrow-phone-max",
+        "value": "479px"
+      },
+      {
+        "name": "compact-phone-max",
+        "value": "359px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Original solid blue action in both themes.",
+      "html": "<button class=\"ds-primary\">Start workout</button>",
+      "css": ".ds-primary{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:46px;border-radius:12px;padding:10px 16px;font:inherit;font-size:15px;font-weight:650;transition:background .15s;cursor:pointer;background:#365de9;color:#fff;border:1px solid #365de9;}.ds-primary:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}.ds-primary:disabled{opacity:.45;cursor:not-allowed;}@media(hover:hover){.ds-primary:hover{background:#284bc4;}}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none;}}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Surface action with the incumbent border and ink.",
+      "html": "<button class=\"ds-secondary\">Discard changes</button>",
+      "css": ".ds-secondary{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:46px;border-radius:12px;padding:10px 16px;font:inherit;font-size:15px;font-weight:650;transition:background .15s;cursor:pointer;background:var(--surface);color:var(--ink);border:1px solid var(--line);}.ds-secondary:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}.ds-secondary:disabled{opacity:.45;cursor:not-allowed;}@media(hover:hover){.ds-secondary:hover{background:hsl(var(--primary)/.07);}}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none;}}"
+    },
+    {
+      "name": "Text action",
+      "kind": "button",
+      "description": "Theme-aware blue text action with an underline for keyboard focus.",
+      "html": "<button class=\"ds-text-action\">Add exercise</button>",
+      "css": ".ds-text-action{display:inline-flex;justify-content:center;align-items:center;gap:8px;min-height:46px;border-radius:12px;padding:10px 16px;font:inherit;font-size:15px;font-weight:650;transition:background .15s;cursor:pointer;min-height:36px;padding:4px;border:0;background:none;color:var(--blue);}.ds-text-action:focus-visible{outline:none;text-decoration:underline;text-underline-offset:4px;}.ds-text-action:disabled{opacity:.45;cursor:not-allowed;}@media(prefers-reduced-motion:reduce){.ds-text-action{transition:none;}}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Original rounded field with visible keyboard focus and error state.",
+      "html": "<label class=\"ds-label\">Workout name<input class=\"ds-input\" value=\"Workout\" /></label>",
+      "css": ".ds-label{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600;color:var(--ink);}.ds-input{width:100%;min-width:0;min-height:46px;max-width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);background:hsl(var(--background));font:inherit;font-size:16px;}.ds-input:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}.ds-input:disabled{color:var(--soft);}.ds-input[aria-invalid=true]{border-color:hsl(var(--destructive));}"
+    },
+    {
+      "name": "List card",
+      "kind": "card",
+      "refersTo": "list-card",
+      "description": "Original rounded, bordered list item; page-specific compact padding remains in the app.",
+      "html": "<button class=\"ds-list-card\"><span><strong>Workout</strong><small>View session</small></span></button>",
+      "css": ".ds-list-card{display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;padding:17px 18px;background:var(--surface);border:1px solid var(--line);border-radius:15px;width:100%;color:var(--ink);margin-bottom:10px;font:inherit;cursor:pointer;}.ds-list-card>span{display:flex;flex-direction:column;gap:5px;min-width:0;}.ds-list-card strong{font-size:17px;overflow-wrap:anywhere;}.ds-list-card small{font-size:13px;color:var(--soft);}.ds-list-card:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}@media(hover:hover){.ds-list-card:hover{background:hsl(var(--primary)/.07);}}"
+    },
+    {
+      "name": "Filter chip",
+      "kind": "chip",
+      "description": "Original pill-shaped exercise filter.",
+      "html": "<button class=\"ds-chip\">All</button> <button class=\"ds-chip ds-selected\" aria-pressed=\"true\">Selected</button>",
+      "css": ".ds-chip{border:1px solid var(--line);border-radius:50px;padding:7px 12px;font:inherit;font-size:13px;background:transparent;white-space:nowrap;color:var(--soft);cursor:pointer;}.ds-chip.ds-selected{background:var(--blue);color:hsl(var(--background));border-color:var(--blue);}.ds-chip:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}"
+    },
+    {
+      "name": "Bottom navigation",
+      "kind": "nav",
+      "description": "Original three destinations with transparent active links and underlined keyboard focus; the preview shows the bar inline, while the app fixes it to the bottom.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Main navigation\"><a class=\"ds-active\" href=\"#workout\" aria-current=\"page\"><svg width=\"21\" height=\"21\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14.4 14.4 9.6 9.6\"/><path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\"/><path d=\"m21.5 21.5-1.4-1.4\"/><path d=\"M3.9 3.9 2.5 2.5\"/><path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\"/></svg><span>Workout</span></a><a href=\"#history\"><svg width=\"21\" height=\"21\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\"/><path d=\"M3 3v5h5\"/><path d=\"M12 7v5l4 2\"/></svg><span>History</span></a><a href=\"#progress\"><svg width=\"21\" height=\"21\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/></svg><span>Progress</span></a></nav>",
+      "css": ".ds-nav{width:min(100%,800px);background:var(--surface);border-top:1px solid var(--line);display:flex;padding:8px 12px calc(8px + env(safe-area-inset-bottom));}.ds-nav a{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;color:var(--soft);font-size:13px;padding:6px;border-radius:10px;text-decoration:none;}.ds-nav a.ds-active{color:var(--blue);background:transparent;}.ds-nav a:focus-visible{outline:none;text-decoration:underline;text-underline-offset:4px;}"
+    },
+    {
+      "name": "Completed set",
+      "kind": "button",
+      "description": "Original green completion control with the retained brief check motion.",
+      "html": "<button class=\"ds-done ds-checked\" aria-label=\"Set completed\" aria-pressed=\"true\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m9 12 2 2 4-4\"/></svg></button>",
+      "css": ".ds-done{width:44px;height:48px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:hsl(var(--background));color:var(--soft);cursor:pointer;}.ds-done.ds-checked{background:#167d58;color:#fff;border-color:#167d58;}.ds-done:focus-visible{outline:3px solid var(--blue);outline-offset:3px;}@keyframes ds-settle-check{from{transform:scale(.8);}to{transform:scale(1);}}@media(prefers-reduced-motion:no-preference){.ds-done.ds-just-checked svg{animation:ds-settle-check 140ms cubic-bezier(.16,1,.3,1);}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Original Gain Train",
+    "overview": "The owner prefers the original Gain Train visual system and requested its restoration while retaining quality-of-life improvements and bug fixes. Blue actions, navy text, light-grey backgrounds, rounded cards and the Gain Train header define that system. Home retains its original heading and date treatment.\n\nVisual authority is the [original GitHub Pages app](https://antonj997.github.io/gain-train-pwa/) and [repository commit 3d2514862f7babecb964eb01b09230d804b86e77](https://github.com/antonj997/gain-train-pwa/tree/3d2514862f7babecb964eb01b09230d804b86e77). The restored `src/index.css` and six public icons come from that commit: `public/icon.svg`, `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable.png`, `public/apple-touch-icon.png` and `public/favicon.ico`. The supplied `public/icon-license.txt` credits Lucide/Feather contributors. Preserve these assets and their license.\n\nCurrent implementation sources are `src/index.css`, `src/styles/usability.css` and `tailwind.config.ts`. The usability stylesheet loads after the original stylesheet and adapts retained controls to the original visual system.",
+    "keyCharacteristics": [
+      "Blue actions and links with light and dark neutral surfaces.",
+      "Rounded, bordered cards and touch-friendly controls.",
+      "Familiar brand header, fixed bottom navigation and animated day/night switch.",
+      "Quality-of-life additions that inherit the original tokens."
+    ],
+    "rules": [],
+    "dos": [
+      "**Do** preserve the original Gain Train palette, rounded containers, header, navigation, theme switch and identity assets.",
+      "**Do** style retained and future quality-of-life controls in `src/styles/usability.css` using the incumbent tokens.",
+      "**Do** retain clear save status, direct load/measurement controls, planned-routine fields and readable completed data."
+    ],
+    "donts": [
+      "**Don't** reintroduce the Training Ledger palette, flattened exercise layout or restrained-corner redesign; the owner rejected that visual direction.",
+      "**Don't** replace the restored identity assets or add a new visual identity without a new user request.",
+      "**Don't** introduce record migrations or cloud changes during these visual refinements."
+    ]
+  }
+}

@@ -1,10 +1,15 @@
 import { suggestedExercises } from "@/data/start";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
+import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { Plus, Play, Trash2, Pencil, ArrowUp, ArrowDown } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
-import { type Routine, newSet, repeatExercises, today } from "@/data/model";
+import { useAuth } from "@/contexts/AuthContext";
+import { type Exercise, type Routine, today } from "@/data/model";
+import { initialSet, hasLoggedExercise } from "@/data/workouts";
+import { draftKey, parseRoutineDraft } from "@/lib/drafts";
+import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import ExercisePicker from "@/components/ExercisePicker";
+import RoutinePlan from "@/components/RoutinePlan";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -13,91 +18,190 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+
 export default function Routines() {
-  const { state, save } = useData(),
-    navigate = useNavigate();
-  const [edit, setEdit] = useState<{ id: string; data: Routine } | null>(null),
-    [picker, setPicker] = useState(false);
+  const { state, save, deleteRecord } = useData();
+  const { account } = useAuth();
+  const workoutStart = useStartWorkout();
+  const draft = useRetainedDraft(
+    draftKey(account, "routine"),
+    parseRoutineDraft,
+  );
+  const edit = draft.value;
+  const setEdit = draft.replace;
+  const [open, setOpen] = useState(false);
+  const [picker, setPicker] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<Exercise | null>(null);
+  const removeExercise = (exercise: Exercise) => {
+    if (edit)
+      setEdit({
+        ...edit,
+        data: {
+          ...edit.data,
+          exercises: edit.data.exercises.filter(
+            (item) => item.id !== exercise.id,
+          ),
+        },
+      });
+    setRemoving(null);
+  };
+  const lock = useRef(false);
   const records = Object.values(state.records).filter(
     (r) => r.kind === "routine" && !r.deleted,
   );
+  const update = (exercise: Exercise) => {
+    if (edit)
+      setEdit({
+        ...edit,
+        data: {
+          ...edit.data,
+          exercises: edit.data.exercises.map((ex) =>
+            ex.id === exercise.id ? exercise : ex,
+          ),
+        },
+      });
+  };
   const moveExercise = (id: string, direction: -1 | 1) => {
-    setEdit((current) => {
-      if (!current) return current;
-      const exercises = [...current.data.exercises];
-      const index = exercises.findIndex((exercise) => exercise.id === id);
-      const target = index + direction;
-      if (index < 0 || target < 0 || target >= exercises.length) return current;
-      [exercises[index], exercises[target]] = [
-        exercises[target],
-        exercises[index],
-      ];
-      return { ...current, data: { ...current.data, exercises } };
-    });
+    if (!edit) return;
+    const exercises = [...edit.data.exercises];
+    const index = exercises.findIndex((ex) => ex.id === id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= exercises.length) return;
+    [exercises[index], exercises[target]] = [
+      exercises[target],
+      exercises[index],
+    ];
+    setEdit({ ...edit, data: { ...edit.data, exercises } });
+  };
+  const run = async (action: () => Promise<void>) => {
+    if (lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    setError(null);
+    try {
+      await action();
+    } catch (cause) {
+      const message =
+        cause instanceof Error
+          ? cause.message
+          : "Could not save. Retry; your draft is still here.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+  const startEdit = (id: string, data: Routine) => {
+    if (edit && edit.id !== id) {
+      toast("Resume or discard the existing routine draft first.");
+      setOpen(true);
+      return;
+    }
+    if (!edit) setEdit({ id, data: structuredClone(data) });
+    setError(null);
+    setOpen(true);
   };
   return (
     <div className="stack">
+      {workoutStart.confirmation}
       <h1>Routines</h1>
       <button
         className="primary"
-        onClick={() =>
-          setEdit({
-            id: crypto.randomUUID(),
-            data: { name: "", exercises: [] },
-          })
-        }
+        onClick={() => {
+          if (!edit)
+            setEdit({
+              id: crypto.randomUUID(),
+              data: { name: "", exercises: [] },
+            });
+          setError(null);
+          setOpen(true);
+        }}
       >
         <Plus size={20} />
-        Create routine
+        {edit ? "Resume routine draft" : "Create routine"}
       </button>
+      {edit && !open && (
+        <p className="draft-receipt" role="status">
+          Unfinished routine: {edit.data.name || "Untitled routine"}.{" "}
+          {draft.retained
+            ? "Kept on this phone."
+            : "Keep this page open; storage is unavailable."}
+        </p>
+      )}
+      {!records.length && !edit && (
+        <p className="empty">
+          Plan your usual exercises and sets once, then start them together.
+        </p>
+      )}
       {records.map((r) => (
         <div className="routine-card" key={r.id}>
           <h2>{r.payload.name}</h2>
           <p className="muted">
-            {(r.payload as Routine).exercises.map((e) => e.name).join(" · ")}
+            {(r.payload as Routine).exercises
+              .map(
+                (ex) =>
+                  `${ex.name} · ${ex.sets.length} ${ex.sets.length === 1 ? "set" : "sets"}`,
+              )
+              .join(" / ")}
           </p>
           <div className="button-row">
             <button
               className="primary"
-              onClick={async () => {
-                const id = crypto.randomUUID();
-                await save(id, "workout", {
-                  routineId: r.id,
-                  ...(r.payload as Routine),
-                  date: today(),
-                  duration: null,
-                  startedAt: Date.now(),
-                  status: "draft",
-                  exercises: suggestedExercises(
-                    (r.payload as Routine).exercises,
-                    Object.values(state.records),
-                  ),
-                });
-                navigate("/workout/" + id);
-              }}
+              disabled={busy || workoutStart.busy}
+              onClick={() =>
+                void (async () => {
+                  const now = Date.now();
+                  await workoutStart.start({
+                    routineId: r.id,
+                    ...(r.payload as Routine),
+                    date: today(),
+                    duration: null,
+                    startedAt: now,
+                    createdAt: now,
+                    status: "draft",
+                    exercises: suggestedExercises(
+                      (r.payload as Routine).exercises,
+                      Object.values(state.records),
+                    ),
+                  });
+                })()
+              }
             >
               <Play size={18} />
               Start
             </button>
             <button
               className="secondary"
-              onClick={() => setEdit({ id: r.id, data: r.payload as Routine })}
+              disabled={busy}
+              onClick={() => startEdit(r.id, r.payload as Routine)}
             >
               <Pencil size={18} />
               Edit
             </button>
             <button
               className="icon-button danger"
+              disabled={busy}
               aria-label={"Delete " + r.payload.name}
-              onClick={async () => {
-                await save(r.id, "routine", r.payload, true);
-                toast("Routine deleted", {
-                  action: {
-                    label: "Undo",
-                    onClick: () => void save(r.id, "routine", r.payload),
-                  },
-                });
-              }}
+              onClick={() =>
+                void run(async () => {
+                  await deleteRecord(r.id);
+                  toast("Routine deleted", {
+                    action: {
+                      label: "Undo",
+                      onClick: () => {
+                        void save(r.id, "routine", r.payload).catch(() =>
+                          toast.error(
+                            "Could not restore the routine. Retry from a backup.",
+                          ),
+                        );
+                      },
+                    },
+                  });
+                })
+              }
             >
               <Trash2 size={19} />
             </button>
@@ -105,17 +209,24 @@ export default function Routines() {
         </div>
       ))}
       <Dialog
-        open={!!edit}
-        onOpenChange={(v) => {
-          if (!v) setEdit(null);
+        open={open && !!edit}
+        onOpenChange={(value) => {
+          if (!busy) {
+            setOpen(value);
+            if (!value) setPicker(false);
+          }
         }}
       >
-        <DialogContent className="detail-dialog">
+        <DialogContent className="detail-dialog routine-dialog">
           <DialogHeader>
-            <DialogTitle>Edit routine</DialogTitle>
+            <DialogTitle>
+              {edit && state.records[edit.id]
+                ? "Edit routine"
+                : "Create routine"}
+            </DialogTitle>
             <DialogDescription>
-              Choose exercises and use the arrows to change their order. Your
-              last weights and reps are available while logging.
+              Plan sets, load and set types. Your unfinished work is kept on
+              this phone when you close this form.
             </DialogDescription>
           </DialogHeader>
           {edit && (
@@ -134,61 +245,96 @@ export default function Routines() {
                 />
               </label>
               {edit.data.exercises.map((ex, index) => (
-                <div className="routine-exercise" key={ex.id}>
-                  <strong>{ex.name}</strong>
-                  <div className="routine-exercise-actions">
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label={"Move " + ex.name + " up"}
-                      disabled={index === 0}
-                      onClick={() => moveExercise(ex.id, -1)}
-                    >
-                      <ArrowUp size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label={"Move " + ex.name + " down"}
-                      disabled={index === edit.data.exercises.length - 1}
-                      onClick={() => moveExercise(ex.id, 1)}
-                    >
-                      <ArrowDown size={18} />
-                    </button>
-                    <button
-                      className="icon-button"
-                      aria-label={"Remove " + ex.name}
-                      onClick={() =>
-                        setEdit({
-                          ...edit,
-                          data: {
-                            ...edit.data,
-                            exercises: edit.data.exercises.filter(
-                              (e) => e.id !== ex.id,
-                            ),
-                          },
-                        })
-                      }
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                <section className="routine-exercise" key={ex.id}>
+                  <div className="exercise-heading">
+                    <h2>{ex.name}</h2>
+                    <div className="routine-exercise-actions">
+                      <button
+                        className="icon-button"
+                        aria-label={"Move " + ex.name + " up"}
+                        disabled={index === 0}
+                        onClick={() => moveExercise(ex.id, -1)}
+                      >
+                        <ArrowUp size={18} />
+                      </button>
+                      <button
+                        className="icon-button"
+                        aria-label={"Move " + ex.name + " down"}
+                        disabled={index === edit.data.exercises.length - 1}
+                        onClick={() => moveExercise(ex.id, 1)}
+                      >
+                        <ArrowDown size={18} />
+                      </button>
+                      <button
+                        className="icon-button danger"
+                        aria-label={"Remove " + ex.name}
+                        onClick={() =>
+                          hasLoggedExercise(ex)
+                            ? setRemoving(ex)
+                            : removeExercise(ex)
+                        }
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                  <RoutinePlan exercise={ex} onChange={update} />
+                </section>
               ))}
-              <button className="secondary" onClick={() => setPicker(true)}>
+              <button
+                className="secondary"
+                onClick={() => setPicker(true)}
+                disabled={busy}
+              >
+                <Plus size={18} />
                 Add exercises
               </button>
+              {error && (
+                <p className="field-error" role="alert">
+                  {error}
+                </p>
+              )}
+              {!draft.retained && (
+                <p className="field-error" role="alert">
+                  Storage is unavailable. Keep this form open and save before
+                  leaving.
+                </p>
+              )}
               <button
                 className="primary"
-                disabled={!edit.data.name.trim() || !edit.data.exercises.length}
-                onClick={async () => {
-                  await save(edit.id, "routine", edit.data);
-                  setEdit(null);
-                  toast.success("Routine saved");
-                }}
+                disabled={
+                  busy || !edit.data.name.trim() || !edit.data.exercises.length
+                }
+                onClick={() =>
+                  void run(async () => {
+                    await save(edit.id, "routine", edit.data);
+                    setEdit(null);
+                    setOpen(false);
+                    toast.success("Routine saved");
+                  })
+                }
               >
-                Save routine
+                {busy ? "Saving…" : "Save routine"}
               </button>
+              <div className="button-row">
+                <button
+                  className="secondary"
+                  disabled={busy}
+                  onClick={() => setOpen(false)}
+                >
+                  Close and keep draft
+                </button>
+                <button
+                  className="text-button danger"
+                  disabled={busy}
+                  onClick={() => {
+                    setEdit(null);
+                    setOpen(false);
+                  }}
+                >
+                  Discard draft
+                </button>
+              </div>
             </>
           )}
         </DialogContent>
@@ -204,17 +350,42 @@ export default function Routines() {
                 ...edit.data,
                 exercises: [
                   ...edit.data.exercises,
-                  ...items.map((e) => ({
+                  ...items.map((item) => ({
                     id: crypto.randomUUID(),
-                    exerciseId: e.id,
-                    name: e.name,
-                    sets: [newSet()],
+                    exerciseId: item.id,
+                    name: item.name,
+                    sets: [initialSet(item.id)],
                   })),
                 ],
               },
             });
         }}
       />
+      <Dialog
+        open={!!removing}
+        onOpenChange={(value) => {
+          if (!value) setRemoving(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove {removing?.name}?</DialogTitle>
+            <DialogDescription>
+              This exercise contains entered values. Removing it deletes its
+              planned sets from this routine.
+            </DialogDescription>
+          </DialogHeader>
+          <button className="secondary" onClick={() => setRemoving(null)}>
+            Keep exercise
+          </button>
+          <button
+            className="secondary danger"
+            onClick={() => removing && removeExercise(removing)}
+          >
+            Remove exercise
+          </button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

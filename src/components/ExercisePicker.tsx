@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, Check, Star, Plus } from "lucide-react";
+import { Search, Check, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,10 @@ import {
 import { useData } from "@/contexts/DataContext";
 import { catalogue, categories } from "@/data/catalogue";
 import { type CustomExercise, type Workout } from "@/data/model";
+import { sortWorkoutsNewest } from "@/data/workouts";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRetainedDraft } from "@/hooks/useRetainedDraft";
+import { draftKey, parseCustomDraft } from "@/lib/drafts";
 export default function ExercisePicker({
   open,
   onClose,
@@ -20,13 +24,33 @@ export default function ExercisePicker({
   onAdd: (items: { id: string; name: string }[]) => void;
 }) {
   const { state, save } = useData();
+  const { account } = useAuth();
+  const creationDraft = useRetainedDraft(
+    draftKey(account, "picker-exercise"),
+    parseCustomDraft,
+  );
+  const pending = creationDraft.value;
+  const name = pending?.data.name ?? "";
+  const category = pending?.data.category ?? "Other";
+  const updateDraft = (change: Partial<CustomExercise>) =>
+    creationDraft.replace({
+      id: pending?.id ?? crypto.randomUUID(),
+      data: {
+        name: "",
+        category: "Other",
+        note: "",
+        favourite: false,
+        ...pending?.data,
+        ...change,
+      },
+    });
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
     [filter, setFilter] = useState("All"),
-    [creating, setCreating] = useState(false),
-    [name, setName] = useState(""),
-    [category, setCategory] = useState("Other");
+    [creating, setCreating] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const custom = Object.values(state.records)
     .filter((r) => r.kind === "exercise" && !r.deleted)
     .map((r) => ({ id: r.id, ...(r.payload as CustomExercise) }));
@@ -34,9 +58,7 @@ export default function ExercisePicker({
   const recent = new Set(
     Object.values(state.records)
       .filter((r) => r.kind === "workout" && !r.deleted)
-      .sort((a, b) =>
-        (b.payload as Workout).date.localeCompare((a.payload as Workout).date),
-      )
+      .sort(sortWorkoutsNewest)
       .slice(0, 5)
       .flatMap((r) =>
         (r.payload as Workout).exercises.map((e) => e.exerciseId),
@@ -70,30 +92,49 @@ export default function ExercisePicker({
         a.name.localeCompare(b.name),
     );
   const close = () => {
+    if (busy) return;
     setSelected([]);
     setSearch("");
     setCreating(false);
+    setError("");
     onClose();
   };
   const create = async () => {
-    if (!name.trim()) return;
+    if (busy || !name.trim()) return;
     const match = all.find(
       (e) => e.name.trim().toLowerCase() === name.trim().toLowerCase(),
     );
     if (match) {
       onAdd([match]);
+      creationDraft.replace(null);
       close();
       return;
     }
-    const id = crypto.randomUUID();
-    await save(id, "exercise", {
-      name: name.trim(),
-      category,
-      note: "",
-      favourite: false,
-    });
-    onAdd([{ id, name: name.trim() }]);
-    close();
+    setBusy(true);
+    setError("");
+    try {
+      const id = pending?.id ?? crypto.randomUUID();
+      await save(id, "exercise", {
+        name: name.trim(),
+        category,
+        note: "",
+        favourite: false,
+      });
+      onAdd([{ id, name: name.trim() }]);
+      setSelected([]);
+      setSearch("");
+      creationDraft.replace(null);
+      setCreating(false);
+      onClose();
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Could not save. Your entries are still here; retry.",
+      );
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <Dialog
@@ -115,7 +156,7 @@ export default function ExercisePicker({
           </DialogTitle>
           <DialogDescription>
             {creating
-              ? "Create it once and use it in any workout."
+              ? "Create it once and use it in any workout. Unfinished details are kept on this phone."
               : "Choose one or more exercises."}
           </DialogDescription>
         </DialogHeader>
@@ -126,7 +167,7 @@ export default function ExercisePicker({
               <input
                 autoFocus
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => updateDraft({ name: e.target.value })}
                 maxLength={100}
               />
             </label>
@@ -134,7 +175,7 @@ export default function ExercisePicker({
               Category
               <select
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => updateDraft({ category: e.target.value })}
               >
                 {categories.map((c) => (
                   <option key={c}>{c}</option>
@@ -144,12 +185,36 @@ export default function ExercisePicker({
             <button
               className="primary"
               onClick={() => void create()}
-              disabled={!name.trim()}
+              disabled={busy || !name.trim()}
             >
-              Create and add
+              {busy ? "Saving…" : "Create and add"}
             </button>
-            <button className="secondary" onClick={() => setCreating(false)}>
+            {error && (
+              <p className="field-error" role="alert">
+                {error}
+              </p>
+            )}
+            {!creationDraft.retained && (
+              <p className="field-error" role="alert">
+                Storage is unavailable. Keep this form open until saved.
+              </p>
+            )}
+            <button
+              className="secondary"
+              disabled={busy}
+              onClick={() => setCreating(false)}
+            >
               Back to exercises
+            </button>
+            <button
+              className="text-button danger"
+              disabled={busy}
+              onClick={() => {
+                creationDraft.replace(null);
+                setCreating(false);
+              }}
+            >
+              Discard exercise draft
             </button>
           </div>
         ) : (
@@ -168,6 +233,7 @@ export default function ExercisePicker({
                 <button
                   key={c}
                   className={filter === c ? "chip selected" : "chip"}
+                  aria-pressed={filter === c}
                   onClick={() => setFilter(c)}
                 >
                   {c}
@@ -178,6 +244,7 @@ export default function ExercisePicker({
               {items.map((e) => (
                 <button
                   key={e.id}
+                  aria-pressed={selected.includes(e.id)}
                   className={
                     "exercise-choice " +
                     (selected.includes(e.id) ? "chosen" : "")
@@ -213,11 +280,11 @@ export default function ExercisePicker({
             <button
               className="text-button"
               onClick={() => {
-                setName(search);
+                if (!pending) updateDraft({ name: search });
                 setCreating(true);
               }}
             >
-              Create custom exercise
+              {pending ? "Resume custom exercise" : "Create custom exercise"}
             </button>
             <button
               className="primary"

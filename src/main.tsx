@@ -3,6 +3,7 @@ import { registerSW } from "virtual:pwa-register";
 import { toast } from "sonner";
 import App from "./App";
 import "./index.css";
+import "./styles/usability.css";
 
 let updateReady = false;
 const update = registerSW({

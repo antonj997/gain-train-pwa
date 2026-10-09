@@ -1,5 +1,5 @@
 import { type Workout, type RecordDoc, validSet } from "./model";
-import { progressFor } from "./analytics";
+import { comparableSets, progressFor } from "./analytics";
 
 export function improvementRate(
   records: RecordDoc[],
@@ -13,13 +13,8 @@ export function improvementRate(
     const latest = points.at(-1);
     if (!latest || latest.date < start) continue;
     const weighted = latest.e1rm !== null;
-    const comparable = points.filter(
-      (point) =>
-        point.set.load === latest.set.load &&
-        (weighted
-          ? point.e1rm !== null
-          : latest.set.load === "bodyweight" ||
-            point.set.weight === latest.set.weight),
+    const comparable = points.filter((point) =>
+      comparableSets(point.set, latest.set),
     );
     const baseline =
       comparable.filter((point) => point.date < start).at(-1) ?? comparable[0];
@@ -109,7 +104,10 @@ export function summarize(workouts: Workout[], days: number) {
   return {
     volume: sets.reduce(
       (sum, set) =>
-        sum + (set.load === "weight" ? (set.weight ?? 0) * (set.reps ?? 0) : 0),
+        sum +
+        (set.load === "weight" && set.measure !== "seconds"
+          ? (set.weight ?? 0) * (set.reps ?? 0)
+          : 0),
       0,
     ),
     workouts: workouts.length,

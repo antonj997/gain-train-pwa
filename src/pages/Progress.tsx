@@ -8,16 +8,22 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { TrendingUp, ChevronDown } from "lucide-react";
+import { TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
 import { metricChange } from "@/data/summary";
 import { Link } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
-import { progressFor, baseline } from "@/data/analytics";
+import { progressFor, baseline, comparableSets } from "@/data/analytics";
 import { labelSet } from "@/data/model";
+import { localizedDate } from "@/lib/dates";
+import { chartDomain, chartSessions } from "@/lib/progressPresentation";
+
 export default function Progress() {
   const { state } = useData();
   const [search, setSearch] = useState("");
   const items = progressFor(Object.values(state.records));
+  const filtered = items.filter((item) =>
+    item.name.toLowerCase().includes(search.trim().toLowerCase()),
+  );
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);
   const cutoffDate = [
@@ -32,189 +38,222 @@ export default function Progress() {
         <input
           aria-label="Find exercise progress"
           placeholder="Find an exercise"
+          type="search"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(event) => setSearch(event.target.value)}
         />
       )}
-      {items
-        .filter((x) => x.name.toLowerCase().includes(search.toLowerCase()))
-        .map((item) => {
-          const latest = item.points.at(-1)!,
-            previous = item.points.at(-2);
-          const weighted = latest.e1rm !== null;
-          const comparable = item.points.filter(
-            (p) =>
-              p.set.load === latest.set.load &&
-              (weighted
-                ? p.e1rm !== null
-                : latest.set.load === "bodyweight" ||
-                  p.set.weight === latest.set.weight),
-          );
-          const base = baseline(comparable, cutoffDate);
-          const best = Math.max(
-            ...comparable.map((p) => (weighted ? p.e1rm! : p.set.reps!)),
-          );
-          const latestValue = weighted ? latest.e1rm : latest.set.reps;
-          const previousComparable = comparable.at(-2);
-          const previousValue = previousComparable
-            ? weighted
-              ? previousComparable.e1rm
-              : previousComparable.set.reps
-            : null;
-          const points = comparable.map((p) => ({
-            date: p.date,
-            value: weighted ? p.e1rm : p.set.reps,
-          }));
-          return (
-            <section className="progress-card" key={item.id}>
-              <h2>{item.name}</h2>
-              <div className="performance">
-                <span className="eyebrow">LAST SESSION · {latest.date}</span>
+      {filtered.map((item) => {
+        const latest = item.points.at(-1)!;
+        const weighted = latest.e1rm !== null;
+        const timed = latest.set.measure === "seconds";
+        const unit = weighted ? "kg" : timed ? "seconds" : "reps";
+        const metricLabel = weighted
+          ? "Estimated 1RM (kg)"
+          : timed
+            ? "Seconds"
+            : "Reps";
+        const comparable = item.points.filter((point) =>
+          comparableSets(point.set, latest.set),
+        );
+        const previous = comparable.at(-2);
+        const valueOf = (point: typeof latest) =>
+          weighted ? point.e1rm! : point.set.reps!;
+        const latestValue = valueOf(latest);
+        const bestPoint = comparable.reduce(
+          (best, point) => (valueOf(point) >= valueOf(best) ? point : best),
+          latest,
+        );
+        const best = valueOf(bestPoint);
+        const base = weighted ? baseline(comparable, cutoffDate) : null;
+        const sessions = chartSessions(item.points);
+        const points = sessions
+          .filter((point) => comparableSets(point.set, latest.set))
+          .map((point) => ({ ...point, value: valueOf(point) }));
+        return (
+          <section className="progress-card" key={item.id}>
+            <h2>{item.name}</h2>
+            <div className="performance">
+              <div className="best-working-set">
+                <span className="performance-label">Best working set</span>
                 <strong>{labelSet(latest.set)}</strong>
-                <p className="muted">
-                  {previous
-                    ? "Previous: " + labelSet(previous.set)
-                    : "First session logged. A starting point to build on."}
-                </p>
               </div>
-              <details>
-                <summary className="session-summary">
-                  Details
-                  <ChevronDown
-                    size={18}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </summary>
-                <div className="progress-details stack">
-                  {" "}
-                  <div className="metrics-grid progress-metrics">
-                    <div className="metric">
-                      <span>{weighted ? "Best est. 1RM" : "Best reps"}</span>
-                      <strong>
-                        {best.toFixed(weighted ? 1 : 0)}
-                        {weighted ? " kg" : ""}
-                      </strong>
-                      <small>
-                        {latestValue === best
-                          ? "At your best"
-                          : `${(best - (latestValue ?? 0)).toFixed(weighted ? 1 : 0)} ${weighted ? "kg" : "reps"} from best`}
-                      </small>
-                    </div>
-                    <div className="metric">
-                      <span>Latest change</span>
-                      <strong>
-                        {metricChange(
-                          latestValue,
-                          previousValue,
-                          weighted ? 1 : 0,
-                        )}
-                      </strong>
-                      <small>
-                        {weighted ? "kg · vs prior" : "reps · same load"}
-                      </small>
-                    </div>
-                    <div className="metric">
-                      <span>Sessions · 30 days</span>
-                      <strong>
-                        {item.points.filter((p) => p.date > cutoffDate).length}
-                      </strong>
-                      <small>{item.points.length} total</small>
-                    </div>
+              <time dateTime={latest.date}>{localizedDate(latest.date)}</time>
+            </div>
+            <p className="previous-performance muted">
+              {previous ? (
+                <>
+                  Prior comparable · {localizedDate(previous.date)}:{" "}
+                  <strong>{labelSet(previous.set)}</strong>
+                </>
+              ) : (
+                "No prior comparable working set yet."
+              )}
+            </p>
+            <details>
+              <summary className="session-summary">
+                Details & sessions
+                <ChevronDown size={18} />
+              </summary>
+              <div className="progress-details stack">
+                <h3>Recorded sessions</h3>
+                {[...sessions].reverse().map((point) => (
+                  <Link
+                    to={"/history?workout=" + point.workoutId}
+                    className="history-set progress-session"
+                    key={point.workoutId}
+                  >
+                    <span>{point.fullLabel}</span>
+                    <strong>{labelSet(point.set)}</strong>
+                    <ChevronRight size={16} aria-hidden="true" />
+                  </Link>
+                ))}
+                <div className="metrics-grid progress-metrics">
+                  <div className="metric">
+                    <span>
+                      {weighted
+                        ? "Best est. 1RM"
+                        : timed
+                          ? "Best duration"
+                          : "Best reps"}
+                    </span>
+                    <strong>
+                      {best.toFixed(weighted ? 1 : 0)} {unit}
+                    </strong>
+                    <small>
+                      {latestValue === best
+                        ? "At your best"
+                        : `${(best - latestValue).toFixed(weighted ? 1 : 0)} ${unit} from best`}
+                    </small>
                   </div>
-                  {points.length > 1 ? (
+                  <div className="metric">
+                    <span>Latest change</span>
+                    <strong>
+                      {metricChange(
+                        latestValue,
+                        previous ? valueOf(previous) : null,
+                        weighted ? 1 : 0,
+                      )}
+                    </strong>
+                    <small>{unit} · vs prior comparable</small>
+                  </div>
+                  <div className="metric">
+                    <span>Sessions · 30 days</span>
+                    <strong>
+                      {
+                        item.points.filter((point) => point.date > cutoffDate)
+                          .length
+                      }
+                    </strong>
+                    <small>{item.points.length} total</small>
+                  </div>
+                </div>
+                <p className="small-note">
+                  Best comparable working result ·{" "}
+                  {localizedDate(bestPoint.date)}:{" "}
+                  <strong>{labelSet(bestPoint.set)}</strong>
+                </p>
+                {points.length > 1 ? (
+                  <>
                     <div
                       className="chart"
                       role="img"
-                      aria-label={
-                        item.name +
-                        " progress over " +
-                        points.length +
-                        " sessions"
-                      }
+                      aria-label={`${item.name}: ${metricLabel.toLowerCase()} by session. The vertical scale starts at zero; exact results are listed below.`}
                     >
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart
                           data={points}
-                          margin={{ top: 10, right: 15, left: -12, bottom: 0 }}
+                          margin={{ top: 10, right: 15, left: -8, bottom: 0 }}
                         >
                           <CartesianGrid
                             vertical={false}
                             stroke="var(--line)"
                           />
                           <XAxis
-                            dataKey="date"
-                            tickFormatter={(d) => d.slice(5)}
+                            dataKey="label"
                             minTickGap={24}
                             tick={{ fill: "var(--soft)", fontSize: 12 }}
                           />
                           <YAxis
-                            domain={["auto", "auto"]}
+                            domain={chartDomain(
+                              points.map((point) => point.value),
+                            )}
+                            allowDecimals={weighted}
                             tick={{ fill: "var(--soft)", fontSize: 12 }}
                           />
                           <Tooltip
                             contentStyle={{
                               background: "var(--surface)",
+                              color: "var(--ink)",
                               border: "1px solid var(--line)",
-                              borderRadius: 10,
+                              borderRadius: 8,
                             }}
-                            labelFormatter={(s) => String(s)}
+                            labelFormatter={(_, payload) =>
+                              payload[0]?.payload.fullLabel ?? ""
+                            }
                             formatter={(value) => [
                               Number(value).toFixed(weighted ? 1 : 0),
-                              weighted ? "Estimated 1RM (kg)" : "Reps",
+                              metricLabel,
                             ]}
                           />
                           <Line
                             dataKey="value"
+                            name={metricLabel}
                             stroke="var(--blue)"
-                            strokeWidth={3}
+                            strokeWidth={2}
                             dot={{ r: 4 }}
                             isAnimationActive={false}
                           />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
+                    <p className="small-note">
+                      {metricLabel} · scale starts at zero. Same-day sessions
+                      use their recorded order.
+                    </p>
+                  </>
+                ) : (
+                  <p className="small-note">
+                    Your chart starts after your next comparable session.
+                  </p>
+                )}
+                <p className="small-note">
+                  {weighted ? (
+                    <>
+                      Estimated strength uses working sets of 1–10 reps.
+                      {base !== null
+                        ? ` ${latestValue - base >= 0 ? "+" : ""}${(latestValue - base).toFixed(1)} kg vs the baseline at least 30 days ago.`
+                        : " No comparable baseline from 30 days ago yet."}
+                    </>
+                  ) : timed ? (
+                    "Working-set duration in seconds at the same load as your latest session."
                   ) : (
-                    <p className="small-note">
-                      Your chart starts after your next comparable session.
-                    </p>
+                    "Working-set reps at the same load as your latest session. Assisted weight is assistance, not lifted weight."
                   )}
-                  {weighted && (
-                    <p className="small-note">
-                      Estimated strength (1RM)
-                      {base !== null && latest.e1rm !== null
-                        ? " · " +
-                          (latest.e1rm - base >= 0 ? "+" : "") +
-                          (latest.e1rm - base).toFixed(1) +
-                          " kg vs 30 days ago"
-                        : ""}
-                      . Estimate uses sets of 1–10 reps.
-                    </p>
-                  )}
-                  {!weighted && (
-                    <p className="small-note">
-                      Best-set reps at the same load as your latest session.
-                      Assisted weight is not lifted weight.
-                    </p>
-                  )}
-                  {[...item.points].reverse().map((p, i) => (
-                    <div className="history-set" key={i}>
-                      <span>{p.date}</span>
-                      <strong>{labelSet(p.set)}</strong>
-                    </div>
-                  ))}
-                </div>{" "}
-              </details>
-            </section>
-          );
-        })}
+                </p>
+              </div>
+            </details>
+          </section>
+        );
+      })}
+      {items.length > 0 && filtered.length === 0 && (
+        <div className="empty-card" role="status">
+          <h2>No matching exercises</h2>
+          <p>
+            Try another name or clear your search to see all recorded progress.
+          </p>
+          <button className="secondary" onClick={() => setSearch("")}>
+            Clear search
+          </button>
+        </div>
+      )}
       {!items.length && (
         <div className="empty-card">
           <TrendingUp size={30} />
-          <h2>See every step forward</h2>
+          <h2>Your working sets will appear here</h2>
           <p>
-            Finish a workout to see your first performance. Your next session
-            gives you a comparison.
+            Finish a workout with a working set to see an exact result. Another
+            comparable session gives you a comparison.
           </p>
           <Link className="primary" to="/">
             Start a workout

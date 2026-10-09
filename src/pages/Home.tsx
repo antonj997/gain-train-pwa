@@ -1,46 +1,50 @@
 import { suggestedExercises } from "@/data/start";
-import { Link, useNavigate } from "react-router-dom";
+import { sortWorkoutsNewest } from "@/data/workouts";
+import { localizedDate } from "@/lib/dates";
+import { countLabel } from "@/lib/labels";
+import { Link } from "react-router-dom";
+import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { Plus, Play, ChevronRight } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
-import {
-  today,
-  repeatExercises,
-  type Workout,
-  type Routine,
-} from "@/data/model";
+import { today, type Workout, type Routine } from "@/data/model";
 export default function Home() {
-  const { state, save } = useData(),
-    navigate = useNavigate();
+  const { state } = useData();
+  const {
+    start: requestStart,
+    busy: starting,
+    confirmation,
+  } = useStartWorkout();
   const records = Object.values(state.records).filter((r) => !r.deleted);
-  const drafts = records.filter(
-    (r) => r.kind === "workout" && (r.payload as Workout).status === "draft",
-  );
+  const drafts = records
+    .filter(
+      (r) => r.kind === "workout" && (r.payload as Workout).status === "draft",
+    )
+    .sort(sortWorkoutsNewest);
   const recent = records
     .filter(
       (r) =>
         r.kind === "workout" && (r.payload as Workout).status === "completed",
     )
-    .sort((a, b) =>
-      (b.payload as Workout).date.localeCompare((a.payload as Workout).date),
-    );
+    .sort(sortWorkoutsNewest);
   const routines = records.filter((r) => r.kind === "routine");
   const start = async (past = false, routine?: Routine, routineId?: string) => {
-    const id = crypto.randomUUID();
-    await save(id, "workout", {
+    const now = Date.now();
+    await requestStart({
       routineId,
       name: routine?.name || "Workout",
       date: today(),
       duration: null,
-      startedAt: past ? null : Date.now(),
+      startedAt: past ? null : now,
+      createdAt: now,
       status: "draft",
       exercises: routine
         ? suggestedExercises(routine.exercises, Object.values(state.records))
         : [],
     });
-    navigate("/workout/" + id);
   };
   return (
     <div className="stack home-page">
+      {confirmation}
       <div className="page-title">
         <div>
           <p className="eyebrow">
@@ -53,26 +57,53 @@ export default function Home() {
           <h1>Ready for your next set?</h1>
         </div>
       </div>
-      {drafts.map((r) => (
-        <Link key={r.id} to={"/workout/" + r.id} className="resume-card">
+      {drafts.map((r, i) => (
+        <Link
+          key={r.id}
+          to={"/workout/" + r.id}
+          className={"resume-card" + (i === 0 ? " resume-primary" : "")}
+        >
           <span>
-            <small>IN PROGRESS</small>
+            <small>Resume workout</small>
             <strong>{r.payload.name}</strong>
-            <span>
-              {(r.payload as Workout).exercises.length} exercises · Resume where
-              you left off
+            <span className="resume-meta">
+              {localizedDate((r.payload as Workout).date)} ·{" "}
+              {(r.payload as Workout).exercises.reduce(
+                (n, ex) => n + ex.sets.filter((set) => set.done).length,
+                0,
+              )}{" "}
+              of{" "}
+              {(r.payload as Workout).exercises.reduce(
+                (n, ex) => n + ex.sets.length,
+                0,
+              )}{" "}
+              sets done
             </span>
           </span>
           <Play size={24} />
         </Link>
       ))}
-      <button className="primary large" onClick={() => void start()}>
-        <Plus size={21} />
-        Start workout
-      </button>
-      <button className="text-button" onClick={() => void start(true)}>
-        Log a past workout
-      </button>
+      <div className="home-actions">
+        <button
+          className={drafts.length ? "secondary" : "primary large"}
+          disabled={starting}
+          onClick={() => void start()}
+        >
+          <Plus size={21} />
+          {starting
+            ? "Starting…"
+            : drafts.length
+              ? "Start a new workout"
+              : "Start workout"}
+        </button>
+        <button
+          className="text-button"
+          disabled={starting}
+          onClick={() => void start(true)}
+        >
+          Log a past workout
+        </button>
+      </div>
       <section>
         <div className="section-heading">
           <h2>Your routines</h2>
@@ -82,13 +113,22 @@ export default function Home() {
           routines.map((r) => (
             <button
               className="list-card"
+              disabled={starting}
               key={r.id}
               onClick={() => void start(false, r.payload as Routine, r.id)}
             >
               <span>
                 <strong>{r.payload.name}</strong>
                 <small>
-                  {(r.payload as Routine).exercises.length} exercises
+                  {countLabel(
+                    (r.payload as Routine).exercises.length,
+                    "exercise",
+                  )}{" "}
+                  ·{" "}
+                  {(r.payload as Routine).exercises
+                    .slice(0, 3)
+                    .map((exercise) => exercise.name)
+                    .join(" · ")}
                 </small>
               </span>
               <Play size={19} />
@@ -116,12 +156,16 @@ export default function Home() {
             <span>
               <strong>{recent[0].payload.name}</strong>
               <small>
-                {(recent[0].payload as Workout).date} ·{" "}
-                {(recent[0].payload as Workout).exercises.reduce(
-                  (n, e) => n + e.sets.filter((s) => s.done).length,
-                  0,
-                )}{" "}
-                sets
+                {localizedDate((recent[0].payload as Workout).date)} ·{" "}
+                {countLabel(
+                  (recent[0].payload as Workout).exercises.reduce(
+                    (n, e) => n + e.sets.filter((s) => s.done).length,
+                    0,
+                  ),
+                  "set",
+                )}
+                {(recent[0].payload as Workout).duration !== null &&
+                  ` · ${(recent[0].payload as Workout).duration === 0 ? "<1" : (recent[0].payload as Workout).duration} min`}
               </small>
             </span>
             <ChevronRight size={20} />

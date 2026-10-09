@@ -1,4 +1,7 @@
 import HistoryDatePicker from "@/components/HistoryDatePicker";
+import { localizedDate } from "@/lib/dates";
+import { countLabel } from "@/lib/labels";
+import { sortWorkoutsNewest } from "@/data/workouts";
 import {
   historyPeriod,
   summarize,
@@ -7,7 +10,8 @@ import {
   improvementRate,
 } from "@/data/summary";
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { useStartWorkout } from "@/hooks/useStartWorkout";
 import {
   Repeat,
   ChevronRight,
@@ -27,10 +31,11 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 export default function History() {
-  const { state, save } = useData();
-  const navigate = useNavigate();
+  const { state, save, restoreWorkout } = useData();
+  const workoutStart = useStartWorkout();
   const [params, setParams] = useSearchParams();
   const [month, setMonth] = useState("");
+  const [busy, setBusy] = useState(false);
   const records = Object.values(state.records)
     .filter(
       (r) =>
@@ -38,9 +43,7 @@ export default function History() {
         !r.deleted &&
         (r.payload as Workout).status === "completed",
     )
-    .sort((a, b) =>
-      (b.payload as Workout).date.localeCompare((a.payload as Workout).date),
-    );
+    .sort(sortWorkoutsNewest);
   const period = historyPeriod(month, today());
   const filtered = records.filter((r) => {
     const date = (r.payload as Workout).date;
@@ -64,7 +67,7 @@ export default function History() {
   ];
   const metrics = [
     {
-      label: "Workouts / week",
+      label: "Workouts / active week",
       value: current.perWeek,
       prior: previous.perWeek,
       decimals: 1,
@@ -86,44 +89,64 @@ export default function History() {
   const selected = records.find((r) => r.id === params.get("workout"));
   const w = selected?.payload as Workout | undefined;
   const repeat = async () => {
-    if (!w) return;
-    const id = crypto.randomUUID();
-    await save(id, "workout", {
+    if (!w || busy || workoutStart.busy) return;
+    const now = Date.now();
+    setParams({});
+    await workoutStart.start({
       ...w,
       date: today(),
       duration: null,
-      startedAt: Date.now(),
+      startedAt: now,
+      createdAt: now,
+      completedAt: undefined,
       status: "draft",
       exercises: repeatExercises(w.exercises),
     });
-    navigate("/workout/" + id);
   };
   const remove = async () => {
     if (
       !selected ||
+      busy ||
       !window.confirm(
         "Delete this workout? You can undo immediately afterwards.",
       )
     )
       return;
-    await save(selected.id, "workout", selected.payload, true);
-    setParams({});
-    toast("Workout deleted", {
-      action: {
-        label: "Undo",
-        onClick: () => void save(selected.id, "workout", selected.payload),
-      },
-    });
+    setBusy(true);
+    try {
+      await save(selected.id, "workout", selected.payload, true);
+      setParams({});
+      toast("Workout deleted", {
+        action: {
+          label: "Undo",
+          onClick: () =>
+            void restoreWorkout(selected.id).catch(() =>
+              toast.error(
+                "Could not restore the workout. Try restoring a backup.",
+              ),
+            ),
+        },
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not delete this workout. Try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <div className="stack history-page">
+      {workoutStart.confirmation}
       <div className="section-heading">
         <h1>History</h1>
-        <span className="muted">{records.length} workouts</span>
+        <span className="muted">{countLabel(records.length, "workout")}</span>
       </div>
       <HistoryDatePicker value={month} onChange={setMonth} />
       <p className="small-note">
-        {period.start} – {period.end}
+        {localizedDate(period.start)} – {localizedDate(period.end)}
       </p>
       <div className="metrics-grid">
         {metrics.map((metric) => (
@@ -143,20 +166,23 @@ export default function History() {
           </div>
         ))}
       </div>
-      <details className="stats-help">
+      <details className="period-summary">
         <summary className="session-summary">
-          Compared with {period.previousStart} – {period.previousEnd}
+          <strong>About these stats</strong>
           <ChevronDown size={18} />
         </summary>
         <p className="small-note">
-          Arrows show the change from the previous period. Duration averages
-          exclude workouts without a recorded duration. Weekly frequency counts
-          only Monday–Sunday weeks with at least one workout in the selected
-          period. Exercises improving compares your latest performance with the
-          last session before this period, or the first session within it. Only
-          exercises with comparable working sets count: estimated strength for
-          weighted sets of 1–10 reps, otherwise reps at the same load. A dash
-          means there is not enough data. Percentage changes are in percentage
+          Compared with {localizedDate(period.previousStart)} –{" "}
+          {localizedDate(period.previousEnd)}.
+        </p>
+        <p className="small-note">
+          Active weeks are Monday–Sunday weeks with at least one workout in this
+          period. Duration averages exclude sessions without a recorded
+          duration. Exercises improving compares your latest working result with
+          the last session before the period, or the first session within it.
+          Only matching load and measure count: estimated strength for weighted
+          sets of 1–10 reps, otherwise reps or seconds at the same load. A dash
+          means there is not enough data. Percentage changes use percentage
           points (pp).
         </p>
       </details>
@@ -164,19 +190,15 @@ export default function History() {
         <section className="history-week" key={week}>
           <div className="section-heading">
             <h2>
-              Week of{" "}
-              {new Date(week + "T12:00:00").toLocaleDateString(undefined, {
-                day: "numeric",
-                month: "short",
-              })}
+              Week of {localizedDate(week, { day: "numeric", month: "short" })}
             </h2>
             <small>
-              {
+              {countLabel(
                 filtered.filter(
                   (r) => weekStart((r.payload as Workout).date) === week,
-                ).length
-              }{" "}
-              workouts
+                ).length,
+                "workout",
+              )}
             </small>
           </div>
           {filtered
@@ -190,20 +212,22 @@ export default function History() {
                   onClick={() => setParams({ workout: r.id })}
                 >
                   <span className="history-date">
-                    {new Date(w.date + "T12:00:00").toLocaleDateString(
-                      undefined,
-                      { weekday: "short", day: "numeric" },
-                    )}
+                    {localizedDate(w.date, {
+                      weekday: "short",
+                      day: "numeric",
+                    })}
                   </span>
                   <span className="history-name">
                     <strong>{w.name}</strong>
                     <small>
-                      {w.exercises.length} exercises ·{" "}
-                      {w.exercises.reduce(
-                        (n, e) => n + e.sets.filter((s) => s.done).length,
-                        0,
-                      )}{" "}
-                      sets
+                      {countLabel(w.exercises.length, "exercise")} ·{" "}
+                      {countLabel(
+                        w.exercises.reduce(
+                          (n, e) => n + e.sets.filter((s) => s.done).length,
+                          0,
+                        ),
+                        "set",
+                      )}
                       {w.duration !== null
                         ? " · " +
                           (w.duration === 0 ? "<1" : w.duration) +
@@ -222,6 +246,11 @@ export default function History() {
           <CalendarDays size={26} />
           <h2>No workouts in this period</h2>
           <p>Choose another month or log your next workout.</p>
+          {month && (
+            <button className="secondary" onClick={() => setMonth("")}>
+              Show last 30 days
+            </button>
+          )}
           <Link className="primary" to="/">
             Log a workout
           </Link>
@@ -237,7 +266,7 @@ export default function History() {
           <DialogHeader>
             <DialogTitle>{w?.name}</DialogTitle>
             <DialogDescription>
-              {w?.date}
+              {w && localizedDate(w.date)}
               {w?.duration !== null && w?.duration !== undefined
                 ? " · " + (w.duration === 0 ? "<1" : w.duration) + " min"
                 : ""}
@@ -262,15 +291,23 @@ export default function History() {
                 ))}
             </section>
           ))}
-          <button className="primary" onClick={() => void repeat()}>
+          <button
+            className="primary"
+            disabled={busy || workoutStart.busy}
+            onClick={() => void repeat()}
+          >
             <Repeat size={18} />
-            Repeat workout
+            {busy ? "Please wait…" : "Repeat workout"}
           </button>
           <Link className="secondary" to={"/workout/" + selected?.id}>
             <Pencil size={18} />
             Edit workout
           </Link>
-          <button className="text-button danger" onClick={() => void remove()}>
+          <button
+            className="text-button danger"
+            disabled={busy}
+            onClick={() => void remove()}
+          >
             <Trash2 size={17} />
             Delete workout
           </button>

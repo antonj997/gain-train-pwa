@@ -13,13 +13,22 @@ import { readAccount, transact } from "@/data/database";
 import {
   emptyState,
   validate,
+  RecordValidationError,
   type LocalState,
   type Kind,
   type Payload,
   type RecordDoc,
   type RemoteDoc,
+  type Workout,
 } from "@/data/model";
 import { syncAccount } from "@/data/sync";
+import {
+  createWorkout,
+  startedWorkouts,
+  restoreRemovedWorkout,
+  WorkoutInProgressError,
+  type StartedWorkout,
+} from "@/data/workout-start";
 import { supabase, syncClient } from "@/integrations/supabase/client";
 type Data = {
   state: LocalState;
@@ -32,6 +41,13 @@ type Data = {
     kind: Kind,
     payload: Payload,
     deleted?: boolean,
+  ) => Promise<void>;
+  deleteRecord: (id: string) => Promise<void>;
+  restoreWorkout: (id: string) => Promise<void>;
+  startWorkout: (
+    id: string,
+    payload: Workout,
+    replace?: StartedWorkout[],
   ) => Promise<void>;
   sync: () => Promise<void>;
   resolve: (id: string, mine: boolean) => Promise<void>;
@@ -188,29 +204,152 @@ export function DataProvider({ children }: { children: ReactNode }) {
     payload: Payload,
     deleted = false,
   ) => {
+    if (deleted) return deleteRecord(id);
+    let parsed: Payload;
     try {
-      const parsed = validate(kind, payload);
+      parsed = validate(kind, payload);
+    } catch (e) {
+      if (activeAccount.current === account)
+        setError(
+          e instanceof Error ? e.message : "Check the details before saving.",
+        );
+      throw e;
+    }
+    try {
       const next = await transact(account, (s) => {
         const old = s.records[id];
+        if (kind === "workout" && old?.deleted)
+          throw new RecordValidationError(
+            "This workout was removed. Return to your log to resume your current workout.",
+          );
+        let saved = parsed;
+        if (kind === "workout") {
+          const workout = parsed as Workout;
+          if (workout.status === "draft" && workout.startedAt !== null) {
+            const others = startedWorkouts(s).filter(
+              (record) => record.id !== id,
+            );
+            if (others.length) throw new WorkoutInProgressError(others);
+          }
+          const previous =
+            old?.kind === "workout" ? (old.payload as Workout) : undefined;
+          const now = Date.now();
+          saved = {
+            ...workout,
+            createdAt: previous
+              ? (previous.createdAt ?? workout.createdAt)
+              : (workout.createdAt ?? now),
+            ...(workout.status === "completed"
+              ? {
+                  completedAt:
+                    previous?.status === "completed"
+                      ? previous.completedAt
+                      : (workout.completedAt ?? now),
+                }
+              : {}),
+          };
+        }
         s.records[id] = {
           ...old,
           id,
           kind,
-          payload: parsed,
+          payload: saved,
           deleted,
           revision: old?.revision ?? 0,
           localVersion: (old?.localVersion ?? 0) + 1,
           dirty: true,
         };
       });
-      if (activeAccount.current === account) setState(next);
+      if (activeAccount.current === account) {
+        setState(next);
+        setError("");
+      }
       notify();
       setTimeout(() => void sync(), 500);
     } catch (e) {
-      setError(
-        "Could not save on this phone. Keep this screen open and free some storage.",
+      const message =
+        e instanceof WorkoutInProgressError
+          ? "Another workout is already in progress. Return to Workout to resume it before restoring this one."
+          : e instanceof RecordValidationError
+            ? e.message
+            : "Could not save on this phone. Keep this screen open and free some storage.";
+      if (activeAccount.current === account) setError(message);
+      throw new Error(message, { cause: e });
+    }
+  };
+  const startWorkout = async (
+    id: string,
+    payload: Workout,
+    replace?: StartedWorkout[],
+  ) => {
+    try {
+      const next = await transact(account, (s) =>
+        createWorkout(s, id, payload, replace),
       );
-      throw e;
+      if (activeAccount.current === account) {
+        setState(next);
+        setError("");
+      }
+      notify();
+      setTimeout(() => void sync(), 500);
+    } catch (e) {
+      if (e instanceof WorkoutInProgressError) throw e;
+      const message =
+        e instanceof RecordValidationError
+          ? e.message
+          : "Could not start on this phone. Your current workout has been kept. Free some storage and try again.";
+      if (activeAccount.current === account) setError(message);
+      throw new Error(message, { cause: e });
+    }
+  };
+  const deleteRecord = async (id: string) => {
+    try {
+      const next = await transact(account, (s) => {
+        const saved = s.records[id];
+        if (!saved)
+          throw new RecordValidationError(
+            "Could not find the saved record. Return to your log and try again.",
+          );
+        if (saved.deleted) return;
+        s.records[id] = {
+          ...saved,
+          payload: validate(saved.kind, saved.payload),
+          deleted: true,
+          localVersion: saved.localVersion + 1,
+          dirty: true,
+        };
+      });
+      if (activeAccount.current === account) {
+        setState(next);
+        setError("");
+      }
+      notify();
+      setTimeout(() => void sync(), 500);
+    } catch (e) {
+      const message =
+        e instanceof RecordValidationError
+          ? e.message
+          : "Could not remove the saved record on this phone. Keep this screen open and try again.";
+      if (activeAccount.current === account) setError(message);
+      throw new Error(message, { cause: e });
+    }
+  };
+  const restoreWorkout = async (id: string) => {
+    try {
+      const next = await transact(account, (s) => restoreRemovedWorkout(s, id));
+      if (activeAccount.current === account) {
+        setState(next);
+        setError("");
+      }
+      notify();
+      setTimeout(() => void sync(), 500);
+    } catch (e) {
+      const message =
+        e instanceof RecordValidationError
+          ? e.message
+          : "Could not restore this workout on this phone. Free some storage and try again.";
+      if (activeAccount.current === account) setError(message);
+      throw new Error(message, { cause: e });
     }
   };
   const resolve = async (id: string, mine: boolean) => {
@@ -234,29 +373,66 @@ export function DataProvider({ children }: { children: ReactNode }) {
     void sync();
   };
   const importRecords = async (records: RecordDoc[]) => {
-    if (records.length > 10000) throw Error("Backup is too large.");
-    for (const r of records) {
-      z.string().uuid().parse(r.id);
-      z.enum(["workout", "routine", "exercise"]).parse(r.kind);
-      if (!r.deleted) validate(r.kind, r.payload);
-    }
-    await transact(account, (s) => {
+    try {
+      if (records.length > 10000)
+        throw new RecordValidationError("Backup is too large.");
+      const restored: RecordDoc[] = [];
       for (const r of records) {
-        if (r.deleted || s.records[r.id]) continue;
-        s.records[r.id] = {
-          id: r.id,
-          kind: r.kind,
-          payload: validate(r.kind, r.payload),
-          deleted: false,
-          revision: 0,
-          localVersion: 1,
-          dirty: true,
-        };
+        if (
+          !z.string().uuid().safeParse(r.id).success ||
+          !z.enum(["workout", "routine", "exercise"]).safeParse(r.kind).success
+        )
+          throw new RecordValidationError(
+            "Backup contains an invalid record ID or type.",
+          );
+        if (!r.deleted)
+          restored.push({ ...r, payload: validate(r.kind, r.payload) });
       }
-    });
-    await reload();
-    notify();
-    void sync();
+      const next = await transact(account, (s) => {
+        let restoredStartedWorkout = false;
+        for (const r of restored) {
+          const old = s.records[r.id];
+          if (old && !old.deleted) continue;
+          if (old && old.kind !== r.kind)
+            throw new RecordValidationError(
+              "A backup record does not match its saved record type.",
+            );
+          s.records[r.id] = {
+            ...old,
+            id: r.id,
+            kind: r.kind,
+            payload: r.payload,
+            deleted: false,
+            revision: old?.revision ?? 0,
+            localVersion: (old?.localVersion ?? 0) + 1,
+            dirty: true,
+          };
+          if (
+            r.kind === "workout" &&
+            (r.payload as Workout).status === "draft" &&
+            (r.payload as Workout).startedAt !== null
+          )
+            restoredStartedWorkout = true;
+        }
+        if (restoredStartedWorkout && startedWorkouts(s).length > 1)
+          throw new RecordValidationError(
+            "A workout is already in progress. Finish or abandon it before restoring a backup with another started workout. No backup records were changed.",
+          );
+      });
+      if (activeAccount.current === account) {
+        setState(next);
+        setError("");
+      }
+      notify();
+      void sync();
+    } catch (e) {
+      const message =
+        e instanceof RecordValidationError
+          ? e.message
+          : "Could not restore the backup on this phone. Free some storage and try again.";
+      if (activeAccount.current === account) setError(message);
+      throw new Error(message, { cause: e });
+    }
   };
   return (
     <Context.Provider
@@ -267,6 +443,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         syncing,
         online,
         save,
+        deleteRecord,
+        restoreWorkout,
+        startWorkout,
         sync,
         resolve,
         importRecords,

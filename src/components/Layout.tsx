@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { readAccount } from "@/data/database";
-import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
+import { Outlet, NavLink, Link, Navigate, useLocation } from "react-router-dom";
 import {
   Dumbbell,
   History,
@@ -17,8 +17,9 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function Layout() {
   useVisualViewport();
   const { state, error, syncing, online, ready } = useData();
-  const { user, account } = useAuth();
+  const { user, account, passwordRecovery } = useAuth();
   const path = useLocation().pathname;
+  const activeWorkout = path.startsWith("/workout/");
   const returnPath = useRef("/");
   useEffect(() => {
     if (path !== "/settings") returnPath.current = path;
@@ -49,6 +50,8 @@ export default function Layout() {
     (r) => r.conflict,
   ).length;
   const dirty = Object.values(state.records).filter((r) => r.dirty).length;
+  if (passwordRecovery && path !== "/auth")
+    return <Navigate to="/auth" replace />;
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -64,7 +67,10 @@ export default function Layout() {
           {path === "/settings" ? <X size={21} /> : <Settings size={21} />}
         </Link>
       </header>
-      <div className="sync-line" role="status">
+      <div
+        className={"sync-line" + (activeWorkout ? " workout-sync-line" : "")}
+        role="status"
+      >
         {syncing ? (
           <>
             <RefreshCw size={14} className="animate-spin" />
@@ -73,8 +79,10 @@ export default function Layout() {
         ) : !user ? (
           <>
             <CloudOff size={14} />
-            {account === "phone" ? "Saved on this phone" : "Offline account"}
-            <Link to="/auth">Sign in to sync</Link>
+            {account === "phone"
+              ? "Saved on this phone"
+              : "Saved on phone · sign in to sync"}
+            {!activeWorkout && <Link to="/auth">Sign in to sync</Link>}
           </>
         ) : dirty ? (
           <>
@@ -107,17 +115,25 @@ export default function Layout() {
       {error && (
         <div className="notice" role="alert">
           {error}
-          <Link to="/settings">View sync</Link>
+          <Link to="/settings">Open settings</Link>
         </div>
       )}
       <main>
         {ready ? (
-          <Outlet />
+          <Suspense
+            fallback={
+              <p className="empty" role="status">
+                Opening…
+              </p>
+            }
+          >
+            <Outlet />
+          </Suspense>
         ) : (
           <p className="empty">Opening your workout log…</p>
         )}
       </main>
-      {!path.startsWith("/workout/") && (
+      {!activeWorkout && (
         <nav className="bottom-nav" aria-label="Main navigation">
           {[
             { to: "/", title: "Workout", Icon: Dumbbell },

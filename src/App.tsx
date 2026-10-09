@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -7,21 +7,29 @@ import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import ActiveWorkout from "@/pages/ActiveWorkout";
-import History from "@/pages/History";
-import Auth from "@/pages/Auth";
-import Settings from "@/pages/Settings";
-import Routines from "@/pages/Routines";
-import MyExercises from "@/pages/MyExercises";
 import NotFound from "@/pages/NotFound";
+const History = lazy(() => import("@/pages/History"));
+const Auth = lazy(() => import("@/pages/Auth"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Routines = lazy(() => import("@/pages/Routines"));
+const MyExercises = lazy(() => import("@/pages/MyExercises"));
 const Progress = lazy(() => import("@/pages/Progress"));
 function AppToaster() {
   const { theme } = useTheme();
   return (
     <Toaster
       theme={theme}
-      position="bottom-center"
-      offset="calc(88px + env(safe-area-inset-bottom))"
-      mobileOffset="calc(88px + env(safe-area-inset-bottom))"
+      position="top-center"
+      offset={{
+        top: "calc(16px + env(safe-area-inset-top))",
+        left: 16,
+        right: 16,
+      }}
+      mobileOffset={{
+        top: "calc(16px + env(safe-area-inset-top))",
+        left: 16,
+        right: 16,
+      }}
       closeButton
       toastOptions={{
         style: {
@@ -38,21 +46,19 @@ function AccountApp() {
   return (
     <DataProvider key={account}>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <Suspense fallback={<p className="empty">Opening…</p>}>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route index element={<Home />} />
-              <Route path="workout/:id" element={<ActiveWorkout />} />
-              <Route path="history" element={<History />} />
-              <Route path="progress" element={<Progress />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="routines" element={<Routines />} />
-              <Route path="my-exercises" element={<MyExercises />} />
-              <Route path="auth" element={<Auth />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </Suspense>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="workout/:id" element={<ActiveWorkout />} />
+            <Route path="history" element={<History />} />
+            <Route path="progress" element={<Progress />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="routines" element={<Routines />} />
+            <Route path="my-exercises" element={<MyExercises />} />
+            <Route path="auth" element={<Auth />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
       </BrowserRouter>
     </DataProvider>
   );

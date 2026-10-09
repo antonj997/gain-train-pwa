@@ -4,6 +4,8 @@ A phone-first workout log: start or resume a workout, enter sets, and review pro
 
 Live app: https://antonj997.github.io/gain-train-pwa/
 
+The app keeps the original GitHub Pages design and adds direct set/load controls, timed holds, planned routines, retained form drafts, explicit Save/Discard for historical edits and optional rest/haptics. Sets remove immediately; exercises with entered values ask before removal. Toasts appear at the top and span the mobile screen with side margins. Narrow screens use wider cards and compact previous-result dates. Starting another workout asks before replacing the one in progress; history stats remain visible above the explanation. See [design restoration](review-reports/design-restoration.md), [functional improvements](review-reports/implementation-verification.md) and [responsive refinements](review-reports/responsive-refinements.md) for the changes and verification.
+
 ## Offline and sync
 
 Open the app once with a connection to cache it, then add it to your home screen. Drafts and finished workouts save to IndexedDB on your device before any network request. Sign in for cloud sync. If you started without an account, Settings lets you copy that phone log into your signed-in account.
@@ -38,12 +40,12 @@ The replacement Supabase project is opecaiznqmgbsezmtnhb in antonj997's Org, on 
 
 Each workout and its sets sync atomically as one document. Ownership policies isolate accounts. Operation receipts make retries idempotent; revision checks detect conflicts; soft deletion and ordered change cursors support disconnected devices. The app never caches authenticated Supabase HTTP responses in the service worker.
 
+Session timestamps and set measure are optional, so older records/backups remain readable. Timed holds store seconds in the existing numeric reps transport field with bodyweight load; the UI and analytics distinguish seconds. The current server accepts these optional JSON fields without a migration.
+
 GitHub Pages and Supabase Free have no recurring charge within their free limits. Supabase may pause an inactive Free project; restore it in your own dashboard. Local logging continues. Default Supabase email delivery is restricted to organization members; configure your own SMTP provider before inviting unrelated users. Confirmation URLs are configured for the live app.
 
 References: https://supabase.com/pricing and https://supabase.com/docs/guides/auth/auth-smtp
 
 ## Review status
 
-Verified: typecheck, production build, eight automated persistence/sync tests, real-server retry test, database ownership and validation assertions, and browser walkthroughs including draft reload, bodyweight, routines, History and Progress. Production app startup and Progress also worked with the local web server stopped (cached assets).
-
-The independent usability agent completed part of round one and reported editing/deletion friction, which was improved. It hit the account usage limit before producing a numeric score. The owner requested prioritizing publication for hands-on testing; no score or completed retest is claimed.
+Final local checks: 70 automated tests passed, one live-cloud test skipped; typecheck and production build passed; lint has no errors and three development-refresh warnings. Mobile/tablet/desktop walkthroughs covered the updated flows. Cached production startup, direct-route Progress and local edits also worked with the local server stopped. Live cloud and physical-device checks remain separate; see the linked verification reports for exact evidence and limitations.

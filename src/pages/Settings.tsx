@@ -23,16 +23,27 @@ import { useData } from "@/contexts/DataContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { readAccount } from "@/data/database";
 import { type RecordDoc } from "@/data/model";
+import {
+  readTrainingPreferences,
+  saveTrainingPreferences,
+} from "@/lib/preferences";
 export default function Settings() {
   const { user, account, signOut, deleteAccount } = useAuth(),
-    { state, sync, syncing, error, resolve, importRecords } = useData(),
+    { state, sync, syncing, online, error, resolve, importRecords } = useData(),
     { theme, toggleTheme } = useTheme();
   const [importing, setImporting] = useState(false);
+  const [preferences, setPreferences] = useState(readTrainingPreferences);
+  const [accountBusy, setAccountBusy] = useState(false);
   const [deleting, setDeleting] = useState(false),
     [confirmDelete, setConfirmDelete] = useState(false),
     [confirmation, setConfirmation] = useState(""),
     [deleteError, setDeleteError] = useState("");
   const conflicts = Object.values(state.records).filter((r) => r.conflict);
+  const dirty = Object.values(state.records).filter((r) => r.dirty).length;
+  const updatePreferences = (patch: Partial<typeof preferences>) => {
+    saveTrainingPreferences(patch);
+    setPreferences(readTrainingPreferences());
+  };
   const exportData = () => {
     const url = URL.createObjectURL(
       new Blob(
@@ -80,15 +91,13 @@ export default function Settings() {
     }
   };
   return (
-    <div className="stack">
+    <div className="stack settings-page">
       <h1>Settings</h1>
       <section className="settings-card">
         <div className="theme-setting">
           <div>
             <h2>Appearance</h2>
-            <p className="small-note">
-              {theme === "dark" ? "Moonlight" : "Daylight"}
-            </p>
+            <p className="small-note">{theme === "dark" ? "Dark" : "Light"}</p>
           </div>
           <button
             type="button"
@@ -119,16 +128,55 @@ export default function Settings() {
         <button
           className="text-button"
           onClick={async () => {
-            const ok = await navigator.storage?.persist?.();
-            toast(
-              ok
-                ? "Persistent storage enabled"
-                : "Your browser manages storage automatically. Keep a backup too.",
-            );
+            try {
+              const ok = await navigator.storage?.persist?.();
+              toast(
+                ok
+                  ? "Persistent storage enabled"
+                  : "Your browser manages storage automatically. Keep a backup too.",
+              );
+            } catch {
+              toast.error(
+                "Your browser could not enable persistent storage. Export a backup to keep a separate copy.",
+              );
+            }
           }}
         >
           Keep data on this device
         </button>
+      </section>
+      <section className="settings-card">
+        <h2>Between sets</h2>
+        <label className="preference-setting">
+          <span>
+            Rest timer<small>Starts after checking a set as done.</small>
+          </span>
+          <select
+            value={preferences.restSeconds}
+            onChange={(event) =>
+              updatePreferences({ restSeconds: Number(event.target.value) })
+            }
+          >
+            {[0, 30, 60, 90, 120, 180].map((seconds) => (
+              <option key={seconds} value={seconds}>
+                {seconds ? `${seconds} seconds` : "Off"}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="preference-toggle">
+          <input
+            type="checkbox"
+            checked={preferences.haptics}
+            onChange={(event) =>
+              updatePreferences({ haptics: event.target.checked })
+            }
+          />
+          <span>
+            Vibrate when a set is done
+            <small>Off by default. Available on supported devices.</small>
+          </span>
+        </label>
       </section>
       <details className="settings-card settings-disclosure">
         <summary className="session-summary">
@@ -137,10 +185,11 @@ export default function Settings() {
               <UserRound size={20} /> Account
             </strong>
             <small>
-              {user?.email || "Not signed in"} ·{" "}
-              {Object.values(state.records).filter((r) => r.dirty).length
-                ? "Changes waiting to sync"
-                : "Saved"}
+              {user
+                ? `${user.email} · ${syncing ? "Syncing…" : dirty ? `${dirty} pending` : "Synced"}`
+                : account === "phone"
+                  ? "Phone only · saved on this phone"
+                  : "Saved on phone · sign in to sync"}
             </small>
           </span>
           <ChevronDown size={18} />
@@ -153,32 +202,64 @@ export default function Settings() {
                 ? "Your log is saved on this phone."
                 : "Sign in again to sync this account."}
           </p>
-          <p className="muted">
-            {Object.values(state.records).filter((r) => r.dirty).length} changes
-            waiting to sync.
-          </p>
-          {error && <p className="error-text">{error}</p>}
+          {(user || account !== "phone") && (
+            <p className="muted">
+              {dirty
+                ? `${dirty} changes waiting to sync${!online ? " when you reconnect" : ""}.`
+                : "Your local log is up to date."}
+            </p>
+          )}
+          {error && (
+            <p className="error-text" role="alert">
+              {error}
+            </p>
+          )}
           {user ? (
             <>
               <button
                 className="secondary"
-                disabled={syncing}
+                disabled={syncing || !online}
                 onClick={() => void sync()}
               >
                 <RefreshCw size={18} />
-                Sync now
+                {syncing ? "Syncing…" : online ? "Sync now" : "Connect to sync"}
               </button>
               <button
                 className="text-button"
+                disabled={accountBusy}
                 onClick={async () => {
-                  const phone = await readAccount("phone");
-                  await importRecords(Object.values(phone.records));
-                  toast.success("Phone workouts copied to this account");
+                  setAccountBusy(true);
+                  try {
+                    const phone = await readAccount("phone");
+                    await importRecords(Object.values(phone.records));
+                    toast.success("Phone workouts copied to this account");
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Could not copy this phone’s log. Try again.",
+                    );
+                  } finally {
+                    setAccountBusy(false);
+                  }
                 }}
               >
                 Copy this phone's unsigned-in workouts to my account
               </button>
-              <button className="text-button" onClick={() => void signOut()}>
+              <button
+                className="text-button"
+                disabled={accountBusy}
+                onClick={async () => {
+                  setAccountBusy(true);
+                  try {
+                    await signOut();
+                  } catch {
+                    toast.error("Could not sign out. Try again.");
+                  } finally {
+                    setAccountBusy(false);
+                  }
+                }}
+              >
                 <LogOut size={17} />
                 Sign out
               </button>
@@ -199,8 +280,9 @@ export default function Settings() {
             </Link>
           )}
           <p className="small-note">
-            Sync runs when connected while the app is open, and when you return.
-            Your phone keeps a local copy.
+            {user || account !== "phone"
+              ? "Sync runs when connected while the app is open, and when you return. Your phone keeps a local copy."
+              : "An account is optional. Sign in to sync across devices; your phone-only log stays separate until you choose to copy it."}
           </p>
         </div>
       </details>
@@ -250,7 +332,11 @@ export default function Settings() {
               type="file"
               accept=".json,application/json"
               disabled={importing}
-              onChange={(e) => void restore(e.target.files?.[0])}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                void restore(file);
+              }}
             />
           </label>
         </div>

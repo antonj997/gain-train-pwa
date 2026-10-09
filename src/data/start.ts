@@ -5,6 +5,11 @@ import {
   newSet,
   repeatExercises,
 } from "./model";
+import {
+  previousSetFor,
+  sortWorkoutsNewest,
+  setProfileOrdinal,
+} from "./workouts";
 
 export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
   const history = records
@@ -14,17 +19,28 @@ export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
         !r.deleted &&
         (r.payload as Workout).status === "completed",
     )
-    .sort((a, b) =>
-      (b.payload as Workout).date.localeCompare((a.payload as Workout).date),
-    );
+    .sort(sortWorkoutsNewest);
   return repeatExercises(items).map((ex) => {
-    const last = history
-      .flatMap((r) => (r.payload as Workout).exercises)
-      .find((e) => e.exerciseId === ex.exerciseId);
-    if (!last) return ex;
+    const lastSession = history.find((r) =>
+      (r.payload as Workout).exercises.some(
+        (e) => e.exerciseId === ex.exerciseId && e.sets.some((s) => s.done),
+      ),
+    );
+    if (!lastSession) return ex;
+    const prior = (lastSession.payload as Workout).exercises
+      .filter((e) => e.exerciseId === ex.exerciseId)
+      .flatMap((e) => e.sets);
     return {
       ...ex,
-      sets: ex.sets.map((set, index) => newSet(last.sets[index] ?? set)),
+      sets: ex.sets.map((set, index) => {
+        const ordinal = setProfileOrdinal(ex.sets, index);
+        const previous = previousSetFor(prior, set, ordinal);
+        return newSet(
+          previous
+            ? { ...set, reps: previous.reps, weight: previous.weight }
+            : set,
+        );
+      }),
     };
   });
 }
