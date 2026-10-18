@@ -85,6 +85,16 @@ components:
     textColor: "var(--ink)"
     rounded: "{rounded.exercise-card}"
     padding: "18px 12px"
+  calendar-panel:
+    backgroundColor: "var(--surface)"
+    textColor: "var(--ink)"
+    rounded: "{rounded.card}"
+    padding: "12px 12px 8px"
+  set-drag-handle:
+    backgroundColor: "transparent"
+    textColor: "var(--soft)"
+    rounded: "{rounded.input}"
+    padding: "0"
 ---
 
 # Design System: Gain Train
@@ -97,7 +107,7 @@ The owner prefers the original Gain Train visual system and requested its restor
 
 Visual authority is the [original GitHub Pages app](https://antonj997.github.io/gain-train-pwa/) and [repository commit 3d2514862f7babecb964eb01b09230d804b86e77](https://github.com/antonj997/gain-train-pwa/tree/3d2514862f7babecb964eb01b09230d804b86e77). The restored `src/index.css` and six public icons come from that commit: `public/icon.svg`, `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable.png`, `public/apple-touch-icon.png` and `public/favicon.ico`. The supplied `public/icon-license.txt` credits Lucide/Feather contributors. Preserve these assets and their license.
 
-Current implementation sources are `src/index.css`, `src/styles/usability.css` and `tailwind.config.ts`. The usability stylesheet loads after the original stylesheet and adapts retained controls to the original visual system.
+Current implementation sources are `src/index.css`, `src/styles/usability.css`, the scoped set-editing, profile and history-calendar stylesheets, and `tailwind.config.ts`. The usability stylesheet loads after the original stylesheet; scoped additions inherit the original visual system.
 
 **Key Characteristics:**
 
@@ -124,6 +134,10 @@ Below 360px, set rows and metric grids adapt to the available width. Set metadat
 
 The original stack gap is 24px; Home, History and Progress use compact 14px page gaps. Keep the Gain Train header on every route. Fixed controls and the header account for safe areas. Dialogs use the visual viewport to fit above the keyboard; bottom controls hide while the keyboard is open.
 
+Compact set editing keeps the handle/index, load, reps or seconds, type and removal control together. Below 640px, the type select occupies a second line under the numeric fields at 16px. At 640px and above, all controls share one row; the type column has a 112px minimum width and 13px text. Handles have a 44px minimum width and 48px minimum height. Profile's input and save button stack below 380px.
+
+Exercise search uses a maximum 640px dialog width and 760px height, bounded by the visual viewport and safe areas. Below 640px it spans the viewport minus 16px, with 16px vertical and 12px horizontal padding. A flexible, independently scrolling result list reserves room for search and footer actions; the dialog retains a scroll fallback when space is scarce. The description hides during focused mobile search. History's inline calendar uses seven equal columns and day controls at least 44px high.
+
 ## Elevation & Depth
 
 Cards use neutral surface contrast and one-pixel borders. The resume card adds a restrained primary-color gradient. Shadows belong to the original day/night switch: the inset track, raised orb and sun/horizon glow. Do not add a general card-shadow system.
@@ -136,17 +150,20 @@ Preserve the varied rounded forms: inputs and completion controls (10px), button
 
 - **Buttons:** primary blue with white text; secondary surface with a divider border; text actions use theme-aware blue. Standard primary/secondary controls are at least 46px high; text actions retain their 36px base height. Icon controls and retained set removal controls are at least 44px. Pointer hover darkens primary blue or applies a subtle primary tint. Bordered controls retain a 3px blue keyboard-focus outline with a 3px offset. Borderless text actions, set-type selects, Back links and navigation use an underline with a 4px offset; icon buttons use blue color and a heavier SVG stroke (3px) without an outline.
 - **Cards:** retain the original rounded, bordered list and exercise containers. Compact Home and History card padding comes from the original stylesheet. Additional timers, routine plans and save-state controls inherit the same surfaces, ink and borders.
-- **Inputs:** rounded bordered fields on the page background, with 16px base text. Set values are centered in 48px fields. Keep the single custom select arrow, visible field errors and readable disabled/completed values.
+- **Inputs:** rounded bordered fields on the page background, with 16px base text. Set values are centered in 48px fields. Set and routine-plan numeric inputs select their existing value on focus and repeated click; selection uses white text on theme-aware blue. Keep the single custom select arrow, visible field errors and readable disabled/completed values. Set-type options appear in this order: Warm-up, Working set, Cool-down.
 - **Navigation:** fixed, centered within the shell, with muted labels and icons. The active destination uses blue text on a transparent background. Menu and exercise actions remain borderless without a background option box. Auth uses an inline Back link; phone-only logging remains available without a separate Continue on phone button.
-- **Workout and history:** the jump action reads “Go to active set”. History metrics remain visible above the explanatory “About these stats” disclosure. Preserve the previous-result layout described in Layout.
+- **Workout:** the jump action reads “Go to active set”. Exercise options include “Edit sets”, which shows compact editable rows without previous-result or completion clutter. Preserve actual field validation. Drag handles show a grip and index, use blue/tinted feedback while moving, and retain visible keyboard focus. Space/Enter grabs and drops, arrows move, and Escape cancels the move while keeping a routine dialog open. Pointer moves auto-scroll the nearest scrollable container. The same control serves routine planning. Historical edits retain Save/Discard.
+- **Profile and BW:** Settings includes a Profile card with decimal bodyweight in kg, a save action, inline validation and truthful local/pending/synced/error status. A registered BW value appears with the small “kg BW” label; absent values retain “BW”. Completed BW sets display their captured bodyweight, preserving the logged value after a profile change.
+- **History:** default to the current month. Keep period statistics above the inline Monday-first calendar and separate from the selected-day filter. A dot marks completed-workout days; today has a blue border and a selected date has a solid original-blue fill. Previous/next month and current-month controls remain directly available. Day selection filters the session list; “More periods” retains rolling presets. Keep the explanatory “About these stats” disclosure.
+- **Exercise search:** search and clear controls, category chips and footer actions retain the original styles. Clearing returns focus to the search input. Use the expanded responsive dialog and result-list scrolling described in Layout.
 - **Theme switch:** retain the original day/night orb, horizon and decorative night stars. Decorative stars remain hidden from assistive technology.
 - **Feedback:** retain top, mobile-wide toasts using the current surface, ink and border. Keep the next-set blue marker and green completion control. The retained check settles over 140ms; the original theme transition takes 650ms. Respect reduced motion. Timers and haptics remain opt-in.
 
 ## Do's and Don'ts
 
 - **Do** preserve the original Gain Train palette, rounded containers, header, navigation, theme switch and identity assets.
-- **Do** style retained and future quality-of-life controls in `src/styles/usability.css` using the incumbent tokens.
+- **Do** style quality-of-life controls in `src/styles/usability.css` or their existing scoped stylesheets using the incumbent tokens.
 - **Do** retain clear save status, direct load/measurement controls, planned-routine fields and readable completed data.
 - **Don't** reintroduce the Training Ledger palette, flattened exercise layout or restrained-corner redesign; the owner rejected that visual direction.
 - **Don't** replace the restored identity assets or add a new visual identity without a new user request.
-- **Don't** introduce record migrations or cloud changes during these visual refinements.
+- **Don't** let compact editing hide real field errors or replace historical Save/Discard behavior.

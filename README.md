@@ -8,6 +8,8 @@ The app keeps the original GitHub Pages design and adds direct set/load controls
 
 ## Offline and sync
 
+The 18 October update adds a bodyweight profile, select-all set inputs, compact set reordering, a roomier exercise picker and a current-month history calendar. See [workout usability verification](review-reports/2026-10-18-workout-usability.md) for completed checks and remaining browser/device verification.
+
 Open the app once with a connection to cache it, then add it to your home screen. Drafts and finished workouts save to IndexedDB on your device before any network request. Sign in for cloud sync. If you started without an account, Settings lets you copy that phone log into your signed-in account.
 
 Sync retries while the app is open, when a connection returns, and when you return to the app. A closed mobile app cannot guarantee immediate background sync. Conflicting device edits are preserved for an explicit choice in Settings. Export a backup before clearing browser data.
@@ -48,4 +50,4 @@ References: https://supabase.com/pricing and https://supabase.com/docs/guides/au
 
 ## Review status
 
-Final local checks: 70 automated tests passed, one live-cloud test skipped; typecheck and production build passed; lint has no errors and three development-refresh warnings. Mobile/tablet/desktop walkthroughs covered the updated flows. Cached production startup, direct-route Progress and local edits also worked with the local server stopped. Live cloud and physical-device checks remain separate; see the linked verification reports for exact evidence and limitations.
+Latest local checks: 104 automated tests passed, one live-cloud test skipped; typecheck and the GitHub Pages production build passed; lint has no errors and four development-refresh warnings. The October 18 additions have source, component and data verification; browser/device verification is still pending. Earlier reports document the October 9 mobile/tablet/desktop walkthroughs and cached offline-startup checks, which do not verify the newer interface changes. See the linked verification reports for exact evidence and limitations.

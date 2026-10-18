@@ -3,6 +3,7 @@ export const setSchema = z.object({
   id: z.string().uuid(),
   reps: z.number().int().min(0).max(10000).nullable(),
   weight: z.number().min(0).max(10000).nullable(),
+  bodyWeightKg: z.number().finite().positive().max(1000).optional(),
   load: z.enum(["weight", "bodyweight", "assisted"]),
   measure: z.enum(["reps", "seconds"]).optional(),
   section: z.enum(["working", "warmup", "winddown"]),
@@ -128,6 +129,8 @@ export function validate(kind: Kind, payload: unknown): Payload {
       duration:
         "Duration must be a whole number from 0 to 1440 minutes, or blank.",
       weight: "Weight must be a number from 0 to 10000 kg, or blank.",
+      bodyWeightKg:
+        "Bodyweight must be greater than 0 and no more than 1000 kg.",
       measure: "Choose reps or seconds for this set.",
       load: "Choose weight, bodyweight or assisted load.",
       section: "Choose working, warm-up or cool-down for this set.",
@@ -194,5 +197,5 @@ export const repeatExercises = (items: Exercise[]) =>
   items.map((e) => ({
     ...e,
     id: crypto.randomUUID(),
-    sets: e.sets.map((s) => ({ ...s, id: crypto.randomUUID(), done: false })),
+    sets: e.sets.map((s) => newSet(s)),
   }));

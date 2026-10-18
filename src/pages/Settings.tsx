@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import ProfileForm from "@/components/ProfileForm";
+import { removeProfileCache } from "@/lib/profile";
 import { readAccount } from "@/data/database";
 import { type RecordDoc } from "@/data/model";
 import {
@@ -93,6 +95,7 @@ export default function Settings() {
   return (
     <div className="stack settings-page">
       <h1>Settings</h1>
+      <ProfileForm />
       <section className="settings-card">
         <div className="theme-setting">
           <div>
@@ -388,6 +391,7 @@ export default function Settings() {
               setDeleteError("");
               try {
                 await deleteAccount();
+                removeProfileCache(account);
                 setConfirmDelete(false);
                 toast.success("Account deleted");
               } catch (error) {

@@ -9,10 +9,12 @@ import {
   ArrowDown,
   Trash2,
   Crosshair,
+  ListOrdered,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import {
   type Workout,
   type Exercise,
@@ -31,6 +33,7 @@ import {
   previousSetFor,
 } from "@/data/workouts";
 import { finishWorkout } from "@/lib/workout-editor";
+import { selectInputValue } from "@/lib/set-editing";
 import {
   draftKey,
   readDraft,
@@ -43,6 +46,8 @@ import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import ExercisePicker from "@/components/ExercisePicker";
 import SetRow from "@/components/SetRow";
+import SortableSetList from "@/components/SortableSetList";
+import "@/styles/set-editing.css";
 import {
   Dialog,
   DialogContent,
@@ -83,6 +88,7 @@ function Editor({
   initial: Workout;
 }) {
   const { state, save, deleteRecord, restoreWorkout } = useData();
+  const { bodyWeightKg } = useProfile();
   const navigate = useNavigate();
   const editing = initial.status === "completed";
   const recoveryKey = draftKey(account, "workout", id);
@@ -99,6 +105,7 @@ function Editor({
       : null,
   );
   const [menu, setMenu] = useState<string | null>(null);
+  const [editingSets, setEditingSets] = useState<string | null>(null);
   const [routine, setRoutine] = useState(false);
   const [busy, setBusy] = useState(false);
   const [abandon, setAbandon] = useState(false);
@@ -413,6 +420,8 @@ function Editor({
               step="1"
               placeholder={w.startedAt ? "Automatic timer" : "Not recorded"}
               value={w.duration ?? ""}
+              onFocus={selectInputValue}
+              onClick={selectInputValue}
               onChange={(e) =>
                 change({
                   ...w,
@@ -441,6 +450,7 @@ function Editor({
       )}
       {w.exercises.map((ex, ei) => {
         const timed = ex.sets[0]?.measure === "seconds";
+        const organizing = editingSets === ex.id;
         return (
           <section className="exercise-card" key={ex.id}>
             <div className="exercise-heading">
@@ -456,6 +466,16 @@ function Editor({
             </div>
             {menu === ex.id && (
               <div className="exercise-actions">
+                <button
+                  className="text-button"
+                  onClick={() => {
+                    setEditingSets(ex.id);
+                    setMenu(null);
+                  }}
+                >
+                  <ListOrdered size={17} />
+                  Edit sets
+                </button>
                 <button
                   className="text-button"
                   disabled={ei === 0}
@@ -498,6 +518,7 @@ function Editor({
                         load: e.target.value as WorkoutSet["load"],
                         weight:
                           e.target.value === "bodyweight" ? null : s.weight,
+                        bodyWeightKg: undefined,
                         done: false,
                       })),
                     })
@@ -523,6 +544,7 @@ function Editor({
                           e.target.value === "seconds" ? "bodyweight" : s.load,
                         weight: e.target.value === "seconds" ? null : s.weight,
                         reps: null,
+                        bodyWeightKg: undefined,
                         done: false,
                       })),
                     })
@@ -533,7 +555,20 @@ function Editor({
                 </select>
               </label>
             </div>
-            <div className="set-labels">
+            {organizing && (
+              <div className="set-organization-heading">
+                <p>Drag a handle to reorder sets.</p>
+                <button
+                  className="text-button"
+                  onClick={() => setEditingSets(null)}
+                >
+                  Done editing
+                </button>
+              </div>
+            )}
+            <div
+              className={`set-labels${organizing ? " set-compact-labels" : ""}`}
+            >
               <span>Set</span>
               <span>
                 {ex.sets[0]?.load === "bodyweight"
@@ -543,57 +578,69 @@ function Editor({
                     : "kg"}
               </span>
               <span>{timed ? "Seconds" : "Reps"}</span>
-              <span>Done</span>
+              <span className={organizing ? "set-type-label" : undefined}>
+                {organizing ? "Type" : "Done"}
+              </span>
               <span />
             </div>
-            {ex.sets.map((s, i) => {
-              const previous = previousSetFor(
-                last(ex.exerciseId)?.sets ?? [],
-                s,
-                setProfileOrdinal(ex.sets, i),
-              );
-              const priorRecord = history.find((record) =>
-                (record.payload as Workout).exercises.some(
-                  (item) =>
-                    item.exerciseId === ex.exerciseId &&
-                    item.sets.some((set) => set.done && validSet(set)),
-                ),
-              );
-              const previousLabel = previous ? labelSet(previous) : undefined;
-              return (
-                <SetRow
-                  editing={editing}
-                  next={nextSet?.id === s.id}
-                  key={s.id}
-                  set={s}
-                  index={i}
-                  name={ex.name}
-                  previous={previousLabel}
-                  previousDate={
-                    previous && priorRecord
-                      ? (priorRecord.payload as Workout).date
-                      : undefined
-                  }
-                  onFocus={() => setFocusedSetId(s.id)}
-                  onChange={(next) => {
-                    update({
-                      ...ex,
-                      sets: ex.sets.map((x) => (x.id === s.id ? next : x)),
-                    });
-                    if (!s.done && next.done && !editing) {
-                      rest.start();
-                      trainingHaptic(rest.preferences.haptics);
+            <SortableSetList
+              key={organizing ? "organizing" : "logging"}
+              sets={ex.sets}
+              name={ex.name}
+              onReorder={(sets) => update({ ...ex, sets })}
+            >
+              {(s, i, handle) => {
+                const previous = previousSetFor(
+                  last(ex.exerciseId)?.sets ?? [],
+                  s,
+                  setProfileOrdinal(ex.sets, i),
+                );
+                const priorRecord = history.find((record) =>
+                  (record.payload as Workout).exercises.some(
+                    (item) =>
+                      item.exerciseId === ex.exerciseId &&
+                      item.sets.some((set) => set.done && validSet(set)),
+                  ),
+                );
+                const previousLabel = previous ? labelSet(previous) : undefined;
+                return (
+                  <SetRow
+                    editing={editing}
+                    compact={organizing}
+                    reorderHandle={handle}
+                    bodyWeightKg={bodyWeightKg}
+                    next={nextSet?.id === s.id}
+                    key={s.id}
+                    set={s}
+                    index={i}
+                    name={ex.name}
+                    previous={previousLabel}
+                    previousDate={
+                      previous && priorRecord
+                        ? (priorRecord.payload as Workout).date
+                        : undefined
                     }
-                  }}
-                  onRemove={() =>
-                    update({
-                      ...ex,
-                      sets: ex.sets.filter((x) => x.id !== s.id),
-                    })
-                  }
-                />
-              );
-            })}
+                    onFocus={() => setFocusedSetId(s.id)}
+                    onChange={(next) => {
+                      update({
+                        ...ex,
+                        sets: ex.sets.map((x) => (x.id === s.id ? next : x)),
+                      });
+                      if (!s.done && next.done && !editing) {
+                        rest.start();
+                        trainingHaptic(rest.preferences.haptics);
+                      }
+                    }}
+                    onRemove={() =>
+                      update({
+                        ...ex,
+                        sets: ex.sets.filter((x) => x.id !== s.id),
+                      })
+                    }
+                  />
+                );
+              }}
+            </SortableSetList>
             <button
               className="add-set"
               onClick={() =>

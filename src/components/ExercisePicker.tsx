@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Search, Check, Plus } from "lucide-react";
+import { Search, Check, Plus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +45,8 @@ export default function ExercisePicker({
       },
     });
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
     [filter, setFilter] = useState("All"),
@@ -95,6 +97,7 @@ export default function ExercisePicker({
     if (busy) return;
     setSelected([]);
     setSearch("");
+    setSearchFocused(false);
     setCreating(false);
     setError("");
     onClose();
@@ -144,7 +147,7 @@ export default function ExercisePicker({
       }}
     >
       <DialogContent
-        className="picker-dialog"
+        className={`picker-dialog${creating ? " is-creating" : searchFocused || search.trim() ? " is-searching" : ""}`}
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           titleRef.current?.focus();
@@ -154,7 +157,7 @@ export default function ExercisePicker({
           <DialogTitle ref={titleRef} tabIndex={-1} className="picker-title">
             {creating ? "Create exercise" : "Add exercises"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="picker-description">
             {creating
               ? "Create it once and use it in any workout. Unfinished details are kept on this phone."
               : "Choose one or more exercises."}
@@ -222,11 +225,28 @@ export default function ExercisePicker({
             <div className="search-field">
               <Search size={19} />
               <input
+                ref={searchRef}
+                type="search"
                 aria-label="Search exercises"
                 placeholder="Search exercises"
                 value={search}
+                autoComplete="off"
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
                 onChange={(e) => setSearch(e.target.value)}
               />
+              {search && (
+                <button
+                  className="icon-button"
+                  aria-label="Clear exercise search"
+                  onClick={() => {
+                    setSearch("");
+                    searchRef.current?.focus();
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              )}
             </div>
             <div className="chips">
               {["All", "Recent", "Favourites", ...categories].map((c) => (
@@ -240,7 +260,11 @@ export default function ExercisePicker({
                 </button>
               ))}
             </div>
-            <div className="picker-list">
+            <div
+              className="picker-list"
+              role="group"
+              aria-label="Exercise search results"
+            >
               {items.map((e) => (
                 <button
                   key={e.id}
@@ -277,26 +301,28 @@ export default function ExercisePicker({
                 </p>
               )}
             </div>
-            <button
-              className="text-button"
-              onClick={() => {
-                if (!pending) updateDraft({ name: search });
-                setCreating(true);
-              }}
-            >
-              {pending ? "Resume custom exercise" : "Create custom exercise"}
-            </button>
-            <button
-              className="primary"
-              disabled={!selected.length}
-              onClick={() => {
-                onAdd(all.filter((e) => selected.includes(e.id)));
-                close();
-              }}
-            >
-              Add {selected.length || ""}{" "}
-              {selected.length === 1 ? "exercise" : "exercises"}
-            </button>
+            <div className="picker-footer">
+              <button
+                className="text-button"
+                onClick={() => {
+                  if (!pending) updateDraft({ name: search });
+                  setCreating(true);
+                }}
+              >
+                {pending ? "Resume draft" : "New exercise"}
+              </button>
+              <button
+                className="primary"
+                disabled={!selected.length}
+                onClick={() => {
+                  onAdd(all.filter((e) => selected.includes(e.id)));
+                  close();
+                }}
+              >
+                Add {selected.length || ""}{" "}
+                {selected.length === 1 ? "exercise" : "exercises"}
+              </button>
+            </div>
           </>
         )}
       </DialogContent>

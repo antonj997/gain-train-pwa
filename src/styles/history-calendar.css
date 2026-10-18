@@ -1,0 +1,104 @@
+.history-calendar {
+  padding: 12px 12px 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.calendar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.calendar-heading h2 {
+  text-align: center;
+  font-size: 18px;
+}
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.calendar-weekdays {
+  color: var(--soft);
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 44px;
+  margin: 2px;
+  padding: 4px 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.calendar-day:disabled {
+  opacity: 0.45;
+}
+.calendar-day.outside-month {
+  visibility: hidden;
+}
+.calendar-day.is-today {
+  border-color: var(--blue);
+}
+.calendar-day.is-selected {
+  background: #365de9;
+  color: white;
+}
+.calendar-workout-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.calendar-day.is-selected .calendar-workout-dot {
+  background: white;
+}
+.calendar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--line);
+  color: var(--soft);
+  font-size: 12px;
+}
+.calendar-footer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.calendar-footer .text-button {
+  font-size: 12px;
+  min-height: 44px;
+}
+.history-selected-date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.history-period-options > summary {
+  cursor: pointer;
+  width: fit-content;
+  color: var(--blue);
+  min-height: 36px;
+  font-size: 14px;
+}
+.history-period-options .date-picker-field {
+  margin-top: 8px;
+}

@@ -1,4 +1,5 @@
 import HistoryDatePicker from "@/components/HistoryDatePicker";
+import HistoryCalendar from "@/components/HistoryCalendar";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { sortWorkoutsNewest } from "@/data/workouts";
@@ -34,7 +35,13 @@ export default function History() {
   const { state, save, restoreWorkout } = useData();
   const workoutStart = useStartWorkout();
   const [params, setParams] = useSearchParams();
-  const [month, setMonth] = useState("");
+  const now = today();
+  const [month, setMonth] = useState(() => today().slice(0, 7));
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const changePeriod = (value: string) => {
+    setMonth(value);
+    setSelectedDate(null);
+  };
   const [busy, setBusy] = useState(false);
   const records = Object.values(state.records)
     .filter(
@@ -44,13 +51,16 @@ export default function History() {
         (r.payload as Workout).status === "completed",
     )
     .sort(sortWorkoutsNewest);
-  const period = historyPeriod(month, today());
-  const filtered = records.filter((r) => {
+  const period = historyPeriod(month, now);
+  const periodRecords = records.filter((r) => {
     const date = (r.payload as Workout).date;
     return date >= period.start && date <= period.end;
   });
+  const filtered = selectedDate
+    ? periodRecords.filter((r) => (r.payload as Workout).date === selectedDate)
+    : periodRecords;
   const current = summarize(
-    filtered.map((r) => r.payload as Workout),
+    periodRecords.map((r) => r.payload as Workout),
     period.days,
   );
   const previous = summarize(
@@ -144,7 +154,6 @@ export default function History() {
         <h1>History</h1>
         <span className="muted">{countLabel(records.length, "workout")}</span>
       </div>
-      <HistoryDatePicker value={month} onChange={setMonth} />
       <p className="small-note">
         {localizedDate(period.start)} – {localizedDate(period.end)}
       </p>
@@ -166,6 +175,21 @@ export default function History() {
           </div>
         ))}
       </div>
+      <HistoryCalendar
+        month={/^\d{4}-\d{2}$/.test(month) ? month : now.slice(0, 7)}
+        now={now}
+        records={records}
+        selectedDate={selectedDate}
+        onMonthChange={changePeriod}
+        onSelectDate={(date) => {
+          setMonth(date.slice(0, 7));
+          setSelectedDate((selected) => (selected === date ? null : date));
+        }}
+      />
+      <details className="history-period-options">
+        <summary>More periods</summary>
+        <HistoryDatePicker value={month} onChange={changePeriod} />
+      </details>
       <details className="period-summary">
         <summary className="session-summary">
           <strong>About these stats</strong>
@@ -186,6 +210,20 @@ export default function History() {
           points (pp).
         </p>
       </details>
+      {selectedDate && (
+        <div className="history-selected-date">
+          <h2>
+            {localizedDate(selectedDate, {
+              weekday: "long",
+              day: "numeric",
+              month: "short",
+            })}
+          </h2>
+          <button className="text-button" onClick={() => setSelectedDate(null)}>
+            Show whole month
+          </button>
+        </div>
+      )}
       {weeks.map((week) => (
         <section className="history-week" key={week}>
           <div className="section-heading">
@@ -244,10 +282,14 @@ export default function History() {
       {!filtered.length && (
         <div className="empty-card">
           <CalendarDays size={26} />
-          <h2>No workouts in this period</h2>
+          <h2>
+            {selectedDate
+              ? "No workouts on this day"
+              : "No workouts in this period"}
+          </h2>
           <p>Choose another month or log your next workout.</p>
           {month && (
-            <button className="secondary" onClick={() => setMonth("")}>
+            <button className="secondary" onClick={() => changePeriod("")}>
               Show last 30 days
             </button>
           )}

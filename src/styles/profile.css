@@ -1,0 +1,28 @@
+.profile-section > div {
+  display: grid;
+  gap: 6px;
+}
+.profile-form {
+  display: grid;
+  gap: 8px;
+}
+.profile-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+.profile-input-row input {
+  font-variant-numeric: tabular-nums;
+}
+.profile-form .profile-save-state {
+  min-height: 1.5em;
+}
+.profile-form .text-button {
+  justify-self: start;
+}
+@media (max-width: 379px) {
+  .profile-input-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
