@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Star, Trash2, Pencil } from "lucide-react";
-import { useData } from "@/contexts/DataContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useData } from "@/contexts/useData";
+import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { catalogue, categories } from "@/data/catalogue";

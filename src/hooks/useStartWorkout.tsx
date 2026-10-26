@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useData } from "@/contexts/DataContext";
+import { useData } from "@/contexts/useData";
 import { type Workout } from "@/data/model";
 import {
   WorkoutInProgressError,

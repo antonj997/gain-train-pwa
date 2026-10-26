@@ -7,11 +7,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useData } from "@/contexts/DataContext";
+import { useData } from "@/contexts/useData";
 import { catalogue, categories } from "@/data/catalogue";
 import { type CustomExercise, type Workout } from "@/data/model";
 import { sortWorkoutsNewest } from "@/data/workouts";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 export default function ExercisePicker({

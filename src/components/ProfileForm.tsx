@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useAuth } from "@/contexts/useAuth";
+import { useProfile } from "@/contexts/useProfile";
 import { parseBodyWeightInput } from "@/lib/profile";
 import "@/styles/profile.css";
 

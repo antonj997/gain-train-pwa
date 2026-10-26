@@ -494,3 +494,17 @@ select,
     scroll-behavior: auto !important;
   }
 }
+.sync-rejections {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sync-rejections li {
+  display: grid;
+  gap: 2px;
+}
+.sync-rejections small {
+  color: var(--soft);
+}

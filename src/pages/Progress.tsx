@@ -11,7 +11,7 @@ import {
 import { TrendingUp, ChevronDown, ChevronRight } from "lucide-react";
 import { metricChange } from "@/data/summary";
 import { Link } from "react-router-dom";
-import { useData } from "@/contexts/DataContext";
+import { useData } from "@/contexts/useData";
 import { progressFor, baseline, comparableSets } from "@/data/analytics";
 import { labelSet, today } from "@/data/model";
 import ProgressSummary from "@/components/ProgressSummary";

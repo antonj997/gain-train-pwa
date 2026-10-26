@@ -4,11 +4,33 @@ import {
   keepUnknownFields,
   routineSchema,
   workoutSchema,
+  type RecordDoc,
+  type Workout,
 } from "../data/model";
 import { setInputTextSchema } from "./set-input";
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 export function draftKey(account: string, kind: string, id = "") {
   return `gt-draft:${account}:${kind}:${id}`;
+}
+/**
+ * Recovery drafts and rest timers left behind by workouts that were finished or
+ * removed, possibly on another device. Unknown workouts are kept: another tab
+ * may have just created them.
+ */
+export function staleDraftKeys(
+  keys: string[],
+  account: string,
+  records: Record<string, RecordDoc>,
+) {
+  const prefixes = [draftKey(account, "workout"), draftKey(account, "rest")];
+  return keys.filter((key) => {
+    const prefix = prefixes.find((p) => key.startsWith(p));
+    const record = prefix && records[key.slice(prefix.length)];
+    return (
+      !!record &&
+      (record.deleted || (record.payload as Workout).status !== "draft")
+    );
+  });
 }
 export function readDraft<T>(
   storage: DraftStorage,

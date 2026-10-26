@@ -2,12 +2,26 @@ import { emptyState, type LocalState } from "./model";
 import { local, storageKeys } from "../lib/storage";
 let dbPromise: Promise<IDBDatabase> | undefined;
 function db() {
-  return (dbPromise ??= new Promise<IDBDatabase>((resolve, reject) => {
+  if (dbPromise) return dbPromise;
+  const opening = new Promise<IDBDatabase>((resolve, reject) => {
     const r = indexedDB.open("gain-train-v2", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("accounts");
-    r.onsuccess = () => resolve(r.result);
+    r.onsuccess = () => {
+      // Let a newer app version in another tab upgrade the database; this tab
+      // reopens on its next read or write.
+      r.result.onversionchange = () => {
+        r.result.close();
+        if (dbPromise === opening) dbPromise = undefined;
+      };
+      resolve(r.result);
+    };
     r.onerror = () => reject(r.error);
-  }));
+  });
+  // Don't cache a failure: storage can become available again.
+  opening.catch(() => {
+    if (dbPromise === opening) dbPromise = undefined;
+  });
+  return (dbPromise = opening);
 }
 export async function readAccount(account: string) {
   if (local.getItem(storageKeys.deleted(account))) return emptyState();

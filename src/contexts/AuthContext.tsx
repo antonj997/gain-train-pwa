@@ -1,11 +1,6 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
+import { AuthContext } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { eraseAccount } from "@/data/database";
 import { local, session, storageKeys, writeStored } from "@/lib/storage";
@@ -15,17 +10,6 @@ import {
   recoveryRequested,
   recoveredSessionMatches,
 } from "@/lib/authRecovery";
-type Auth = {
-  user: User | null;
-  account: string;
-  ready: boolean;
-  passwordRecovery: boolean;
-  recoveredSession: boolean;
-  finishPasswordRecovery: () => void;
-  signOut: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
-};
-const Context = createContext<Auth | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null),
     [account, setAccount] = useState(
@@ -117,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   return (
-    <Context.Provider
+    <AuthContext.Provider
       value={{
         user,
         account,
@@ -130,11 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </Context.Provider>
+    </AuthContext.Provider>
   );
-}
-export function useAuth() {
-  const c = useContext(Context);
-  if (!c) throw Error("Auth provider missing");
-  return c;
 }

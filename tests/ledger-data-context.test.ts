@@ -8,6 +8,9 @@ import ts from "typescript";
 import { readAccount, transact } from "../src/data/database";
 import * as model from "../src/data/model";
 import * as workoutStart from "../src/data/workout-start";
+import * as drafts from "../src/lib/drafts";
+import * as storage from "../src/lib/storage";
+import * as syncHealth from "../src/lib/sync-health";
 import { type RecordDoc, type Workout, newSet } from "../src/data/model";
 
 // Run the real provider with a small hook host; keep its validation and IndexedDB
@@ -34,6 +37,7 @@ async function provider(account: string) {
     useRef: (initial: unknown) =>
       refs[refIndex++] ?? (refs[refIndex - 1] = { current: initial }),
     useCallback: (callback: unknown) => callback,
+    useMemo: (create: () => unknown) => create(),
     useEffect: () => {},
   };
   const source = await readFile(
@@ -55,8 +59,14 @@ async function provider(account: string) {
     exports: exported,
     require: (id: string) => {
       if (id === "react") return hooks;
-      if (id === "./AuthContext")
+      if (id === "./useAuth")
         return { useAuth: () => ({ account, user: null, ready: true }) };
+      if (id === "./useData") return { DataContext: { Provider: "provider" } };
+      if (id === "@/lib/drafts") return drafts;
+      if (id === "@/lib/storage") return storage;
+      if (id === "@/lib/sync-health") return syncHealth;
+      if (id === "@/lib/tab-sync")
+        return { notifyOtherTabs: () => {}, onOtherTabChange: () => () => {} };
       if (id === "@/data/database") return { readAccount, transact };
       if (id === "@/data/model") return model;
       if (id === "@/data/workout-start") return workoutStart;
@@ -71,8 +81,8 @@ async function provider(account: string) {
     },
     navigator: { onLine: true },
     Error,
-    BroadcastChannel,
     setTimeout: () => 0,
+    clearTimeout: () => {},
   });
   function render() {
     stateIndex = 0;
@@ -505,4 +515,32 @@ test("saves keep newer-app records intact and stamp this app's schema version", 
     (await readAccount(account)).records[ownId].payload.schemaVersion,
     model.SCHEMA_VERSION,
   );
+});
+
+test("editing or retrying a change the server rejected sends it again", async () => {
+  const account = crypto.randomUUID(),
+    id = crypto.randomUUID(),
+    otherId = crypto.randomUUID();
+  const render = await provider(account);
+  await transact(account, (s) => {
+    s.records[id] = {
+      ...document(id, workout()),
+      dirty: true,
+      syncError: "Invalid set",
+    };
+    s.records[otherId] = {
+      ...document(otherId, workout()),
+      dirty: true,
+      syncError: "Invalid set",
+    };
+  });
+  await render().save(id, "workout", { ...workout(), name: "Fixed" });
+  let state = await readAccount(account);
+  assert.equal(state.records[id].syncError, undefined);
+  assert.equal(state.records[otherId].syncError, "Invalid set");
+  await (
+    render() as unknown as { retryRejected: () => Promise<void> }
+  ).retryRejected();
+  state = await readAccount(account);
+  assert.equal(state.records[otherId].syncError, undefined);
 });

@@ -63,6 +63,8 @@ export interface RecordDoc {
   localVersion: number;
   dirty: boolean;
   conflict?: RemoteDoc;
+  /** Set when the server refused this change; it is resent after the next edit or a retry. */
+  syncError?: string;
 }
 export interface RemoteDoc {
   id: string;
@@ -85,6 +87,8 @@ export interface LocalState {
   records: Record<string, RecordDoc>;
   outbox: Operation[];
   cursor: number;
+  /** Downloaded rows this version could not read; retried on every sync. */
+  quarantine?: Record<string, RemoteDoc>;
 }
 export const emptyState = (): LocalState => ({
   records: {},

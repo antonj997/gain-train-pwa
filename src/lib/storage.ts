@@ -56,3 +56,13 @@ export const storageKeys = {
   syncHealth: (account: string) => "gt-sync-health:" + account,
   legacyRemembered: ["rememberedPassword", "rememberedEmail"],
 };
+
+/** Every key in local storage, or none when storage is unavailable. */
+export function storedKeys() {
+  try {
+    const storage = globalThis.localStorage;
+    return Array.from({ length: storage.length }, (_, i) => storage.key(i)!);
+  } catch {
+    return [];
+  }
+}

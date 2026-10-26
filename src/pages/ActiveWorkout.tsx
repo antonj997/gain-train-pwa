@@ -13,9 +13,9 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useData } from "@/contexts/DataContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/contexts/ProfileContext";
+import { useData } from "@/contexts/useData";
+import { useAuth } from "@/contexts/useAuth";
+import { useProfile } from "@/contexts/useProfile";
 import {
   type Workout,
   type Exercise,

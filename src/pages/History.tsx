@@ -18,7 +18,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useData } from "@/contexts/DataContext";
+import { useData } from "@/contexts/useData";
 import { type Workout, today, repeatExercises, labelSet } from "@/data/model";
 import {
   Dialog,

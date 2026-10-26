@@ -228,3 +228,153 @@ test("30-day comparison uses the nearest session on or before the cutoff", () =>
     null,
   );
 });
+
+const rejection = (message: string) =>
+  Object.assign(new Error(message), { code: "P0001" });
+
+test("a change the server rejects is parked and the rest of the queue still syncs", async () => {
+  const { account, id } = await setup(),
+    cloud = server(),
+    otherId = crypto.randomUUID();
+  await transact(account, (s) => {
+    s.records[otherId] = { ...s.records[id], id: otherId };
+  });
+  await syncAccount(
+    account,
+    {
+      ...cloud.transport,
+      push: async (op) => {
+        if (op.id === id) throw rejection("Invalid set");
+        return cloud.transport.push(op);
+      },
+    },
+    () => {},
+  );
+  const state = await readAccount(account);
+  assert.equal(state.records[id].syncError, "Invalid set");
+  assert.equal(state.records[id].dirty, true);
+  assert.equal(state.records[otherId].dirty, false);
+  assert.equal(cloud.records.has(otherId), true);
+  assert.deepEqual(state.outbox, []);
+});
+
+test("network failures keep the operation queued for the next sync", async () => {
+  const { account, id } = await setup(),
+    cloud = server();
+  await assert.rejects(
+    syncAccount(
+      account,
+      {
+        ...cloud.transport,
+        push: async () => {
+          throw new TypeError("Failed to fetch");
+        },
+      },
+      () => {},
+    ),
+    /failed to fetch/i,
+  );
+  const state = await readAccount(account);
+  assert.equal(state.outbox.length, 1);
+  assert.equal(state.records[id].syncError, undefined);
+});
+
+test("a record the server lost is re-created instead of blocking sync", async () => {
+  const { account, id } = await setup(),
+    cloud = server();
+  await transact(account, (s) => {
+    s.records[id].revision = 7;
+  });
+  await syncAccount(
+    account,
+    {
+      ...cloud.transport,
+      push: async (op) => {
+        if (op.baseRevision !== 0 && !cloud.records.has(op.id))
+          throw rejection("Record missing; restore a backup");
+        return cloud.transport.push(op);
+      },
+    },
+    () => {},
+  );
+  const state = await readAccount(account);
+  assert.equal(cloud.records.get(id)?.revision, 1);
+  assert.equal(state.records[id].revision, 1);
+  assert.equal(state.records[id].dirty, false);
+});
+
+test("unreadable downloads are set aside without stopping later rows", async () => {
+  const account = crypto.randomUUID(),
+    badId = crypto.randomUUID(),
+    goodId = crypto.randomUUID();
+  const rows: RemoteDoc[] = [
+    {
+      id: badId,
+      kind: "workout",
+      payload: { ...workout(), status: "unknown" } as unknown as Workout,
+      revision: 1,
+      deleted: false,
+      change_seq: 1,
+    },
+    {
+      id: goodId,
+      kind: "workout",
+      payload: workout(),
+      revision: 1,
+      deleted: false,
+      change_seq: 2,
+    },
+  ];
+  await syncAccount(
+    account,
+    {
+      push: async () => assert.fail("nothing to push"),
+      pull: async (c) => rows.filter((r) => r.change_seq > c),
+    },
+    () => {},
+  );
+  let state = await readAccount(account);
+  assert.equal(state.cursor, 2);
+  assert.equal(state.records[goodId].payload.name, "Test");
+  assert.equal(state.records[badId], undefined);
+  assert.equal(state.quarantine?.[badId]?.revision, 1);
+  // A later readable revision replaces the parked row.
+  rows.push({ ...rows[1], id: badId, revision: 2, change_seq: 3 });
+  await syncAccount(
+    account,
+    {
+      push: async () => assert.fail("nothing to push"),
+      pull: async (c) => rows.filter((r) => r.change_seq > c),
+    },
+    () => {},
+  );
+  state = await readAccount(account);
+  assert.equal(state.records[badId].revision, 2);
+  assert.equal(state.quarantine?.[badId], undefined);
+});
+
+test("parked downloads are applied once this version can read them", async () => {
+  const account = crypto.randomUUID(),
+    id = crypto.randomUUID();
+  await transact(account, (s) => {
+    s.quarantine = {
+      [id]: {
+        id,
+        kind: "workout",
+        payload: workout(),
+        revision: 4,
+        deleted: false,
+        change_seq: 9,
+      },
+    };
+    s.cursor = 9;
+  });
+  await syncAccount(
+    account,
+    { push: async () => assert.fail("nothing to push"), pull: async () => [] },
+    () => {},
+  );
+  const state = await readAccount(account);
+  assert.equal(state.records[id].revision, 4);
+  assert.deepEqual(state.quarantine, {});
+});

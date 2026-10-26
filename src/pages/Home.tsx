@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { Plus, Play, ChevronRight } from "lucide-react";
-import { useData } from "@/contexts/DataContext";
+import { useData } from "@/contexts/useData";
 import { today, type Workout, type Routine } from "@/data/model";
 export default function Home() {
   const { state } = useData();
