@@ -6,6 +6,8 @@ import {
   type Workout,
   type WorkoutSet,
 } from "../data/model";
+import { hasExtraWeight } from "./set-load";
+import { getSetInputText } from "./set-input";
 
 export function getSetIssues(set: WorkoutSet): {
   weight?: string;
@@ -16,7 +18,16 @@ export function getSetIssues(set: WorkoutSet): {
   if (set.reps === null) issues.reps = `Enter ${unit} to complete this set.`;
   else if (!Number.isInteger(set.reps) || set.reps < 1 || set.reps > 10000)
     issues.reps = `Enter whole ${unit} from 1 to 10,000.`;
-  if (set.load !== "bodyweight") {
+  if (hasExtraWeight(set)) {
+    if (set.weight === null)
+      issues.weight = "Enter added kg to complete this set.";
+    else if (
+      !Number.isFinite(set.weight) ||
+      set.weight <= 0 ||
+      set.weight > 10000
+    )
+      issues.weight = "Enter added weight greater than 0 and up to 10,000 kg.";
+  } else if (set.load !== "bodyweight") {
     if (set.weight === null)
       issues.weight = "Enter kg, or choose Bodyweight above.";
     else if (
@@ -26,6 +37,10 @@ export function getSetIssues(set: WorkoutSet): {
     )
       issues.weight = "Enter a weight from 0 to 10,000 kg.";
   }
+  if (getSetInputText(set, "reps") !== undefined)
+    issues.reps = `Enter whole ${unit} from 1 to 10,000.`;
+  if (getSetInputText(set, "weight") !== undefined)
+    issues.weight = "Enter a weight from 0 to 10,000 kg.";
   return issues;
 }
 

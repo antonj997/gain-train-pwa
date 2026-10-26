@@ -3,16 +3,15 @@ import { Check, Minus } from "lucide-react";
 import { type WorkoutSet, validSet } from "@/data/model";
 import { getSetIssues } from "@/lib/workout-editor";
 import { localizedDate } from "@/lib/dates";
-import {
-  bodyWeightForSet,
-  selectInputValue,
-  toggleSetCompletion,
-} from "@/lib/set-editing";
+import { bodyWeightForSet, toggleSetCompletion } from "@/lib/set-editing";
+import { hasExtraWeight } from "@/lib/set-load";
+import SetNumberInput from "@/components/SetNumberInput";
+import { changeSetNumber, getSetInputText } from "@/lib/set-input";
 import "@/styles/set-editing.css";
 
 export default function SetRow({
-  editing = false,
   compact = false,
+  showProfile = false,
   reorderHandle,
   bodyWeightKg = null,
   next = false,
@@ -25,8 +24,8 @@ export default function SetRow({
   onChange,
   onRemove,
 }: {
-  editing?: boolean;
   compact?: boolean;
+  showProfile?: boolean;
   reorderHandle?: ReactNode;
   bodyWeightKg?: number | null;
   next?: boolean;
@@ -40,7 +39,7 @@ export default function SetRow({
   onRemove: () => void;
 }) {
   const [checkedNow, setCheckedNow] = useState(false);
-  const [editedAfterCompletion, setEditedAfterCompletion] = useState(false);
+  const [lockedAttempt, setLockedAttempt] = useState(false);
   const wasDone = useRef(set.done);
   useEffect(() => {
     if (set.done && !wasDone.current) {
@@ -54,35 +53,39 @@ export default function SetRow({
   const label = `${name} set ${index + 1}`;
   const timed = set.measure === "seconds";
   const displayedBodyWeight = bodyWeightForSet(set, bodyWeightKg);
+  const extraWeight = hasExtraWeight(set);
   const issues = getSetIssues(set);
-  const invalidEntry =
-    set.done ||
-    (set.weight !== null && !!issues.weight) ||
-    (set.reps !== null && !!issues.reps);
   const errorId = `set-errors-${set.id}`;
-  const visibleIssues = compact
-    ? Object.entries(issues)
-        .filter(
-          ([field]) =>
-            set.done ||
-            (field === "weight" ? set.weight !== null : set.reps !== null),
-        )
-        .map(([, issue]) => issue)
-    : Object.values(issues);
-  const updateNumber = (field: "weight" | "reps", value: string) => {
-    if (set.done && !editing) setEditedAfterCompletion(true);
-    onChange({
-      ...set,
-      [field]: value === "" ? null : Number(value),
-      done: editing ? set.done : false,
-    });
+  const lockId = `set-locked-${set.id}`;
+  const showLock = set.done && lockedAttempt;
+  const visibleIssues = Object.entries(issues)
+    .filter(
+      ([field]) =>
+        getSetInputText(set, field as "weight" | "reps") !== undefined ||
+        (field === "weight" ? set.weight !== null : set.reps !== null),
+    )
+    .map(([, issue]) => issue);
+  if (set.done && !validSet(set) && !visibleIssues.length)
+    visibleIssues.push("Uncheck this set to correct its missing values.");
+  const updateNumber = (
+    field: "weight" | "reps",
+    value: number | null,
+    unfinishedText?: string,
+  ) => {
+    if (set.done) {
+      setLockedAttempt(true);
+      return;
+    }
+    onChange(changeSetNumber(set, field, value, unfinishedText));
   };
   const sectionSelect = (
     <select
       className="set-type"
       aria-label={`${label} type`}
       value={set.section}
+      disabled={set.done}
       onChange={(e) =>
+        !set.done &&
         onChange({ ...set, section: e.target.value as WorkoutSet["section"] })
       }
     >
@@ -110,7 +113,7 @@ export default function SetRow({
             {index + 1}
           </span>
         )}
-        {set.load === "bodyweight" ? (
+        {set.load === "bodyweight" && !extraWeight ? (
           <span
             className={`bodyweight-value${displayedBodyWeight !== null ? " with-weight" : ""}`}
             aria-label={
@@ -123,56 +126,73 @@ export default function SetRow({
             {displayedBodyWeight !== null && <small>kg BW</small>}
           </span>
         ) : (
-          <input
-            aria-label={`${label} ${set.load === "assisted" ? "assistance" : "weight"} kg`}
-            aria-invalid={set.weight !== null && !!issues.weight}
-            aria-describedby={
-              visibleIssues.length && issues.weight ? errorId : undefined
+          <SetNumberInput
+            aria-label={`${label} ${extraWeight ? "added weight" : set.load === "assisted" ? "assistance" : "weight"} kg`}
+            aria-invalid={
+              !!issues.weight &&
+              (set.weight !== null ||
+                getSetInputText(set, "weight") !== undefined)
             }
-            type="number"
+            aria-describedby={
+              [
+                visibleIssues.length && issues.weight ? errorId : "",
+                showLock ? lockId : "",
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined
+            }
             inputMode="decimal"
             min="0"
             max="10000"
             step="any"
-            placeholder="kg"
-            value={set.weight ?? ""}
-            onFocus={selectInputValue}
-            onClick={selectInputValue}
-            onChange={(e) => updateNumber("weight", e.target.value)}
+            placeholder={extraWeight ? "+ kg" : "kg"}
+            value={set.weight}
+            inputText={getSetInputText(set, "weight")}
+            readOnly={set.done}
+            onLockedAttempt={() => setLockedAttempt(true)}
+            onValueChange={(value, text) => updateNumber("weight", value, text)}
           />
         )}
-        <input
+        <SetNumberInput
           aria-label={`${label} ${timed ? "seconds" : "reps"}`}
-          aria-invalid={set.reps !== null && !!issues.reps}
-          aria-describedby={
-            visibleIssues.length && issues.reps ? errorId : undefined
+          aria-invalid={
+            !!issues.reps &&
+            (set.reps !== null || getSetInputText(set, "reps") !== undefined)
           }
-          type="number"
+          aria-describedby={
+            [
+              visibleIssues.length && issues.reps ? errorId : "",
+              showLock ? lockId : "",
+            ]
+              .filter(Boolean)
+              .join(" ") || undefined
+          }
           inputMode="numeric"
           min="1"
           max="10000"
           step="1"
           placeholder={timed ? "sec" : "reps"}
-          value={set.reps ?? ""}
-          onFocus={selectInputValue}
-          onClick={selectInputValue}
-          onChange={(e) => updateNumber("reps", e.target.value)}
+          value={set.reps}
+          inputText={getSetInputText(set, "reps")}
+          readOnly={set.done}
+          onLockedAttempt={() => setLockedAttempt(true)}
+          onValueChange={(value, text) => updateNumber("reps", value, text)}
         />
-        {!compact && (
-          <button
-            className={`done-button${set.done ? " checked" : ""}`}
-            aria-label={`${set.done ? "Uncheck" : "Complete"} ${label}`}
-            aria-pressed={set.done}
-            aria-describedby={!validSet(set) ? errorId : undefined}
-            disabled={!set.done && !validSet(set)}
-            onClick={() => {
-              setEditedAfterCompletion(false);
-              onChange(toggleSetCompletion(set, bodyWeightKg));
-            }}
-          >
-            <Check size={21} />
-          </button>
-        )}
+        <button
+          className={`done-button${set.done ? " checked" : ""}${showLock ? " unlock-highlight" : ""}`}
+          aria-label={`${set.done ? "Uncheck" : "Complete"} ${label}`}
+          aria-pressed={set.done}
+          aria-describedby={
+            showLock ? lockId : visibleIssues.length ? errorId : undefined
+          }
+          disabled={!set.done && !validSet(set)}
+          onClick={() => {
+            setLockedAttempt(false);
+            onChange(toggleSetCompletion(set, bodyWeightKg));
+          }}
+        >
+          <Check size={21} />
+        </button>
         {compact && sectionSelect}
         <button
           className="icon-button subtle remove-set"
@@ -182,6 +202,21 @@ export default function SetRow({
           <Minus size={18} />
         </button>
       </div>
+      {(extraWeight || showProfile) && (
+        <p className="set-extra-load">
+          {extraWeight
+            ? "BW + added kg"
+            : set.load === "bodyweight"
+              ? "BW"
+              : set.load === "assisted"
+                ? "Assist kg"
+                : "kg"}
+          {showProfile ? (timed ? " · Seconds" : " · Reps") : ""}
+          {extraWeight && displayedBodyWeight !== null
+            ? ` · ${displayedBodyWeight} kg BW`
+            : ""}
+        </p>
+      )}
       {!compact && (
         <div className="set-meta">
           <span className="set-previous">
@@ -218,19 +253,15 @@ export default function SetRow({
         </div>
       )}
       {!!visibleIssues.length && (
-        <p
-          id={errorId}
-          className={`set-errors ${invalidEntry ? "field-error" : "set-hint"}`}
-        >
+        <p id={errorId} className="set-errors field-error">
           {visibleIssues.join(" ")}
         </p>
       )}
-      {!compact &&
-        editedAfterCompletion &&
-        !set.done &&
-        !Object.keys(issues).length && (
-          <p className="set-errors set-hint">Edited · check to confirm</p>
-        )}
+      {showLock && (
+        <p id={lockId} className="set-errors field-error" role="status">
+          Uncheck this set to edit its values.
+        </p>
+      )}
     </div>
   );
 }

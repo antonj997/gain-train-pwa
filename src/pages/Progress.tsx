@@ -13,14 +13,16 @@ import { metricChange } from "@/data/summary";
 import { Link } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import { progressFor, baseline, comparableSets } from "@/data/analytics";
-import { labelSet } from "@/data/model";
+import { labelSet, today } from "@/data/model";
+import ProgressSummary from "@/components/ProgressSummary";
 import { localizedDate } from "@/lib/dates";
 import { chartDomain, chartSessions } from "@/lib/progressPresentation";
 
 export default function Progress() {
   const { state } = useData();
   const [search, setSearch] = useState("");
-  const items = progressFor(Object.values(state.records));
+  const records = Object.values(state.records);
+  const items = progressFor(records);
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
@@ -34,6 +36,7 @@ export default function Progress() {
   return (
     <div className="stack progress-page">
       <h1>Progress</h1>
+      <ProgressSummary records={records} now={today()} />
       {items.length > 0 && (
         <input
           aria-label="Find exercise progress"

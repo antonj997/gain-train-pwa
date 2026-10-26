@@ -1,6 +1,17 @@
 import { type Exercise, type WorkoutSet } from "@/data/model";
 import { resizePlannedSets } from "@/lib/workout-editor";
-import { selectInputValue } from "@/lib/set-editing";
+import {
+  changeSetLoad,
+  changeSetMeasure,
+  changeExtraWeight,
+  hasExtraWeight,
+} from "@/lib/set-load";
+import SetNumberInput from "@/components/SetNumberInput";
+import {
+  changeSetNumber,
+  getSetInputText,
+  hasSetInputText,
+} from "@/lib/set-input";
 import SortableSetList from "@/components/SortableSetList";
 import "@/styles/set-editing.css";
 
@@ -15,15 +26,16 @@ export default function RoutinePlan({
   const timed = first?.measure === "seconds";
   const countOptions = Array.from({ length: 20 }, (_, i) => i + 1);
   if (exercise.sets.length > 20) countOptions.push(exercise.sets.length);
-  const changeAll = (patch: Partial<WorkoutSet>) =>
+  const changeAll = (change: (set: WorkoutSet) => WorkoutSet) =>
     onChange({
       ...exercise,
-      sets: exercise.sets.map((set) => ({
-        ...set,
-        ...patch,
-        bodyWeightKg: undefined,
-        done: false,
-      })),
+      sets: exercise.sets.map((set) =>
+        change({
+          ...set,
+          bodyWeightKg: undefined,
+          done: false,
+        }),
+      ),
     });
   return (
     <div className="routine-plan">
@@ -51,10 +63,9 @@ export default function RoutinePlan({
             value={first?.load ?? "weight"}
             disabled={timed}
             onChange={(e) =>
-              changeAll({
-                load: e.target.value as WorkoutSet["load"],
-                ...(e.target.value === "bodyweight" ? { weight: null } : {}),
-              })
+              changeAll((set) =>
+                changeSetLoad(set, e.target.value as WorkoutSet["load"]),
+              )
             }
           >
             <option value="weight">Weight (kg)</option>
@@ -68,13 +79,9 @@ export default function RoutinePlan({
             aria-label={`${exercise.name} planned measure`}
             value={timed ? "seconds" : "reps"}
             onChange={(e) =>
-              changeAll({
-                measure: e.target.value as "reps" | "seconds",
-                reps: null,
-                ...(e.target.value === "seconds"
-                  ? { load: "bodyweight", weight: null }
-                  : {}),
-              })
+              changeAll((set) =>
+                changeSetMeasure(set, e.target.value as "reps" | "seconds"),
+              )
             }
           >
             <option value="reps">Reps</option>
@@ -82,6 +89,20 @@ export default function RoutinePlan({
           </select>
         </label>
       </div>
+      {first?.load === "bodyweight" && (
+        <label className="check-label extra-weight-toggle">
+          <input
+            type="checkbox"
+            role="switch"
+            aria-label={`${exercise.name} planned extra weight`}
+            checked={hasExtraWeight(first)}
+            onChange={(event) =>
+              changeAll((set) => changeExtraWeight(set, event.target.checked))
+            }
+          />
+          Extra weight
+        </label>
+      )}
       <SortableSetList
         sets={exercise.sets}
         name={exercise.name}
@@ -90,32 +111,34 @@ export default function RoutinePlan({
         {(set, index, handle) => (
           <div className="routine-planned-set" key={set.id}>
             {handle}
-            {set.load !== "bodyweight" && (
+            {(set.load !== "bodyweight" || hasExtraWeight(set)) && (
               <label>
-                {set.load === "assisted" ? "Assist kg" : "kg"}
-                <input
-                  type="number"
+                {hasExtraWeight(set)
+                  ? "BW + kg"
+                  : set.load === "assisted"
+                    ? "Assist kg"
+                    : "kg"}
+                <SetNumberInput
                   inputMode="decimal"
                   min="0"
                   max="10000"
                   step="any"
                   placeholder="Optional"
-                  aria-label={`${exercise.name} planned set ${index + 1} kg`}
-                  value={set.weight ?? ""}
-                  onFocus={selectInputValue}
-                  onClick={selectInputValue}
-                  onChange={(e) =>
+                  aria-label={`${exercise.name} planned set ${index + 1} ${hasExtraWeight(set) ? "added " : ""}kg`}
+                  value={set.weight}
+                  inputText={getSetInputText(set, "weight")}
+                  aria-invalid={getSetInputText(set, "weight") !== undefined}
+                  onValueChange={(value, text) =>
                     onChange({
                       ...exercise,
                       sets: exercise.sets.map((s) =>
                         s.id === set.id
-                          ? {
-                              ...s,
-                              weight:
-                                e.target.value === ""
-                                  ? null
-                                  : Number(e.target.value),
-                            }
+                          ? changeSetNumber(
+                              { ...s, done: false },
+                              "weight",
+                              value,
+                              text,
+                            )
                           : s,
                       ),
                     })
@@ -125,29 +148,27 @@ export default function RoutinePlan({
             )}
             <label>
               {timed ? "Seconds" : "Reps"}
-              <input
-                type="number"
+              <SetNumberInput
                 inputMode="numeric"
                 min="1"
                 max="10000"
                 step="1"
                 placeholder="Optional"
                 aria-label={`${exercise.name} planned set ${index + 1} ${timed ? "seconds" : "reps"}`}
-                value={set.reps ?? ""}
-                onFocus={selectInputValue}
-                onClick={selectInputValue}
-                onChange={(e) =>
+                value={set.reps}
+                inputText={getSetInputText(set, "reps")}
+                aria-invalid={getSetInputText(set, "reps") !== undefined}
+                onValueChange={(value, text) =>
                   onChange({
                     ...exercise,
                     sets: exercise.sets.map((s) =>
                       s.id === set.id
-                        ? {
-                            ...s,
-                            reps:
-                              e.target.value === ""
-                                ? null
-                                : Number(e.target.value),
-                          }
+                        ? changeSetNumber(
+                            { ...s, done: false },
+                            "reps",
+                            value,
+                            text,
+                          )
                         : s,
                     ),
                   })
@@ -178,6 +199,11 @@ export default function RoutinePlan({
                 <option value="winddown">Cool-down</option>
               </select>
             </label>
+            {hasSetInputText(set) && (
+              <p className="field-error routine-set-error">
+                Enter numeric set values before saving.
+              </p>
+            )}
           </div>
         )}
       </SortableSetList>

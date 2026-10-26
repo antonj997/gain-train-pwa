@@ -6,6 +6,184 @@ import {
   workoutDates,
 } from "../src/lib/history-calendar";
 import { type RecordDoc, type Workout } from "../src/data/model";
+import * as calendar from "../src/lib/history-calendar";
+
+test("history defaults to this month and simple mode has one cell per actual day", () => {
+  const state = calendar.createHistoryCalendar("2026-10-26");
+  assert.deepEqual(calendar.historyCalendarBounds(state, "2026-10-26"), {
+    start: "2026-10-01",
+    end: "2026-10-26",
+  });
+  const cells = calendarCells("2024-02", "simple");
+  assert.equal(cells.length, 29);
+  assert.equal(cells[0].date, "2024-02-01");
+  assert.equal(cells.at(-1)?.date, "2024-02-29");
+  assert.ok(cells.every((cell) => cell.inMonth));
+});
+
+test("cross-month and reverse range selection includes both dates and survives browsing", () => {
+  const now = "2026-10-26";
+  let state = calendar.changeHistoryCalendar(
+    calendar.createHistoryCalendar(now),
+    { type: "mode", mode: "range" },
+    now,
+  );
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "date", date: "2026-10-10" },
+    now,
+  );
+  assert.equal(state.activeBound, "to");
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "browse", month: "2026-09" },
+    now,
+  );
+  assert.equal(state.from, "2026-10-10");
+  assert.equal(state.to, null);
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "date", date: "2026-09-29" },
+    now,
+  );
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-09-29",
+    end: "2026-10-10",
+  });
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "browse", month: "2025-12" },
+    now,
+  );
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-09-29",
+    end: "2026-10-10",
+  });
+});
+
+test("range boundaries cross years and preserve leap day, with explicit clearing and reset", () => {
+  const now = "2024-03-02";
+  let state = calendar.changeHistoryCalendar(
+    calendar.createHistoryCalendar(now),
+    { type: "mode", mode: "range" },
+    now,
+  );
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "date", date: "2023-12-31" },
+    now,
+  );
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "date", date: "2024-02-29" },
+    now,
+  );
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2023-12-31",
+    end: "2024-02-29",
+  });
+  state = calendar.changeHistoryCalendar(state, { type: "clear" }, now);
+  assert.equal(calendar.historyCalendarBounds(state, now), null);
+  assert.equal(state.activeBound, "from");
+  state = calendar.changeHistoryCalendar(state, { type: "reset" }, now);
+  assert.deepEqual(state, calendar.createHistoryCalendar(now));
+});
+
+test("future dates cannot be chosen and future navigation is clamped to the current month", () => {
+  const now = "2026-10-26";
+  const state = calendar.createHistoryCalendar(now);
+  assert.deepEqual(
+    calendar.changeHistoryCalendar(
+      state,
+      { type: "date", date: "2026-10-27" },
+      now,
+    ),
+    state,
+  );
+  assert.equal(
+    calendar.changeHistoryCalendar(
+      state,
+      { type: "browse", month: "2027-01" },
+      now,
+    ).month,
+    "2026-10",
+  );
+  assert.throws(
+    () =>
+      calendar.changeHistoryCalendar(
+        state,
+        { type: "date", date: "2026-02-29" },
+        now,
+      ),
+    /date/i,
+  );
+});
+
+test("month day filtering toggles off and browsing another month clears only the day", () => {
+  const now = "2026-10-26";
+  let state = calendar.changeHistoryCalendar(
+    calendar.createHistoryCalendar(now),
+    { type: "date", date: "2026-10-12" },
+    now,
+  );
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-10-12",
+    end: "2026-10-12",
+  });
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "date", date: "2026-10-12" },
+    now,
+  );
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-10-01",
+    end: "2026-10-26",
+  });
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "date", date: "2026-10-12" },
+    now,
+  );
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "browse", month: "2026-09" },
+    now,
+  );
+  assert.equal(state.selectedDate, null);
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-09-01",
+    end: "2026-09-30",
+  });
+});
+
+test("changing calendar display and reselecting the active mode preserve the chosen range", () => {
+  const now = "2026-10-26";
+  let state = {
+    ...calendar.createHistoryCalendar(now),
+    mode: "range" as const,
+    from: "2026-09-29",
+    to: "2026-10-10",
+  };
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "display", display: "simple" },
+    now,
+  );
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "mode", mode: "range" },
+    now,
+  );
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-09-29",
+    end: "2026-10-10",
+  });
+  assert.equal(state.display, "simple");
+  assert.equal(
+    calendar.changeHistoryCalendar(state, { type: "reset" }, now).display,
+    "simple",
+  );
+});
 
 test("month calendar starts on Monday and includes every leap-day exactly once", () => {
   const cells = calendarCells("2024-02");

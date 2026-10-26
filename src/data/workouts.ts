@@ -6,6 +6,7 @@ import {
   type Workout,
   type WorkoutSet,
 } from "./model";
+import { hasExtraWeight } from "../lib/set-load";
 
 const sessionTime = (workout: Workout) =>
   workout.completedAt ?? workout.startedAt ?? workout.createdAt ?? 0;
@@ -53,6 +54,8 @@ export function hasLoggedExercise(ex: Exercise) {
 export function setProfileMatches(left: WorkoutSet, right: WorkoutSet) {
   return (
     left.load === right.load &&
+    hasExtraWeight(left) === hasExtraWeight(right) &&
+    (!hasExtraWeight(left) || left.weight === right.weight) &&
     left.section === right.section &&
     (left.measure ?? "reps") === (right.measure ?? "reps")
   );

@@ -35,6 +35,12 @@ import {
 import { finishWorkout } from "@/lib/workout-editor";
 import { selectInputValue } from "@/lib/set-editing";
 import {
+  changeSetLoad,
+  changeSetMeasure,
+  changeExtraWeight,
+  hasExtraWeight,
+} from "@/lib/set-load";
+import {
   draftKey,
   readDraft,
   writeDraft,
@@ -449,7 +455,17 @@ function Editor({
         </div>
       )}
       {w.exercises.map((ex, ei) => {
-        const timed = ex.sets[0]?.measure === "seconds";
+        const editableSet = ex.sets.find((s) => !s.done) ?? ex.sets[0];
+        const hasEditableSets = ex.sets.some((s) => !s.done);
+        const timed = editableSet?.measure === "seconds";
+        const mixedProfiles =
+          new Set(
+            ex.sets.map(
+              (s) => `${s.load}:${hasExtraWeight(s)}:${s.measure ?? "reps"}`,
+            ),
+          ).size > 1;
+        const mixedMeasures =
+          new Set(ex.sets.map((s) => s.measure ?? "reps")).size > 1;
         const organizing = editingSets === ex.id;
         return (
           <section className="exercise-card" key={ex.id}>
@@ -466,16 +482,6 @@ function Editor({
             </div>
             {menu === ex.id && (
               <div className="exercise-actions">
-                <button
-                  className="text-button"
-                  onClick={() => {
-                    setEditingSets(ex.id);
-                    setMenu(null);
-                  }}
-                >
-                  <ListOrdered size={17} />
-                  Edit sets
-                </button>
                 <button
                   className="text-button"
                   disabled={ei === 0}
@@ -508,19 +514,14 @@ function Editor({
                 Load
                 <select
                   aria-label={ex.name + " load type"}
-                  value={ex.sets[0]?.load ?? "weight"}
-                  disabled={timed}
+                  value={editableSet?.load ?? "weight"}
+                  disabled={timed || !hasEditableSets}
                   onChange={(e) =>
                     update({
                       ...ex,
-                      sets: ex.sets.map((s) => ({
-                        ...s,
-                        load: e.target.value as WorkoutSet["load"],
-                        weight:
-                          e.target.value === "bodyweight" ? null : s.weight,
-                        bodyWeightKg: undefined,
-                        done: false,
-                      })),
+                      sets: ex.sets.map((s) =>
+                        changeSetLoad(s, e.target.value as WorkoutSet["load"]),
+                      ),
                     })
                   }
                 >
@@ -534,19 +535,16 @@ function Editor({
                 <select
                   aria-label={ex.name + " measure"}
                   value={timed ? "seconds" : "reps"}
+                  disabled={!hasEditableSets}
                   onChange={(e) =>
                     update({
                       ...ex,
-                      sets: ex.sets.map((s) => ({
-                        ...s,
-                        measure: e.target.value as "reps" | "seconds",
-                        load:
-                          e.target.value === "seconds" ? "bodyweight" : s.load,
-                        weight: e.target.value === "seconds" ? null : s.weight,
-                        reps: null,
-                        bodyWeightKg: undefined,
-                        done: false,
-                      })),
+                      sets: ex.sets.map((s) =>
+                        changeSetMeasure(
+                          s,
+                          e.target.value as "reps" | "seconds",
+                        ),
+                      ),
                     })
                   }
                 >
@@ -554,33 +552,59 @@ function Editor({
                   <option value="seconds">Seconds</option>
                 </select>
               </label>
+              {editableSet?.load === "bodyweight" && (
+                <label className="check-label extra-weight-toggle">
+                  <input
+                    type="checkbox"
+                    role="switch"
+                    aria-label={`${ex.name} extra weight`}
+                    checked={hasExtraWeight(editableSet)}
+                    disabled={!hasEditableSets}
+                    onChange={(event) =>
+                      update({
+                        ...ex,
+                        sets: ex.sets.map((s) =>
+                          changeExtraWeight(s, event.target.checked),
+                        ),
+                      })
+                    }
+                  />
+                  Extra weight
+                </label>
+              )}
             </div>
-            {organizing && (
-              <div className="set-organization-heading">
-                <p>Drag a handle to reorder sets.</p>
-                <button
-                  className="text-button"
-                  onClick={() => setEditingSets(null)}
-                >
-                  Done editing
-                </button>
-              </div>
-            )}
+            <div className="set-organization-heading">
+              <button
+                className="set-edit-toggle"
+                aria-pressed={organizing}
+                onClick={() => setEditingSets(organizing ? null : ex.id)}
+              >
+                <ListOrdered size={17} aria-hidden="true" />
+                Edit sets
+                <span className="set-toggle-track" aria-hidden="true" />
+              </button>
+              {organizing && <p>Drag a handle to reorder.</p>}
+            </div>
             <div
               className={`set-labels${organizing ? " set-compact-labels" : ""}`}
             >
               <span>Set</span>
               <span>
-                {ex.sets[0]?.load === "bodyweight"
+                {mixedProfiles
                   ? "Load"
-                  : ex.sets[0]?.load === "assisted"
-                    ? "Assist kg"
-                    : "kg"}
+                  : editableSet?.load === "bodyweight"
+                    ? hasExtraWeight(editableSet)
+                      ? "BW + kg"
+                      : "Load"
+                    : editableSet?.load === "assisted"
+                      ? "Assist kg"
+                      : "kg"}
               </span>
-              <span>{timed ? "Seconds" : "Reps"}</span>
-              <span className={organizing ? "set-type-label" : undefined}>
-                {organizing ? "Type" : "Done"}
+              <span>
+                {mixedMeasures ? "Reps / sec" : timed ? "Seconds" : "Reps"}
               </span>
+              {organizing && <span className="set-type-label">Type</span>}
+              <span>Done</span>
               <span />
             </div>
             <SortableSetList
@@ -605,8 +629,8 @@ function Editor({
                 const previousLabel = previous ? labelSet(previous) : undefined;
                 return (
                   <SetRow
-                    editing={editing}
                     compact={organizing}
+                    showProfile={mixedProfiles}
                     reorderHandle={handle}
                     bodyWeightKg={bodyWeightKg}
                     next={nextSet?.id === s.id}

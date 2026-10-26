@@ -1,9 +1,12 @@
 import { z } from "zod";
+import { hasSetInputText } from "../lib/set-input";
+import { hasExtraWeight } from "../lib/set-load";
 export const setSchema = z.object({
   id: z.string().uuid(),
   reps: z.number().int().min(0).max(10000).nullable(),
   weight: z.number().min(0).max(10000).nullable(),
   bodyWeightKg: z.number().finite().positive().max(1000).optional(),
+  extraWeight: z.boolean().optional(),
   load: z.enum(["weight", "bodyweight", "assisted"]),
   measure: z.enum(["reps", "seconds"]).optional(),
   section: z.enum(["working", "warmup", "winddown"]),
@@ -94,16 +97,26 @@ export const newSet = (prior?: WorkoutSet): WorkoutSet => ({
   weight: prior?.weight ?? null,
   load: prior?.load ?? "weight",
   ...(prior?.measure ? { measure: prior.measure } : {}),
+  ...(prior?.extraWeight !== undefined
+    ? { extraWeight: prior.extraWeight }
+    : {}),
   section: prior?.section ?? "working",
   done: false,
 });
 export function validSet(s: WorkoutSet) {
   return (
+    !hasSetInputText(s) &&
     s.reps !== null &&
     s.reps > 0 &&
     Number.isInteger(s.reps) &&
     s.reps <= 10000 &&
     (s.measure !== "seconds" || s.load === "bodyweight") &&
+    (s.extraWeight !== true || s.load === "bodyweight") &&
+    (!hasExtraWeight(s) ||
+      (s.weight !== null &&
+        Number.isFinite(s.weight) &&
+        s.weight > 0 &&
+        s.weight <= 10000)) &&
     (s.load === "bodyweight" ||
       (s.weight !== null && s.weight >= 0 && s.weight <= 10000))
   );
@@ -123,6 +136,15 @@ export function validate(kind: Kind, payload: unknown): Payload {
   if (!result.success) {
     const issue = result.error.issues[0];
     const field = issue.path.at(-1);
+    const candidate = payload as { exercises?: Exercise[] };
+    const candidateSet =
+      candidate?.exercises?.[Number(issue.path[1])]?.sets?.[
+        Number(issue.path[3])
+      ];
+    if (field === "weight" && candidateSet && hasExtraWeight(candidateSet))
+      throw new RecordValidationError(
+        "Added weight must be greater than 0 and no more than 10000 kg, or blank for an unfinished set.",
+      );
     const messages: Record<string, string> = {
       name: "Enter a name between 1 and 100 characters.",
       date: "Choose a valid workout date.",
@@ -131,6 +153,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
       weight: "Weight must be a number from 0 to 10000 kg, or blank.",
       bodyWeightKg:
         "Bodyweight must be greater than 0 and no more than 1000 kg.",
+      extraWeight: "Choose whether this bodyweight set uses extra weight.",
       measure: "Choose reps or seconds for this set.",
       load: "Choose weight, bodyweight or assisted load.",
       section: "Choose working, warm-up or cool-down for this set.",
@@ -138,12 +161,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
       sets: "Use no more than 100 sets per exercise.",
     };
     if (field === "reps") {
-      const exerciseIndex = issue.path[1];
-      const setIndex = issue.path[3];
-      const candidate = payload as { exercises?: Exercise[] };
-      const timed =
-        candidate?.exercises?.[Number(exerciseIndex)]?.sets?.[Number(setIndex)]
-          ?.measure === "seconds";
+      const timed = candidateSet?.measure === "seconds";
       throw new RecordValidationError(
         `${timed ? "Seconds" : "Reps"} must be a whole number from 0 to 10000, or blank.`,
       );
@@ -154,8 +172,24 @@ export function validate(kind: Kind, payload: unknown): Payload {
   }
   const p = result.data;
   if (kind === "workout" || kind === "routine") {
+    if (
+      (payload as Workout | Routine).exercises.some((ex) =>
+        ex.sets.some(hasSetInputText),
+      )
+    )
+      throw new RecordValidationError(
+        "Finish entering the set values before saving.",
+      );
     for (const ex of (p as Workout | Routine).exercises) {
       for (const s of ex.sets) {
+        if (s.extraWeight === true && s.load !== "bodyweight")
+          throw new RecordValidationError(
+            "Extra weight is available for bodyweight sets only.",
+          );
+        if (hasExtraWeight(s) && s.weight !== null && s.weight <= 0)
+          throw new RecordValidationError(
+            "Added weight must be greater than 0 and no more than 10000 kg.",
+          );
         if (s.measure === "seconds" && s.load !== "bodyweight")
           throw new RecordValidationError(
             "Timed sets use bodyweight. Choose bodyweight to log seconds.",
@@ -186,13 +220,15 @@ export function validate(kind: Kind, payload: unknown): Payload {
   return p;
 }
 export const labelSet = (s: WorkoutSet) =>
-  s.measure === "seconds"
-    ? s.reps + " sec"
-    : s.load === "bodyweight"
-      ? "BW × " + s.reps
-      : s.load === "assisted"
-        ? s.weight + " kg assist × " + s.reps
-        : s.weight + " kg × " + s.reps;
+  hasExtraWeight(s)
+    ? `BW + ${s.weight} kg${s.measure === "seconds" ? ` · ${s.reps} sec` : ` × ${s.reps}`}`
+    : s.measure === "seconds"
+      ? s.reps + " sec"
+      : s.load === "bodyweight"
+        ? "BW × " + s.reps
+        : s.load === "assisted"
+          ? s.weight + " kg assist × " + s.reps
+          : s.weight + " kg × " + s.reps;
 export const repeatExercises = (items: Exercise[]) =>
   items.map((e) => ({
     ...e,

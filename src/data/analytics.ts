@@ -5,6 +5,7 @@ import {
   validSet,
 } from "./model";
 import { sortWorkoutsNewest } from "./workouts";
+import { hasExtraWeight } from "../lib/set-load";
 export function estimate(s: WorkoutSet) {
   return s.measure !== "seconds" &&
     validSet(s) &&
@@ -18,6 +19,7 @@ export function estimate(s: WorkoutSet) {
 export function comparableSets(a: WorkoutSet, b: WorkoutSet) {
   if (
     a.load !== b.load ||
+    hasExtraWeight(a) !== hasExtraWeight(b) ||
     a.section !== b.section ||
     (a.measure ?? "reps") !== (b.measure ?? "reps")
   )
@@ -26,7 +28,7 @@ export function comparableSets(a: WorkoutSet, b: WorkoutSet) {
     bEstimate = estimate(b);
   return aEstimate !== null || bEstimate !== null
     ? aEstimate !== null && bEstimate !== null
-    : a.load === "bodyweight" || a.weight === b.weight;
+    : (a.load === "bodyweight" && !hasExtraWeight(a)) || a.weight === b.weight;
 }
 export function progressFor(records: RecordDoc[]) {
   const map = new Map<
