@@ -20,10 +20,11 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/contexts/useTheme";
 import ProfileForm from "@/components/ProfileForm";
 import { removeProfileCache } from "@/lib/profile";
 import { readAccount } from "@/data/database";
+import { requestPersistentStorage } from "@/lib/persistence";
 import { type RecordDoc } from "@/data/model";
 import {
   readTrainingPreferences,
@@ -132,7 +133,7 @@ export default function Settings() {
           className="text-button"
           onClick={async () => {
             try {
-              const ok = await navigator.storage?.persist?.();
+              const ok = await requestPersistentStorage();
               toast(
                 ok
                   ? "Persistent storage enabled"

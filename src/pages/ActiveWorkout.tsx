@@ -49,6 +49,7 @@ import {
   parseWorkoutDraft,
 } from "@/lib/drafts";
 import { trainingHaptic } from "@/lib/preferences";
+import { requestPersistenceOnce } from "@/lib/persistence";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
@@ -314,6 +315,7 @@ function Editor({
       await save(id, "workout", next);
       writeDraft(localStorage, recoveryKey, null);
       rest.skip();
+      if (!editing) requestPersistenceOnce();
       if (routine && !fromRoutine) {
         try {
           await save(crypto.randomUUID(), "routine", {

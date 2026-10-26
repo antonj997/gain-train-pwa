@@ -12,14 +12,55 @@ export default defineConfig({
       injectRegister: null,
       includeAssets: ["icon.svg", "apple-touch-icon.png"],
       manifest: {
+        // A stable identity keeps installs linked if start_url ever changes.
+        id: base,
         name: "Gain Train — Workout Log",
         short_name: "Gain Train",
         description: "Log your sets. See your progress. Works offline.",
+        lang: "en",
+        categories: ["health", "fitness", "sports"],
         start_url: base,
         scope: base,
         display: "standalone",
-        background_color: "#0d111c",
-        theme_color: "#365de9",
+        // Match the dark app background so the splash and title bar don't flash.
+        background_color: "#0d1016",
+        theme_color: "#0d1016",
+        shortcuts: [
+          {
+            name: "Start or resume workout",
+            short_name: "Workout",
+            url: base + "?start=workout",
+            icons: [{ src: base + "icon-192.png", sizes: "192x192" }],
+          },
+          {
+            name: "History",
+            url: base + "history",
+            icons: [{ src: base + "icon-192.png", sizes: "192x192" }],
+          },
+        ],
+        screenshots: [
+          {
+            src: base + "screenshots/workout.png",
+            sizes: "780x1688",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Log sets with your previous results alongside",
+          },
+          {
+            src: base + "screenshots/progress.png",
+            sizes: "780x1688",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Track progress for every exercise",
+          },
+          {
+            src: base + "screenshots/home.png",
+            sizes: "780x1688",
+            type: "image/png",
+            form_factor: "narrow",
+            label: "Start a workout or a saved routine",
+          },
+        ],
         icons: [
           { src: base + "icon-192.png", sizes: "192x192", type: "image/png" },
           {
@@ -38,6 +79,8 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
+        // Install-sheet screenshots are only fetched by the browser's install UI.
+        globIgnores: ["screenshots/**"],
         navigateFallback: base + "index.html",
         cleanupOutdatedCaches: true,
       },

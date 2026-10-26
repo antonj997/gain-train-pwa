@@ -2,7 +2,8 @@ import { suggestedExercises } from "@/data/start";
 import { sortWorkoutsNewest } from "@/data/workouts";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
-import { Link } from "react-router-dom";
+import { useEffect, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { Plus, Play, ChevronRight } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
@@ -27,6 +28,9 @@ export default function Home() {
     )
     .sort(sortWorkoutsNewest);
   const routines = records.filter((r) => r.kind === "routine");
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const handledShortcut = useRef(false);
   const start = async (past = false, routine?: Routine, routineId?: string) => {
     const now = Date.now();
     await requestStart({
@@ -42,6 +46,15 @@ export default function Home() {
         : [],
     });
   };
+  // The home-screen shortcut resumes a running workout instead of replacing it.
+  useEffect(() => {
+    if (params.get("start") !== "workout" || handledShortcut.current) return;
+    handledShortcut.current = true;
+    setParams({}, { replace: true });
+    const running = drafts.find((r) => (r.payload as Workout).startedAt !== null);
+    if (running) navigate("/workout/" + running.id, { replace: true });
+    else void start();
+  });
   return (
     <div className="stack home-page">
       {confirmation}

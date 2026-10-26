@@ -1,29 +1,38 @@
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { local, storageKeys, writeStored } from "@/lib/storage";
+import { ThemeContext, type Theme } from "./useTheme";
 
-type Theme = "light" | "dark";
+const lightQuery = "(prefers-color-scheme: light)";
+const savedTheme = (): Theme | null => {
+  const saved = local.getItem(storageKeys.theme);
+  return saved === "light" || saved === "dark" ? saved : null;
+};
+const systemTheme = (): Theme =>
+  globalThis.matchMedia?.(lightQuery).matches ? "light" : "dark";
 
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const stored = localStorage.getItem("gain-train-theme");
-    return (stored as Theme) || "dark";
-  });
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  // index.html applies the same choice before first paint.
+  const [theme, setTheme] = useState<Theme>(() => savedTheme() ?? systemTheme());
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const root = document.documentElement;
     root.classList.remove("light", "dark");
     root.classList.add(theme);
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", theme === "dark" ? "#0d1016" : "#f5f6f9");
-    localStorage.setItem("gain-train-theme", theme);
   }, [theme]);
+
+  // Follow the system appearance until the user picks one in Settings.
+  useEffect(() => {
+    const query = globalThis.matchMedia?.(lightQuery);
+    if (!query) return;
+    const follow = () => {
+      if (!savedTheme()) setTheme(systemTheme());
+    };
+    query.addEventListener("change", follow);
+    return () => query.removeEventListener("change", follow);
+  }, []);
 
   const fadeTimer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(
@@ -42,7 +51,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       () => document.documentElement.classList.remove("theme-fading"),
       700,
     );
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    const next = theme === "light" ? "dark" : "light";
+    writeStored(storageKeys.theme, next);
+    setTheme(next);
   };
 
   return (
@@ -50,12 +61,4 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
     </ThemeContext.Provider>
   );
-};
-
-export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
-};
+}
