@@ -11,8 +11,7 @@ export function useRetainedDraft<T>(
     value: readDraft(local, key, parse),
   }));
   const [retained, setRetained] = useState(true);
-  const value =
-    entry.key === key ? entry.value : readDraft(local, key, parse);
+  const value = entry.key === key ? entry.value : readDraft(local, key, parse);
   const replace = (next: T | null) => {
     setEntry({ key, value: next });
     setRetained(writeDraft(local, key, next));

@@ -1,4 +1,7 @@
-export type KeyValueStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+export type KeyValueStorage = Pick<
+  Storage,
+  "getItem" | "setItem" | "removeItem"
+>;
 
 // Safari and privacy settings can throw on any storage access, including reading
 // the global itself. Reads and removals fall back quietly so the app still opens;

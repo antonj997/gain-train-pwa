@@ -12,7 +12,9 @@ const systemTheme = (): Theme =>
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // index.html applies the same choice before first paint.
-  const [theme, setTheme] = useState<Theme>(() => savedTheme() ?? systemTheme());
+  const [theme, setTheme] = useState<Theme>(
+    () => savedTheme() ?? systemTheme(),
+  );
 
   useEffect(() => {
     const root = document.documentElement;

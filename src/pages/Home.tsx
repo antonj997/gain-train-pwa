@@ -51,7 +51,9 @@ export default function Home() {
     if (params.get("start") !== "workout" || handledShortcut.current) return;
     handledShortcut.current = true;
     setParams({}, { replace: true });
-    const running = drafts.find((r) => (r.payload as Workout).startedAt !== null);
+    const running = drafts.find(
+      (r) => (r.payload as Workout).startedAt !== null,
+    );
     if (running) navigate("/workout/" + running.id, { replace: true });
     else void start();
   });

@@ -45,10 +45,7 @@ export function parseBodyWeightInput(input: string): number | null {
 }
 const cacheKey = (account: string) =>
   `gt-profile-v1:${encodeURIComponent(account)}`;
-export function removeProfileCache(
-  account: string,
-  storage: Storage = local,
-) {
+export function removeProfileCache(account: string, storage: Storage = local) {
   storage.removeItem(cacheKey(account));
 }
 function remoteProfile(metadata: unknown): Omit<SavedProfile, "dirty"> | null {

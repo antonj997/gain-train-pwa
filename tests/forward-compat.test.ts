@@ -42,7 +42,7 @@ test("validation keeps fields written by a newer app version", () => {
   const saved = validate("workout", workout()) as Workout & {
     rpeScale?: string;
   };
-  const exercise = saved.exercises[0] as typeof saved.exercises[0] & {
+  const exercise = saved.exercises[0] as (typeof saved.exercises)[0] & {
     note?: string;
   };
   assert.equal(saved.rpeScale, "1-10");
