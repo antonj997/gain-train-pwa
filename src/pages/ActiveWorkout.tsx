@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
@@ -35,6 +35,7 @@ import {
 } from "@/data/workouts";
 import { finishWorkout } from "@/lib/workout-editor";
 import { selectInputValue } from "@/lib/set-editing";
+import { changeExerciseOptions } from "@/lib/exercise-options";
 import {
   changeSetLoad,
   changeSetMeasure,
@@ -111,8 +112,7 @@ function Editor({
       ? "Recovered unsaved entries. Correct any errors, then retry saving."
       : null,
   );
-  const [menu, setMenu] = useState<string | null>(null);
-  const [editingSets, setEditingSets] = useState<string | null>(null);
+  const [menu, changeOptions] = useReducer(changeExerciseOptions, null);
   const [routine, setRoutine] = useState(false);
   const [busy, setBusy] = useState(false);
   const [abandon, setAbandon] = useState(false);
@@ -124,6 +124,54 @@ function Editor({
   const actionLocked = useRef(false);
   const lastSaved = useRef(initial);
   const editorRef = useRef<HTMLDivElement>(null);
+  const openExerciseId = menu?.id;
+  useEffect(() => {
+    if (!openExerciseId) return;
+    const card = editorRef.current?.querySelector<HTMLElement>(
+      "[data-options-open]",
+    );
+    if (!card) return;
+    let pointerActivation = false;
+    const beginPointer = () => {
+      pointerActivation = true;
+    };
+    const cancelPointer = () => {
+      pointerActivation = false;
+    };
+    const closeOutside = (event: Event) => {
+      if (event.target instanceof Node && !card.contains(event.target))
+        changeOptions({ type: "close", id: openExerciseId });
+    };
+    const closeAfterClick = (event: MouseEvent) => {
+      pointerActivation = false;
+      closeOutside(event);
+    };
+    const closeOnFocus = (event: FocusEvent) => {
+      // Keep the layout still until a pointer's target has received its click.
+      if (!pointerActivation) closeOutside(event);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      pointerActivation = false;
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault();
+      card.querySelector<HTMLButtonElement>(".exercise-heading button")?.focus({
+        preventScroll: true,
+      });
+      changeOptions({ type: "close", id: openExerciseId });
+    };
+    document.addEventListener("pointerdown", beginPointer, true);
+    document.addEventListener("pointercancel", cancelPointer, true);
+    document.addEventListener("click", closeAfterClick);
+    document.addEventListener("focusin", closeOnFocus);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", beginPointer, true);
+      document.removeEventListener("pointercancel", cancelPointer, true);
+      document.removeEventListener("click", closeAfterClick);
+      document.removeEventListener("focusin", closeOnFocus);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openExerciseId]);
   const rest = useRestTimer(account, id);
   const dirty = JSON.stringify(w) !== JSON.stringify(initial);
   const completed = w.exercises.reduce(
@@ -226,7 +274,7 @@ function Editor({
     });
   const remove = (ex: Exercise) => {
     change({ ...w, exercises: w.exercises.filter((e) => e.id !== ex.id) });
-    setMenu(null);
+    changeOptions({ type: "close" });
     setRemoveExercise(null);
   };
   const move = (index: number, step: number) => {
@@ -467,42 +515,57 @@ function Editor({
           ).size > 1;
         const mixedMeasures =
           new Set(ex.sets.map((s) => s.measure ?? "reps")).size > 1;
-        const organizing = editingSets === ex.id;
+        const optionsOpen = menu?.id === ex.id;
+        const organizing = optionsOpen && menu.editing;
         return (
-          <section className="exercise-card" key={ex.id}>
+          <section
+            className="exercise-card"
+            key={ex.id}
+            data-options-open={optionsOpen ? "" : undefined}
+          >
             <div className="exercise-heading">
               <h2>{ex.name}</h2>
               <button
                 className="icon-button"
                 aria-label={"Options for " + ex.name}
-                aria-expanded={menu === ex.id}
-                onClick={() => setMenu(menu === ex.id ? null : ex.id)}
+                aria-expanded={optionsOpen}
+                aria-controls={`exercise-options-${ex.id}`}
+                onClick={() =>
+                  changeOptions(
+                    optionsOpen
+                      ? { type: "close" }
+                      : { type: "open", id: ex.id },
+                  )
+                }
               >
                 <MoreHorizontal size={23} />
               </button>
             </div>
-            {menu === ex.id && (
-              <div className="exercise-actions">
+            {optionsOpen && (
+              <div
+                className="exercise-actions"
+                id={`exercise-options-${ex.id}`}
+                role="group"
+                aria-label={`Options for ${ex.name}`}
+              >
                 <button
+                  type="button"
                   className="text-button set-edit-menu-toggle"
-                  aria-pressed={organizing}
-                  onClick={(event) => {
-                    event.currentTarget
-                      .closest(".exercise-card")
-                      ?.querySelector<HTMLButtonElement>(
-                        ".exercise-heading button",
-                      )
-                      ?.focus({ preventScroll: true });
-                    setEditingSets(organizing ? null : ex.id);
-                    setMenu(null);
-                  }}
+                  role="switch"
+                  aria-label={`Edit sets for ${ex.name}`}
+                  aria-checked={organizing}
+                  onClick={() => changeOptions({ type: "edit", id: ex.id })}
                 >
-                  {organizing ? (
-                    <Check size={17} aria-hidden="true" />
-                  ) : (
-                    <ListOrdered size={17} aria-hidden="true" />
-                  )}
+                  <ListOrdered size={17} aria-hidden="true" />
                   Edit sets
+                  <span className="set-edit-switch-track" aria-hidden="true">
+                    <span className="set-edit-switch-thumb">
+                      {organizing && <Check size={12} />}
+                    </span>
+                  </span>
+                  <span className="set-edit-switch-state" aria-hidden="true">
+                    {organizing ? "On" : "Off"}
+                  </span>
                 </button>
                 <button
                   className="text-button"

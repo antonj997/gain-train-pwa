@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-26T10:22:25Z",
+  "generatedAt": "2026-10-26T16:25:52.366Z",
   "title": "Design System: Gain Train",
   "extensions": {
     "colorMeta": {
@@ -186,9 +186,9 @@
     {
       "name": "Edit sets menu toggle",
       "kind": "button",
-      "description": "Static off/on examples of the same toggle inside the exercise actions menu. The live menu shows one toggle only, closes on activation and restores focus to Options. These examples illustrate states and are not a browser capture.",
-      "html": "<div class=\"ds-menu-states\"><button class=\"ds-menu-toggle\" aria-pressed=\"false\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-list-ordered\" aria-hidden=\"true\"><path d=\"M10 12h11\"></path><path d=\"M10 18h11\"></path><path d=\"M10 6h11\"></path><path d=\"M4 10h2\"></path><path d=\"M4 6h1v4\"></path><path d=\"M6 18H4c0-1 2-2 2-3s-1-1.5-2-1\"></path></svg>Edit sets</button><button class=\"ds-menu-toggle\" aria-pressed=\"true\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-check\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"></path></svg>Edit sets</button></div>",
-      "css": ".ds-menu-states{display:flex;gap:12px;flex-wrap:wrap;}.ds-menu-toggle{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px;border:0;background:transparent;color:var(--blue);font:inherit;font-size:13px;font-weight:600;}.ds-menu-toggle[aria-pressed=true]{font-weight:700;}.ds-menu-toggle:focus-visible{outline:none;text-decoration:underline;text-underline-offset:4px;}"
+      "description": "Static off/on examples of the accessible switch inside exercise options. The live menu stays open while toggling; closing or leaving the exercise clears editing. These are state examples, not browser captures.",
+      "html": "<div class=\"ds-menu-states\"><button class=\"ds-menu-toggle\" role=\"switch\" aria-checked=\"false\">Edit sets<span class=\"ds-switch-track\" aria-hidden=\"true\"><span></span></span><span aria-hidden=\"true\">Off</span></button><button class=\"ds-menu-toggle\" role=\"switch\" aria-checked=\"true\">Edit sets<span class=\"ds-switch-track\" aria-hidden=\"true\"><span></span></span><span aria-hidden=\"true\">On</span></button></div>",
+      "css": ".ds-menu-states{display:flex;gap:12px;flex-wrap:wrap}.ds-menu-toggle{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px;border:0;background:transparent;color:var(--ink);font:inherit;font-size:14px}.ds-switch-track{display:inline-flex;align-items:center;width:40px;height:24px;padding:3px;box-sizing:border-box;border:1px solid var(--soft);border-radius:24px}.ds-switch-track>span{width:16px;height:16px;border-radius:50%;background:var(--soft)}.ds-menu-toggle[aria-checked=true] .ds-switch-track{background:var(--blue);border-color:var(--blue)}.ds-menu-toggle[aria-checked=true] .ds-switch-track>span{transform:translateX(16px);background:var(--surface)}.ds-menu-toggle:focus-visible{outline:0;text-decoration:underline;text-underline-offset:4px}"
     },
     {
       "name": "Simple calendar day states",

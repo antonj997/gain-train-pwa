@@ -2,7 +2,6 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import {
   Calendar,
   CalendarDays,
-  CalendarRange,
   Grid3X3,
   RotateCcw,
   ChevronLeft,
@@ -23,6 +22,28 @@ import {
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import "@/styles/history-calendar.css";
+
+function DateRangeIcon() {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M8 2v4m8-4v4M3 10h18" />
+      <circle cx="7" cy="16" r="1.5" />
+      <circle cx="17" cy="16" r="1.5" />
+      <path d="M9 16h6m-2-2 2 2-2 2" />
+    </svg>
+  );
+}
 
 export default function HistoryCalendar({
   value,
@@ -101,17 +122,17 @@ export default function HistoryCalendar({
           aria-pressed={mode === "range"}
           title={
             mode === "month"
-              ? "Month filter · switch to date range"
-              : "Date range filter · switch to month"
+              ? "Choose a From and To date"
+              : "Date range selected · show one month"
           }
           onClick={() =>
             change({ type: "mode", mode: mode === "month" ? "range" : "month" })
           }
         >
           {mode === "month" ? (
-            <Calendar size={18} aria-hidden="true" />
+            <DateRangeIcon />
           ) : (
-            <CalendarRange size={18} aria-hidden="true" />
+            <Calendar size={20} aria-hidden="true" />
           )}
         </button>
         <button

@@ -2,8 +2,8 @@
 
 Follow-up to the workout refinements, based on the owner's live mobile feedback.
 
-- Keep the single Edit sets toggle inside the exercise's … menu. No separate edit/finish action outside it.
-- Replace the two segmented calendar controls with two icon-only toggle buttons on one line. Icons show the active mode; pressed states, titles and accessible labels explain them.
+- Keep the single Edit sets toggle inside the exercise’s … menu. No separate edit/finish action outside it. Later feedback requires a visible On/Off switch, retaining the menu while toggling and resetting editing when it closes or the user leaves the exercise.
+- Replace the two segmented calendar controls with two icon-only toggle buttons on one line. The date-filter icon offers connected From/To endpoints or return to month; the display icon shows the active view. Pressed states, titles and accessible labels explain them.
 - Draw a continuous selected-range band across adjacent days, with only visible row/period ends rounded. Keep single-day selection and workout markers distinct.
 - Replace the competing footer reset controls with one contextual Show current month action, absent when already showing the unfiltered current month.
 - Make Simple denser with smaller squares, less padding and shorter grid rows. Preserve date labels, keyboard navigation and touch targets of at least 36px height on coarse pointers.
