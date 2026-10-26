@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { local } from "@/lib/storage";
 import {
   ProfileStore,
   createProfileConnection,
@@ -33,7 +34,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       currentAuth.current.user?.id === account;
     return new ProfileStore({
       account,
-      storage: localStorage,
+      storage: local,
       metadata: auth.user?.id === account ? auth.user.user_metadata : undefined,
       canSync: () =>
         !!supabase &&

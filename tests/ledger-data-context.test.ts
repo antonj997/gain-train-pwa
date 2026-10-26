@@ -482,3 +482,27 @@ test("deleting a missing record gives a useful failure without creating a tombst
   }, /could not find|no longer/i);
   assert.equal(Object.keys((await readAccount(account)).records).length, 0);
 });
+
+test("saves keep newer-app records intact and stamp this app's schema version", async () => {
+  const account = crypto.randomUUID(),
+    newerId = crypto.randomUUID(),
+    ownId = crypto.randomUUID();
+  const render = await provider(account);
+  const newer = document(newerId, {
+    ...workout(),
+    schemaVersion: model.SCHEMA_VERSION + 1,
+  });
+  await transact(account, (s) => {
+    s.records[newerId] = newer;
+  });
+  await assert.rejects(
+    render().save(newerId, "workout", { ...workout(), name: "Overwrite" }),
+    /newer version/i,
+  );
+  assert.deepEqual((await readAccount(account)).records[newerId], newer);
+  await render().save(ownId, "workout", workout());
+  assert.equal(
+    (await readAccount(account)).records[ownId].payload.schemaVersion,
+    model.SCHEMA_VERSION,
+  );
+});

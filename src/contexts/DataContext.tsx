@@ -13,7 +13,9 @@ import { readAccount, transact } from "@/data/database";
 import {
   emptyState,
   validate,
+  isFromNewerApp,
   RecordValidationError,
+  SCHEMA_VERSION,
   type LocalState,
   type Kind,
   type Payload,
@@ -54,6 +56,8 @@ type Data = {
   importRecords: (records: RecordDoc[]) => Promise<void>;
 };
 const Context = createContext<Data | null>(null);
+const NEWER_APP_MESSAGE =
+  "This was saved by a newer version of Gain Train. Close and reopen the app to update it, then try again.";
 export function DataProvider({ children }: { children: ReactNode }) {
   const { account, user, ready: authReady } = useAuth();
   const [state, setState] = useState(emptyState),
@@ -218,13 +222,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     try {
       const next = await transact(account, (s) => {
         const old = s.records[id];
+        if (old && isFromNewerApp(old.payload))
+          throw new RecordValidationError(NEWER_APP_MESSAGE);
         if (kind === "workout" && old?.deleted)
           throw new RecordValidationError(
             "This workout was removed. Return to your log to resume your current workout.",
           );
-        let saved = parsed;
+        let saved: Payload = { ...parsed, schemaVersion: SCHEMA_VERSION };
         if (kind === "workout") {
-          const workout = parsed as Workout;
+          const workout = saved as Workout;
           if (workout.status === "draft" && workout.startedAt !== null) {
             const others = startedWorkouts(s).filter(
               (record) => record.id !== id,

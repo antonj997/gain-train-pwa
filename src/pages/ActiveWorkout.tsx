@@ -25,6 +25,7 @@ import {
   validSet,
   labelSet,
   validate,
+  isFromNewerApp,
 } from "@/data/model";
 import {
   priorWorkouts,
@@ -50,6 +51,7 @@ import {
 } from "@/lib/drafts";
 import { trainingHaptic } from "@/lib/preferences";
 import { requestPersistenceOnce } from "@/lib/persistence";
+import { local } from "@/lib/storage";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
@@ -74,6 +76,17 @@ export default function ActiveWorkout() {
     return (
       <div className="empty">
         <h1>Workout not found</h1>
+        <Link to="/">Back to workouts</Link>
+      </div>
+    );
+  if (isFromNewerApp(doc.payload))
+    return (
+      <div className="empty">
+        <h1>Update Gain Train to edit this workout</h1>
+        <p>
+          It was saved by a newer version of the app. Close and reopen Gain
+          Train to update; your workout is safe in the meantime.
+        </p>
         <Link to="/">Back to workouts</Link>
       </div>
     );
@@ -102,7 +115,7 @@ function Editor({
   const editing = initial.status === "completed";
   const recoveryKey = draftKey(account, "workout", id);
   const [recovered] = useState(() =>
-    editing ? null : readDraft(localStorage, recoveryKey, parseWorkoutDraft),
+    editing ? null : readDraft(local, recoveryKey, parseWorkoutDraft),
   );
   const [w, setW] = useState<Workout>(recovered ?? initial);
   const [picker, setPicker] = useState(false);
@@ -202,7 +215,7 @@ function Editor({
     setError(null);
     const current = ++version.current;
     if (editing) return;
-    const retained = writeDraft(localStorage, recoveryKey, value);
+    const retained = writeDraft(local, recoveryKey, value);
     try {
       validate("workout", value);
     } catch (cause) {
@@ -222,7 +235,7 @@ function Editor({
         if (current === version.current) {
           setSaved(true);
           setError(null);
-          writeDraft(localStorage, recoveryKey, null);
+          writeDraft(local, recoveryKey, null);
         }
       })
       .catch((cause) => {
@@ -313,7 +326,7 @@ function Editor({
       await queue.current;
       const next = finishWorkout(w);
       await save(id, "workout", next);
-      writeDraft(localStorage, recoveryKey, null);
+      writeDraft(local, recoveryKey, null);
       rest.skip();
       if (!editing) requestPersistenceOnce();
       if (routine && !fromRoutine) {
@@ -354,7 +367,7 @@ function Editor({
     try {
       await queue.current;
       await deleteRecord(id);
-      writeDraft(localStorage, recoveryKey, null);
+      writeDraft(local, recoveryKey, null);
       rest.skip();
       navigate("/");
       toast("Workout abandoned", {

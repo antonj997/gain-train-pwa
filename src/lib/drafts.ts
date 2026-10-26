@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { customSchema, routineSchema, workoutSchema } from "../data/model";
+import {
+  customSchema,
+  keepUnknownFields,
+  routineSchema,
+  workoutSchema,
+} from "../data/model";
 import { setInputTextSchema } from "./set-input";
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 export function draftKey(account: string, kind: string, id = "") {
@@ -56,15 +61,17 @@ const workoutDraft = workoutSchema.extend({
 });
 export function parseRoutineDraft(value: unknown) {
   const result = routineDraft.safeParse(value);
-  return result.success ? result.data : null;
+  return result.success ? keepUnknownFields(value, result.data) : null;
 }
 export function parseCustomDraft(value: unknown) {
   const result = customDraft.safeParse(value);
-  return result.success ? result.data : null;
+  return result.success ? keepUnknownFields(value, result.data) : null;
 }
 export function parseWorkoutDraft(value: unknown) {
   const result = workoutDraft.safeParse(value);
-  return result.success && result.data.status === "draft" ? result.data : null;
+  return result.success && result.data.status === "draft"
+    ? keepUnknownFields(value, result.data)
+    : null;
 }
 export function readRestEnd(
   storage: DraftStorage,

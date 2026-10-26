@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { draftKey, extendRestEnd, readRestEnd } from "@/lib/drafts";
+import { local, writeStored } from "@/lib/storage";
 import {
   readTrainingPreferences,
   TRAINING_PREFERENCES_EVENT,
@@ -8,19 +9,15 @@ import {
 export function useRestTimer(account: string, workoutId: string) {
   const key = draftKey(account, "rest", workoutId);
   const [preferences, setPreferences] = useState(readTrainingPreferences);
-  const [end, setEnd] = useState(() => readRestEnd(localStorage, key));
+  const [end, setEnd] = useState(() => readRestEnd(local, key));
   const [now, setNow] = useState(Date.now);
   const [elapsed, setElapsed] = useState(false);
   const update = (value: number | null) => {
     setElapsed(false);
     setNow(Date.now());
     setEnd(value);
-    try {
-      if (value === null) localStorage.removeItem(key);
-      else localStorage.setItem(key, String(value));
-    } catch {
-      /* A live timer still works. */
-    }
+    // A live timer still works when storage is unavailable.
+    writeStored(key, value === null ? null : String(value));
   };
   useEffect(() => {
     const refresh = () => setPreferences(readTrainingPreferences());
@@ -39,11 +36,7 @@ export function useRestTimer(account: string, workoutId: string) {
       if (end <= time) {
         setEnd(null);
         setElapsed(true);
-        try {
-          localStorage.removeItem(key);
-        } catch {
-          /* Expired timer can safely be ignored on reload. */
-        }
+        local.removeItem(key);
       }
     };
     const interval = window.setInterval(tick, 1000);
@@ -57,11 +50,7 @@ export function useRestTimer(account: string, workoutId: string) {
     if (preferences.restSeconds > 0) return;
     setEnd(null);
     setElapsed(false);
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      /* Rest is off. */
-    }
+    local.removeItem(key);
   }, [preferences.restSeconds, key]);
   return {
     preferences,

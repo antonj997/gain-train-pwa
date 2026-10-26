@@ -18,7 +18,13 @@ export const exerciseSchema = z.object({
   name: z.string().trim().min(1).max(100),
   sets: z.array(setSchema).max(100),
 });
+// Records without a schemaVersion were written by version 1. Bump SCHEMA_VERSION
+// when a release changes what existing fields mean; older apps then open those
+// records read-only instead of saving over them.
+export const SCHEMA_VERSION = 1;
+const schemaVersion = z.number().int().positive().optional();
 export const workoutSchema = z.object({
+  schemaVersion,
   routineId: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(100),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -30,10 +36,12 @@ export const workoutSchema = z.object({
   exercises: z.array(exerciseSchema).max(100),
 });
 export const routineSchema = z.object({
+  schemaVersion,
   name: z.string().trim().min(1).max(100),
   exercises: z.array(exerciseSchema).max(100),
 });
 export const customSchema = z.object({
+  schemaVersion,
   name: z.string().trim().min(1).max(100),
   category: z.string().max(50),
   note: z.string().max(1000),
@@ -123,6 +131,33 @@ export function validSet(s: WorkoutSet) {
 }
 export class RecordValidationError extends Error {}
 
+/** True when a newer app version saved this record; this version must not overwrite it. */
+export const isFromNewerApp = (payload: unknown) =>
+  ((payload as { schemaVersion?: unknown } | null)?.schemaVersion as number) >
+  SCHEMA_VERSION;
+
+const editorOnlyFields = new Set(["inputText"]);
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === "object" && !Array.isArray(value);
+
+// zod drops keys it does not know. Copy them back so fields added by a newer app
+// version survive when this version saves the record. Editor-only state never does.
+export function keepUnknownFields<T>(original: unknown, parsed: T): T {
+  if (Array.isArray(parsed))
+    return (
+      Array.isArray(original)
+        ? parsed.map((item, i) => keepUnknownFields(original[i], item))
+        : parsed
+    ) as T;
+  if (!isPlainObject(parsed) || !isPlainObject(original)) return parsed;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(original))
+    if (!(key in parsed) && !editorOnlyFields.has(key)) result[key] = value;
+  for (const [key, value] of Object.entries(parsed))
+    result[key] = keepUnknownFields(original[key], value);
+  return result as T;
+}
+
 export function validate(kind: Kind, payload: unknown): Payload {
   if (!["workout", "routine", "exercise"].includes(kind))
     throw new RecordValidationError("Unknown record type.");
@@ -170,7 +205,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
       messages[String(field)] ?? "Check the record details before saving.",
     );
   }
-  const p = result.data;
+  const p = keepUnknownFields(payload, result.data);
   if (kind === "workout" || kind === "routine") {
     if (
       (payload as Workout | Routine).exercises.some((ex) =>

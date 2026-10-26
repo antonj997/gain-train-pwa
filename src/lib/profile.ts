@@ -1,3 +1,4 @@
+import { local } from "./storage";
 const BODYWEIGHT_ERROR =
   "Bodyweight must be greater than 0 and no more than 1000 kg, or blank to clear it.";
 
@@ -46,7 +47,7 @@ const cacheKey = (account: string) =>
   `gt-profile-v1:${encodeURIComponent(account)}`;
 export function removeProfileCache(
   account: string,
-  storage: Storage = localStorage,
+  storage: Storage = local,
 ) {
   storage.removeItem(cacheKey(account));
 }

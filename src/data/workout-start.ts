@@ -1,6 +1,7 @@
 import {
   validate,
   RecordValidationError,
+  SCHEMA_VERSION,
   type LocalState,
   type Workout,
 } from "./model";
@@ -99,7 +100,11 @@ export function createWorkout(
   state.records[id] = {
     id,
     kind: "workout",
-    payload: { ...workout, createdAt: workout.createdAt ?? Date.now() },
+    payload: {
+      ...workout,
+      schemaVersion: SCHEMA_VERSION,
+      createdAt: workout.createdAt ?? Date.now(),
+    },
     revision: 0,
     localVersion: 1,
     deleted: false,
