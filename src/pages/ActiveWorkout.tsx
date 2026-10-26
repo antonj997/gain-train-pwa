@@ -10,6 +10,7 @@ import {
   Trash2,
   Crosshair,
   ListOrdered,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/DataContext";
@@ -483,6 +484,27 @@ function Editor({
             {menu === ex.id && (
               <div className="exercise-actions">
                 <button
+                  className="text-button set-edit-menu-toggle"
+                  aria-pressed={organizing}
+                  onClick={(event) => {
+                    event.currentTarget
+                      .closest(".exercise-card")
+                      ?.querySelector<HTMLButtonElement>(
+                        ".exercise-heading button",
+                      )
+                      ?.focus({ preventScroll: true });
+                    setEditingSets(organizing ? null : ex.id);
+                    setMenu(null);
+                  }}
+                >
+                  {organizing ? (
+                    <Check size={17} aria-hidden="true" />
+                  ) : (
+                    <ListOrdered size={17} aria-hidden="true" />
+                  )}
+                  Edit sets
+                </button>
+                <button
                   className="text-button"
                   disabled={ei === 0}
                   onClick={() => move(ei, -1)}
@@ -572,18 +594,6 @@ function Editor({
                   Extra weight
                 </label>
               )}
-            </div>
-            <div className="set-organization-heading">
-              <button
-                className="set-edit-toggle"
-                aria-pressed={organizing}
-                onClick={() => setEditingSets(organizing ? null : ex.id)}
-              >
-                <ListOrdered size={17} aria-hidden="true" />
-                Edit sets
-                <span className="set-toggle-track" aria-hidden="true" />
-              </button>
-              {organizing && <p>Drag a handle to reorder.</p>}
             </div>
             <div
               className={`set-labels${organizing ? " set-compact-labels" : ""}`}

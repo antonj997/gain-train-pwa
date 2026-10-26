@@ -171,3 +171,21 @@ export function workoutDates(records: readonly RecordDoc[]) {
   }
   return dates;
 }
+
+/** Ends of a visible range band, including row wraps and month boundaries. */
+export function calendarRangeEdges(
+  cells: ReturnType<typeof calendarCells>,
+  index: number,
+  bounds: { start: string; end: string } | null,
+) {
+  const selected = (cell: (typeof cells)[number] | undefined) =>
+    !!bounds &&
+    !!cell?.inMonth &&
+    cell.date >= bounds.start &&
+    cell.date <= bounds.end;
+  if (!selected(cells[index])) return null;
+  return {
+    start: index % 7 === 0 || !selected(cells[index - 1]),
+    end: index % 7 === 6 || !selected(cells[index + 1]),
+  };
+}

@@ -1,9 +1,18 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Calendar,
+  CalendarDays,
+  CalendarRange,
+  Grid3X3,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { type RecordDoc } from "@/data/model";
 import { shiftDate } from "@/data/summary";
 import {
   calendarCells,
+  calendarRangeEdges,
   changeHistoryCalendar,
   historyCalendarBounds,
   moveCalendarMonth,
@@ -33,6 +42,7 @@ export default function HistoryCalendar({
   const currentMonth = now.slice(0, 7);
   const year = Number(month.slice(0, 4));
   const currentYear = Number(now.slice(0, 4));
+  const canReset = mode === "range" || month !== currentMonth || !!selectedDate;
   const instructionsId = useId();
   const headingId = useId();
   const [focused, setFocused] = useState(selectedDate ?? now);
@@ -79,43 +89,54 @@ export default function HistoryCalendar({
       className={`history-calendar calendar-${display}`}
       aria-label="Workout calendar"
     >
-      <div className="calendar-toolbar">
-        <div className="calendar-toggle" role="group" aria-label="Date filter">
-          <button
-            type="button"
-            aria-pressed={mode === "month"}
-            onClick={() => change({ type: "mode", mode: "month" })}
-          >
-            Month
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "range"}
-            onClick={() => change({ type: "mode", mode: "range" })}
-          >
-            Date range
-          </button>
-        </div>
-        <div
-          className="calendar-toggle"
-          role="group"
-          aria-label="Calendar display"
+      <div
+        className="calendar-toolbar"
+        role="group"
+        aria-label="Calendar controls"
+      >
+        <button
+          type="button"
+          className="calendar-icon-toggle"
+          aria-label="Date range"
+          aria-pressed={mode === "range"}
+          title={
+            mode === "month"
+              ? "Month filter · switch to date range"
+              : "Date range filter · switch to month"
+          }
+          onClick={() =>
+            change({ type: "mode", mode: mode === "month" ? "range" : "month" })
+          }
         >
-          <button
-            type="button"
-            aria-pressed={display === "detailed"}
-            onClick={() => change({ type: "display", display: "detailed" })}
-          >
-            Detailed
-          </button>
-          <button
-            type="button"
-            aria-pressed={display === "simple"}
-            onClick={() => change({ type: "display", display: "simple" })}
-          >
-            Simple
-          </button>
-        </div>
+          {mode === "month" ? (
+            <Calendar size={18} aria-hidden="true" />
+          ) : (
+            <CalendarRange size={18} aria-hidden="true" />
+          )}
+        </button>
+        <button
+          type="button"
+          className="calendar-icon-toggle"
+          aria-label="Simple view"
+          aria-pressed={display === "simple"}
+          title={
+            display === "detailed"
+              ? "Detailed calendar · switch to simple"
+              : "Simple calendar · switch to detailed"
+          }
+          onClick={() =>
+            change({
+              type: "display",
+              display: display === "detailed" ? "simple" : "detailed",
+            })
+          }
+        >
+          {display === "detailed" ? (
+            <CalendarDays size={18} aria-hidden="true" />
+          ) : (
+            <Grid3X3 size={18} aria-hidden="true" />
+          )}
+        </button>
       </div>
       {mode === "range" && (
         <div className="calendar-range-fields">
@@ -131,7 +152,11 @@ export default function HistoryCalendar({
               <span>{bound === "from" ? "From" : "To"}</span>
               {value[bound] ? (
                 <time dateTime={value[bound]}>
-                  {localizedDate(value[bound])}
+                  {localizedDate(value[bound], {
+                    day: "numeric",
+                    month: "short",
+                    year: "2-digit",
+                  })}
                 </time>
               ) : (
                 <strong>Choose date</strong>
@@ -200,12 +225,12 @@ export default function HistoryCalendar({
         </button>
       </div>
       <p
-        className="calendar-instructions"
+        className={`calendar-instructions${mode === "month" && !selectedDate ? " sr-only" : ""}`}
         id={instructionsId}
         aria-live="polite"
       >
         {mode === "range"
-          ? `Choose the ${activeBound === "from" ? "From" : "To"} date on the calendar. Both dates are included.`
+          ? `Choose ${activeBound === "from" ? "start" : "end"} date`
           : selectedDate
             ? localizedDate(selectedDate, {
                 weekday: "long",
@@ -217,7 +242,7 @@ export default function HistoryCalendar({
         <span className="sr-only">
           {" "}
           Use arrow keys to move between days, Home and End to move within a
-          week.
+          week. Date ranges include both dates.
         </span>
       </p>
       {display === "detailed" && (
@@ -232,13 +257,18 @@ export default function HistoryCalendar({
           ))}
         </div>
       )}
-      <div className="calendar-days" aria-labelledby={headingId}>
-        {cells.map((cell) => {
+      <div
+        className={`calendar-days${mode === "range" ? " calendar-range" : ""}`}
+        aria-labelledby={headingId}
+      >
+        {cells.map((cell, index) => {
           const count = counts.get(cell.date) ?? 0;
           const selected =
             mode === "range"
               ? !!bounds && cell.date >= bounds.start && cell.date <= bounds.end
               : selectedDate === cell.date;
+          const edges =
+            mode === "range" ? calendarRangeEdges(cells, index, bounds) : null;
           return (
             <button
               type="button"
@@ -247,7 +277,7 @@ export default function HistoryCalendar({
                 if (node) buttons.current.set(cell.date, node);
                 else buttons.current.delete(cell.date);
               }}
-              className={`calendar-day${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${mode === "range" && from === cell.date ? " is-range-start" : ""}${mode === "range" && to === cell.date ? " is-range-end" : ""}${!cell.inMonth ? " outside-month" : ""}`}
+              className={`calendar-day${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${mode === "range" && from === cell.date ? " is-range-start" : ""}${mode === "range" && to === cell.date ? " is-range-end" : ""}${edges?.start ? " range-row-start" : ""}${edges?.end ? " range-row-end" : ""}${!cell.inMonth ? " outside-month" : ""}`}
               disabled={!cell.inMonth || cell.date > now}
               tabIndex={cell.date === focusable ? 0 : -1}
               aria-current={cell.date === now ? "date" : undefined}
@@ -285,26 +315,19 @@ export default function HistoryCalendar({
             }
             aria-hidden="true"
           />{" "}
-          Workout logged
+          Workout day
         </span>
-        <div className="calendar-reset-actions">
-          {(selectedDate || from || to) && (
-            <button
-              type="button"
-              className="text-button"
-              onClick={() => change({ type: "clear" })}
-            >
-              {mode === "range" ? "Clear dates" : "Whole month"}
-            </button>
-          )}
+        {canReset && (
           <button
             type="button"
-            className="text-button"
+            className="text-button calendar-reset"
+            title={`Show all workouts in ${localizedDate(now, { month: "long", year: "numeric" })}`}
             onClick={() => change({ type: "reset" })}
           >
-            This month
+            <RotateCcw size={14} aria-hidden="true" />
+            Show current month
           </button>
-        </div>
+        )}
       </div>
     </section>
   );

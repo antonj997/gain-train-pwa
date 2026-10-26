@@ -98,8 +98,9 @@ test("simple calendar renders exactly the month's squares, accessible dates and 
     html,
     /aria-label="[^"]*(?:29 February|February 29)[^"]*2024[^"]*1 workout/,
   );
-  assert.match(html, /aria-label="Calendar display"/);
-  assert.match(html, /aria-pressed="true">Simple/);
+  assert.match(html, /aria-label="Simple view" aria-pressed="true"/);
+  assert.equal((html.match(/class="calendar-icon-toggle"/g) ?? []).length, 2);
+  assert.doesNotMatch(html, /class="calendar-toggle"/);
   assert.doesNotMatch(html, /outside-month|calendar-weekdays/);
 });
 
@@ -146,7 +147,28 @@ test("range calendar exposes chosen bounds and the active boundary without anoth
   assert.match(html, /dateTime="2026-09-29"/i);
   assert.match(html, /dateTime="2026-10-10"/i);
   assert.match(html, /is-range-start/);
+  assert.match(html, /calendar-days calendar-range/);
+  assert.match(html, /range-row-start/);
+  assert.match(html, /range-row-end/);
+  assert.equal((html.match(/>Show current month<\/button>/g) ?? []).length, 1);
+  assert.doesNotMatch(html, />Whole month<|>This month<|>Clear dates</);
   assert.doesNotMatch(html, /type="date"|More periods/);
+});
+
+test("the default calendar has two icon toggles and no redundant reset action", async () => {
+  const Calendar = await component("../src/components/HistoryCalendar.tsx");
+  const html = renderToStaticMarkup(
+    createElement(Calendar, {
+      value: calendar.createHistoryCalendar("2026-10-26"),
+      now: "2026-10-26",
+      records: [],
+      onChange() {},
+    }),
+  );
+  assert.equal((html.match(/class="calendar-icon-toggle"/g) ?? []).length, 2);
+  assert.match(html, /aria-label="Date range" aria-pressed="false"/);
+  assert.match(html, /aria-label="Simple view" aria-pressed="false"/);
+  assert.doesNotMatch(html, />Show current month<|>Whole month<|>This month</);
 });
 
 test("recent summary uses an inclusive 30-day window and an explicit preceding comparison", async () => {
