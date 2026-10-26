@@ -439,7 +439,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       sync,
       ...actions,
     }),
-    [state, ready, authReady, error, syncing, online, syncHealth, sync, actions],
+    [
+      state,
+      ready,
+      authReady,
+      error,
+      syncing,
+      online,
+      syncHealth,
+      sync,
+      actions,
+    ],
   );
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
