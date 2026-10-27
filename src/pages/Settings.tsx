@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "@/lib/errors";
 import { Link } from "react-router-dom";
 import {
   Download,
@@ -18,12 +19,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { useData } from "@/contexts/DataContext";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/useAuth";
+import { useData } from "@/contexts/useData";
+import { useTheme } from "@/contexts/useTheme";
 import ProfileForm from "@/components/ProfileForm";
 import { removeProfileCache } from "@/lib/profile";
 import { readAccount } from "@/data/database";
+import { requestPersistentStorage } from "@/lib/persistence";
 import { type RecordDoc } from "@/data/model";
 import {
   readTrainingPreferences,
@@ -31,7 +33,17 @@ import {
 } from "@/lib/preferences";
 export default function Settings() {
   const { user, account, signOut, deleteAccount } = useAuth(),
-    { state, sync, syncing, online, error, resolve, importRecords } = useData(),
+    {
+      state,
+      sync,
+      syncing,
+      online,
+      error,
+      syncHealth,
+      resolve,
+      retryRejected,
+      importRecords,
+    } = useData(),
     { theme, toggleTheme } = useTheme();
   const [importing, setImporting] = useState(false);
   const [preferences, setPreferences] = useState(readTrainingPreferences);
@@ -41,6 +53,15 @@ export default function Settings() {
     [confirmation, setConfirmation] = useState(""),
     [deleteError, setDeleteError] = useState("");
   const conflicts = Object.values(state.records).filter((r) => r.conflict);
+  const rejected = Object.values(state.records).filter((r) => r.syncError);
+  const parked = Object.keys(state.quarantine ?? {}).length;
+  const choose = async (id: string, mine: boolean) => {
+    try {
+      await resolve(id, mine);
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not save your choice."));
+    }
+  };
   const dirty = Object.values(state.records).filter((r) => r.dirty).length;
   const updatePreferences = (patch: Partial<typeof preferences>) => {
     saveTrainingPreferences(patch);
@@ -87,7 +108,7 @@ export default function Settings() {
       await importRecords(data.records as RecordDoc[]);
       toast.success("Backup restored. Existing workouts were kept.");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not restore backup");
+      toast.error(errorMessage(e, "Could not restore backup"));
     } finally {
       setImporting(false);
     }
@@ -132,7 +153,7 @@ export default function Settings() {
           className="text-button"
           onClick={async () => {
             try {
-              const ok = await navigator.storage?.persist?.();
+              const ok = await requestPersistentStorage();
               toast(
                 ok
                   ? "Persistent storage enabled"
@@ -210,6 +231,24 @@ export default function Settings() {
               {dirty
                 ? `${dirty} changes waiting to sync${!online ? " when you reconnect" : ""}.`
                 : "Your local log is up to date."}
+              {syncHealth.lastSyncedAt &&
+                ` Last synced ${new Date(
+                  syncHealth.lastSyncedAt,
+                ).toLocaleString(undefined, {
+                  day: "numeric",
+                  month: "short",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}.`}
+            </p>
+          )}
+          {parked > 0 && (
+            <p className="muted">
+              {parked === 1
+                ? "1 synced record needs"
+                : `${parked} synced records need`}{" "}
+              a newer version of Gain Train. Close and reopen the app to update;
+              they appear once it can read them.
             </p>
           )}
           {error && (
@@ -238,9 +277,10 @@ export default function Settings() {
                     toast.success("Phone workouts copied to this account");
                   } catch (error) {
                     toast.error(
-                      error instanceof Error
-                        ? error.message
-                        : "Could not copy this phone’s log. Try again.",
+                      errorMessage(
+                        error,
+                        "Could not copy this phone’s log. Try again.",
+                      ),
                     );
                   } finally {
                     setAccountBusy(false);
@@ -289,6 +329,38 @@ export default function Settings() {
           </p>
         </div>
       </details>
+      {rejected.length > 0 && (
+        <section className="settings-card">
+          <h2>Changes the server didn't accept</h2>
+          <p>
+            These stay saved on this phone. Editing one sends it again; Retry
+            sends them all, for example after an app update.
+          </p>
+          <ul className="sync-rejections">
+            {rejected.map((r) => (
+              <li key={r.id}>
+                <strong>{r.payload.name}</strong>
+                <small>{r.syncError}</small>
+              </li>
+            ))}
+          </ul>
+          <button
+            className="secondary"
+            disabled={!online}
+            onClick={async () => {
+              try {
+                await retryRejected();
+                void sync();
+              } catch (error) {
+                toast.error(errorMessage(error, "Could not retry."));
+              }
+            }}
+          >
+            <RefreshCw size={18} />
+            Retry
+          </button>
+        </section>
+      )}
       {conflicts.map((r) => (
         <section key={r.id} className="settings-card">
           <h2>Choose which version to keep</h2>
@@ -298,14 +370,11 @@ export default function Settings() {
           </p>
           <button
             className="secondary"
-            onClick={() => void resolve(r.id, false)}
+            onClick={() => void choose(r.id, false)}
           >
             Use server version
           </button>
-          <button
-            className="secondary"
-            onClick={() => void resolve(r.id, true)}
-          >
+          <button className="secondary" onClick={() => void choose(r.id, true)}>
             Keep this phone's version
           </button>
         </section>
@@ -396,9 +465,7 @@ export default function Settings() {
                 toast.success("Account deleted");
               } catch (error) {
                 setDeleteError(
-                  error instanceof Error
-                    ? error.message
-                    : "Could not delete account.",
+                  errorMessage(error, "Could not delete account."),
                 );
               } finally {
                 setDeleting(false);

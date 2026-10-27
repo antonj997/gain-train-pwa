@@ -4,17 +4,23 @@ A phone-first workout log: start or resume a workout, enter sets, and review pro
 
 Live app: https://antonj997.github.io/gain-train-pwa/
 
-The app keeps the original GitHub Pages design and adds direct set/load controls, timed holds, planned routines, retained form drafts, explicit Save/Discard for historical edits and optional rest/haptics. Sets remove immediately; exercises with entered values ask before removal. Toasts appear at the top and span the mobile screen with side margins. Narrow screens use wider cards and compact previous-result dates. Starting another workout asks before replacing the one in progress. History has one calendar/date controller; general stats and their explanation appear in Progress. See [design restoration](review-reports/design-restoration.md), [functional improvements](review-reports/implementation-verification.md) and [responsive refinements](review-reports/responsive-refinements.md) for earlier changes and verification.
+What's new: see [CHANGELOG.md](CHANGELOG.md).
 
-## Offline and sync
+## Features
 
-The 18 October update adds a bodyweight profile, select-all set inputs, compact set reordering, a roomier exercise picker and a current-month history calendar. See [workout usability verification](review-reports/2026-10-18-workout-usability.md) for completed checks and remaining browser/device verification.
+- Direct set and load controls, bodyweight and assisted loads, timed holds, warm-up and cool-down sets, and set reordering.
+- Previous results suggested for each set; routines that pre-fill your last numbers.
+- Optional rest timer and haptics; explicit Save/Discard when editing a finished workout.
+- History calendar with date ranges; Progress with 30-day stats and per-exercise charts.
+- Light and dark themes that follow your phone until you pick one.
 
-The 26 October refinements add an Edit sets toggle inside the exercise’s … menu, checked-set locking with an uncheck instruction, added kilograms for BW sets, compact calendar icon controls and continuous date-range bands. Progress shows general stats for the last 30 days. Set inputs retain incomplete text in local draft recovery and keep numeric saved records. The switch now stays visible while editing and resets when Options closes; the date-range icon depicts connected endpoints. See [workout refinements](review-reports/2026-10-26-workout-refinements.md), the [calendar follow-up](review-reports/2026-10-26-calendar-controls.md) and the [edit-switch follow-up](review-reports/2026-10-26-edit-switch.md) for behavior, tests and browser limitations.
+## Install and offline use
 
-Open the app once with a connection to cache it, then add it to your home screen. Drafts and finished workouts save to IndexedDB on your device before any network request. Sign in for cloud sync. If you started without an account, Settings lets you copy that phone log into your signed-in account.
+Open the app once with a connection so it caches, then add it to your home screen. Long-press the icon for the Workout and History shortcuts. Updates download in the background and are offered when you are not in a workout.
 
-Sync retries while the app is open, when a connection returns, and when you return to the app. A closed mobile app cannot guarantee immediate background sync. Conflicting device edits are preserved for an explicit choice in Settings. Export a backup before clearing browser data.
+Drafts and finished workouts save to IndexedDB on your device before any network request. Drafts save once typing pauses, and a recovery copy is kept on every change. Sign in for cloud sync; if you started without an account, Settings copies that phone log into your signed-in account.
+
+Sync runs while the app is open, when a connection returns and when you come back to the app; a closed mobile app cannot sync in the background. Conflicting edits from two devices wait for your choice in Settings. A change the server refuses is kept on the phone with a Retry in Settings, and if the server has been unreachable for a day the app says so. Export a backup before clearing browser data.
 
 ## Run locally
 
@@ -36,20 +42,31 @@ npm run build
 
 The optional cloud integration test uses QA_EMAIL and QA_PASSWORD for a disposable confirmed test account. It is skipped when those variables are absent.
 
+## Code map
+
+- `src/data`: the record model and validation (`model.ts`), record queries (`selectors.ts`), IndexedDB (`database.ts`), sync (`sync.ts`), workout helpers and analytics.
+- `src/contexts`: providers (`*Context.tsx`) and their hooks (`useData`, `useAuth`, `useProfile`, `useTheme`).
+- `src/hooks`: editor and page behaviour, e.g. `useWorkoutAutosave`, `useStartWorkout`, `useRestTimer`.
+- `src/lib`: small pure helpers (dates, labels, routes, guarded storage, drafts, sync health).
+- `src/components`, `src/pages`: UI. `ConfirmDialog` is the shared confirmation dialog.
+- `src/styles`: `reset.css` and `primitives.css` sit under `index.css`; the other files are scoped feature styles.
+- `tests`: Node test runner via tsx; component tests render real components with React's server renderer.
+- `docs`: specs, plans, review reports and older fix notes.
+
 ## Hosting and database
 
-Pushing main deploys to GitHub Pages through the existing Actions workflow. It sets GITHUB_PAGES=true to use /gain-train-pwa/ as the application base path.
+Pushing main deploys to GitHub Pages through the Actions workflow, after typecheck, tests and lint pass. It sets GITHUB_PAGES=true to use /gain-train-pwa/ as the base path.
 
-The replacement Supabase project is opecaiznqmgbsezmtnhb in antonj997's Org, on Free. Its active schema is in supabase/migrations/20260913181407_offline_record_sync.sql. This migration has already been applied to that project. Older migrations describe the retired Lovable database and remain for reference; the replacement project uses gain_records and gain_sync_receipts. No historical data could be recovered from the unavailable original database.
+The Supabase project is opecaiznqmgbsezmtnhb in antonj997's Org, on Free. Its schema is in `supabase/migrations/20260913181407_offline_record_sync.sql` (applied). `20261027090000_prune_sync_receipts.sql` adds 90-day receipt pruning and is applied separately. Older migrations describe the retired Lovable database and remain for reference.
 
-Each workout and its sets sync atomically as one document. Ownership policies isolate accounts. Operation receipts make retries idempotent; revision checks detect conflicts; soft deletion and ordered change cursors support disconnected devices. The app never caches authenticated Supabase HTTP responses in the service worker.
+Each workout and its sets sync atomically as one document. Ownership policies isolate accounts. Operation receipts make retries idempotent; revision checks detect conflicts; soft deletion and ordered change cursors support disconnected devices. Records carry a `schemaVersion` so an older app never overwrites what a newer one saved. The service worker never caches authenticated Supabase responses.
 
-Session timestamps and set measure are optional, so older records/backups remain readable. Timed holds store seconds in the existing numeric reps transport field with bodyweight load; the UI and analytics distinguish seconds. The current server accepts these optional JSON fields without a migration.
+Session timestamps and set measure are optional, so older records and backups remain readable. Timed holds store seconds in the numeric reps field with bodyweight load; the UI and analytics distinguish seconds.
 
-GitHub Pages and Supabase Free have no recurring charge within their free limits. Supabase may pause an inactive Free project; restore it in your own dashboard. Local logging continues. Default Supabase email delivery is restricted to organization members; configure your own SMTP provider before inviting unrelated users. Confirmation URLs are configured for the live app.
+### Before inviting friends
 
-References: https://supabase.com/pricing and https://supabase.com/docs/guides/auth/auth-smtp
+- **Email:** Supabase's built-in email only reaches members of your organization and is rate-limited. Configure your own SMTP provider (Authentication → Emails) so friends receive confirmation and password-reset emails. Confirmation URLs are configured for the live app.
+- **Pausing:** Supabase may pause an inactive Free project after about a week. Logging continues offline and the app shows a notice; restore the project from the dashboard.
+- **Passwords:** enable leaked-password protection in Authentication settings if your plan includes it.
 
-## Review status
-
-Latest local checks for the 26 October edit-switch follow-up: 151 tests total, 150 passed, one existing real-cloud test skipped and zero failures. Typecheck and the GitHub Pages production build passed; lint has zero errors and four existing context-export Fast Refresh warnings. Independent review caught early outside-pointer dismissal shifting controls during taps; this was corrected and re-reviewed without further findings. Computer Use stopped because it could not verify the current Edge URL. Browser rendering and physical-device verification remain pending. See the [edit-switch report](review-reports/2026-10-26-edit-switch.md) for evidence and limitations.
+GitHub Pages and Supabase Free have no recurring charge within their limits. References: https://supabase.com/pricing and https://supabase.com/docs/guides/auth/auth-smtp

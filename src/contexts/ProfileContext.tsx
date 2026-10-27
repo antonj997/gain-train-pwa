@@ -1,26 +1,15 @@
 import {
-  createContext,
-  useContext,
   useEffect,
   useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "./useAuth";
+import { ProfileContext } from "./useProfile";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  ProfileStore,
-  createProfileConnection,
-  type Profile,
-  type ProfileSnapshot,
-} from "@/lib/profile";
-
-type ProfileContext = ProfileSnapshot & {
-  saveProfile: (profile: Profile) => void;
-  retrySync: () => void;
-};
-const Context = createContext<ProfileContext | null>(null);
+import { local } from "@/lib/storage";
+import { ProfileStore, createProfileConnection } from "@/lib/profile";
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
@@ -33,7 +22,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       currentAuth.current.user?.id === account;
     return new ProfileStore({
       account,
-      storage: localStorage,
+      storage: local,
       metadata: auth.user?.id === account ? auth.user.user_metadata : undefined,
       canSync: () =>
         !!supabase &&
@@ -95,7 +84,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     };
   }, [store]);
   return (
-    <Context.Provider
+    <ProfileContext.Provider
       value={{
         ...snapshot,
         saveProfile: (profile) => {
@@ -108,11 +97,6 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </Context.Provider>
+    </ProfileContext.Provider>
   );
-}
-export function useProfile() {
-  const context = useContext(Context);
-  if (!context) throw new Error("Profile provider missing");
-  return context;
 }

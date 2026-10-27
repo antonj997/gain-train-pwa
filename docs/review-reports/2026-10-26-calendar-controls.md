@@ -1,6 +1,6 @@
 # Compact calendar controls — 26 October 2026
 
-This follow-up implements the owner's mobile feedback after the workout refinement release. The [specification](../docs/superpowers/specs/2026-10-26-calendar-controls.md) preserves the original Gain Train visual system and all record behavior. Publication uses the existing [Pages workflow](https://github.com/antonj997/gain-train-pwa/actions/workflows/deploy.yml).
+This follow-up implements the owner's mobile feedback after the workout refinement release. The [specification](../superpowers/specs/2026-10-26-calendar-controls.md) preserves the original Gain Train visual system and all record behavior. Publication uses the existing [Pages workflow](https://github.com/antonj997/gain-train-pwa/actions/workflows/deploy.yml).
 
 - Edit sets appears only in the exercise’s … menu as one pressed toggle. Its icon changes when enabled. Activating it closes the menu and returns focus to that exercise's Options button.
 - Two 44px icon buttons on one line replace the segmented Month/Date range and Detailed/Simple controls. Current mode is represented by the icon, title and accessible pressed state.

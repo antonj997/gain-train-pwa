@@ -1,6 +1,6 @@
 # Gain Train workout refinements — 26 October 2026
 
-This report records implementation and pre-publication verification of the [26 October specification](../docs/superpowers/specs/2026-10-26-workout-refinements.md). The changes preserve the original Gain Train blue/navy/light-grey palette, rounded components, icons and license, header, navigation and theme switch. Publication proceeds through the repository's [Pages workflow](https://github.com/antonj997/gain-train-pwa/actions/workflows/deploy.yml); native mobile/device verification remains pending and is separate from deployment.
+This report records implementation and pre-publication verification of the [26 October specification](../superpowers/specs/2026-10-26-workout-refinements.md). The changes preserve the original Gain Train blue/navy/light-grey palette, rounded components, icons and license, header, navigation and theme switch. Publication proceeds through the repository's [Pages workflow](https://github.com/antonj997/gain-train-pwa/actions/workflows/deploy.yml); native mobile/device verification remains pending and is separate from deployment.
 
 ## Implemented behavior
 

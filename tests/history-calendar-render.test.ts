@@ -199,9 +199,11 @@ test("History places its only calendar before current-month workouts and removes
   const records = [workout("2026-10-26"), workout("2026-09-26")];
   (records[0].payload as model.Workout).name = "Current session";
   (records[1].payload as model.Workout).name = "Previous month session";
+  const ConfirmDialog = await component("../src/components/ConfirmDialog.tsx");
   const History = await component("../src/pages/History.tsx", {
     "@/components/HistoryCalendar": { default: Calendar },
-    "@/contexts/DataContext": {
+    "@/components/ConfirmDialog": { default: ConfirmDialog },
+    "@/contexts/useData": {
       useData: () => ({
         state: {
           records: Object.fromEntries(
@@ -253,7 +255,7 @@ test("Progress keeps the recent summary and the existing exercise results togeth
   ];
   const Progress = await component("../src/pages/Progress.tsx", {
     "@/components/ProgressSummary": { default: Summary },
-    "@/contexts/DataContext": {
+    "@/contexts/useData": {
       useData: () => ({ state: { records: { [record.id]: record } } }),
     },
     "@/data/analytics": analytics,

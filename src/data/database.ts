@@ -1,19 +1,30 @@
 import { emptyState, type LocalState } from "./model";
+import { local, storageKeys } from "../lib/storage";
 let dbPromise: Promise<IDBDatabase> | undefined;
 function db() {
-  return (dbPromise ??= new Promise<IDBDatabase>((resolve, reject) => {
+  if (dbPromise) return dbPromise;
+  const opening = new Promise<IDBDatabase>((resolve, reject) => {
     const r = indexedDB.open("gain-train-v2", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("accounts");
-    r.onsuccess = () => resolve(r.result);
+    r.onsuccess = () => {
+      // Let a newer app version in another tab upgrade the database; this tab
+      // reopens on its next read or write.
+      r.result.onversionchange = () => {
+        r.result.close();
+        if (dbPromise === opening) dbPromise = undefined;
+      };
+      resolve(r.result);
+    };
     r.onerror = () => reject(r.error);
-  }));
+  });
+  // Don't cache a failure: storage can become available again.
+  opening.catch(() => {
+    if (dbPromise === opening) dbPromise = undefined;
+  });
+  return (dbPromise = opening);
 }
 export async function readAccount(account: string) {
-  if (
-    typeof localStorage !== "undefined" &&
-    localStorage.getItem("gt-deleted-" + account)
-  )
-    return emptyState();
+  if (local.getItem(storageKeys.deleted(account))) return emptyState();
   const d = await db();
   return new Promise<LocalState>((resolve, reject) => {
     const r = d.transaction("accounts").objectStore("accounts").get(account);
@@ -33,10 +44,7 @@ export async function transact(
     let next: LocalState;
     r.onsuccess = () => {
       try {
-        if (
-          typeof localStorage !== "undefined" &&
-          localStorage.getItem("gt-deleted-" + account)
-        )
+        if (local.getItem(storageKeys.deleted(account)))
           throw Error("This account was deleted.");
         next = r.result ?? emptyState();
         change(next);
@@ -53,7 +61,7 @@ export async function transact(
   });
 }
 export async function eraseAccount(account: string) {
-  localStorage.setItem("gt-deleted-" + account, "true");
+  local.setItem(storageKeys.deleted(account), "true");
   const d = await db();
   await new Promise<void>((resolve, reject) => {
     const tx = d.transaction("accounts", "readwrite");

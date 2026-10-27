@@ -1,8 +1,10 @@
 import {
   validate,
   RecordValidationError,
+  SCHEMA_VERSION,
   type LocalState,
   type Workout,
+  type WorkoutRecord,
 } from "./model";
 
 export type StartedWorkout = {
@@ -22,11 +24,11 @@ export class WorkoutInProgressError extends Error {
 export function startedWorkouts(state: LocalState): StartedWorkout[] {
   return Object.values(state.records)
     .filter(
-      (record) =>
+      (record): record is WorkoutRecord =>
         !record.deleted &&
         record.kind === "workout" &&
-        (record.payload as Workout).status === "draft" &&
-        (record.payload as Workout).startedAt !== null,
+        record.payload.status === "draft" &&
+        record.payload.startedAt !== null,
     )
     .map((record) => ({
       id: record.id,
@@ -43,7 +45,7 @@ export function restoreRemovedWorkout(state: LocalState, id: string) {
       "Could not find this workout to restore it.",
     );
   if (!record.deleted) return;
-  const workout = validate("workout", record.payload) as Workout;
+  const workout = validate("workout", record.payload);
   if (
     workout.status === "draft" &&
     workout.startedAt !== null &&
@@ -69,7 +71,7 @@ export function createWorkout(
   payload: Workout,
   confirmed?: Pick<StartedWorkout, "id" | "localVersion" | "revision">[],
 ) {
-  const workout = validate("workout", payload) as Workout;
+  const workout = validate("workout", payload);
   if (workout.status !== "draft" || state.records[id])
     throw new RecordValidationError("Could not start this workout. Try again.");
   const started = startedWorkouts(state);
@@ -99,7 +101,11 @@ export function createWorkout(
   state.records[id] = {
     id,
     kind: "workout",
-    payload: { ...workout, createdAt: workout.createdAt ?? Date.now() },
+    payload: {
+      ...workout,
+      schemaVersion: SCHEMA_VERSION,
+      createdAt: workout.createdAt ?? Date.now(),
+    },
     revision: 0,
     localVersion: 1,
     deleted: false,

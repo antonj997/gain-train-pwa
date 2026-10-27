@@ -12,11 +12,12 @@ import {
   CloudOff,
   RefreshCw,
 } from "lucide-react";
-import { useData } from "@/contexts/DataContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useData } from "@/contexts/useData";
+import { useAuth } from "@/contexts/useAuth";
+import { isSyncOutage } from "@/lib/sync-health";
 export default function Layout() {
   useVisualViewport();
-  const { state, error, syncing, online, ready } = useData();
+  const { state, error, syncing, online, ready, syncHealth } = useData();
   const { user, account, passwordRecovery } = useAuth();
   const path = useLocation().pathname;
   const activeWorkout = path.startsWith("/workout/");
@@ -25,6 +26,11 @@ export default function Layout() {
     if (path !== "/settings") returnPath.current = path;
   }, [path]);
   const [phoneLogAvailable, setPhoneLogAvailable] = useState(false);
+  // Only additions can change whether phone records are missing here, so don't
+  // re-read the phone log on every edit.
+  const recordCount = Object.keys(state.records).length;
+  const records = useRef(state.records);
+  records.current = state.records;
   useEffect(() => {
     let active = true;
     if (user)
@@ -33,7 +39,7 @@ export default function Layout() {
           if (active)
             setPhoneLogAvailable(
               Object.values(phone.records).some(
-                (r) => !r.deleted && !state.records[r.id],
+                (r) => !r.deleted && !records.current[r.id],
               ),
             );
         })
@@ -42,14 +48,16 @@ export default function Layout() {
     return () => {
       active = false;
     };
-  }, [user, state.records]);
+  }, [user, recordCount]);
   useEffect(() => {
     window.dispatchEvent(new Event("gain-route-change"));
   }, [path]);
-  const conflicts = Object.values(state.records).filter(
-    (r) => r.conflict,
-  ).length;
-  const dirty = Object.values(state.records).filter((r) => r.dirty).length;
+  const all = Object.values(state.records);
+  const conflicts = all.filter((r) => r.conflict).length;
+  const rejected = all.filter((r) => r.syncError).length;
+  const dirty = all.filter((r) => r.dirty).length;
+  const needsUpdate = Object.keys(state.quarantine ?? {}).length > 0;
+  const outage = !!user && online && isSyncOutage(syncHealth);
   if (passwordRecovery && path !== "/auth")
     return <Navigate to="/auth" replace />;
   return (
@@ -112,11 +120,39 @@ export default function Layout() {
           </Link>
         </div>
       )}
-      {error && (
+      {rejected > 0 && (
+        <div className="notice">
+          <Link to="/settings">
+            {rejected === 1
+              ? "1 change couldn't sync. Open Settings to retry."
+              : `${rejected} changes couldn't sync. Open Settings to retry.`}
+          </Link>
+        </div>
+      )}
+      {needsUpdate && (
+        <div className="notice">
+          Some synced records need a newer version of Gain Train. Close and
+          reopen the app to update.
+        </div>
+      )}
+      {outage ? (
         <div className="notice" role="alert">
-          {error}
+          The sync server hasn't responded since{" "}
+          {new Date(syncHealth.failingSince!).toLocaleDateString(undefined, {
+            day: "numeric",
+            month: "short",
+          })}
+          . Your workouts are safe on this phone and upload automatically when
+          it's back.
           <Link to="/settings">Open settings</Link>
         </div>
+      ) : (
+        error && (
+          <div className="notice" role="alert">
+            {error}
+            <Link to="/settings">Open settings</Link>
+          </div>
+        )
       )}
       <main>
         {ready ? (

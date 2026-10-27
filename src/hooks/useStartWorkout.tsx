@@ -1,19 +1,15 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useData } from "@/contexts/DataContext";
+import { useData } from "@/contexts/useData";
 import { type Workout } from "@/data/model";
 import {
   WorkoutInProgressError,
   type StartedWorkout,
 } from "@/data/workout-start";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { errorMessage } from "@/lib/errors";
+import { workoutPath } from "@/lib/routes";
 
 type PendingStart = {
   id: string;
@@ -43,15 +39,13 @@ export function useStartWorkout() {
         request.replacing,
       );
       setPending(null);
-      navigate("/workout/" + request.id);
+      navigate(workoutPath(request.id));
     } catch (error) {
       if (error instanceof WorkoutInProgressError)
         setPending({ ...request, replacing: error.workouts });
       else
         toast.error(
-          error instanceof Error
-            ? error.message
-            : "Could not start this workout. Try again.",
+          errorMessage(error, "Could not start this workout. Try again."),
         );
     } finally {
       lock.current = false;
@@ -60,38 +54,22 @@ export function useStartWorkout() {
   };
   const start = (workout: Workout) =>
     attempt({ id: crypto.randomUUID(), workout });
+  const replacing = pending?.replacing ?? [];
   const confirmation = (
-    <Dialog
+    <ConfirmDialog
       open={!!pending}
-      onOpenChange={(open) => {
-        if (!open && !lock.current) setPending(null);
-      }}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Workout already in progress</DialogTitle>
-          <DialogDescription>
-            {pending?.replacing?.length === 1
-              ? `“${pending.replacing[0].name}” is already in progress. Starting “${pending.workout.name}” will remove it and its logged sets.`
-              : `You have ${pending?.replacing?.length ?? 0} workouts in progress. Starting “${pending?.workout.name}” will remove them and their logged sets.`}
-          </DialogDescription>
-        </DialogHeader>
-        <button
-          className="secondary"
-          disabled={busy}
-          onClick={() => setPending(null)}
-        >
-          Keep current workout
-        </button>
-        <button
-          className="secondary danger"
-          disabled={busy}
-          onClick={() => pending && void attempt(pending)}
-        >
-          {busy ? "Starting…" : "Abandon and start"}
-        </button>
-      </DialogContent>
-    </Dialog>
+      title="Workout already in progress"
+      description={
+        replacing.length === 1
+          ? `“${replacing[0].name}” is already in progress. Starting “${pending?.workout.name}” will remove it and its logged sets.`
+          : `You have ${replacing.length} workouts in progress. Starting “${pending?.workout.name}” will remove them and their logged sets.`
+      }
+      cancelLabel="Keep current workout"
+      confirmLabel={busy ? "Starting…" : "Abandon and start"}
+      busy={busy}
+      onCancel={() => setPending(null)}
+      onConfirm={() => pending && void attempt(pending)}
+    />
   );
   return { start, busy, confirmation };
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { readDraft, writeDraft } from "@/lib/drafts";
+import { local } from "@/lib/storage";
 
 export function useRetainedDraft<T>(
   key: string,
@@ -7,14 +8,13 @@ export function useRetainedDraft<T>(
 ) {
   const [entry, setEntry] = useState(() => ({
     key,
-    value: readDraft(localStorage, key, parse),
+    value: readDraft(local, key, parse),
   }));
   const [retained, setRetained] = useState(true);
-  const value =
-    entry.key === key ? entry.value : readDraft(localStorage, key, parse);
+  const value = entry.key === key ? entry.value : readDraft(local, key, parse);
   const replace = (next: T | null) => {
     setEntry({ key, value: next });
-    setRetained(writeDraft(localStorage, key, next));
+    setRetained(writeDraft(local, key, next));
   };
   return { value, replace, retained };
 }

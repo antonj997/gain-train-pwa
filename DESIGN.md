@@ -105,9 +105,9 @@ components:
 
 The owner prefers the original Gain Train visual system and requested its restoration while retaining quality-of-life improvements and bug fixes. Blue actions, navy text, light-grey backgrounds, rounded cards and the Gain Train header define that system. Home retains its original heading and date treatment.
 
-Visual authority is the [original GitHub Pages app](https://antonj997.github.io/gain-train-pwa/) and [repository commit 3d2514862f7babecb964eb01b09230d804b86e77](https://github.com/antonj997/gain-train-pwa/tree/3d2514862f7babecb964eb01b09230d804b86e77). The restored `src/index.css` and six public icons come from that commit: `public/icon.svg`, `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable.png`, `public/apple-touch-icon.png` and `public/favicon.ico`. The supplied `public/icon-license.txt` credits Lucide/Feather contributors. Preserve these assets and their license.
+Visual authority is the [original GitHub Pages app](https://antonj997.github.io/gain-train-pwa/) and [repository commit 3d2514862f7babecb964eb01b09230d804b86e77](https://github.com/antonj997/gain-train-pwa/tree/3d2514862f7babecb964eb01b09230d804b86e77). The restored `src/index.css` and six public icons come from that commit: `public/icon.svg`, `public/icon-192.png`, `public/icon-512.png`, `public/icon-maskable.png`, `public/apple-touch-icon.png` and `public/favicon.ico`. That commit's 512px and maskable PNGs were corrupted, so on 27 October 2026 both were re-rendered from its `icon.svg` (the maskable glyph slightly smaller to sit inside the safe zone). The supplied `public/icon-license.txt` credits Lucide/Feather contributors. Preserve these assets and their license.
 
-Current implementation sources are `src/index.css`, `src/styles/usability.css`, the scoped set-editing, profile, history-calendar and progress-summary stylesheets, and `tailwind.config.ts`. The usability stylesheet loads after the original stylesheet; scoped additions inherit the original visual system.
+Current implementation sources are `src/index.css`, `src/styles/usability.css`, the scoped set-editing, profile, history-calendar and progress-summary stylesheets, with `src/styles/reset.css` and `src/styles/primitives.css` (base reset and dialog shell) loading first. The usability stylesheet loads after the original stylesheet; scoped additions inherit the original visual system.
 
 **Key Characteristics:**
 
@@ -144,7 +144,7 @@ Cards use neutral surface contrast and one-pixel borders. The resume card adds a
 
 ## Shapes
 
-Preserve the varied rounded forms: inputs and completion controls (10px), buttons (12px), list cards (15px), general cards (16px) and exercise cards (17px). Chips are pill-shaped. The theme switch keeps its 28px track radius and circular orb. Tailwind's shared radius is 1rem, with medium and small variants derived by subtracting 2px and 4px.
+Preserve the varied rounded forms: inputs and completion controls (10px), buttons (12px), list cards (15px), general cards (16px) and exercise cards (17px). Chips are pill-shaped. The theme switch keeps its 28px track radius and circular orb. The shared `--radius` token is 1rem; the dialog close button uses it minus 4px.
 
 ## Components
 

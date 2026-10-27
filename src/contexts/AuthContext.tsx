@@ -1,53 +1,37 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
+import { AuthContext } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { eraseAccount } from "@/data/database";
+import { local, session, storageKeys, writeStored } from "@/lib/storage";
 import {
   RECOVERY_STORAGE_KEY,
   RECOVERY_USER_KEY,
   recoveryRequested,
   recoveredSessionMatches,
 } from "@/lib/authRecovery";
-type Auth = {
-  user: User | null;
-  account: string;
-  ready: boolean;
-  passwordRecovery: boolean;
-  recoveredSession: boolean;
-  finishPasswordRecovery: () => void;
-  signOut: () => Promise<void>;
-  deleteAccount: () => Promise<void>;
-};
-const Context = createContext<Auth | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null),
     [account, setAccount] = useState(
-      () => localStorage.getItem("gt-account") || "phone",
+      () => local.getItem(storageKeys.account) || "phone",
     ),
     [ready, setReady] = useState(false),
     [passwordRecovery, setPasswordRecovery] = useState(
       () =>
         recoveryRequested(location.href) ||
-        sessionStorage.getItem(RECOVERY_STORAGE_KEY) === "true",
+        session.getItem(RECOVERY_STORAGE_KEY) === "true",
     );
   const [recoveryUserId, setRecoveryUserId] = useState(() =>
-    sessionStorage.getItem(RECOVERY_USER_KEY),
+    session.getItem(RECOVERY_USER_KEY),
   );
   const finishPasswordRecovery = () => {
-    sessionStorage.removeItem(RECOVERY_STORAGE_KEY);
-    sessionStorage.removeItem(RECOVERY_USER_KEY);
+    session.removeItem(RECOVERY_STORAGE_KEY);
+    session.removeItem(RECOVERY_USER_KEY);
     setRecoveryUserId(null);
     setPasswordRecovery(false);
   };
   useEffect(() => {
-    localStorage.removeItem("rememberedPassword");
-    localStorage.removeItem("rememberedEmail");
+    for (const key of storageKeys.legacyRemembered) local.removeItem(key);
     if (!supabase) {
       setReady(true);
       return;
@@ -57,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!active) return;
       setUser(u);
       if (u) {
-        localStorage.setItem("gt-account", u.id);
+        writeStored(storageKeys.account, u.id);
         setAccount(u.id);
       }
       setReady(true);
@@ -69,12 +53,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === "PASSWORD_RECOVERY") {
         const recoveredId = s?.user.id ?? null;
         setRecoveryUserId(recoveredId);
-        if (recoveredId) sessionStorage.setItem(RECOVERY_USER_KEY, recoveredId);
-        sessionStorage.setItem(RECOVERY_STORAGE_KEY, "true");
+        if (recoveredId) writeStored(RECOVERY_USER_KEY, recoveredId, session);
+        writeStored(RECOVERY_STORAGE_KEY, "true", session);
         setPasswordRecovery(true);
       }
       if (event === "SIGNED_OUT" && navigator.onLine) {
-        localStorage.removeItem("gt-account");
+        local.removeItem(storageKeys.account);
         setAccount("phone");
         finishPasswordRecovery();
       }
@@ -92,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
   const signOut = async () => {
     await supabase?.auth.signOut({ scope: "local" });
-    localStorage.removeItem("gt-account");
+    local.removeItem(storageKeys.account);
     setUser(null);
     setAccount("phone");
     finishPasswordRecovery();
@@ -117,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   return (
-    <Context.Provider
+    <AuthContext.Provider
       value={{
         user,
         account,
@@ -130,11 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </Context.Provider>
+    </AuthContext.Provider>
   );
-}
-export function useAuth() {
-  const c = useContext(Context);
-  if (!c) throw Error("Auth provider missing");
-  return c;
 }

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { errorMessage } from "@/lib/errors";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useData } from "@/contexts/DataContext";
+import { useAuth } from "@/contexts/useAuth";
+import { useData } from "@/contexts/useData";
 import { recoveryRedirect } from "@/lib/authRecovery";
 
 type FormMode = "signin" | "signup" | "reset";
@@ -102,9 +103,10 @@ export default function Auth() {
       }
     } catch (error) {
       setError(
-        error instanceof Error
-          ? error.message
-          : "Could not complete this request. Please try again.",
+        errorMessage(
+          error,
+          "Could not complete this request. Please try again.",
+        ),
       );
     } finally {
       setBusy(false);

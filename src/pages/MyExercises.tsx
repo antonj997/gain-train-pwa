@@ -1,11 +1,17 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { errorMessage } from "@/lib/errors";
 import { Star, Trash2, Pencil } from "lucide-react";
-import { useData } from "@/contexts/DataContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useData } from "@/contexts/useData";
+import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { catalogue, categories } from "@/data/catalogue";
-import { type CustomExercise } from "@/data/model";
+import {
+  favouriteIds,
+  favouriteMarker,
+  favouriteNote,
+  ownExercises,
+} from "@/data/exercises";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +19,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 export default function MyExercises() {
   const { state, save, deleteRecord } = useData();
@@ -30,23 +37,17 @@ export default function MyExercises() {
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
     null,
   );
-  const custom = Object.values(state.records).filter(
-    (r) => r.kind === "exercise" && !r.deleted,
-  );
-  const all = [
-    ...catalogue.map((e) => ({
-      ...e,
-      note: "",
-      favourite: custom.some(
-        (r) => (r.payload as CustomExercise).note === "favourite:" + e.id,
-      ),
-    })),
-    ...custom
-      .filter(
-        (r) => !(r.payload as CustomExercise).note.startsWith("favourite:"),
-      )
-      .map((r) => ({ id: r.id, ...(r.payload as CustomExercise) })),
-  ];
+  const all = useMemo(() => {
+    const favourites = favouriteIds(state.records);
+    return [
+      ...catalogue.map((e) => ({
+        ...e,
+        note: "",
+        favourite: favourites.has(e.id),
+      })),
+      ...ownExercises(state.records),
+    ];
+  }, [state.records]);
   return (
     <div className="stack">
       <h1>Exercises</h1>
@@ -95,18 +96,14 @@ export default function MyExercises() {
                 onClick={async () => {
                   try {
                     if (e.id.startsWith("builtin:")) {
-                      const fav = custom.find(
-                        (r) =>
-                          (r.payload as CustomExercise).note ===
-                          "favourite:" + e.id,
-                      );
+                      const fav = favouriteMarker(state.records, e.id);
                       await save(
                         fav?.id || crypto.randomUUID(),
                         "exercise",
                         {
                           name: e.name,
                           category: e.category,
-                          note: "favourite:" + e.id,
+                          note: favouriteNote(e.id),
                           favourite: true,
                         },
                         !!fav,
@@ -153,51 +150,29 @@ export default function MyExercises() {
             </div>
           </div>
         ))}
-      <Dialog
+      <ConfirmDialog
         open={!!deleting}
-        onOpenChange={(v) => {
-          if (!busy && !v) setDeleting(null);
+        title={<>Delete {deleting?.name}?</>}
+        description="This removes the exercise from your library. Its entries in saved workouts and routines stay intact."
+        cancelLabel="Keep exercise"
+        confirmLabel={busy ? "Deleting…" : "Delete exercise"}
+        busy={busy}
+        onCancel={() => setDeleting(null)}
+        onConfirm={async () => {
+          if (!deleting || busy) return;
+          setBusy(true);
+          try {
+            await deleteRecord(deleting.id);
+            if (edit?.id === deleting.id) setEdit(null);
+            setDeleting(null);
+            toast("Exercise deleted");
+          } catch {
+            toast.error("Could not delete. The exercise is still here; retry.");
+          } finally {
+            setBusy(false);
+          }
         }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete {deleting?.name}?</DialogTitle>
-            <DialogDescription>
-              This removes the exercise from your library. Its entries in saved
-              workouts and routines stay intact.
-            </DialogDescription>
-          </DialogHeader>
-          <button
-            className="secondary"
-            disabled={busy}
-            onClick={() => setDeleting(null)}
-          >
-            Keep exercise
-          </button>
-          <button
-            className="secondary danger"
-            disabled={busy}
-            onClick={async () => {
-              if (!deleting || busy) return;
-              setBusy(true);
-              try {
-                await deleteRecord(deleting.id);
-                if (edit?.id === deleting.id) setEdit(null);
-                setDeleting(null);
-                toast("Exercise deleted");
-              } catch {
-                toast.error(
-                  "Could not delete. The exercise is still here; retry.",
-                );
-              } finally {
-                setBusy(false);
-              }
-            }}
-          >
-            {busy ? "Deleting…" : "Delete exercise"}
-          </button>
-        </DialogContent>
-      </Dialog>
+      />
       <Dialog
         open={open && !!edit}
         onOpenChange={(v) => {
@@ -269,9 +244,10 @@ export default function MyExercises() {
                     toast.success("Exercise saved");
                   } catch (cause) {
                     setError(
-                      cause instanceof Error
-                        ? cause.message
-                        : "Could not save. Your draft is kept here.",
+                      errorMessage(
+                        cause,
+                        "Could not save. Your draft is kept here.",
+                      ),
                     );
                   } finally {
                     setBusy(false);

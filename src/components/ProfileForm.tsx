@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useProfile } from "@/contexts/ProfileContext";
+import { errorMessage } from "@/lib/errors";
+import { useAuth } from "@/contexts/useAuth";
+import { useProfile } from "@/contexts/useProfile";
 import { parseBodyWeightInput } from "@/lib/profile";
 import "@/styles/profile.css";
 
@@ -23,9 +24,7 @@ export default function ProfileForm() {
       setSaved(true);
     } catch (error) {
       setFieldError(
-        error instanceof Error
-          ? error.message
-          : "Could not save your bodyweight. Try again.",
+        errorMessage(error, "Could not save your bodyweight. Try again."),
       );
     }
   };

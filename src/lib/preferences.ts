@@ -1,3 +1,4 @@
+import { local, storageKeys, writeStored } from "./storage";
 export const TRAINING_PREFERENCES_EVENT = "gain-preferences-change";
 export type TrainingPreferences = { restSeconds: number; haptics: boolean };
 export function normalizeTrainingPreferences(
@@ -12,19 +13,15 @@ export function normalizeTrainingPreferences(
   };
 }
 export function readTrainingPreferences(): TrainingPreferences {
-  try {
-    return normalizeTrainingPreferences(
-      localStorage.getItem("gt-rest-seconds"),
-      localStorage.getItem("gt-haptics"),
-    );
-  } catch {
-    return { restSeconds: 0, haptics: false };
-  }
+  return normalizeTrainingPreferences(
+    local.getItem(storageKeys.restSeconds),
+    local.getItem(storageKeys.haptics),
+  );
 }
 export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
   const next = { ...readTrainingPreferences(), ...change };
-  localStorage.setItem("gt-rest-seconds", String(next.restSeconds));
-  localStorage.setItem("gt-haptics", String(next.haptics));
+  writeStored(storageKeys.restSeconds, String(next.restSeconds));
+  writeStored(storageKeys.haptics, String(next.haptics));
   window.dispatchEvent(new Event(TRAINING_PREFERENCES_EVENT));
 }
 export function trainingHaptic(enabled: boolean) {

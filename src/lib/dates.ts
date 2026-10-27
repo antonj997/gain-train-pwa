@@ -12,3 +12,17 @@ export function localizedDate(
     ? value
     : date.toLocaleDateString(locale, options);
 }
+/** The local calendar date as YYYY-MM-DD. */
+export function isoDate(date: Date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+/** The local date `days` before `from`, as YYYY-MM-DD. */
+export function daysAgo(days: number, from = new Date()) {
+  const date = new Date(from);
+  date.setDate(date.getDate() - days);
+  return isoDate(date);
+}

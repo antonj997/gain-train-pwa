@@ -17,10 +17,10 @@ import {
   hasLoggedExercise,
   initialSet,
   previousSetFor,
-  sortWorkoutsNewest,
   priorWorkouts,
   setProfileOrdinal,
 } from "../src/data/workouts";
+import { sortWorkoutsNewest } from "../src/data/selectors";
 
 const set = (values: Partial<WorkoutSet> = {}): WorkoutSet => ({
   ...newSet(),

@@ -7,21 +7,49 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="theme-color" content="#0d1016" />
+    <script>
+      // Apply the saved or system theme before first paint to avoid a flash.
+      (function () {
+        var theme = "dark";
+        try {
+          var saved = localStorage.getItem("gain-train-theme");
+          theme =
+            saved === "light" || saved === "dark"
+              ? saved
+              : matchMedia("(prefers-color-scheme: light)").matches
+                ? "light"
+                : "dark";
+        } catch (e) {}
+        document.documentElement.classList.add(theme);
+        document
+          .querySelector('meta[name="theme-color"]')
+          .setAttribute("content", theme === "dark" ? "#0d1016" : "#f5f6f9");
+      })();
+    </script>
     <link rel="icon" href="%BASE_URL%icon.svg" />
     <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
-    <title>Gain Train - Workout Tracker</title>
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Gain Train" />
+    <title>Gain Train — Workout Log</title>
     <meta
       name="description"
-      content="All aboard the progress log. Track your sets, reps, and progress with Gain Train."
+      content="Log your sets. See your progress. Works offline."
     />
     <meta name="author" content="Gain Train" />
 
-    <meta property="og:title" content="Gain Train - Workout Tracker" />
+    <meta property="og:title" content="Gain Train — Workout Log" />
     <meta
       property="og:description"
-      content="All aboard the progress log. Track your sets, reps, and progress with Gain Train."
+      content="Log your sets. See your progress. Works offline."
     />
     <meta property="og:type" content="website" />
+    <meta
+      property="og:image"
+      content="https://antonj997.github.io/gain-train-pwa/icon-512.png"
+    />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
     <meta name="twitter:card" content="summary" />
 
     <!-- Start Single Page Apps for GitHub Pages -->

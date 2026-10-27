@@ -5,6 +5,7 @@ import App from "./App";
 import "./index.css";
 import "./styles/usability.css";
 
+const UPDATE_CHECK_MS = 60 * 60 * 1000;
 let updateReady = false;
 const update = registerSW({
   onNeedRefresh() {
@@ -13,6 +14,18 @@ const update = registerSW({
   },
   onOfflineReady() {
     toast("Ready to log offline");
+  },
+  // An installed app can stay open for days without a navigation, which is when
+  // browsers normally look for a new version. Check on return and hourly.
+  onRegisteredSW(_url, registration) {
+    if (!registration) return;
+    const check = () => {
+      if (navigator.onLine) registration.update().catch(() => {});
+    };
+    setInterval(check, UPDATE_CHECK_MS);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") check();
+    });
   },
 });
 function showUpdate() {

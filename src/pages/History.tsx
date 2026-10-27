@@ -4,10 +4,14 @@ import {
   historyCalendarBounds,
 } from "@/lib/history-calendar";
 import { localizedDate } from "@/lib/dates";
-import { countLabel } from "@/lib/labels";
-import { sortWorkoutsNewest } from "@/data/workouts";
+import { countLabel, durationLabel } from "@/lib/labels";
+import { errorMessage } from "@/lib/errors";
+import { workoutPath } from "@/lib/routes";
+import { toastWithUndo } from "@/lib/undo-toast";
+import { completedWorkouts, doneSetCount } from "@/data/selectors";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { weekStart } from "@/data/summary";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import {
@@ -18,8 +22,8 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useData } from "@/contexts/DataContext";
-import { type Workout, today, repeatExercises, labelSet } from "@/data/model";
+import { useData } from "@/contexts/useData";
+import { today, repeatExercises, labelSet } from "@/data/model";
 import {
   Dialog,
   DialogContent,
@@ -28,30 +32,25 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 export default function History() {
-  const { state, save, restoreWorkout } = useData();
+  const { state, deleteRecord, restoreWorkout } = useData();
   const workoutStart = useStartWorkout();
   const [params, setParams] = useSearchParams();
   const now = today();
   const [calendar, setCalendar] = useState(() => createHistoryCalendar(now));
   const [busy, setBusy] = useState(false);
-  const records = Object.values(state.records)
-    .filter(
-      (r) =>
-        r.kind === "workout" &&
-        !r.deleted &&
-        (r.payload as Workout).status === "completed",
-    )
-    .sort(sortWorkoutsNewest);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const records = useMemo(
+    () => completedWorkouts(state.records),
+    [state.records],
+  );
   const period = historyCalendarBounds(calendar, now);
-  const filtered = records.filter((r) => {
-    const date = (r.payload as Workout).date;
-    return period && date >= period.start && date <= period.end;
-  });
-  const weeks = [
-    ...new Set(filtered.map((r) => weekStart((r.payload as Workout).date))),
-  ];
+  const filtered = records.filter(
+    ({ payload: { date } }) =>
+      period && date >= period.start && date <= period.end,
+  );
+  const weeks = [...new Set(filtered.map((r) => weekStart(r.payload.date)))];
   const selected = records.find((r) => r.id === params.get("workout"));
-  const w = selected?.payload as Workout | undefined;
+  const w = selected?.payload;
   const repeat = async () => {
     if (!w || busy || workoutStart.busy) return;
     const now = Date.now();
@@ -68,34 +67,20 @@ export default function History() {
     });
   };
   const remove = async () => {
-    if (
-      !selected ||
-      busy ||
-      !window.confirm(
-        "Delete this workout? You can undo immediately afterwards.",
-      )
-    )
-      return;
+    if (!selected || busy) return;
     setBusy(true);
     try {
-      await save(selected.id, "workout", selected.payload, true);
+      await deleteRecord(selected.id);
+      setConfirmDelete(false);
       setParams({});
-      toast("Workout deleted", {
-        action: {
-          label: "Undo",
-          onClick: () =>
-            void restoreWorkout(selected.id).catch(() =>
-              toast.error(
-                "Could not restore the workout. Try restoring a backup.",
-              ),
-            ),
-        },
-      });
+      toastWithUndo(
+        "Workout deleted",
+        () => restoreWorkout(selected.id),
+        "Could not restore the workout. Try restoring a backup.",
+      );
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not delete this workout. Try again.",
+        errorMessage(error, "Could not delete this workout. Try again."),
       );
     } finally {
       setBusy(false);
@@ -134,17 +119,16 @@ export default function History() {
             </h2>
             <small>
               {countLabel(
-                filtered.filter(
-                  (r) => weekStart((r.payload as Workout).date) === week,
-                ).length,
+                filtered.filter((r) => weekStart(r.payload.date) === week)
+                  .length,
                 "workout",
               )}
             </small>
           </div>
           {filtered
-            .filter((r) => weekStart((r.payload as Workout).date) === week)
+            .filter((r) => weekStart(r.payload.date) === week)
             .map((r) => {
-              const w = r.payload as Workout;
+              const w = r.payload;
               return (
                 <button
                   className="list-card"
@@ -161,17 +145,9 @@ export default function History() {
                     <strong>{w.name}</strong>
                     <small>
                       {countLabel(w.exercises.length, "exercise")} ·{" "}
-                      {countLabel(
-                        w.exercises.reduce(
-                          (n, e) => n + e.sets.filter((s) => s.done).length,
-                          0,
-                        ),
-                        "set",
-                      )}
+                      {countLabel(doneSetCount(w), "set")}
                       {w.duration !== null
-                        ? " · " +
-                          (w.duration === 0 ? "<1" : w.duration) +
-                          " min"
+                        ? " · " + durationLabel(w.duration)
                         : ""}
                     </small>
                   </span>
@@ -212,7 +188,7 @@ export default function History() {
             <DialogDescription>
               {w && localizedDate(w.date)}
               {w?.duration !== null && w?.duration !== undefined
-                ? " · " + (w.duration === 0 ? "<1" : w.duration) + " min"
+                ? " · " + durationLabel(w.duration)
                 : ""}
             </DialogDescription>
           </DialogHeader>
@@ -243,20 +219,30 @@ export default function History() {
             <Repeat size={18} />
             {busy ? "Please wait…" : "Repeat workout"}
           </button>
-          <Link className="secondary" to={"/workout/" + selected?.id}>
+          <Link className="secondary" to={workoutPath(selected?.id ?? "")}>
             <Pencil size={18} />
             Edit workout
           </Link>
           <button
             className="text-button danger"
             disabled={busy}
-            onClick={() => void remove()}
+            onClick={() => setConfirmDelete(true)}
           >
             <Trash2 size={17} />
             Delete workout
           </button>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={confirmDelete && !!selected}
+        title={`Delete ${w?.name ?? "this workout"}?`}
+        description="You can undo immediately afterwards."
+        cancelLabel="Keep workout"
+        confirmLabel={busy ? "Deleting…" : "Delete workout"}
+        busy={busy}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => void remove()}
+      />
     </div>
   );
 }

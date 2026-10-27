@@ -1,12 +1,21 @@
-import { suggestedExercises } from "@/data/start";
-import { sortWorkoutsNewest } from "@/data/workouts";
-import { localizedDate } from "@/lib/dates";
-import { countLabel } from "@/lib/labels";
-import { Link } from "react-router-dom";
-import { useStartWorkout } from "@/hooks/useStartWorkout";
+import { useEffect, useRef } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Play, ChevronRight } from "lucide-react";
-import { useData } from "@/contexts/DataContext";
-import { today, type Workout, type Routine } from "@/data/model";
+import { useData } from "@/contexts/useData";
+import { useStartWorkout } from "@/hooks/useStartWorkout";
+import type { RoutineRecord } from "@/data/model";
+import {
+  completedWorkouts,
+  doneSetCount,
+  draftWorkouts,
+  routines as routineRecords,
+  setCount,
+} from "@/data/selectors";
+import { newWorkout } from "@/data/start";
+import { localizedDate } from "@/lib/dates";
+import { countLabel, durationLabel } from "@/lib/labels";
+import { historyPath, workoutPath } from "@/lib/routes";
+
 export default function Home() {
   const { state } = useData();
   const {
@@ -14,34 +23,23 @@ export default function Home() {
     busy: starting,
     confirmation,
   } = useStartWorkout();
-  const records = Object.values(state.records).filter((r) => !r.deleted);
-  const drafts = records
-    .filter(
-      (r) => r.kind === "workout" && (r.payload as Workout).status === "draft",
-    )
-    .sort(sortWorkoutsNewest);
-  const recent = records
-    .filter(
-      (r) =>
-        r.kind === "workout" && (r.payload as Workout).status === "completed",
-    )
-    .sort(sortWorkoutsNewest);
-  const routines = records.filter((r) => r.kind === "routine");
-  const start = async (past = false, routine?: Routine, routineId?: string) => {
-    const now = Date.now();
-    await requestStart({
-      routineId,
-      name: routine?.name || "Workout",
-      date: today(),
-      duration: null,
-      startedAt: past ? null : now,
-      createdAt: now,
-      status: "draft",
-      exercises: routine
-        ? suggestedExercises(routine.exercises, Object.values(state.records))
-        : [],
-    });
-  };
+  const drafts = draftWorkouts(state.records);
+  const last = completedWorkouts(state.records)[0];
+  const routines = routineRecords(state.records);
+  const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const handledShortcut = useRef(false);
+  const start = (past = false, routine?: RoutineRecord) =>
+    requestStart(newWorkout(Object.values(state.records), { routine, past }));
+  // The home-screen shortcut resumes a running workout instead of replacing it.
+  useEffect(() => {
+    if (params.get("start") !== "workout" || handledShortcut.current) return;
+    handledShortcut.current = true;
+    setParams({}, { replace: true });
+    const running = drafts.find((r) => r.payload.startedAt !== null);
+    if (running) navigate(workoutPath(running.id), { replace: true });
+    else void start();
+  });
   return (
     <div className="stack home-page">
       {confirmation}
@@ -60,24 +58,15 @@ export default function Home() {
       {drafts.map((r, i) => (
         <Link
           key={r.id}
-          to={"/workout/" + r.id}
+          to={workoutPath(r.id)}
           className={"resume-card" + (i === 0 ? " resume-primary" : "")}
         >
           <span>
             <small>Resume workout</small>
             <strong>{r.payload.name}</strong>
             <span className="resume-meta">
-              {localizedDate((r.payload as Workout).date)} ·{" "}
-              {(r.payload as Workout).exercises.reduce(
-                (n, ex) => n + ex.sets.filter((set) => set.done).length,
-                0,
-              )}{" "}
-              of{" "}
-              {(r.payload as Workout).exercises.reduce(
-                (n, ex) => n + ex.sets.length,
-                0,
-              )}{" "}
-              sets done
+              {localizedDate(r.payload.date)} · {doneSetCount(r.payload)} of{" "}
+              {setCount(r.payload)} sets done
             </span>
           </span>
           <Play size={24} />
@@ -115,17 +104,13 @@ export default function Home() {
               className="list-card"
               disabled={starting}
               key={r.id}
-              onClick={() => void start(false, r.payload as Routine, r.id)}
+              onClick={() => void start(false, r)}
             >
               <span>
                 <strong>{r.payload.name}</strong>
                 <small>
-                  {countLabel(
-                    (r.payload as Routine).exercises.length,
-                    "exercise",
-                  )}{" "}
-                  ·{" "}
-                  {(r.payload as Routine).exercises
+                  {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
+                  {r.payload.exercises
                     .slice(0, 3)
                     .map((exercise) => exercise.name)
                     .join(" · ")}
@@ -146,26 +131,20 @@ export default function Home() {
           </div>
         )}
       </section>
-      {recent.length > 0 && (
+      {last && (
         <section>
           <div className="section-heading">
             <h2>Last workout</h2>
             <Link to="/history">View all</Link>
           </div>
-          <Link className="list-card" to={"/history?workout=" + recent[0].id}>
+          <Link className="list-card" to={historyPath(last.id)}>
             <span>
-              <strong>{recent[0].payload.name}</strong>
+              <strong>{last.payload.name}</strong>
               <small>
-                {localizedDate((recent[0].payload as Workout).date)} ·{" "}
-                {countLabel(
-                  (recent[0].payload as Workout).exercises.reduce(
-                    (n, e) => n + e.sets.filter((s) => s.done).length,
-                    0,
-                  ),
-                  "set",
-                )}
-                {(recent[0].payload as Workout).duration !== null &&
-                  ` · ${(recent[0].payload as Workout).duration === 0 ? "<1" : (recent[0].payload as Workout).duration} min`}
+                {localizedDate(last.payload.date)} ·{" "}
+                {countLabel(doneSetCount(last.payload), "set")}
+                {last.payload.duration !== null &&
+                  ` · ${durationLabel(last.payload.duration)}`}
               </small>
             </span>
             <ChevronRight size={20} />

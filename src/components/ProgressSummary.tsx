@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
-import { type RecordDoc, type Workout } from "@/data/model";
+import { type RecordDoc } from "@/data/model";
+import { completedWorkouts } from "@/data/selectors";
 import {
   historyPeriod,
   improvementRate,
@@ -17,19 +18,11 @@ export default function ProgressSummary({
   now: string;
 }) {
   const period = historyPeriod("", now);
-  const completed = records.filter(
-    (record) =>
-      !record.deleted &&
-      record.kind === "workout" &&
-      (record.payload as Workout).status === "completed",
-  );
+  const completed = completedWorkouts(records);
   const workoutsIn = (start: string, end: string) =>
     completed
-      .filter((record) => {
-        const date = (record.payload as Workout).date;
-        return date >= start && date <= end;
-      })
-      .map((record) => record.payload as Workout);
+      .map((record) => record.payload)
+      .filter(({ date }) => date >= start && date <= end);
   const current = summarize(workoutsIn(period.start, period.end), period.days);
   const previous = summarize(
     workoutsIn(period.previousStart, period.previousEnd),

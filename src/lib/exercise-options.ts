@@ -1,6 +1,6 @@
 export type ExerciseOptions = { id: string; editing: boolean } | null;
 
-type OptionsAction =
+export type OptionsAction =
   | { type: "open"; id: string }
   | { type: "edit"; id: string }
   | { type: "close"; id?: string };

@@ -30,8 +30,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check types and persistence tests
-        run: npm run typecheck && npm test
+      - name: Check types, lint and tests
+        run: npm run typecheck && npm run lint && npm test
 
       - name: Build
         run: npm run build

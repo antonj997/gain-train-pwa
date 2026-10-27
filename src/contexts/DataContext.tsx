@@ -1,21 +1,22 @@
 import { z } from "zod";
 import {
-  createContext,
-  useContext,
+  useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
-  useCallback,
   type ReactNode,
 } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./useAuth";
+import { DataContext, type Data } from "./useData";
 import { readAccount, transact } from "@/data/database";
 import {
   emptyState,
   validate,
+  isFromNewerApp,
   RecordValidationError,
+  SCHEMA_VERSION,
   type LocalState,
-  type Kind,
   type Payload,
   type RecordDoc,
   type RemoteDoc,
@@ -27,40 +28,35 @@ import {
   startedWorkouts,
   restoreRemovedWorkout,
   WorkoutInProgressError,
-  type StartedWorkout,
 } from "@/data/workout-start";
 import { supabase, syncClient } from "@/integrations/supabase/client";
-type Data = {
-  state: LocalState;
-  ready: boolean;
-  error: string;
-  syncing: boolean;
-  online: boolean;
-  save: (
-    id: string,
-    kind: Kind,
-    payload: Payload,
-    deleted?: boolean,
-  ) => Promise<void>;
-  deleteRecord: (id: string) => Promise<void>;
-  restoreWorkout: (id: string) => Promise<void>;
-  startWorkout: (
-    id: string,
-    payload: Workout,
-    replace?: StartedWorkout[],
-  ) => Promise<void>;
-  sync: () => Promise<void>;
-  resolve: (id: string, mine: boolean) => Promise<void>;
-  importRecords: (records: RecordDoc[]) => Promise<void>;
+import { staleDraftKeys } from "@/lib/drafts";
+import { local, storedKeys } from "@/lib/storage";
+import { readSyncHealth, recordSyncResult } from "@/lib/sync-health";
+import { notifyOtherTabs, onOtherTabChange } from "@/lib/tab-sync";
+
+// Batches a burst of edits (typing a set, checking several sets) into one upload.
+const SYNC_DELAY_MS = 1500;
+const NEWER_APP_MESSAGE =
+  "This was saved by a newer version of Gain Train. Close and reopen the app to update it, then try again.";
+const IN_PROGRESS_MESSAGE =
+  "Another workout is already in progress. Return to Workout to resume it before restoring this one.";
+
+type Failure = {
+  /** Shown when the device write fails for a reason other than validation. */
+  storage: string;
+  /** Shown for a conflicting running workout; when absent the error is rethrown as is. */
+  inProgress?: string;
 };
-const Context = createContext<Data | null>(null);
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const { account, user, ready: authReady } = useAuth();
   const [state, setState] = useState(emptyState),
     [ready, setReady] = useState(false),
     [error, setError] = useState(""),
     [syncing, setSyncing] = useState(false),
-    [online, setOnline] = useState(navigator.onLine);
+    [online, setOnline] = useState(navigator.onLine),
+    [syncHealth, setSyncHealth] = useState(() => readSyncHealth(account));
   const activeAccount = useRef(account);
   useEffect(() => {
     activeAccount.current = account;
@@ -68,7 +64,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
       activeAccount.current = "";
     };
   }, [account]);
-  const running = useRef(false);
+  const running = useRef(false),
+    rerun = useRef(false),
+    syncTimer = useRef<ReturnType<typeof setTimeout>>();
   const reload = useCallback(async () => {
     const s = await readAccount(account);
     if (activeAccount.current === account) setState(s);
@@ -78,12 +76,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setReady(false);
     setState(emptyState());
     setError("");
+    setSyncHealth(readSyncHealth(account));
     readAccount(account)
       .then((s) => {
-        if (active) {
-          setState(s);
-          setReady(true);
-        }
+        if (!active) return;
+        setState(s);
+        setReady(true);
+        for (const key of staleDraftKeys(storedKeys(), account, s.records))
+          local.removeItem(key);
       })
       .catch(() => {
         if (active) {
@@ -98,14 +98,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   }, [account]);
   const sync = useCallback(async () => {
-    if (
-      running.current ||
-      !supabase ||
-      !user ||
-      account !== user.id ||
-      !navigator.onLine
-    )
+    clearTimeout(syncTimer.current);
+    if (!supabase || !user || account !== user.id || !navigator.onLine) return;
+    // A change made during a sync is sent by one more run right after it.
+    if (running.current) {
+      rerun.current = true;
       return;
+    }
     running.current = true;
     setSyncing(true);
     const work = async () => {
@@ -151,15 +150,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
           },
           () => activeAccount.current === account,
         );
-        if (activeAccount.current === account) setError("");
-      } catch (e) {
-        if (activeAccount.current === account)
+        if (activeAccount.current === account) {
+          setError("");
+          setSyncHealth(recordSyncResult(account, true));
+        }
+      } catch {
+        if (activeAccount.current === account) {
           setError(
             "Saved on this phone. Sync will retry when the server is available.",
           );
+          setSyncHealth(recordSyncResult(account, false));
+        }
       } finally {
         running.current = false;
         setSyncing(false);
+        if (rerun.current) {
+          rerun.current = false;
+          void syncRef.current();
+        }
       }
     };
     // Only one tab may send this account's queue at a time.
@@ -167,6 +175,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       await navigator.locks.request("gain-sync-" + account, work);
     else await work();
   }, [account, user, reload]);
+  const syncRef = useRef(sync);
+  syncRef.current = sync;
+  const scheduleSync = useCallback(() => {
+    clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => void syncRef.current(), SYNC_DELAY_MS);
+  }, []);
+  useEffect(() => () => clearTimeout(syncTimer.current), []);
   useEffect(() => {
     const onOnline = () => {
       setOnline(navigator.onLine);
@@ -188,275 +203,258 @@ export function DataProvider({ children }: { children: ReactNode }) {
       clearInterval(timer);
     };
   }, [sync, reload, ready, authReady]);
-  useEffect(() => {
-    const channel = new BroadcastChannel("gain-train");
-    channel.onmessage = () => void reload();
-    return () => channel.close();
-  }, [reload]);
-  const notify = () => {
-    const channel = new BroadcastChannel("gain-train");
-    channel.postMessage("changed");
-    channel.close();
-  };
-  const save = async (
-    id: string,
-    kind: Kind,
-    payload: Payload,
-    deleted = false,
-  ) => {
-    if (deleted) return deleteRecord(id);
-    let parsed: Payload;
-    try {
-      parsed = validate(kind, payload);
-    } catch (e) {
-      if (activeAccount.current === account)
-        setError(
-          e instanceof Error ? e.message : "Check the details before saving.",
-        );
-      throw e;
-    }
-    try {
-      const next = await transact(account, (s) => {
-        const old = s.records[id];
-        if (kind === "workout" && old?.deleted)
-          throw new RecordValidationError(
-            "This workout was removed. Return to your log to resume your current workout.",
-          );
-        let saved = parsed;
-        if (kind === "workout") {
-          const workout = parsed as Workout;
-          if (workout.status === "draft" && workout.startedAt !== null) {
-            const others = startedWorkouts(s).filter(
-              (record) => record.id !== id,
-            );
-            if (others.length) throw new WorkoutInProgressError(others);
-          }
-          const previous =
-            old?.kind === "workout" ? (old.payload as Workout) : undefined;
-          const now = Date.now();
-          saved = {
-            ...workout,
-            createdAt: previous
-              ? (previous.createdAt ?? workout.createdAt)
-              : (workout.createdAt ?? now),
-            ...(workout.status === "completed"
-              ? {
-                  completedAt:
-                    previous?.status === "completed"
-                      ? previous.completedAt
-                      : (workout.completedAt ?? now),
-                }
-              : {}),
-          };
+  useEffect(() => onOtherTabChange(() => void reload()), [reload]);
+
+  const actions = useMemo(() => {
+    // Every local write: one IndexedDB transaction, then refresh this tab, tell
+    // other tabs and queue an upload. Validation messages are shown as they are.
+    const commit = async (
+      write: () => Promise<LocalState>,
+      failure: Failure,
+    ) => {
+      try {
+        const next = await write();
+        if (activeAccount.current === account) {
+          setState(next);
+          setError("");
         }
-        s.records[id] = {
-          ...old,
-          id,
-          kind,
-          payload: saved,
-          deleted,
-          revision: old?.revision ?? 0,
-          localVersion: (old?.localVersion ?? 0) + 1,
-          dirty: true,
-        };
-      });
-      if (activeAccount.current === account) {
-        setState(next);
-        setError("");
+        notifyOtherTabs();
+        scheduleSync();
+      } catch (e) {
+        if (e instanceof WorkoutInProgressError && !failure.inProgress) throw e;
+        const message =
+          e instanceof WorkoutInProgressError
+            ? failure.inProgress!
+            : e instanceof RecordValidationError
+              ? e.message
+              : failure.storage;
+        if (activeAccount.current === account) setError(message);
+        throw new Error(message, { cause: e });
       }
-      notify();
-      setTimeout(() => void sync(), 500);
-    } catch (e) {
-      const message =
-        e instanceof WorkoutInProgressError
-          ? "Another workout is already in progress. Return to Workout to resume it before restoring this one."
-          : e instanceof RecordValidationError
-            ? e.message
-            : "Could not save on this phone. Keep this screen open and free some storage.";
-      if (activeAccount.current === account) setError(message);
-      throw new Error(message, { cause: e });
-    }
-  };
-  const startWorkout = async (
-    id: string,
-    payload: Workout,
-    replace?: StartedWorkout[],
-  ) => {
-    try {
-      const next = await transact(account, (s) =>
-        createWorkout(s, id, payload, replace),
-      );
-      if (activeAccount.current === account) {
-        setState(next);
-        setError("");
-      }
-      notify();
-      setTimeout(() => void sync(), 500);
-    } catch (e) {
-      if (e instanceof WorkoutInProgressError) throw e;
-      const message =
-        e instanceof RecordValidationError
-          ? e.message
-          : "Could not start on this phone. Your current workout has been kept. Free some storage and try again.";
-      if (activeAccount.current === account) setError(message);
-      throw new Error(message, { cause: e });
-    }
-  };
-  const deleteRecord = async (id: string) => {
-    try {
-      const next = await transact(account, (s) => {
-        const saved = s.records[id];
-        if (!saved)
-          throw new RecordValidationError(
-            "Could not find the saved record. Return to your log and try again.",
-          );
-        if (saved.deleted) return;
-        s.records[id] = {
-          ...saved,
-          payload: validate(saved.kind, saved.payload),
-          deleted: true,
-          localVersion: saved.localVersion + 1,
-          dirty: true,
-        };
-      });
-      if (activeAccount.current === account) {
-        setState(next);
-        setError("");
-      }
-      notify();
-      setTimeout(() => void sync(), 500);
-    } catch (e) {
-      const message =
-        e instanceof RecordValidationError
-          ? e.message
-          : "Could not remove the saved record on this phone. Keep this screen open and try again.";
-      if (activeAccount.current === account) setError(message);
-      throw new Error(message, { cause: e });
-    }
-  };
-  const restoreWorkout = async (id: string) => {
-    try {
-      const next = await transact(account, (s) => restoreRemovedWorkout(s, id));
-      if (activeAccount.current === account) {
-        setState(next);
-        setError("");
-      }
-      notify();
-      setTimeout(() => void sync(), 500);
-    } catch (e) {
-      const message =
-        e instanceof RecordValidationError
-          ? e.message
-          : "Could not restore this workout on this phone. Free some storage and try again.";
-      if (activeAccount.current === account) setError(message);
-      throw new Error(message, { cause: e });
-    }
-  };
-  const resolve = async (id: string, mine: boolean) => {
-    await transact(account, (s) => {
-      const r = s.records[id],
-        remote = r?.conflict;
-      if (!remote) return;
-      s.outbox = s.outbox.filter((o) => o.id !== id);
-      s.records[id] = mine
-        ? {
-            ...r,
-            conflict: undefined,
-            revision: remote.revision,
-            localVersion: r.localVersion + 1,
-            dirty: true,
-          }
-        : { ...remote, localVersion: r.localVersion + 1, dirty: false };
+    };
+    const change = (update: (s: LocalState) => void) =>
+      transact(account, update);
+    // A new local version supersedes any earlier server rejection.
+    const nextVersion = (record: RecordDoc): Partial<RecordDoc> => ({
+      localVersion: record.localVersion + 1,
+      dirty: true,
+      syncError: undefined,
     });
-    await reload();
-    notify();
-    void sync();
-  };
-  const importRecords = async (records: RecordDoc[]) => {
-    try {
-      if (records.length > 10000)
-        throw new RecordValidationError("Backup is too large.");
-      const restored: RecordDoc[] = [];
-      for (const r of records) {
-        if (
-          !z.string().uuid().safeParse(r.id).success ||
-          !z.enum(["workout", "routine", "exercise"]).safeParse(r.kind).success
-        )
-          throw new RecordValidationError(
-            "Backup contains an invalid record ID or type.",
-          );
-        if (!r.deleted)
-          restored.push({ ...r, payload: validate(r.kind, r.payload) });
-      }
-      const next = await transact(account, (s) => {
-        let restoredStartedWorkout = false;
-        for (const r of restored) {
-          const old = s.records[r.id];
-          if (old && !old.deleted) continue;
-          if (old && old.kind !== r.kind)
-            throw new RecordValidationError(
-              "A backup record does not match its saved record type.",
-            );
-          s.records[r.id] = {
-            ...old,
-            id: r.id,
-            kind: r.kind,
-            payload: r.payload,
-            deleted: false,
-            revision: old?.revision ?? 0,
-            localVersion: (old?.localVersion ?? 0) + 1,
-            dirty: true,
-          };
-          if (
-            r.kind === "workout" &&
-            (r.payload as Workout).status === "draft" &&
-            (r.payload as Workout).startedAt !== null
-          )
-            restoredStartedWorkout = true;
-        }
-        if (restoredStartedWorkout && startedWorkouts(s).length > 1)
-          throw new RecordValidationError(
-            "A workout is already in progress. Finish or abandon it before restoring a backup with another started workout. No backup records were changed.",
-          );
+
+    const deleteRecord: Data["deleteRecord"] = (id) =>
+      commit(
+        () =>
+          change((s) => {
+            const saved = s.records[id];
+            if (!saved)
+              throw new RecordValidationError(
+                "Could not find the saved record. Return to your log and try again.",
+              );
+            if (saved.deleted) return;
+            s.records[id] = {
+              ...saved,
+              ...nextVersion(saved),
+              payload: validate(saved.kind, saved.payload),
+              deleted: true,
+            } as RecordDoc;
+          }),
+        {
+          storage:
+            "Could not remove the saved record on this phone. Keep this screen open and try again.",
+        },
+      );
+    const save: Data["save"] = (id, kind, payload, deleted = false) => {
+      if (deleted) return deleteRecord(id);
+      return commit(
+        () => {
+          const parsed = validate(kind, payload);
+          return change((s) => {
+            const old = s.records[id];
+            if (old && isFromNewerApp(old.payload))
+              throw new RecordValidationError(NEWER_APP_MESSAGE);
+            if (kind === "workout" && old?.deleted)
+              throw new RecordValidationError(
+                "This workout was removed. Return to your log to resume your current workout.",
+              );
+            let saved: Payload = { ...parsed, schemaVersion: SCHEMA_VERSION };
+            if (kind === "workout") {
+              const workout = saved as Workout;
+              if (workout.status === "draft" && workout.startedAt !== null) {
+                const others = startedWorkouts(s).filter(
+                  (record) => record.id !== id,
+                );
+                if (others.length) throw new WorkoutInProgressError(others);
+              }
+              const previous =
+                old?.kind === "workout" ? old.payload : undefined;
+              const now = Date.now();
+              saved = {
+                ...workout,
+                createdAt: previous
+                  ? (previous.createdAt ?? workout.createdAt)
+                  : (workout.createdAt ?? now),
+                ...(workout.status === "completed"
+                  ? {
+                      completedAt:
+                        previous?.status === "completed"
+                          ? previous.completedAt
+                          : (workout.completedAt ?? now),
+                    }
+                  : {}),
+              };
+            }
+            s.records[id] = {
+              ...old,
+              id,
+              kind,
+              payload: saved,
+              deleted,
+              revision: old?.revision ?? 0,
+              localVersion: (old?.localVersion ?? 0) + 1,
+              dirty: true,
+              syncError: undefined,
+            } as RecordDoc;
+          });
+        },
+        {
+          storage:
+            "Could not save on this phone. Keep this screen open and free some storage.",
+          inProgress: IN_PROGRESS_MESSAGE,
+        },
+      );
+    };
+    const startWorkout: Data["startWorkout"] = (id, payload, replace) =>
+      commit(() => change((s) => createWorkout(s, id, payload, replace)), {
+        storage:
+          "Could not start on this phone. Your current workout has been kept. Free some storage and try again.",
       });
-      if (activeAccount.current === account) {
-        setState(next);
-        setError("");
-      }
-      notify();
-      void sync();
-    } catch (e) {
-      const message =
-        e instanceof RecordValidationError
-          ? e.message
-          : "Could not restore the backup on this phone. Free some storage and try again.";
-      if (activeAccount.current === account) setError(message);
-      throw new Error(message, { cause: e });
-    }
-  };
-  return (
-    <Context.Provider
-      value={{
-        state,
-        ready: ready && authReady,
-        error,
-        syncing,
-        online,
-        save,
-        deleteRecord,
-        restoreWorkout,
-        startWorkout,
-        sync,
-        resolve,
-        importRecords,
-      }}
-    >
-      {children}
-    </Context.Provider>
+    const restoreWorkout: Data["restoreWorkout"] = (id) =>
+      commit(() => change((s) => restoreRemovedWorkout(s, id)), {
+        storage:
+          "Could not restore this workout on this phone. Free some storage and try again.",
+      });
+    const resolve: Data["resolve"] = (id, mine) =>
+      commit(
+        () =>
+          change((s) => {
+            const r = s.records[id],
+              remote = r?.conflict;
+            if (!remote) return;
+            s.outbox = s.outbox.filter((o) => o.id !== id);
+            s.records[id] = (
+              mine
+                ? {
+                    ...r,
+                    ...nextVersion(r),
+                    conflict: undefined,
+                    revision: remote.revision,
+                  }
+                : { ...remote, localVersion: r.localVersion + 1, dirty: false }
+            ) as RecordDoc;
+          }),
+        { storage: "Could not save your choice on this phone. Try again." },
+      );
+    const retryRejected: Data["retryRejected"] = () =>
+      commit(
+        () =>
+          change((s) => {
+            for (const record of Object.values(s.records))
+              delete record.syncError;
+          }),
+        { storage: "Could not retry on this phone. Try again." },
+      );
+    const importRecords: Data["importRecords"] = (records) =>
+      commit(
+        () => {
+          if (records.length > 10000)
+            throw new RecordValidationError("Backup is too large.");
+          const restored: RecordDoc[] = [];
+          for (const r of records) {
+            if (
+              !z.string().uuid().safeParse(r.id).success ||
+              !z.enum(["workout", "routine", "exercise"]).safeParse(r.kind)
+                .success
+            )
+              throw new RecordValidationError(
+                "Backup contains an invalid record ID or type.",
+              );
+            if (!r.deleted)
+              restored.push({
+                ...r,
+                payload: validate(r.kind, r.payload),
+              } as RecordDoc);
+          }
+          return change((s) => {
+            let restoredStartedWorkout = false;
+            for (const r of restored) {
+              const old = s.records[r.id];
+              if (old && !old.deleted) continue;
+              if (old && old.kind !== r.kind)
+                throw new RecordValidationError(
+                  "A backup record does not match its saved record type.",
+                );
+              s.records[r.id] = {
+                ...old,
+                id: r.id,
+                kind: r.kind,
+                payload: r.payload,
+                deleted: false,
+                revision: old?.revision ?? 0,
+                localVersion: (old?.localVersion ?? 0) + 1,
+                dirty: true,
+                syncError: undefined,
+              } as RecordDoc;
+              if (
+                r.kind === "workout" &&
+                r.payload.status === "draft" &&
+                r.payload.startedAt !== null
+              )
+                restoredStartedWorkout = true;
+            }
+            if (restoredStartedWorkout && startedWorkouts(s).length > 1)
+              throw new RecordValidationError(
+                "A workout is already in progress. Finish or abandon it before restoring a backup with another started workout. No backup records were changed.",
+              );
+          });
+        },
+        {
+          storage:
+            "Could not restore the backup on this phone. Free some storage and try again.",
+        },
+      );
+    return {
+      save,
+      deleteRecord,
+      restoreWorkout,
+      startWorkout,
+      resolve,
+      retryRejected,
+      importRecords,
+    };
+  }, [account, scheduleSync]);
+
+  const value = useMemo<Data>(
+    () => ({
+      state,
+      ready: ready && authReady,
+      error,
+      syncing,
+      online,
+      syncHealth,
+      sync,
+      ...actions,
+    }),
+    [
+      state,
+      ready,
+      authReady,
+      error,
+      syncing,
+      online,
+      syncHealth,
+      sync,
+      actions,
+    ],
   );
-}
-export function useData() {
-  const c = useContext(Context);
-  if (!c) throw Error("Data provider missing");
-  return c;
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
 }
