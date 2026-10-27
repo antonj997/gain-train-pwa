@@ -1,17 +1,6 @@
 /* Usability additions to the original Gain Train design. */
-:root {
-  --completed: #167d58;
-  --completed-ink: #fff;
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23596273' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-}
-.dark {
-  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23a3aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-}
 html {
   scroll-padding-block: 20px 116px;
-}
-button {
-  color: inherit;
 }
 textarea:focus-visible {
   outline: 3px solid var(--blue);
@@ -55,9 +44,6 @@ select,
 }
 .resume-card.resume-primary {
   border-width: 2px;
-}
-.resume-card small {
-  letter-spacing: normal;
 }
 .resume-meta {
   overflow-wrap: anywhere;
@@ -176,9 +162,6 @@ select,
 }
 .icon-button:focus-visible svg {
   stroke-width: 3;
-}
-.bottom-nav a.active {
-  background: transparent;
 }
 .back-link {
   display: inline-flex;
@@ -356,23 +339,6 @@ select,
   font-family: inherit !important;
 }
 /* Keep search and actions fixed while the result list uses the available room. */
-.app-dialog.picker-dialog {
-  width: min(640px, calc(100% - 24px));
-  height: min(
-    760px,
-    calc(
-      var(--viewport-height, 100dvh) - 24px - env(safe-area-inset-top) -
-        env(safe-area-inset-bottom)
-    )
-  );
-  max-height: calc(
-    var(--viewport-height, 100dvh) - 24px - env(safe-area-inset-top) -
-      env(safe-area-inset-bottom)
-  );
-  overflow-x: hidden;
-  overflow-y: auto;
-  gap: 12px;
-}
 .picker-dialog .picker-list {
   flex: 1 1 0;
   min-height: 44px;
