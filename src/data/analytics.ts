@@ -1,10 +1,5 @@
-import {
-  type RecordDoc,
-  type Workout,
-  type WorkoutSet,
-  validSet,
-} from "./model";
-import { sortWorkoutsNewest } from "./workouts";
+import { type RecordDoc, type WorkoutSet, validSet } from "./model";
+import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 export function estimate(s: WorkoutSet) {
   return s.measure !== "seconds" &&
@@ -43,14 +38,8 @@ export function progressFor(records: RecordDoc[]) {
       }[];
     }
   >();
-  const sessions = [...records]
-    .filter((r) => r.kind === "workout" && !r.deleted)
-    .sort(sortWorkoutsNewest)
-    .reverse();
-  for (const record of sessions) {
-    if (record.kind !== "workout" || record.deleted) continue;
-    const w = record.payload as Workout;
-    if (w.status !== "completed") continue;
+  for (const record of completedWorkouts(records).reverse()) {
+    const w = record.payload;
     const grouped = new Map<string, { name: string; sets: WorkoutSet[] }>();
     for (const ex of w.exercises) {
       const group = grouped.get(ex.exerciseId) ?? { name: ex.name, sets: [] };

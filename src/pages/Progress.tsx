@@ -15,8 +15,9 @@ import { useData } from "@/contexts/useData";
 import { progressFor, baseline, comparableSets } from "@/data/analytics";
 import { labelSet, today } from "@/data/model";
 import ProgressSummary from "@/components/ProgressSummary";
-import { localizedDate } from "@/lib/dates";
+import { daysAgo, localizedDate } from "@/lib/dates";
 import { chartDomain, chartSessions } from "@/lib/progressPresentation";
+import { historyPath } from "@/lib/routes";
 
 export default function Progress() {
   const { state } = useData();
@@ -26,13 +27,7 @@ export default function Progress() {
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - 30);
-  const cutoffDate = [
-    cutoff.getFullYear(),
-    String(cutoff.getMonth() + 1).padStart(2, "0"),
-    String(cutoff.getDate()).padStart(2, "0"),
-  ].join("-");
+  const cutoffDate = daysAgo(30);
   return (
     <div className="stack progress-page">
       <h1>Progress</h1>
@@ -102,7 +97,7 @@ export default function Progress() {
                 <h3>Recorded sessions</h3>
                 {[...sessions].reverse().map((point) => (
                   <Link
-                    to={"/history?workout=" + point.workoutId}
+                    to={historyPath(point.workoutId)}
                     className="history-set progress-session"
                     key={point.workoutId}
                   >

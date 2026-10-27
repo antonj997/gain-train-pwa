@@ -28,7 +28,9 @@ export function staleDraftKeys(
     const record = prefix && records[key.slice(prefix.length)];
     return (
       !!record &&
-      (record.deleted || (record.payload as Workout).status !== "draft")
+      (record.deleted ||
+        record.kind !== "workout" ||
+        record.payload.status !== "draft")
     );
   });
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { hasSetInputText } from "../lib/set-input";
 import { hasExtraWeight } from "../lib/set-load";
+import { isoDate } from "../lib/dates";
 export const setSchema = z.object({
   id: z.string().uuid(),
   reps: z.number().int().min(0).max(10000).nullable(),
@@ -54,10 +55,8 @@ export type Routine = z.infer<typeof routineSchema>;
 export type CustomExercise = z.infer<typeof customSchema>;
 export type Kind = "workout" | "routine" | "exercise";
 export type Payload = Workout | Routine | CustomExercise;
-export interface RecordDoc {
+interface RecordBase {
   id: string;
-  kind: Kind;
-  payload: Payload;
   revision: number;
   deleted: boolean;
   localVersion: number;
@@ -66,6 +65,14 @@ export interface RecordDoc {
   /** Set when the server refused this change; it is resent after the next edit or a retry. */
   syncError?: string;
 }
+// Checking `kind` narrows `payload`, so callers need no casts.
+export type WorkoutRecord = RecordBase & { kind: "workout"; payload: Workout };
+export type RoutineRecord = RecordBase & { kind: "routine"; payload: Routine };
+export type ExerciseRecord = RecordBase & {
+  kind: "exercise";
+  payload: CustomExercise;
+};
+export type RecordDoc = WorkoutRecord | RoutineRecord | ExerciseRecord;
 export interface RemoteDoc {
   id: string;
   kind: Kind;
@@ -95,14 +102,7 @@ export const emptyState = (): LocalState => ({
   outbox: [],
   cursor: 0,
 });
-export const today = () => {
-  const d = new Date();
-  return [
-    d.getFullYear(),
-    String(d.getMonth() + 1).padStart(2, "0"),
-    String(d.getDate()).padStart(2, "0"),
-  ].join("-");
-};
+export const today = () => isoDate(new Date());
 export const newSet = (prior?: WorkoutSet): WorkoutSet => ({
   id: crypto.randomUUID(),
   reps: prior?.reps ?? null,
@@ -162,6 +162,10 @@ export function keepUnknownFields<T>(original: unknown, parsed: T): T {
   return result as T;
 }
 
+export function validate(kind: "workout", payload: unknown): Workout;
+export function validate(kind: "routine", payload: unknown): Routine;
+export function validate(kind: "exercise", payload: unknown): CustomExercise;
+export function validate(kind: Kind, payload: unknown): Payload;
 export function validate(kind: Kind, payload: unknown): Payload {
   if (!["workout", "routine", "exercise"].includes(kind))
     throw new RecordValidationError("Unknown record type.");

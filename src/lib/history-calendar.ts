@@ -165,7 +165,7 @@ export function workoutDates(records: readonly RecordDoc[]) {
   const dates = new Map<string, number>();
   for (const record of records) {
     if (record.deleted || record.kind !== "workout") continue;
-    const workout = record.payload as Workout;
+    const workout = record.payload;
     if (workout.status !== "completed") continue;
     dates.set(workout.date, (dates.get(workout.date) ?? 0) + 1);
   }

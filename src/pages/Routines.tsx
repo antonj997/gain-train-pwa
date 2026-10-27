@@ -1,10 +1,14 @@
-import { suggestedExercises } from "@/data/start";
+import { newWorkout } from "@/data/start";
+import { routines } from "@/data/selectors";
+import { errorMessage } from "@/lib/errors";
+import { toastWithUndo } from "@/lib/undo-toast";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useRef, useState } from "react";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { Plus, Play, Trash2, Pencil, ArrowUp, ArrowDown } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
-import { type Exercise, type Routine, today } from "@/data/model";
+import { type Exercise, type Routine } from "@/data/model";
 import { initialSet, hasLoggedExercise } from "@/data/workouts";
 import { draftKey, parseRoutineDraft } from "@/lib/drafts";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
@@ -48,9 +52,7 @@ export default function Routines() {
     setRemoving(null);
   };
   const lock = useRef(false);
-  const records = Object.values(state.records).filter(
-    (r) => r.kind === "routine" && !r.deleted,
-  );
+  const records = routines(state.records);
   const update = (exercise: Exercise) => {
     if (edit)
       setEdit({
@@ -83,10 +85,10 @@ export default function Routines() {
     try {
       await action();
     } catch (cause) {
-      const message =
-        cause instanceof Error
-          ? cause.message
-          : "Could not save. Retry; your draft is still here.";
+      const message = errorMessage(
+        cause,
+        "Could not save. Retry; your draft is still here.",
+      );
       setError(message);
       toast.error(message);
     } finally {
@@ -140,7 +142,7 @@ export default function Routines() {
         <div className="routine-card" key={r.id}>
           <h2>{r.payload.name}</h2>
           <p className="muted">
-            {(r.payload as Routine).exercises
+            {r.payload.exercises
               .map(
                 (ex) =>
                   `${ex.name} · ${ex.sets.length} ${ex.sets.length === 1 ? "set" : "sets"}`,
@@ -152,22 +154,9 @@ export default function Routines() {
               className="primary"
               disabled={busy || workoutStart.busy}
               onClick={() =>
-                void (async () => {
-                  const now = Date.now();
-                  await workoutStart.start({
-                    routineId: r.id,
-                    ...(r.payload as Routine),
-                    date: today(),
-                    duration: null,
-                    startedAt: now,
-                    createdAt: now,
-                    status: "draft",
-                    exercises: suggestedExercises(
-                      (r.payload as Routine).exercises,
-                      Object.values(state.records),
-                    ),
-                  });
-                })()
+                void workoutStart.start(
+                  newWorkout(Object.values(state.records), { routine: r }),
+                )
               }
             >
               <Play size={18} />
@@ -176,7 +165,7 @@ export default function Routines() {
             <button
               className="secondary"
               disabled={busy}
-              onClick={() => startEdit(r.id, r.payload as Routine)}
+              onClick={() => startEdit(r.id, r.payload)}
             >
               <Pencil size={18} />
               Edit
@@ -188,18 +177,11 @@ export default function Routines() {
               onClick={() =>
                 void run(async () => {
                   await deleteRecord(r.id);
-                  toast("Routine deleted", {
-                    action: {
-                      label: "Undo",
-                      onClick: () => {
-                        void save(r.id, "routine", r.payload).catch(() =>
-                          toast.error(
-                            "Could not restore the routine. Retry from a backup.",
-                          ),
-                        );
-                      },
-                    },
-                  });
+                  toastWithUndo(
+                    "Routine deleted",
+                    () => save(r.id, "routine", r.payload),
+                    "Could not restore the routine. Retry from a backup.",
+                  );
                 })
               }
             >
@@ -361,31 +343,15 @@ export default function Routines() {
             });
         }}
       />
-      <Dialog
+      <ConfirmDialog
         open={!!removing}
-        onOpenChange={(value) => {
-          if (!value) setRemoving(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove {removing?.name}?</DialogTitle>
-            <DialogDescription>
-              This exercise contains entered values. Removing it deletes its
-              planned sets from this routine.
-            </DialogDescription>
-          </DialogHeader>
-          <button className="secondary" onClick={() => setRemoving(null)}>
-            Keep exercise
-          </button>
-          <button
-            className="secondary danger"
-            onClick={() => removing && removeExercise(removing)}
-          >
-            Remove exercise
-          </button>
-        </DialogContent>
-      </Dialog>
+        title={<>Remove {removing?.name}?</>}
+        description="This exercise contains entered values. Removing it deletes its planned sets from this routine."
+        cancelLabel="Keep exercise"
+        confirmLabel="Remove exercise"
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => removing && removeExercise(removing)}
+      />
     </div>
   );
 }

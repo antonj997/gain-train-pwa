@@ -9,8 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { useData } from "@/contexts/useData";
 import { catalogue, categories } from "@/data/catalogue";
-import { type CustomExercise, type Workout } from "@/data/model";
-import { sortWorkoutsNewest } from "@/data/workouts";
+import { type CustomExercise } from "@/data/model";
+import { workouts } from "@/data/selectors";
+import { isFavourite, ownExercises } from "@/data/exercises";
+import { errorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
@@ -53,39 +55,19 @@ export default function ExercisePicker({
     [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const custom = Object.values(state.records)
-    .filter((r) => r.kind === "exercise" && !r.deleted)
-    .map((r) => ({ id: r.id, ...(r.payload as CustomExercise) }));
-  const all = [...catalogue, ...custom];
+  const all = [...catalogue, ...ownExercises(state.records)];
   const recent = new Set(
-    Object.values(state.records)
-      .filter((r) => r.kind === "workout" && !r.deleted)
-      .sort(sortWorkoutsNewest)
+    workouts(state.records)
       .slice(0, 5)
-      .flatMap((r) =>
-        (r.payload as Workout).exercises.map((e) => e.exerciseId),
-      ),
+      .flatMap((r) => r.payload.exercises.map((e) => e.exerciseId)),
   );
-  const favourite = (id: string) =>
-    custom.some((e) => e.id === id && e.favourite) ||
-    Object.values(state.records).some(
-      (r) =>
-        r.kind === "exercise" &&
-        !r.deleted &&
-        (r.payload as CustomExercise).note === "favourite:" + id,
-    );
   const items = all
     .filter(
       (e) =>
-        !(
-          "note" in e &&
-          typeof e.note === "string" &&
-          e.note.startsWith("favourite:")
-        ) &&
         e.name.toLowerCase().includes(search.toLowerCase()) &&
         (filter === "All" ||
           (filter === "Recent" && recent.has(e.id)) ||
-          (filter === "Favourites" && favourite(e.id)) ||
+          (filter === "Favourites" && isFavourite(state.records, e.id)) ||
           e.category === filter),
     )
     .sort(
@@ -131,9 +113,10 @@ export default function ExercisePicker({
       onClose();
     } catch (cause) {
       setError(
-        cause instanceof Error
-          ? cause.message
-          : "Could not save. Your entries are still here; retry.",
+        errorMessage(
+          cause,
+          "Could not save. Your entries are still here; retry.",
+        ),
       );
     } finally {
       setBusy(false);

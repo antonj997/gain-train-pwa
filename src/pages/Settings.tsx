@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { errorMessage } from "@/lib/errors";
 import { Link } from "react-router-dom";
 import {
   Download,
@@ -58,9 +59,7 @@ export default function Settings() {
     try {
       await resolve(id, mine);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not save your choice.",
-      );
+      toast.error(errorMessage(error, "Could not save your choice."));
     }
   };
   const dirty = Object.values(state.records).filter((r) => r.dirty).length;
@@ -109,7 +108,7 @@ export default function Settings() {
       await importRecords(data.records as RecordDoc[]);
       toast.success("Backup restored. Existing workouts were kept.");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not restore backup");
+      toast.error(errorMessage(e, "Could not restore backup"));
     } finally {
       setImporting(false);
     }
@@ -278,9 +277,10 @@ export default function Settings() {
                     toast.success("Phone workouts copied to this account");
                   } catch (error) {
                     toast.error(
-                      error instanceof Error
-                        ? error.message
-                        : "Could not copy this phone’s log. Try again.",
+                      errorMessage(
+                        error,
+                        "Could not copy this phone’s log. Try again.",
+                      ),
                     );
                   } finally {
                     setAccountBusy(false);
@@ -352,9 +352,7 @@ export default function Settings() {
                 await retryRejected();
                 void sync();
               } catch (error) {
-                toast.error(
-                  error instanceof Error ? error.message : "Could not retry.",
-                );
+                toast.error(errorMessage(error, "Could not retry."));
               }
             }}
           >
@@ -467,9 +465,7 @@ export default function Settings() {
                 toast.success("Account deleted");
               } catch (error) {
                 setDeleteError(
-                  error instanceof Error
-                    ? error.message
-                    : "Could not delete account.",
+                  errorMessage(error, "Could not delete account."),
                 );
               } finally {
                 setDeleting(false);

@@ -20,6 +20,7 @@ import {
   type Workout,
   type Exercise,
   type WorkoutSet,
+  type WorkoutRecord,
   newSet,
   today,
   validSet,
@@ -250,7 +251,7 @@ function Editor({
   }
   const history = priorWorkouts(
     Object.values(state.records),
-    { ...state.records[id], payload: initial },
+    { ...state.records[id], payload: initial } as WorkoutRecord,
     w.date,
   );
   const last = (exerciseId: string) =>

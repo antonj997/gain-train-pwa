@@ -256,7 +256,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
               ...nextVersion(saved),
               payload: validate(saved.kind, saved.payload),
               deleted: true,
-            };
+            } as RecordDoc;
           }),
         {
           storage:
@@ -286,7 +286,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 if (others.length) throw new WorkoutInProgressError(others);
               }
               const previous =
-                old?.kind === "workout" ? (old.payload as Workout) : undefined;
+                old?.kind === "workout" ? old.payload : undefined;
               const now = Date.now();
               saved = {
                 ...workout,
@@ -313,7 +313,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
               localVersion: (old?.localVersion ?? 0) + 1,
               dirty: true,
               syncError: undefined,
-            };
+            } as RecordDoc;
           });
         },
         {
@@ -341,14 +341,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
               remote = r?.conflict;
             if (!remote) return;
             s.outbox = s.outbox.filter((o) => o.id !== id);
-            s.records[id] = mine
-              ? {
-                  ...r,
-                  ...nextVersion(r),
-                  conflict: undefined,
-                  revision: remote.revision,
-                }
-              : { ...remote, localVersion: r.localVersion + 1, dirty: false };
+            s.records[id] = (
+              mine
+                ? {
+                    ...r,
+                    ...nextVersion(r),
+                    conflict: undefined,
+                    revision: remote.revision,
+                  }
+                : { ...remote, localVersion: r.localVersion + 1, dirty: false }
+            ) as RecordDoc;
           }),
         { storage: "Could not save your choice on this phone. Try again." },
       );
@@ -377,7 +379,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 "Backup contains an invalid record ID or type.",
               );
             if (!r.deleted)
-              restored.push({ ...r, payload: validate(r.kind, r.payload) });
+              restored.push({
+                ...r,
+                payload: validate(r.kind, r.payload),
+              } as RecordDoc);
           }
           return change((s) => {
             let restoredStartedWorkout = false;
@@ -398,11 +403,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 localVersion: (old?.localVersion ?? 0) + 1,
                 dirty: true,
                 syncError: undefined,
-              };
+              } as RecordDoc;
               if (
                 r.kind === "workout" &&
-                (r.payload as Workout).status === "draft" &&
-                (r.payload as Workout).startedAt !== null
+                r.payload.status === "draft" &&
+                r.payload.startedAt !== null
               )
                 restoredStartedWorkout = true;
             }

@@ -1,0 +1,65 @@
+import {
+  validSet,
+  type ExerciseRecord,
+  type RecordDoc,
+  type RoutineRecord,
+  type Workout,
+  type WorkoutRecord,
+} from "./model";
+
+type Records = Record<string, RecordDoc> | readonly RecordDoc[];
+const list = (records: Records) =>
+  Array.isArray(records)
+    ? (records as readonly RecordDoc[])
+    : Object.values(records as Record<string, RecordDoc>);
+
+export const isWorkout = (record: RecordDoc): record is WorkoutRecord =>
+  record.kind === "workout";
+
+const sessionTime = (workout: Workout) =>
+  workout.completedAt ?? workout.startedAt ?? workout.createdAt ?? 0;
+/** Newest date first; same-day sessions by finish or start time, then id. */
+export function sortWorkoutsNewest(a: WorkoutRecord, b: WorkoutRecord) {
+  return (
+    b.payload.date.localeCompare(a.payload.date) ||
+    sessionTime(b.payload) - sessionTime(a.payload) ||
+    b.id.localeCompare(a.id)
+  );
+}
+
+/** Workouts that are not deleted, newest first, optionally of one status. */
+export function workouts(records: Records, status?: Workout["status"]) {
+  return list(records)
+    .filter(
+      (record): record is WorkoutRecord =>
+        isWorkout(record) &&
+        !record.deleted &&
+        (!status || record.payload.status === status),
+    )
+    .sort(sortWorkoutsNewest);
+}
+export const completedWorkouts = (records: Records) =>
+  workouts(records, "completed");
+export const draftWorkouts = (records: Records) => workouts(records, "draft");
+
+export const routines = (records: Records) =>
+  list(records).filter(
+    (record): record is RoutineRecord =>
+      record.kind === "routine" && !record.deleted,
+  );
+
+export const customExercises = (records: Records) =>
+  list(records).filter(
+    (record): record is ExerciseRecord =>
+      record.kind === "exercise" && !record.deleted,
+  );
+
+type HasSets = Pick<Workout, "exercises">;
+/** Checked sets that would be saved: done and valid. */
+export const doneSetCount = ({ exercises }: HasSets) =>
+  exercises.reduce(
+    (n, ex) => n + ex.sets.filter((s) => s.done && validSet(s)).length,
+    0,
+  );
+export const setCount = ({ exercises }: HasSets) =>
+  exercises.reduce((n, ex) => n + ex.sets.length, 0);

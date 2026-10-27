@@ -3,23 +3,11 @@ import {
   validSet,
   type Exercise,
   type RecordDoc,
-  type Workout,
+  type WorkoutRecord,
   type WorkoutSet,
 } from "./model";
+import { completedWorkouts, sortWorkoutsNewest } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
-
-const sessionTime = (workout: Workout) =>
-  workout.completedAt ?? workout.startedAt ?? workout.createdAt ?? 0;
-
-export function sortWorkoutsNewest(a: RecordDoc, b: RecordDoc) {
-  const left = a.payload as Workout;
-  const right = b.payload as Workout;
-  return (
-    right.date.localeCompare(left.date) ||
-    sessionTime(right) - sessionTime(left) ||
-    b.id.localeCompare(a.id)
-  );
-}
 
 const bodyweightExercises = new Set([
   "builtin:pull-up",
@@ -67,23 +55,19 @@ export function setProfileOrdinal(sets: WorkoutSet[], index: number) {
     .filter((set) => setProfileMatches(set, sets[index])).length;
 }
 
+/** Completed sessions before this one, newest first, for previous-result hints. */
 export function priorWorkouts(
   records: RecordDoc[],
-  current: RecordDoc,
+  current: WorkoutRecord,
   date: string,
 ) {
-  const editingCompleted = (current.payload as Workout).status === "completed";
-  return records
-    .filter(
-      (record) =>
-        record.id !== current.id &&
-        !record.deleted &&
-        record.kind === "workout" &&
-        (record.payload as Workout).status === "completed" &&
-        (record.payload as Workout).date <= date &&
-        (!editingCompleted || sortWorkoutsNewest(record, current) > 0),
-    )
-    .sort(sortWorkoutsNewest);
+  const editingCompleted = current.payload.status === "completed";
+  return completedWorkouts(records).filter(
+    (record) =>
+      record.id !== current.id &&
+      record.payload.date <= date &&
+      (!editingCompleted || sortWorkoutsNewest(record, current) > 0),
+  );
 }
 
 export function previousSetFor(

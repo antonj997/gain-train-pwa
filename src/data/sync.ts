@@ -3,6 +3,7 @@ import {
   type RemoteDoc,
   type Operation,
   type LocalState,
+  type RecordDoc,
   validate,
 } from "./model";
 export interface Transport {
@@ -42,7 +43,7 @@ function applyRemote(s: LocalState, row: RemoteDoc) {
       ...row,
       localVersion: current?.localVersion ?? 0,
       dirty: false,
-    };
+    } as RecordDoc;
   } else if (
     current.dirty &&
     row.revision > current.revision &&

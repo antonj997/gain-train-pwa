@@ -73,7 +73,7 @@ export function finishWorkout(workout: Workout, now = Date.now()): Workout {
       }))
       .filter((ex) => ex.sets.length > 0),
   };
-  return validate("workout", result) as Workout;
+  return validate("workout", result);
 }
 
 export function resizePlannedSets(exercise: Exercise, count: number): Exercise {
