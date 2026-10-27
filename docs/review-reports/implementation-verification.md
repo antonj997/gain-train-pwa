@@ -39,6 +39,6 @@ No commit, push or deployment was performed. The pre-existing package-lock.json 
 
 ## Design evidence
 
-- [Training Ledger direction](../DESIGN.md), [original creative review](creative-direction.md), [functional review](functional-qa.md), [UX review](ux-review.md).
+- [Training Ledger direction](../../DESIGN.md), [original creative review](creative-direction.md), [functional review](functional-qa.md), [UX review](ux-review.md).
 - [Pinterest printed-log reference](https://www.pinterest.com/pin/organisation--73394668921588828/) informed the ruled layout; [Rive interaction examples](https://www.rive.app/use-cases) informed short state feedback. No external assets or animation runtime were added.
 - Screenshots are in the task's visualization directory: ledger-mobile-light.png, ledger-mobile-dark.png, ledger-desktop-light.png, ledger-desktop-dark.png and ledger-routine-320.png. They contain disposable QA sessions rather than the owner's training data.
