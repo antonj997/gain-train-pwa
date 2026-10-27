@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -22,8 +22,9 @@ import { historyPath } from "@/lib/routes";
 export default function Progress() {
   const { state } = useData();
   const [search, setSearch] = useState("");
-  const records = Object.values(state.records);
-  const items = progressFor(records);
+  const records = useMemo(() => Object.values(state.records), [state.records]);
+  // Recomputed only when the log changes, not while typing in the search box.
+  const items = useMemo(() => progressFor(records), [records]);
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(search.trim().toLowerCase()),
   );

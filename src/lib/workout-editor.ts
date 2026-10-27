@@ -1,7 +1,9 @@
 import {
   newSet,
+  today,
   validSet,
   validate,
+  RecordValidationError,
   type Exercise,
   type Workout,
   type WorkoutSet,
@@ -44,7 +46,31 @@ export function getSetIssues(set: WorkoutSet): {
   return issues;
 }
 
+/** The date input's max only limits its picker; typed or pasted dates need this too. */
+export function assertNotFuture(workout: Workout) {
+  if (workout.date > today())
+    throw new RecordValidationError("Choose today or an earlier date.");
+}
+
+// Fields a save adds, so they don't count as someone else's edit.
+const savedOnly = new Set(["schemaVersion", "createdAt", "completedAt"]);
+const canonical = (value: unknown, top = false): unknown =>
+  Array.isArray(value)
+    ? value.map((item) => canonical(item))
+    : value && typeof value === "object"
+      ? Object.fromEntries(
+          Object.entries(value)
+            .filter(([key]) => !(top && savedOnly.has(key)))
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([key, item]) => [key, canonical(item)]),
+        )
+      : value;
+/** Compares what a person entered, ignoring key order and save timestamps. */
+export const workoutContentKey = (workout: Workout) =>
+  JSON.stringify(canonical(workout, true));
+
 export function finishWorkout(workout: Workout, now = Date.now()): Workout {
+  assertNotFuture(workout);
   if (
     workout.exercises.some((ex) =>
       ex.sets.some((set) => set.done && !validSet(set)),

@@ -12,7 +12,7 @@ import {
 import {
   favouriteMarker,
   favouriteNote,
-  isFavourite,
+  favouriteIds,
   ownExercises,
 } from "../src/data/exercises";
 import { newWorkout } from "../src/data/start";
@@ -126,9 +126,9 @@ test("favourite markers are hidden from the user's own exercises", () => {
     ["mine"],
   );
   assert.equal(favouriteMarker(records, "builtin:squat")?.id, "marker");
-  assert.equal(isFavourite(records, "builtin:squat"), true);
-  assert.equal(isFavourite(records, "mine"), true);
-  assert.equal(isFavourite(records, "builtin:deadlift"), false);
+  assert.equal(favouriteIds(records).has("builtin:squat"), true);
+  assert.equal(favouriteIds(records).has("mine"), true);
+  assert.equal(favouriteIds(records).has("builtin:deadlift"), false);
 });
 
 test("new workouts start blank, from a routine, or as a past session", () => {

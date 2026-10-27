@@ -21,6 +21,12 @@ export const ownExercises = (records: Records) =>
     .filter((r) => !isFavouriteMarker(r.payload))
     .map((r) => ({ id: r.id, ...r.payload }));
 
-export const isFavourite = (records: Records, id: string) =>
-  ownExercises(records).some((e) => e.id === id && e.favourite) ||
-  !!favouriteMarker(records, id);
+/** Ids of favourite exercises: the user's own starred ones and marked built-ins. */
+export function favouriteIds(records: Records) {
+  const ids = new Set<string>();
+  for (const { id, payload } of customExercises(records))
+    if (isFavouriteMarker(payload))
+      ids.add(payload.note.slice(FAVOURITE_PREFIX.length));
+    else if (payload.favourite) ids.add(id);
+  return ids;
+}

@@ -11,7 +11,7 @@ import { toastWithUndo } from "@/lib/undo-toast";
 import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { weekStart } from "@/data/summary";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import {
@@ -39,7 +39,10 @@ export default function History() {
   const [calendar, setCalendar] = useState(() => createHistoryCalendar(now));
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const records = completedWorkouts(state.records);
+  const records = useMemo(
+    () => completedWorkouts(state.records),
+    [state.records],
+  );
   const period = historyCalendarBounds(calendar, now);
   const filtered = records.filter(
     ({ payload: { date } }) =>

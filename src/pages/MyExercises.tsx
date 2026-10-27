@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { errorMessage } from "@/lib/errors";
 import { Star, Trash2, Pencil } from "lucide-react";
 import { useData } from "@/contexts/useData";
@@ -6,7 +6,12 @@ import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { catalogue, categories } from "@/data/catalogue";
-import { favouriteMarker, favouriteNote, ownExercises } from "@/data/exercises";
+import {
+  favouriteIds,
+  favouriteMarker,
+  favouriteNote,
+  ownExercises,
+} from "@/data/exercises";
 import {
   Dialog,
   DialogContent,
@@ -32,14 +37,17 @@ export default function MyExercises() {
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
     null,
   );
-  const all = [
-    ...catalogue.map((e) => ({
-      ...e,
-      note: "",
-      favourite: !!favouriteMarker(state.records, e.id),
-    })),
-    ...ownExercises(state.records),
-  ];
+  const all = useMemo(() => {
+    const favourites = favouriteIds(state.records);
+    return [
+      ...catalogue.map((e) => ({
+        ...e,
+        note: "",
+        favourite: favourites.has(e.id),
+      })),
+      ...ownExercises(state.records),
+    ];
+  }, [state.records]);
   return (
     <div className="stack">
       <h1>Exercises</h1>

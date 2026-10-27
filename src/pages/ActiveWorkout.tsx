@@ -1,17 +1,6 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { useMemo, useReducer, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowLeft,
-  ChevronDown,
-  Plus,
-  MoreHorizontal,
-  ArrowUp,
-  ArrowDown,
-  Trash2,
-  Crosshair,
-  ListOrdered,
-  Check,
-} from "lucide-react";
+import { ArrowLeft, ChevronDown, Plus, Crosshair } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
@@ -19,54 +8,34 @@ import { useProfile } from "@/contexts/useProfile";
 import {
   type Workout,
   type Exercise,
-  type WorkoutSet,
-  type WorkoutRecord,
   newSet,
   today,
   validSet,
-  labelSet,
-  validate,
   isFromNewerApp,
 } from "@/data/model";
+import { doneSetCount, setCount } from "@/data/selectors";
 import {
   priorWorkouts,
-  setProfileOrdinal,
   initialSet,
   hasLoggedExercise,
-  previousSetFor,
+  lastSessions,
 } from "@/data/workouts";
 import { finishWorkout } from "@/lib/workout-editor";
 import { selectInputValue } from "@/lib/set-editing";
 import { changeExerciseOptions } from "@/lib/exercise-options";
-import {
-  changeSetLoad,
-  changeSetMeasure,
-  changeExtraWeight,
-  hasExtraWeight,
-} from "@/lib/set-load";
-import {
-  draftKey,
-  readDraft,
-  writeDraft,
-  parseWorkoutDraft,
-} from "@/lib/drafts";
 import { trainingHaptic } from "@/lib/preferences";
 import { requestPersistenceOnce } from "@/lib/persistence";
-import { local } from "@/lib/storage";
-import { useRestTimer } from "@/hooks/useRestTimer";
-import { localizedDate } from "@/lib/dates";
+import { errorMessage } from "@/lib/errors";
 import { countLabel } from "@/lib/labels";
+import { historyPath } from "@/lib/routes";
+import { toastWithUndo } from "@/lib/undo-toast";
+import { useRestTimer } from "@/hooks/useRestTimer";
+import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
+import { useCloseOptionsOutside } from "@/hooks/useCloseOptionsOutside";
 import ExercisePicker from "@/components/ExercisePicker";
-import SetRow from "@/components/SetRow";
-import SortableSetList from "@/components/SortableSetList";
+import ExerciseCard from "@/components/ExerciseCard";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import "@/styles/set-editing.css";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 
 export default function ActiveWorkout() {
   const { id } = useParams();
@@ -96,7 +65,7 @@ export default function ActiveWorkout() {
       key={`${account}:${id}`}
       id={id!}
       account={account}
-      initial={doc.payload as Workout}
+      initial={doc.payload}
     />
   );
 }
@@ -113,20 +82,10 @@ function Editor({
   const { state, save, deleteRecord, restoreWorkout } = useData();
   const { bodyWeightKg } = useProfile();
   const navigate = useNavigate();
-  const editing = initial.status === "completed";
-  const recoveryKey = draftKey(account, "workout", id);
-  const [recovered] = useState(() =>
-    editing ? null : readDraft(local, recoveryKey, parseWorkoutDraft),
-  );
-  const [w, setW] = useState<Workout>(recovered ?? initial);
+  const autosave = useWorkoutAutosave(id, account, initial);
+  const { workout: w, change, editing, saved, error, setError } = autosave;
   const [picker, setPicker] = useState(false);
   const [finish, setFinish] = useState(false);
-  const [saved, setSaved] = useState(!recovered);
-  const [error, setError] = useState<string | null>(
-    recovered
-      ? "Recovered unsaved entries. Correct any errors, then retry saving."
-      : null,
-  );
   const [menu, changeOptions] = useReducer(changeExerciseOptions, null);
   const [routine, setRoutine] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -134,66 +93,12 @@ function Editor({
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
   const [focusedSetId, setFocusedSetId] = useState<string | null>(null);
-  const queue = useRef(Promise.resolve());
-  const version = useRef(0);
-  const actionLocked = useRef(false);
-  const lastSaved = useRef(initial);
   const editorRef = useRef<HTMLDivElement>(null);
-  const openExerciseId = menu?.id;
-  useEffect(() => {
-    if (!openExerciseId) return;
-    const card = editorRef.current?.querySelector<HTMLElement>(
-      "[data-options-open]",
-    );
-    if (!card) return;
-    let pointerActivation = false;
-    const beginPointer = () => {
-      pointerActivation = true;
-    };
-    const cancelPointer = () => {
-      pointerActivation = false;
-    };
-    const closeOutside = (event: Event) => {
-      if (event.target instanceof Node && !card.contains(event.target))
-        changeOptions({ type: "close", id: openExerciseId });
-    };
-    const closeAfterClick = (event: MouseEvent) => {
-      pointerActivation = false;
-      closeOutside(event);
-    };
-    const closeOnFocus = (event: FocusEvent) => {
-      // Keep the layout still until a pointer's target has received its click.
-      if (!pointerActivation) closeOutside(event);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      pointerActivation = false;
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      event.preventDefault();
-      card.querySelector<HTMLButtonElement>(".exercise-heading button")?.focus({
-        preventScroll: true,
-      });
-      changeOptions({ type: "close", id: openExerciseId });
-    };
-    document.addEventListener("pointerdown", beginPointer, true);
-    document.addEventListener("pointercancel", cancelPointer, true);
-    document.addEventListener("click", closeAfterClick);
-    document.addEventListener("focusin", closeOnFocus);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", beginPointer, true);
-      document.removeEventListener("pointercancel", cancelPointer, true);
-      document.removeEventListener("click", closeAfterClick);
-      document.removeEventListener("focusin", closeOnFocus);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [openExerciseId]);
+  useCloseOptionsOutside(editorRef, menu?.id, changeOptions);
   const rest = useRestTimer(account, id);
   const dirty = JSON.stringify(w) !== JSON.stringify(initial);
-  const completed = w.exercises.reduce(
-    (n, ex) => n + ex.sets.filter((s) => s.done && validSet(s)).length,
-    0,
-  );
-  const total = w.exercises.reduce((n, ex) => n + ex.sets.length, 0);
+  const completed = doneSetCount(w);
+  const total = setCount(w);
   const invalidChecked = w.exercises.some((ex) =>
     ex.sets.some((s) => s.done && !validSet(s)),
   );
@@ -203,74 +108,28 @@ function Editor({
   const nextSet =
     unfinished.find((s) => s.id === focusedSetId) ?? unfinished[0];
   const fromRoutine = !!w.routineId;
-  const message = (cause: unknown) =>
-    cause instanceof Error
-      ? cause.message
-      : "Could not save. Retry to keep your changes.";
-
-  function change(next: Workout) {
-    if (actionLocked.current) return;
-    const value = { ...next, status: initial.status };
-    setW(value);
-    setSaved(false);
-    setError(null);
-    const current = ++version.current;
-    if (editing) return;
-    const retained = writeDraft(local, recoveryKey, value);
-    try {
-      validate("workout", value);
-    } catch (cause) {
-      setError(
-        message(cause) +
-          (retained
-            ? " Unsaved entries are kept on this phone."
-            : " Keep this screen open until corrected."),
-      );
-      return;
-    }
-    queue.current = queue.current
-      .catch(() => {})
-      .then(async () => {
-        await save(id, "workout", value);
-        lastSaved.current = value;
-        if (current === version.current) {
-          setSaved(true);
-          setError(null);
-          writeDraft(local, recoveryKey, null);
-        }
-      })
-      .catch((cause) => {
-        if (current === version.current)
-          setError(
-            message(cause) +
-              (retained
-                ? " Unsaved entries are kept on this phone. Retry saving."
-                : " Keep this screen open and retry saving."),
-          );
-      });
-  }
-  const history = priorWorkouts(
-    Object.values(state.records),
-    { ...state.records[id], payload: initial } as WorkoutRecord,
-    w.date,
+  // Previous results per exercise, rebuilt only when the log or date changes.
+  const previous = useMemo(
+    () =>
+      lastSessions(
+        priorWorkouts(
+          Object.values(state.records),
+          { ...state.records[id], kind: "workout", payload: initial },
+          w.date,
+        ),
+      ),
+    [state.records, id, initial, w.date],
   );
-  const last = (exerciseId: string) =>
-    history
-      .flatMap((r) => (r.payload as Workout).exercises)
-      .find(
-        (ex) =>
-          ex.exerciseId === exerciseId &&
-          ex.sets.some((s) => s.done && validSet(s)),
-      );
+
   const add = (items: { id: string; name: string }[]) =>
     change({
       ...w,
       exercises: [
         ...w.exercises,
         ...items.map((item) => {
-          const prior = last(item.id)?.sets.filter(
-            (s) => s.done && validSet(s),
-          );
+          const prior = previous
+            .get(item.id)
+            ?.sets.filter((s) => s.done && validSet(s));
           return {
             id: crypto.randomUUID(),
             exerciseId: item.id,
@@ -317,82 +176,74 @@ function Editor({
   };
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
-    else navigate(editing ? "/history?workout=" + id : "/");
+    else navigate(editing ? historyPath(id) : "/");
   };
-  const complete = async () => {
+  // Finishing and abandoning lock the editor so no keystroke saves underneath.
+  const actionLocked = useRef(false);
+  const runLocked = async (action: () => Promise<void>, failure: string) => {
+    // A ref, not `busy`: a double tap arrives before the re-render disables buttons.
     if (actionLocked.current) return;
     actionLocked.current = true;
+    autosave.lock();
     setBusy(true);
     try {
-      await queue.current;
-      const next = finishWorkout(w);
-      await save(id, "workout", next);
-      writeDraft(local, recoveryKey, null);
-      rest.skip();
-      if (!editing) requestPersistenceOnce();
-      if (routine && !fromRoutine) {
-        try {
-          await save(crypto.randomUUID(), "routine", {
-            name: next.name,
-            exercises: next.exercises.map((ex) => ({
-              ...ex,
-              sets: ex.sets.map((s) => ({ ...s, done: false })),
-            })),
-          });
-        } catch {
-          toast.error(
-            "Workout saved. The routine could not be saved; create it from History.",
-          );
-        }
-      }
-      toast.success(
-        editing ? "Changes saved on this phone" : "Workout saved on this phone",
-      );
-      navigate("/history?workout=" + id);
+      await action();
     } catch (cause) {
-      setError(message(cause));
-      toast.error(
-        editing
-          ? "Changes could not be saved. Your original workout is unchanged."
-          : "Could not finish. Your draft is still here.",
+      setError(
+        errorMessage(cause, "Could not save. Retry to keep your changes."),
       );
+      toast.error(failure);
     } finally {
       actionLocked.current = false;
+      autosave.unlock();
       setBusy(false);
     }
   };
-  const abandonWorkout = async () => {
-    if (actionLocked.current) return;
-    actionLocked.current = true;
-    setBusy(true);
-    try {
-      await queue.current;
+  const complete = () =>
+    runLocked(
+      async () => {
+        const next = finishWorkout(w);
+        await autosave.saveNow(next);
+        rest.skip();
+        if (!editing) requestPersistenceOnce();
+        if (routine && !fromRoutine) {
+          try {
+            await save(crypto.randomUUID(), "routine", {
+              name: next.name,
+              exercises: next.exercises.map((ex) => ({
+                ...ex,
+                sets: ex.sets.map((s) => ({ ...s, done: false })),
+              })),
+            });
+          } catch {
+            toast.error(
+              "Workout saved. The routine could not be saved; create it from History.",
+            );
+          }
+        }
+        toast.success(
+          editing
+            ? "Changes saved on this phone"
+            : "Workout saved on this phone",
+        );
+        navigate(historyPath(id));
+      },
+      editing
+        ? "Changes could not be saved. Your original workout is unchanged."
+        : "Could not finish. Your draft is still here.",
+    );
+  const abandonWorkout = () =>
+    runLocked(async () => {
+      await autosave.flush();
       await deleteRecord(id);
-      writeDraft(local, recoveryKey, null);
       rest.skip();
       navigate("/");
-      toast("Workout abandoned", {
-        action: {
-          label: "Undo",
-          onClick: () => {
-            void restoreWorkout(id).catch((cause) =>
-              toast.error(
-                cause instanceof Error
-                  ? cause.message
-                  : "Could not restore the workout. Try importing a backup.",
-              ),
-            );
-          },
-        },
-      });
-    } catch (cause) {
-      setError(message(cause));
-      toast.error("Could not abandon. The workout is still here; retry.");
-    } finally {
-      actionLocked.current = false;
-      setBusy(false);
-    }
-  };
+      toastWithUndo(
+        "Workout abandoned",
+        () => restoreWorkout(id),
+        "Could not restore the workout. Try importing a backup.",
+      );
+    }, "Could not abandon. The workout is still here; retry.");
 
   return (
     <div ref={editorRef} className="workout-editor stack" aria-busy={busy}>
@@ -443,6 +294,17 @@ function Editor({
           </button>
         )}
       </div>
+      {autosave.changedElsewhere && !busy && (
+        <div className="save-error" role="alert">
+          <p>This workout was changed in another tab or on another device.</p>
+          <button className="secondary" onClick={autosave.loadLatest}>
+            Load the latest version
+          </button>
+          <button className="text-button" onClick={autosave.keepMine}>
+            Keep my entries
+          </button>
+        </div>
+      )}
       {error && (
         <div className="save-error" role="alert">
           <p>{error}</p>
@@ -519,261 +381,30 @@ function Editor({
           </button>
         </div>
       )}
-      {w.exercises.map((ex, ei) => {
-        const editableSet = ex.sets.find((s) => !s.done) ?? ex.sets[0];
-        const hasEditableSets = ex.sets.some((s) => !s.done);
-        const timed = editableSet?.measure === "seconds";
-        const mixedProfiles =
-          new Set(
-            ex.sets.map(
-              (s) => `${s.load}:${hasExtraWeight(s)}:${s.measure ?? "reps"}`,
-            ),
-          ).size > 1;
-        const mixedMeasures =
-          new Set(ex.sets.map((s) => s.measure ?? "reps")).size > 1;
-        const optionsOpen = menu?.id === ex.id;
-        const organizing = optionsOpen && menu.editing;
-        return (
-          <section
-            className="exercise-card"
-            key={ex.id}
-            data-options-open={optionsOpen ? "" : undefined}
-          >
-            <div className="exercise-heading">
-              <h2>{ex.name}</h2>
-              <button
-                className="icon-button"
-                aria-label={"Options for " + ex.name}
-                aria-expanded={optionsOpen}
-                aria-controls={`exercise-options-${ex.id}`}
-                onClick={() =>
-                  changeOptions(
-                    optionsOpen
-                      ? { type: "close" }
-                      : { type: "open", id: ex.id },
-                  )
-                }
-              >
-                <MoreHorizontal size={23} />
-              </button>
-            </div>
-            {optionsOpen && (
-              <div
-                className="exercise-actions"
-                id={`exercise-options-${ex.id}`}
-                role="group"
-                aria-label={`Options for ${ex.name}`}
-              >
-                <button
-                  type="button"
-                  className="text-button set-edit-menu-toggle"
-                  role="switch"
-                  aria-label={`Edit sets for ${ex.name}`}
-                  aria-checked={organizing}
-                  onClick={() => changeOptions({ type: "edit", id: ex.id })}
-                >
-                  <ListOrdered size={17} aria-hidden="true" />
-                  Edit sets
-                  <span className="set-edit-switch-track" aria-hidden="true">
-                    <span className="set-edit-switch-thumb">
-                      {organizing && <Check size={12} />}
-                    </span>
-                  </span>
-                  <span className="set-edit-switch-state" aria-hidden="true">
-                    {organizing ? "On" : "Off"}
-                  </span>
-                </button>
-                <button
-                  className="text-button"
-                  disabled={ei === 0}
-                  onClick={() => move(ei, -1)}
-                >
-                  <ArrowUp size={17} />
-                  Up
-                </button>
-                <button
-                  className="text-button"
-                  disabled={ei === w.exercises.length - 1}
-                  onClick={() => move(ei, 1)}
-                >
-                  <ArrowDown size={17} />
-                  Down
-                </button>
-                <button
-                  className="text-button danger"
-                  onClick={() =>
-                    hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex)
-                  }
-                >
-                  <Trash2 size={17} />
-                  Remove exercise
-                </button>
-              </div>
-            )}
-            <div className="exercise-load-controls">
-              <label>
-                Load
-                <select
-                  aria-label={ex.name + " load type"}
-                  value={editableSet?.load ?? "weight"}
-                  disabled={timed || !hasEditableSets}
-                  onChange={(e) =>
-                    update({
-                      ...ex,
-                      sets: ex.sets.map((s) =>
-                        changeSetLoad(s, e.target.value as WorkoutSet["load"]),
-                      ),
-                    })
-                  }
-                >
-                  <option value="weight">Weight (kg)</option>
-                  <option value="bodyweight">Bodyweight</option>
-                  <option value="assisted">Assisted (kg)</option>
-                </select>
-              </label>
-              <label>
-                Measure
-                <select
-                  aria-label={ex.name + " measure"}
-                  value={timed ? "seconds" : "reps"}
-                  disabled={!hasEditableSets}
-                  onChange={(e) =>
-                    update({
-                      ...ex,
-                      sets: ex.sets.map((s) =>
-                        changeSetMeasure(
-                          s,
-                          e.target.value as "reps" | "seconds",
-                        ),
-                      ),
-                    })
-                  }
-                >
-                  <option value="reps">Reps</option>
-                  <option value="seconds">Seconds</option>
-                </select>
-              </label>
-              {editableSet?.load === "bodyweight" && (
-                <label className="check-label extra-weight-toggle">
-                  <input
-                    type="checkbox"
-                    role="switch"
-                    aria-label={`${ex.name} extra weight`}
-                    checked={hasExtraWeight(editableSet)}
-                    disabled={!hasEditableSets}
-                    onChange={(event) =>
-                      update({
-                        ...ex,
-                        sets: ex.sets.map((s) =>
-                          changeExtraWeight(s, event.target.checked),
-                        ),
-                      })
-                    }
-                  />
-                  Extra weight
-                </label>
-              )}
-            </div>
-            <div
-              className={`set-labels${organizing ? " set-compact-labels" : ""}`}
-            >
-              <span>Set</span>
-              <span>
-                {mixedProfiles
-                  ? "Load"
-                  : editableSet?.load === "bodyweight"
-                    ? hasExtraWeight(editableSet)
-                      ? "BW + kg"
-                      : "Load"
-                    : editableSet?.load === "assisted"
-                      ? "Assist kg"
-                      : "kg"}
-              </span>
-              <span>
-                {mixedMeasures ? "Reps / sec" : timed ? "Seconds" : "Reps"}
-              </span>
-              {organizing && <span className="set-type-label">Type</span>}
-              <span>Done</span>
-              <span />
-            </div>
-            <SortableSetList
-              key={organizing ? "organizing" : "logging"}
-              sets={ex.sets}
-              name={ex.name}
-              onReorder={(sets) => update({ ...ex, sets })}
-            >
-              {(s, i, handle) => {
-                const previous = previousSetFor(
-                  last(ex.exerciseId)?.sets ?? [],
-                  s,
-                  setProfileOrdinal(ex.sets, i),
-                );
-                const priorRecord = history.find((record) =>
-                  (record.payload as Workout).exercises.some(
-                    (item) =>
-                      item.exerciseId === ex.exerciseId &&
-                      item.sets.some((set) => set.done && validSet(set)),
-                  ),
-                );
-                const previousLabel = previous ? labelSet(previous) : undefined;
-                return (
-                  <SetRow
-                    compact={organizing}
-                    showProfile={mixedProfiles}
-                    reorderHandle={handle}
-                    bodyWeightKg={bodyWeightKg}
-                    next={nextSet?.id === s.id}
-                    key={s.id}
-                    set={s}
-                    index={i}
-                    name={ex.name}
-                    previous={previousLabel}
-                    previousDate={
-                      previous && priorRecord
-                        ? (priorRecord.payload as Workout).date
-                        : undefined
-                    }
-                    onFocus={() => setFocusedSetId(s.id)}
-                    onChange={(next) => {
-                      update({
-                        ...ex,
-                        sets: ex.sets.map((x) => (x.id === s.id ? next : x)),
-                      });
-                      if (!s.done && next.done && !editing) {
-                        rest.start();
-                        trainingHaptic(rest.preferences.haptics);
-                      }
-                    }}
-                    onRemove={() =>
-                      update({
-                        ...ex,
-                        sets: ex.sets.filter((x) => x.id !== s.id),
-                      })
-                    }
-                  />
-                );
-              }}
-            </SortableSetList>
-            <button
-              className="add-set"
-              onClick={() =>
-                update({
-                  ...ex,
-                  sets: [
-                    ...ex.sets,
-                    ex.sets.length
-                      ? newSet(ex.sets.at(-1))
-                      : initialSet(ex.exerciseId),
-                  ],
-                })
-              }
-            >
-              <Plus size={18} />
-              Add set
-            </button>
-          </section>
-        );
-      })}
+      {w.exercises.map((ex, ei) => (
+        <ExerciseCard
+          key={ex.id}
+          exercise={ex}
+          isFirst={ei === 0}
+          isLast={ei === w.exercises.length - 1}
+          options={menu}
+          changeOptions={changeOptions}
+          lastSession={previous.get(ex.exerciseId)}
+          bodyWeightKg={bodyWeightKg}
+          nextSetId={nextSet?.id}
+          onFocusSet={setFocusedSetId}
+          onChange={update}
+          onMove={(step) => move(ei, step)}
+          onRemove={() =>
+            hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex)
+          }
+          onSetDone={() => {
+            if (editing) return;
+            rest.start();
+            trainingHaptic(rest.preferences.haptics);
+          }}
+        />
+      ))}
       {!w.exercises.length && (
         <div className="empty-card">
           <h2>{w.startedAt ? "Log your first set" : "What did you train?"}</h2>
@@ -809,7 +440,7 @@ function Editor({
           disabled={
             busy ||
             invalidChecked ||
-            (!editing && (!saved || !!error)) ||
+            (!editing && !!error) ||
             (editing && !dirty)
           }
           onClick={() => setFinish(true)}
@@ -822,136 +453,79 @@ function Editor({
         onClose={() => setPicker(false)}
         onAdd={add}
       />
-      <Dialog
+      <ConfirmDialog
         open={!!removeExercise}
-        onOpenChange={(open) => {
-          if (!open) setRemoveExercise(null);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove {removeExercise?.name}?</DialogTitle>
-            <DialogDescription>
-              This exercise contains entered values or completed sets. Removing
-              it deletes all of those sets from this workout.
-            </DialogDescription>
-          </DialogHeader>
-          <button className="secondary" onClick={() => setRemoveExercise(null)}>
-            Keep exercise
-          </button>
-          <button
-            className="secondary danger"
-            onClick={() => removeExercise && remove(removeExercise)}
-          >
-            Remove exercise
-          </button>
-        </DialogContent>
-      </Dialog>
-      <Dialog
+        title={<>Remove {removeExercise?.name}?</>}
+        description="This exercise contains entered values or completed sets. Removing it deletes all of those sets from this workout."
+        cancelLabel="Keep exercise"
+        confirmLabel="Remove exercise"
+        onCancel={() => setRemoveExercise(null)}
+        onConfirm={() => removeExercise && remove(removeExercise)}
+      />
+      <ConfirmDialog
         open={abandon}
-        onOpenChange={(open) => {
-          if (!busy) setAbandon(open);
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Abandon this workout?</DialogTitle>
-            <DialogDescription>
-              This removes the draft from your log. You can undo immediately
-              afterwards.
-            </DialogDescription>
-          </DialogHeader>
-          <button
-            className="secondary"
-            disabled={busy}
-            onClick={() => setAbandon(false)}
-          >
-            Keep workout
-          </button>
-          <button
-            className="secondary danger"
-            disabled={busy}
-            onClick={() => void abandonWorkout()}
-          >
-            {busy ? "Abandoning…" : "Abandon workout"}
-          </button>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={discardChanges} onOpenChange={setDiscardChanges}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Discard your changes?</DialogTitle>
-            <DialogDescription>
-              Your saved workout will stay as it was before editing.
-            </DialogDescription>
-          </DialogHeader>
-          <button
-            className="secondary"
-            onClick={() => setDiscardChanges(false)}
-          >
-            Keep editing
-          </button>
-          <button
-            className="secondary danger"
-            onClick={() => navigate("/history?workout=" + id)}
-          >
-            Discard changes
-          </button>
-        </DialogContent>
-      </Dialog>
-      <Dialog
+        title="Abandon this workout?"
+        description="This removes the draft from your log. You can undo immediately afterwards."
+        cancelLabel="Keep workout"
+        confirmLabel={busy ? "Abandoning…" : "Abandon workout"}
+        busy={busy}
+        onCancel={() => setAbandon(false)}
+        onConfirm={() => void abandonWorkout()}
+      />
+      <ConfirmDialog
+        open={discardChanges}
+        title="Discard your changes?"
+        description="Your saved workout will stay as it was before editing."
+        cancelLabel="Keep editing"
+        confirmLabel="Discard changes"
+        onCancel={() => setDiscardChanges(false)}
+        onConfirm={() => navigate(historyPath(id))}
+      />
+      <ConfirmDialog
         open={finish}
-        onOpenChange={(open) => {
-          if (!busy) setFinish(open);
-        }}
+        tone="primary"
+        title={
+          <>
+            {editing ? "Save changes to " : "Finish "}
+            {w.name}?
+          </>
+        }
+        description={
+          <>
+            {countLabel(completed, "completed set")} will be saved.
+            {total > completed ? " Unchecked sets will be left out." : ""}
+          </>
+        }
+        cancelLabel={editing ? "Keep editing" : "Keep logging"}
+        confirmLabel={
+          busy ? "Saving…" : editing ? "Save changes" : "Save workout"
+        }
+        busy={busy}
+        confirmDisabled={!completed || invalidChecked}
+        onCancel={() => setFinish(false)}
+        onConfirm={() => void complete()}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editing ? "Save changes to " : "Finish "}
-              {w.name}?
-            </DialogTitle>
-            <DialogDescription>
-              {countLabel(completed, "completed set")} will be saved.
-              {total > completed ? " Unchecked sets will be left out." : ""}
-            </DialogDescription>
-          </DialogHeader>
-          {completed < total && (
-            <p className="completion-warning" role="alert">
-              {countLabel(total - completed, "unchecked set")} will be left out.
-            </p>
-          )}
-          {!completed && (
-            <p className="completion-warning">
-              Complete at least one set before saving.
-            </p>
-          )}
-          {!editing && !fromRoutine && (
-            <label className="check-label">
-              <input
-                type="checkbox"
-                checked={routine}
-                onChange={(e) => setRoutine(e.target.checked)}
-              />
-              Save as a routine for next time
-            </label>
-          )}
-          <button
-            className="primary"
-            disabled={busy || !completed || invalidChecked}
-            onClick={() => void complete()}
-          >
-            {busy ? "Saving…" : editing ? "Save changes" : "Save workout"}
-          </button>
-          <button
-            className="secondary"
-            disabled={busy}
-            onClick={() => setFinish(false)}
-          >
-            {editing ? "Keep editing" : "Keep logging"}
-          </button>
-        </DialogContent>
-      </Dialog>
+        {completed < total && (
+          <p className="completion-warning" role="alert">
+            {countLabel(total - completed, "unchecked set")} will be left out.
+          </p>
+        )}
+        {!completed && (
+          <p className="completion-warning">
+            Complete at least one set before saving.
+          </p>
+        )}
+        {!editing && !fromRoutine && (
+          <label className="check-label">
+            <input
+              type="checkbox"
+              checked={routine}
+              onChange={(e) => setRoutine(e.target.checked)}
+            />
+            Save as a routine for next time
+          </label>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }

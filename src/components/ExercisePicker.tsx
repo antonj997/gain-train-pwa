@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Search, Check, Plus, X } from "lucide-react";
 import {
   Dialog,
@@ -11,7 +11,7 @@ import { useData } from "@/contexts/useData";
 import { catalogue, categories } from "@/data/catalogue";
 import { type CustomExercise } from "@/data/model";
 import { workouts } from "@/data/selectors";
-import { isFavourite, ownExercises } from "@/data/exercises";
+import { favouriteIds, ownExercises } from "@/data/exercises";
 import { errorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
@@ -55,11 +55,17 @@ export default function ExercisePicker({
     [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const all = [...catalogue, ...ownExercises(state.records)];
-  const recent = new Set(
-    workouts(state.records)
-      .slice(0, 5)
-      .flatMap((r) => r.payload.exercises.map((e) => e.exerciseId)),
+  const { all, recent, favourites } = useMemo(
+    () => ({
+      all: [...catalogue, ...ownExercises(state.records)],
+      recent: new Set(
+        workouts(state.records)
+          .slice(0, 5)
+          .flatMap((r) => r.payload.exercises.map((e) => e.exerciseId)),
+      ),
+      favourites: favouriteIds(state.records),
+    }),
+    [state.records],
   );
   const items = all
     .filter(
@@ -67,7 +73,7 @@ export default function ExercisePicker({
         e.name.toLowerCase().includes(search.toLowerCase()) &&
         (filter === "All" ||
           (filter === "Recent" && recent.has(e.id)) ||
-          (filter === "Favourites" && isFavourite(state.records, e.id)) ||
+          (filter === "Favourites" && favourites.has(e.id)) ||
           e.category === filter),
     )
     .sort(

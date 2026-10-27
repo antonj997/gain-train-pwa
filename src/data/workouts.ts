@@ -80,3 +80,23 @@ export function previousSetFor(
   const matching = prior.filter(matches);
   return matching[index] ?? matching.at(-1);
 }
+
+export type LastSession = { date: string; sets: WorkoutSet[] };
+/**
+ * The most recent session per exercise that has a completed set, from
+ * newest-first history. Built once so set rows don't each rescan history.
+ */
+export function lastSessions(history: WorkoutRecord[]) {
+  const sessions = new Map<string, LastSession>();
+  for (const { payload } of history)
+    for (const exercise of payload.exercises)
+      if (
+        !sessions.has(exercise.exerciseId) &&
+        exercise.sets.some((s) => s.done && validSet(s))
+      )
+        sessions.set(exercise.exerciseId, {
+          date: payload.date,
+          sets: exercise.sets,
+        });
+  return sessions;
+}
