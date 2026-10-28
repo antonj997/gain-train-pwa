@@ -8,16 +8,24 @@ import {
   summarize,
 } from "@/data/summary";
 import { localizedDate } from "@/lib/dates";
-import "@/styles/progress-summary.css";
+import { timeTrainedLabel } from "@/lib/labels";
 
+/** The change text with its unit, such as "↑ +1.2 t". Arrows only; messages stay as they are. */
+const withUnit = (change: string, unit: string) =>
+  /^[↑↓]/.test(change) ? `${change} ${unit}` : change;
+
+/** Four tiles for a period, each against the period before it, and a note on how they are worked out. */
 export default function ProgressSummary({
   records,
   now,
+  range,
 }: {
   records: readonly RecordDoc[];
   now: string;
+  /** A `historyPeriod` key: "4w", "3m" or "12m". */
+  range: string;
 }) {
-  const period = historyPeriod("", now);
+  const period = historyPeriod(range, now);
   const completed = completedWorkouts(records);
   const workoutsIn = (start: string, end: string) =>
     completed
@@ -33,83 +41,103 @@ export default function ProgressSummary({
     period.previousDays,
     now,
   );
-  const metrics = [
+  // Volume reads in tonnes once either period passes a tonne.
+  const tonnes = Math.max(current.volume, previous.volume) >= 1000;
+  const scale = tonnes ? 1000 : 1;
+  const tiles = [
     {
-      label: "Workouts / active week",
-      value: current.perWeek,
-      prior: previous.perWeek,
-      decimals: 1,
+      label: "Workouts / week",
+      value: current.perWeek === null ? "—" : current.perWeek.toFixed(1),
+      change:
+        metricChange(current.perWeek, previous.perWeek, 1) +
+        (current.perWeek !== null && previous.perWeek !== null
+          ? " · finished weeks"
+          : ""),
     },
     {
-      label: "Avg duration · min",
-      value: current.duration,
-      prior: previous.duration,
-      decimals: 0,
+      label: "Working sets",
+      value: String(current.workingSets),
+      change: metricChange(current.workingSets, previous.workingSets),
     },
     {
-      label: "Exercises improving",
-      value: improvementRate(completed, period.start, period.end),
-      prior: improvementRate(
-        completed,
-        period.previousStart,
-        period.previousEnd,
+      label: "Volume",
+      value: tonnes
+        ? (current.volume / scale).toFixed(1)
+        : String(Math.round(current.volume)),
+      unit: tonnes ? "t" : "kg",
+      change: withUnit(
+        metricChange(
+          current.volume / scale,
+          previous.volume / scale,
+          tonnes ? 1 : 0,
+        ),
+        tonnes ? "t" : "kg",
       ),
-      decimals: 0,
-      suffix: "%",
+    },
+    {
+      label: "Time trained",
+      value: timeTrainedLabel(Math.round(current.minutes ?? 0)),
+      change: withUnit(
+        metricChange(current.minutes ?? 0, previous.minutes ?? 0),
+        "min",
+      ),
     },
   ];
+  const improving = improvementRate(completed, period.start, period.end);
   return (
-    <section className="progress-summary" aria-label="Last 30 days summary">
-      <h2>Last 30 days</h2>
-      <p className="small-note">
-        <time dateTime={period.start}>{localizedDate(period.start)}</time> –{" "}
-        <time dateTime={period.end}>{localizedDate(period.end)}</time>
-      </p>
-      <p className="small-note">
-        Compared with{" "}
-        <time dateTime={period.previousStart}>
-          {localizedDate(period.previousStart)}
-        </time>{" "}
-        –{" "}
-        <time dateTime={period.previousEnd}>
-          {localizedDate(period.previousEnd)}
-        </time>
-        .
-      </p>
-      <div className="metrics-grid">
-        {metrics.map((metric) => (
-          <div className="metric" key={metric.label}>
-            <span>{metric.label}</span>
-            <strong>
-              {metric.value === null
-                ? "—"
-                : metric.value.toFixed(metric.decimals) + (metric.suffix ?? "")}
+    <section className="progress-summary" aria-label="Summary">
+      <div className="tiles">
+        {tiles.map((tile) => (
+          <div className="card tile" key={tile.label}>
+            <span className="row-sub">{tile.label}</span>
+            <strong className="tile-value">
+              {tile.value}
+              {tile.unit && <span className="tile-unit"> {tile.unit}</span>}
             </strong>
-            <small>
-              {metricChange(metric.value, metric.prior, metric.decimals)}
-              {metric.suffix && metric.value !== null && metric.prior !== null
-                ? " pp"
-                : ""}
+            <small
+              className={
+                "tile-change" + (tile.change.startsWith("↑") ? " up" : " flat")
+              }
+            >
+              {tile.change}
             </small>
           </div>
         ))}
       </div>
+      <p className="row-sub">
+        {current.duration === null
+          ? "No recorded durations"
+          : `Average workout ${Math.round(current.duration)} min`}
+        {" · "}
+        {improving === null
+          ? "no exercises to compare yet"
+          : `${Math.round(improving)}% of exercises improving`}
+      </p>
       <details className="period-summary">
         <summary className="session-summary">
           <strong>About these stats</strong>
-          <ChevronDown size={18} />
+          <ChevronDown size={18} aria-hidden="true" />
         </summary>
-        <p className="small-note">
-          Active weeks are Monday–Sunday weeks with at least one workout in this
-          period. The current week is left out of workouts per active week until
-          it is over. Duration averages exclude sessions without a recorded
-          duration. Exercises improving compares your latest working result with
-          the last session before the period, or the first session within it.
-          Only comparable load and measure count: estimated strength for
+        <p className="row-sub">
+          <time dateTime={period.start}>{localizedDate(period.start)}</time> –{" "}
+          <time dateTime={period.end}>{localizedDate(period.end)}</time>,
+          compared with{" "}
+          <time dateTime={period.previousStart}>
+            {localizedDate(period.previousStart)}
+          </time>{" "}
+          –{" "}
+          <time dateTime={period.previousEnd}>
+            {localizedDate(period.previousEnd)}
+          </time>
+          . Workouts per week counts Monday–Sunday weeks that are over and have
+          at least one workout; the current week joins once it ends. Working
+          sets leave out warm-ups, cool-downs and drops; volume is weight × reps
+          for weighted sets, drops included. Time trained adds the recorded
+          durations. Exercises improving compares your latest working result
+          with the last session before the period, or the first session within
+          it. Only comparable load and measure count: estimated strength for
           weighted sets of 1–10 reps, otherwise reps or seconds at the same
-          load. Plain bodyweight, added bodyweight and assisted sets are
-          compared separately. A dash means there is not enough data. Percentage
-          changes use percentage points (pp).
+          load. A dash means there is not enough data.
         </p>
       </details>
     </section>

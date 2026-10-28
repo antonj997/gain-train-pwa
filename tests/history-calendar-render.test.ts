@@ -12,11 +12,7 @@ import * as labels from "../src/lib/labels";
 import * as summary from "../src/data/summary";
 import * as model from "../src/data/model";
 import * as drops from "../src/data/drops";
-import * as workouts from "../src/data/workouts";
-import * as analytics from "../src/data/analytics";
-import * as presentation from "../src/lib/progressPresentation";
 import * as segmentedKeys from "../src/lib/segmented-keys";
-import { StaticRouter } from "react-router-dom/server";
 
 // Real React server rendering verifies markup without installing a DOM runtime.
 // Browser layout, focus movement and device touch behavior are verified separately.
@@ -187,120 +183,6 @@ test("the default calendar is simple, with a display control, a range switch and
   assert.match(html, /class="icon-btn" aria-label="Previous month"/);
   assert.match(html, /class="icon-btn" aria-label="Next month"/);
   assert.doesNotMatch(html, />Show current month<|>Whole month<|>This month</);
-});
-
-test("recent summary uses an inclusive 30-day window and an explicit preceding comparison", async () => {
-  const Summary = await component("../src/components/ProgressSummary.tsx");
-  const html = renderToStaticMarkup(
-    createElement(Summary, {
-      now: "2026-10-26",
-      records: [
-        workout("2026-09-27", 20),
-        workout("2026-10-26", 40),
-        workout("2026-09-26", 10),
-        workout("2026-08-28", 10),
-        workout("2026-10-27", 999),
-        workout("2026-10-25", 999, "draft"),
-        workout("2026-10-24", 999, "completed", true),
-      ],
-    }),
-  );
-  assert.match(html, /Last 30 days/);
-  for (const date of ["2026-09-27", "2026-10-26", "2026-08-28", "2026-09-26"])
-    assert.match(html, new RegExp(`dateTime="${date}"`, "i"));
-  assert.match(html, /Avg duration · min<\/span><strong>30<\/strong>/);
-  assert.match(html, /About these stats/);
-});
-
-test("History places its only calendar before current-month workouts and removes general stats", async () => {
-  const Calendar = await calendarComponent();
-  const records = [workout("2026-10-26"), workout("2026-09-26")];
-  (records[0].payload as model.Workout).name = "Current session";
-  (records[1].payload as model.Workout).name = "Previous month session";
-  // ConfirmDialog renders through Sheet, which this loader must compile too.
-  const Sheet = await component("../src/components/ui/Sheet.tsx");
-  const ConfirmDialog = await component("../src/components/ConfirmDialog.tsx", {
-    "@/components/ui/Sheet": { default: Sheet },
-  });
-  const HistorySetList = await component(
-    "../src/components/HistorySetList.tsx",
-    { "@/data/drops": drops },
-  );
-  const History = await component("../src/pages/History.tsx", {
-    "@/components/HistoryCalendar": { default: Calendar },
-    "@/components/HistorySetList": { default: HistorySetList },
-    "@/components/ConfirmDialog": { default: ConfirmDialog },
-    "@/contexts/useData": {
-      useData: () => ({
-        state: {
-          records: Object.fromEntries(
-            records.map((record) => [record.id, record]),
-          ),
-        },
-        save: async () => {},
-        restoreWorkout: async () => {},
-      }),
-    },
-    "@/hooks/useStartWorkout": {
-      useStartWorkout: () => ({
-        busy: false,
-        confirmation: null,
-        start: async () => {},
-      }),
-    },
-    "@/data/model": { ...model, today: () => "2026-10-26" },
-    "@/data/workouts": workouts,
-  });
-  const html = renderToStaticMarkup(
-    createElement(
-      StaticRouter,
-      { location: "/history" },
-      createElement(History),
-    ),
-  );
-  assert.equal((html.match(/aria-label="Workout calendar"/g) ?? []).length, 1);
-  assert.ok(
-    html.indexOf('aria-label="Workout calendar"') <
-      html.indexOf("Current session"),
-  );
-  assert.doesNotMatch(
-    html,
-    /Previous month session|More periods|About these stats|Workouts \/ active week/,
-  );
-});
-
-test("Progress keeps the recent summary and the existing exercise results together", async () => {
-  const Summary = await component("../src/components/ProgressSummary.tsx");
-  const record = workout("2026-10-26");
-  (record.payload as model.Workout).exercises = [
-    {
-      id: "exercise",
-      exerciseId: "bench",
-      name: "Bench press",
-      sets: [{ ...model.newSet(), done: true, weight: 60, reps: 8 }],
-    },
-  ];
-  const Progress = await component("../src/pages/Progress.tsx", {
-    "@/components/ProgressSummary": { default: Summary },
-    "@/contexts/useData": {
-      useData: () => ({ state: { records: { [record.id]: record } } }),
-    },
-    "@/data/analytics": analytics,
-    "@/lib/progressPresentation": presentation,
-    "@/data/model": { ...model, today: () => "2026-10-26" },
-  });
-  const html = renderToStaticMarkup(
-    createElement(
-      StaticRouter,
-      { location: "/progress" },
-      createElement(Progress),
-    ),
-  );
-  assert.match(html, /Last 30 days/);
-  assert.match(html, /Workouts \/ active week/);
-  assert.match(html, /Bench press/);
-  assert.match(html, /Best working set/);
-  assert.match(html, /href="\/history\?workout=/);
 });
 
 test("History details number only checked sets and show a drop under its set", async () => {

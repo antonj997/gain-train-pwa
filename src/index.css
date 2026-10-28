@@ -509,8 +509,7 @@ summary {
   font-weight: 600;
 }
 .settings-card,
-.routine-card,
-.progress-card {
+.routine-card {
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -535,15 +534,6 @@ summary {
   padding: 0;
   border: 0;
   min-height: 30px;
-}
-.performance {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.performance > strong {
-  font-size: 27px;
-  letter-spacing: -0.04em;
 }
 .chart {
   height: 180px;
@@ -705,83 +695,6 @@ h3,
   padding: 16px;
   gap: 10px;
 }
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-.metric {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow-wrap: anywhere;
-}
-.metric > span,
-.metric small {
-  font-size: 11px;
-  color: var(--soft);
-}
-.metric strong {
-  font-size: 20px;
-  letter-spacing: -0.03em;
-}
-.history-week .section-heading {
-  margin: 4px 0 6px;
-}
-.history-week h2 {
-  font-size: 14px;
-}
-.history-week .list-card {
-  padding: 10px 12px;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.history-week .history-date {
-  flex: 0 0 48px;
-  font-size: 12px;
-  color: var(--soft);
-}
-.history-week .history-name {
-  flex: 1;
-  min-width: 0;
-  gap: 1px;
-}
-.history-week strong {
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-.history-week small {
-  font-size: 12px;
-  color: var(--soft);
-}
-.progress-card {
-  padding: 14px;
-  gap: 10px;
-}
-.progress-card h2 {
-  font-size: 18px;
-}
-.progress-card .performance > strong {
-  font-size: 22px;
-}
-.progress-card .chart {
-  height: 145px;
-}
-.progress-metrics {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-.progress-metrics .metric {
-  padding: 8px;
-}
-.progress-metrics strong {
-  font-size: 16px;
-}
 .session-summary {
   list-style: none;
   display: flex;
@@ -800,36 +713,6 @@ h3,
 }
 details[open] > .session-summary > svg {
   transform: rotate(180deg);
-}
-@media (min-width: 640px) {
-  .history-page > .metrics-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (max-width: 359px) {
-  .progress-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .progress-metrics .metric:last-child {
-    grid-column: 1 / -1;
-  }
-}
-
-.history-page > .metrics-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-.history-page .metric {
-  padding: 8px;
-}
-@media (max-width: 359px) {
-  .history-page > .metrics-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.progress-details {
-  gap: 12px;
-  padding-top: 10px;
 }
 .theme-setting {
   display: flex;
@@ -951,7 +834,6 @@ select {
   html.theme-fading main,
   html.theme-fading section,
   html.theme-fading details,
-  html.theme-fading .metric,
   html.theme-fading input,
   html.theme-fading select,
   html.theme-fading button:not(.theme-switch),
