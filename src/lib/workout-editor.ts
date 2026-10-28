@@ -1,3 +1,5 @@
+import { dropGroup, isDrop } from "../data/drops";
+import { initialSet } from "../data/workouts";
 import {
   newSet,
   today,
@@ -10,6 +12,7 @@ import {
 } from "../data/model";
 import { hasExtraWeight } from "./set-load";
 import { getSetInputText } from "./set-input";
+import { toggleSetCompletion } from "./set-editing";
 
 export function getSetIssues(set: WorkoutSet): {
   weight?: string;
@@ -107,4 +110,40 @@ export function resizePlannedSets(exercise: Exercise, count: number): Exercise {
   const sets = exercise.sets.slice(0, count);
   while (sets.length < count) sets.push(newSet(sets.at(-1)));
   return { ...exercise, sets };
+}
+
+/** True when the set and each of its drops have values that can be checked. */
+export function groupComplete(sets: WorkoutSet[], index: number) {
+  const { start, end } = dropGroup(sets, index);
+  return sets.slice(start, end).every(validSet);
+}
+
+/**
+ * Checks or unchecks a set together with its drops. A set can only be checked
+ * once each of its drops is complete.
+ */
+export function toggleGroupCompletion(
+  sets: WorkoutSet[],
+  setId: string,
+  profileWeight: number | null,
+): WorkoutSet[] {
+  const index = sets.findIndex((set) => set.id === setId);
+  if (index < 0) return sets;
+  const { start, end } = dropGroup(sets, index);
+  if (!sets[start].done && !groupComplete(sets, start)) return sets;
+  return sets.map((set, i) =>
+    i >= start && i < end ? toggleSetCompletion(set, profileWeight) : set,
+  );
+}
+
+/** A new unchecked set like the last one that is not a drop. */
+export function appendSet(exercise: Exercise): Exercise {
+  const prior = exercise.sets.filter((set) => !isDrop(set)).at(-1);
+  return {
+    ...exercise,
+    sets: [
+      ...exercise.sets,
+      prior ? newSet(prior) : initialSet(exercise.exerciseId),
+    ],
+  };
 }

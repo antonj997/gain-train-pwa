@@ -2,6 +2,7 @@ import { z } from "zod";
 import { hasSetInputText } from "../lib/set-input";
 import { hasExtraWeight } from "../lib/set-load";
 import { isoDate } from "../lib/dates";
+import { normalizeDrops } from "./drops";
 export const setSchema = z.object({
   id: z.string().uuid(),
   reps: z.number().int().min(0).max(10000).nullable(),
@@ -12,6 +13,8 @@ export const setSchema = z.object({
   measure: z.enum(["reps", "seconds"]).optional(),
   section: z.enum(["working", "warmup", "winddown"]),
   done: z.boolean(),
+  /** Continues the set above at a lower weight. See drops.ts. */
+  drop: z.boolean().optional(),
 });
 export const exerciseSchema = z.object({
   id: z.string().uuid(),
@@ -114,6 +117,7 @@ export const newSet = (prior?: WorkoutSet): WorkoutSet => ({
     : {}),
   section: prior?.section ?? "working",
   done: false,
+  ...(prior?.drop ? { drop: true } : {}),
 });
 export function validSet(s: WorkoutSet) {
   return (
@@ -224,6 +228,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
         "Finish entering the set values before saving.",
       );
     for (const ex of (p as Workout | Routine).exercises) {
+      ex.sets = normalizeDrops(ex.sets);
       for (const s of ex.sets) {
         if (s.extraWeight === true && s.load !== "bodyweight")
           throw new RecordValidationError(

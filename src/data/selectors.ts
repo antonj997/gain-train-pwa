@@ -6,6 +6,7 @@ import {
   type Workout,
   type WorkoutRecord,
 } from "./model";
+import { isDrop } from "./drops";
 
 type Records = Record<string, RecordDoc> | readonly RecordDoc[];
 const list = (records: Records) =>
@@ -55,11 +56,13 @@ export const customExercises = (records: Records) =>
   );
 
 type HasSets = Pick<Workout, "exercises">;
-/** Checked sets that would be saved: done and valid. */
+/** Checked sets that would be saved: done and valid. A set and its drops count as one. */
 export const doneSetCount = ({ exercises }: HasSets) =>
   exercises.reduce(
-    (n, ex) => n + ex.sets.filter((s) => s.done && validSet(s)).length,
+    (n, ex) =>
+      n + ex.sets.filter((s) => !isDrop(s) && s.done && validSet(s)).length,
     0,
   );
+/** Planned or logged sets. A set and its drops count as one. */
 export const setCount = ({ exercises }: HasSets) =>
-  exercises.reduce((n, ex) => n + ex.sets.length, 0);
+  exercises.reduce((n, ex) => n + ex.sets.filter((s) => !isDrop(s)).length, 0);
