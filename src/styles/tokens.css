@@ -49,6 +49,11 @@
   --gt-radius-xl: 22px;
 
   --gt-motion: 180ms ease-out;
+
+  /* The rest bar and the next-set chip are the only floating controls. The
+     shadows are translucent neutrals, so they read the same in both themes. */
+  --gt-shadow-bar: 0 8px 24px rgb(20 22 26 / 0.16);
+  --gt-shadow-chip: 0 4px 16px rgb(20 22 26 / 0.24);
 }
 
 .dark {

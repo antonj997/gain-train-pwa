@@ -260,10 +260,184 @@
   line-height: 1.4;
 }
 
-/* The list leaves room for an open set's sheet (useKeepAboveSheet), so the last
-   row can still be centred above it. */
+/* The workout screen: a sticky top bar, the cards and two floating controls.
+   The page leaves room below for the rest bar, and for an open set's sheet
+   (useKeepAboveSheet), so the last row can still be centred above it. */
 .workout-editor {
-  padding-bottom: var(--sheet-space, 0px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-4);
+  padding-bottom: calc(var(--sheet-space, 0px) + var(--gt-space-6) * 3);
+}
+.workout-editor > * {
+  min-width: 0;
+}
+
+/* Top bar: back, the name over one status line, and Finish or Save. */
+.top-bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  padding-block: var(--gt-space-1);
+  border-bottom: 1px solid var(--gt-line);
+  background-color: var(--gt-ground);
+}
+.top-bar-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.top-bar-title {
+  margin: 0;
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.top-bar-title button {
+  display: block;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.top-bar-title button:disabled {
+  opacity: 1;
+}
+/* The status line tucks under the title's tap area, which is taller than its text. */
+.top-bar-status {
+  position: relative;
+  margin: -12px 0 0;
+  padding-bottom: var(--gt-space-1);
+  overflow: hidden;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.top-bar-status .is-error {
+  color: var(--gt-danger-fg);
+  font-weight: 600;
+}
+.date-chip {
+  display: inline-block;
+  min-height: 28px;
+  margin-block: -5px;
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  vertical-align: baseline;
+}
+.top-bar > .btn-primary {
+  flex: none;
+}
+
+/* Banners under the top bar: the message, then its actions. */
+.workout-banner {
+  flex-wrap: wrap;
+}
+.workout-banner p {
+  flex: 1 1 200px;
+  margin: 0;
+}
+.banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-2);
+}
+
+/* Add exercise: a dashed button after the cards; alone it is a large one. */
+.add-exercise {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-space-2);
+  min-height: 48px;
+  border: 2px dashed var(--gt-ink-3);
+  border-radius: var(--gt-radius-lg);
+  background: transparent;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
+.add-exercise:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.add-first {
+  width: 100%;
+  min-height: 56px;
+  font-size: var(--gt-fs-4);
+}
+
+/* The next-set chip and rest bar float over the page, bottom centre, and step
+   aside while the keyboard is open. */
+.float-stack {
+  position: fixed;
+  right: 0;
+  bottom: calc(var(--gt-space-4) + env(safe-area-inset-bottom));
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gt-space-2);
+  padding-inline: var(--gt-space-4);
+  pointer-events: none;
+}
+.float-stack > * {
+  pointer-events: auto;
+}
+[data-keyboard-open] .float-stack {
+  display: none;
+}
+.next-set-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-space-1);
+  min-height: 44px;
+  padding: 0 var(--gt-space-4);
+  border: 0;
+  border-radius: var(--gt-radius-xl);
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  box-shadow: var(--gt-shadow-chip);
+}
+.rest-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-1);
+  width: min(100%, 420px);
+  min-height: 56px;
+  padding: var(--gt-space-1) var(--gt-space-1) var(--gt-space-1)
+    var(--gt-space-4);
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-lg);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  box-shadow: var(--gt-shadow-bar);
+}
+.rest-bar-time {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--gt-fs-5);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Sheet content: the Set, Load and count, exercise menu and Reorder sheets. */
