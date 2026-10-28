@@ -301,7 +301,7 @@ test("the badge is a labelled button carrying its tone", async () => {
   const warm = await setLine({ set: sets[0], badge: setBadge(sets, 0) });
   assert.match(
     warm,
-    /<button[^>]*aria-label="Warm-up set\. Change type, load or delete"[^>]*data-tone="warmup"|<button[^>]*data-tone="warmup"[^>]*aria-label="Warm-up set\. Change type, load or delete"/,
+    /<button[^>]*aria-label="Warm-up set 1\. Change type, load or delete"[^>]*data-tone="warmup"|<button[^>]*data-tone="warmup"[^>]*aria-label="Warm-up set 1\. Change type, load or delete"/,
   );
   assert.match(warm, />W</);
   const working = await setLine({ set: sets[1], badge: setBadge(sets, 1) });
@@ -388,6 +388,16 @@ test("rows of the same kind get different names", async () => {
   assert.ok(inputNames.includes("Bench Press warm-up set 2 reps"));
   assert.ok(inputNames.includes("Bench Press drop 1 after set 1 kilograms"));
   assert.ok(inputNames.includes("Bench Press drop 2 after set 1 reps"));
+  // The badge buttons differ as well, so each opens a distinguishable sheet.
+  const badgeLabels = html.map(
+    (row) =>
+      row.match(/<button[^>]*class="set-badge[^>]*aria-label="([^"]+)"/)![1],
+  );
+  assert.equal(new Set(badgeLabels).size, badgeLabels.length);
+  assert.equal(badgeLabels[0], "Warm-up set 1. Change type, load or delete");
+  assert.equal(badgeLabels[1], "Warm-up set 2. Change type, load or delete");
+  assert.equal(badgeLabels[3], "Drop 1 after set 1. Change load or delete");
+  assert.equal(badgeLabels[4], "Drop 2 after set 1. Change load or delete");
   // The bodyweight text of the second warm-up names its row too.
   assert.match(html[1], /Bench Press warm-up set 2: Bodyweight/);
 });

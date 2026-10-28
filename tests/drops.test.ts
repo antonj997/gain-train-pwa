@@ -239,7 +239,7 @@ test("setBadge numbers working sets only", () => {
   assert.deepEqual(badges[0], {
     text: "W",
     tone: "warmup",
-    label: "Warm-up set. Change type, load or delete",
+    label: "Warm-up set 1. Change type, load or delete",
     title: "Warm-up set",
     name: "warm-up set 1",
   });
@@ -250,7 +250,7 @@ test("setBadge numbers working sets only", () => {
     title: "Set 1",
     name: "set 1",
   });
-  assert.equal(badges[2].label, "Drop after set 1. Change load or delete");
+  assert.equal(badges[2].label, "Drop 1 after set 1. Change load or delete");
   assert.equal(badges[2].title, "Drop");
   assert.equal(
     badges[3].label,
@@ -259,7 +259,7 @@ test("setBadge numbers working sets only", () => {
   assert.deepEqual(badges[4], {
     text: "C",
     tone: "winddown",
-    label: "Cool-down set. Change type, load or delete",
+    label: "Cool-down set 1. Change type, load or delete",
     title: "Cool-down set",
     name: "cool-down set 1",
   });
@@ -286,9 +286,25 @@ test("setBadge names are unique within an exercise", () => {
     "cool-down set 1",
   ]);
   assert.equal(new Set(names).size, names.length);
+  // The badge is the only button on a drop row, so its label must differ too.
+  const labels = sets.map((_, i) => setBadge(sets, i).label);
+  assert.deepEqual(labels, [
+    "Warm-up set 1. Change type, load or delete",
+    "Warm-up set 2. Change type, load or delete",
+    "Set 1, working set. Change type, load or delete",
+    "Drop 1 after set 1. Change load or delete",
+    "Drop 2 after set 1. Change load or delete",
+    "Set 2, working set. Change type, load or delete",
+    "Cool-down set 1. Change type, load or delete",
+  ]);
+  assert.equal(new Set(labels).size, labels.length);
   // A second cool-down and a drop after the second set keep counting.
   const more = [...sets, set({ section: "winddown" })];
   assert.equal(setBadge(more, 7).name, "cool-down set 2");
+  assert.equal(
+    setBadge(more, 7).label,
+    "Cool-down set 2. Change type, load or delete",
+  );
   const second = [set(), set(), drop()];
   assert.equal(setBadge(second, 2).name, "drop 1 after set 2");
 });

@@ -8,6 +8,7 @@ export type SetTone = "working" | "warmup" | "winddown" | "drop";
 export type SetBadgeInfo = {
   text: string;
   tone: SetTone;
+  /** The badge button's accessible name; it differs for every row of an exercise. */
   label: string;
   title: string;
   /**
@@ -138,27 +139,31 @@ export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
     return {
       text: "↓",
       tone: "drop",
-      label: `Drop after set ${parent}. Change load or delete`,
+      label: `Drop ${position} after set ${parent}. Change load or delete`,
       title: "Drop",
       name: `drop ${position} after set ${parent}`,
     };
   }
-  if (set.section === "warmup")
+  if (set.section === "warmup") {
+    const n = ordinal("warmup", index);
     return {
       text: "W",
       tone: "warmup",
-      label: "Warm-up set. Change type, load or delete",
+      label: `Warm-up set ${n}. Change type, load or delete`,
       title: "Warm-up set",
-      name: `warm-up set ${ordinal("warmup", index)}`,
+      name: `warm-up set ${n}`,
     };
-  if (set.section === "winddown")
+  }
+  if (set.section === "winddown") {
+    const n = ordinal("winddown", index);
     return {
       text: "C",
       tone: "winddown",
-      label: "Cool-down set. Change type, load or delete",
+      label: `Cool-down set ${n}. Change type, load or delete`,
       title: "Cool-down set",
-      name: `cool-down set ${ordinal("winddown", index)}`,
+      name: `cool-down set ${n}`,
     };
+  }
   const n = ordinal("working", index);
   return {
     text: String(n),
