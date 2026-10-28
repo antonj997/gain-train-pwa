@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
-import { today, repeatExercises } from "@/data/model";
+import { today } from "@/data/model";
 import {
   Dialog,
   DialogContent,
@@ -54,18 +54,8 @@ export default function History() {
   const w = selected?.payload;
   const repeat = async () => {
     if (!w || busy || workoutStart.busy) return;
-    const now = Date.now();
     setParams({});
-    await workoutStart.start({
-      ...w,
-      date: today(),
-      duration: null,
-      startedAt: now,
-      createdAt: now,
-      completedAt: undefined,
-      status: "draft",
-      exercises: repeatExercises(w.exercises),
-    });
+    await workoutStart.repeat(w);
   };
   const remove = async () => {
     if (!selected || busy) return;

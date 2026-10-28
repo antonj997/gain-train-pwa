@@ -51,6 +51,7 @@ export const storageKeys = {
   theme: "gain-train-theme",
   restSeconds: "gt-rest-seconds",
   haptics: "gt-haptics",
+  weeklyGoal: "gt-weekly-goal",
   persistRequested: "gt-persist-requested",
   deleted: (account: string) => "gt-deleted-" + account,
   syncHealth: (account: string) => "gt-sync-health:" + account,
