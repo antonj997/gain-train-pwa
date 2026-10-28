@@ -1,0 +1,253 @@
+/* Workout screen styles for the Quiet visual system. Colours come from
+   tokens.css only; spacing, type sizes, radii and motion use its tokens too.
+
+   A set row is one grid line (.set-line): badge, previous result, load, count
+   and the done button. Every control is 44px. Below 360px the Previous column
+   is hidden so the rows never scroll sideways. */
+
+.set-line {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    44px minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1fr)
+    44px;
+  align-items: center;
+  column-gap: var(--gt-space-1);
+  row-gap: var(--gt-space-1);
+  padding: var(--gt-space-1);
+  border-radius: var(--gt-radius-sm);
+  transition: background-color var(--gt-motion);
+}
+@media (min-width: 400px) {
+  .set-line {
+    column-gap: var(--gt-space-2);
+  }
+}
+.set-line.is-done {
+  background-color: var(--gt-done-soft);
+}
+/* The row whose Set sheet is open stays readable above the sheet. */
+.set-line.is-editing {
+  background-color: var(--gt-accent-soft);
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+}
+
+/* Badge: a 44px target around a smaller coloured chip. */
+.set-badge {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-sm);
+  background: transparent;
+  color: var(--gt-ink);
+}
+.set-badge-chip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  line-height: 1;
+  transition:
+    background-color var(--gt-motion),
+    color var(--gt-motion);
+}
+.set-badge[data-tone="warmup"] .set-badge-chip {
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.set-badge[data-tone="winddown"] .set-badge-chip {
+  background-color: var(--gt-cool-bg);
+  color: var(--gt-cool-fg);
+}
+.set-badge[data-tone="drop"] .set-badge-chip {
+  background-color: transparent;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-4);
+}
+.set-line.is-next .set-badge[data-tone="working"] .set-badge-chip {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.set-badge.is-editing .set-badge-chip {
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+}
+
+/* Previous result. It is hidden below 360px; the Set sheet still shows it. */
+.set-line .set-previous {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 359px) {
+  .set-line {
+    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) 44px;
+  }
+  .set-line .set-previous {
+    display: none;
+  }
+}
+
+/* Load and count fields. A marker sits inside the load field. */
+.set-field {
+  position: relative;
+  min-width: 0;
+}
+.set-line .set-field input {
+  width: 100%;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 var(--gt-space-1);
+  border: 1px solid transparent;
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+  text-align: center;
+  transition:
+    background-color var(--gt-motion),
+    border-color var(--gt-motion);
+}
+.set-line .set-field input::placeholder {
+  color: var(--gt-ink-2);
+  font-weight: 400;
+  opacity: 1;
+}
+.set-line .set-field input::selection {
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+}
+.set-line .set-number-input {
+  overflow: hidden;
+  white-space: nowrap;
+  caret-color: var(--gt-accent);
+  touch-action: none;
+}
+.set-line .set-field input[readonly] {
+  cursor: default;
+}
+.set-line.is-done .set-field input {
+  background-color: transparent;
+}
+.set-line.is-next .set-field input {
+  border-color: var(--gt-accent);
+}
+.set-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  pointer-events: none;
+}
+.set-marker-prefix {
+  left: var(--gt-space-2);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-4);
+}
+.set-marker-suffix {
+  right: var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+}
+.set-field.has-prefix input {
+  padding-left: calc(var(--gt-space-3) + var(--gt-space-2));
+}
+.set-field.has-suffix input {
+  padding-right: calc(var(--gt-space-3) + var(--gt-space-2));
+}
+
+/* Plain bodyweight is text, not a field. */
+.set-bodyweight {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 44px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.set-bodyweight small {
+  display: block;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 400;
+}
+.set-line.is-done .set-bodyweight {
+  color: var(--gt-ink);
+}
+
+/* Done button. Drops and planned sets have an empty cell in its place. */
+.set-check {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink-2);
+  transition:
+    background-color var(--gt-motion),
+    border-color var(--gt-motion),
+    color var(--gt-motion);
+}
+.set-check[aria-pressed="true"] {
+  border-color: var(--gt-done);
+  background-color: var(--gt-done);
+  color: var(--gt-on-accent);
+}
+/* A checked row refused an edit: point at the way to unlock it. */
+.set-check.unlock-highlight {
+  border: 2px solid var(--gt-danger-fg);
+  outline: 2px solid var(--gt-danger-fg);
+  outline-offset: 2px;
+}
+.set-line-spacer {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+@keyframes set-check-settle {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .set-line.is-just-checked .set-check svg {
+    animation: set-check-settle var(--gt-motion);
+  }
+}
+
+/* Field messages and the unlock notice run under the whole row. */
+.set-line .set-errors {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0 var(--gt-space-1) var(--gt-space-1);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
