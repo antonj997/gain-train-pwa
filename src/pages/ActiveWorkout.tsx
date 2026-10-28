@@ -1,4 +1,4 @@
-import { useMemo, useReducer, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Plus, Crosshair } from "lucide-react";
 import { toast } from "sonner";
@@ -22,7 +22,6 @@ import {
 } from "@/data/workouts";
 import { finishWorkout } from "@/lib/workout-editor";
 import { selectInputValue } from "@/lib/set-editing";
-import { changeExerciseOptions } from "@/lib/exercise-options";
 import { trainingHaptic } from "@/lib/preferences";
 import { requestPersistenceOnce } from "@/lib/persistence";
 import { errorMessage } from "@/lib/errors";
@@ -31,7 +30,6 @@ import { historyPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
-import { useCloseOptionsOutside } from "@/hooks/useCloseOptionsOutside";
 import ExercisePicker from "@/components/ExercisePicker";
 import ExerciseCard from "@/components/ExerciseCard";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -86,15 +84,12 @@ function Editor({
   const { workout: w, change, editing, saved, error, setError } = autosave;
   const [picker, setPicker] = useState(false);
   const [finish, setFinish] = useState(false);
-  const [menu, changeOptions] = useReducer(changeExerciseOptions, null);
   const [routine, setRoutine] = useState(false);
   const [busy, setBusy] = useState(false);
   const [abandon, setAbandon] = useState(false);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
-  const [focusedSetId, setFocusedSetId] = useState<string | null>(null);
   const editorRef = useRef<HTMLDivElement>(null);
-  useCloseOptionsOutside(editorRef, menu?.id, changeOptions);
   const rest = useRestTimer(account, id);
   const dirty = JSON.stringify(w) !== JSON.stringify(initial);
   const completed = doneSetCount(w);
@@ -105,8 +100,7 @@ function Editor({
   const unfinished = w.exercises
     .flatMap((ex) => ex.sets)
     .filter((s) => !s.done);
-  const nextSet =
-    unfinished.find((s) => s.id === focusedSetId) ?? unfinished[0];
+  const nextSet = unfinished[0];
   const fromRoutine = !!w.routineId;
   // Previous results per exercise, rebuilt only when the log or date changes.
   const previous = useMemo(
@@ -148,7 +142,6 @@ function Editor({
     });
   const remove = (ex: Exercise) => {
     change({ ...w, exercises: w.exercises.filter((e) => e.id !== ex.id) });
-    changeOptions({ type: "close" });
     setRemoveExercise(null);
   };
   const move = (index: number, step: number) => {
@@ -387,12 +380,9 @@ function Editor({
           exercise={ex}
           isFirst={ei === 0}
           isLast={ei === w.exercises.length - 1}
-          options={menu}
-          changeOptions={changeOptions}
           lastSession={previous.get(ex.exerciseId)}
           bodyWeightKg={bodyWeightKg}
           nextSetId={nextSet?.id}
-          onFocusSet={setFocusedSetId}
           onChange={update}
           onMove={(step) => move(ei, step)}
           onRemove={() =>

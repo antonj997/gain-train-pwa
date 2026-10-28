@@ -1,41 +1,51 @@
-import type { Dispatch } from "react";
+import { useId, useRef, useState } from "react";
+import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 import {
-  Plus,
-  MoreHorizontal,
-  ArrowUp,
-  ArrowDown,
-  Trash2,
-  ListOrdered,
-  Check,
-} from "lucide-react";
-import { type Exercise, type WorkoutSet, labelSet, newSet } from "@/data/model";
+  type Exercise,
+  type WorkoutSet,
+  labelSet,
+  validSet,
+} from "@/data/model";
+import { type LastSession, previousResult } from "@/data/workouts";
 import {
-  initialSet,
-  previousSetFor,
-  setProfileOrdinal,
-  type LastSession,
-} from "@/data/workouts";
-import type { ExerciseOptions, OptionsAction } from "@/lib/exercise-options";
+  addDrop,
+  changeSection,
+  dropGroup,
+  isDrop,
+  removeSetOrDrop,
+  setBadge,
+} from "@/data/drops";
 import {
-  changeSetLoad,
-  changeSetMeasure,
-  changeExtraWeight,
-  hasExtraWeight,
-} from "@/lib/set-load";
-import SetRow from "@/components/SetRow";
-import SortableSetList from "@/components/SortableSetList";
+  appendSet,
+  groupComplete,
+  toggleGroupCompletion,
+} from "@/lib/workout-editor";
+import {
+  applyExerciseCount,
+  applyExerciseLoad,
+  countHeading,
+  defaultLoadKey,
+  exerciseMeasure,
+  loadHeading,
+  loadMarker,
+  withLoadKey,
+} from "@/lib/load-keys";
+import { localizedDate } from "@/lib/dates";
+import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
+import SetLine from "@/components/workout/SetLine";
+import SetSheet from "@/components/workout/SetSheet";
+import LoadCountSheet from "@/components/workout/LoadCountSheet";
+import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
+import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 
 type Props = {
   exercise: Exercise;
   isFirst: boolean;
   isLast: boolean;
-  options: ExerciseOptions;
-  changeOptions: Dispatch<OptionsAction>;
   /** The last session with this exercise, for previous-result hints. */
   lastSession?: LastSession;
   bodyWeightKg: number | null;
   nextSetId?: string;
-  onFocusSet: (setId: string) => void;
   onChange: (exercise: Exercise) => void;
   onMove: (step: -1 | 1) => void;
   onRemove: () => void;
@@ -43,228 +53,195 @@ type Props = {
   onSetDone: () => void;
 };
 
-/** One exercise in the workout editor: its options, load controls and sets. */
+/** The one sheet this card has open: a set's, or the exercise's own. */
+type OpenSheet =
+  | { kind: "set"; setId: string }
+  | { kind: "loadCount" }
+  | { kind: "menu" }
+  | { kind: "reorder" }
+  | null;
+
+/** One exercise in the workout editor: its sets, one line each, and its sheets. */
 export default function ExerciseCard({
   exercise: ex,
   isFirst,
   isLast,
-  options,
-  changeOptions,
   lastSession,
   bodyWeightKg,
   nextSetId,
-  onFocusSet,
   onChange,
   onMove,
   onRemove,
   onSetDone,
 }: Props) {
-  const editableSet = ex.sets.find((s) => !s.done) ?? ex.sets[0];
-  const hasEditableSets = ex.sets.some((s) => !s.done);
-  const timed = editableSet?.measure === "seconds";
-  const mixedProfiles =
-    new Set(
-      ex.sets.map(
-        (s) => `${s.load}:${hasExtraWeight(s)}:${s.measure ?? "reps"}`,
-      ),
-    ).size > 1;
-  const mixedMeasures =
-    new Set(ex.sets.map((s) => s.measure ?? "reps")).size > 1;
-  const optionsOpen = options?.id === ex.id;
-  const organizing = optionsOpen && options.editing;
-  const changeSets = (change: (set: WorkoutSet) => WorkoutSet) =>
-    onChange({ ...ex, sets: ex.sets.map(change) });
+  const { sets } = ex;
+  const headingId = useId();
+  const [sheet, setSheet] = useState<OpenSheet>(null);
+  const setSheetRef = useRef<HTMLDivElement>(null);
+  const openSetId = sheet?.kind === "set" ? sheet.setId : null;
+  useKeepAboveSheet(openSetId, setSheetRef);
+  // The Set sheet keeps its set while it slides out, after `sheet` is cleared.
+  const shownSetId = useRef<string | null>(null);
+  if (openSetId) shownSetId.current = openSetId;
+  const shownIndex = sets.findIndex((s) => s.id === shownSetId.current);
+  const shown = shownIndex >= 0 ? sets[shownIndex] : undefined;
+
+  const defaultKey = defaultLoadKey(sets);
+  const close = () => setSheet(null);
+  const changeSets = (next: WorkoutSet[]) => onChange({ ...ex, sets: next });
+  const updateSet = (next: WorkoutSet) =>
+    changeSets(sets.map((s) => (s.id === next.id ? next : s)));
+  const toggleDone = (setId: string) => {
+    const next = toggleGroupCompletion(sets, setId, bodyWeightKg);
+    if (next === sets) return;
+    changeSets(next);
+    const was = sets.find((s) => s.id === setId);
+    const now = next.find((s) => s.id === setId);
+    if (was && !was.done && now?.done) onSetDone();
+  };
+  const previousOf = (index: number) => {
+    const result = previousResult(lastSession?.sets ?? [], sets, index);
+    return result ? labelSet(result) : undefined;
+  };
+
   return (
-    <section
-      className="exercise-card"
-      data-options-open={optionsOpen ? "" : undefined}
-    >
-      <div className="exercise-heading">
-        <h2>{ex.name}</h2>
+    <section className="card ex-card" aria-labelledby={headingId}>
+      <div className="ex-head">
+        <div className="ex-titles">
+          <h2 id={headingId} className="ex-title">
+            {ex.name}
+          </h2>
+          {lastSession && (
+            <p className="ex-last">
+              Last:{" "}
+              {localizedDate(lastSession.date, {
+                day: "numeric",
+                month: "short",
+              })}
+            </p>
+          )}
+        </div>
         <button
-          className="icon-button"
-          aria-label={"Options for " + ex.name}
-          aria-expanded={optionsOpen}
-          aria-controls={`exercise-options-${ex.id}`}
-          onClick={() =>
-            changeOptions(
-              optionsOpen ? { type: "close" } : { type: "open", id: ex.id },
-            )
-          }
+          type="button"
+          className="icon-btn"
+          aria-label={`${ex.name} options`}
+          aria-haspopup="dialog"
+          onClick={() => setSheet({ kind: "menu" })}
         >
-          <MoreHorizontal size={23} />
+          <MoreHorizontal size={23} aria-hidden="true" />
         </button>
       </div>
-      {optionsOpen && (
-        <div
-          className="exercise-actions"
-          id={`exercise-options-${ex.id}`}
-          role="group"
-          aria-label={`Options for ${ex.name}`}
-        >
-          <button
-            type="button"
-            className="text-button set-edit-menu-toggle"
-            role="switch"
-            aria-label={`Edit sets for ${ex.name}`}
-            aria-checked={organizing}
-            onClick={() => changeOptions({ type: "edit", id: ex.id })}
-          >
-            <ListOrdered size={17} aria-hidden="true" />
-            Edit sets
-            <span className="set-edit-switch-track" aria-hidden="true">
-              <span className="set-edit-switch-thumb">
-                {organizing && <Check size={12} />}
-              </span>
-            </span>
-            <span className="set-edit-switch-state" aria-hidden="true">
-              {organizing ? "On" : "Off"}
-            </span>
-          </button>
-          <button
-            className="text-button"
-            disabled={isFirst}
-            onClick={() => onMove(-1)}
-          >
-            <ArrowUp size={17} />
-            Up
-          </button>
-          <button
-            className="text-button"
-            disabled={isLast}
-            onClick={() => onMove(1)}
-          >
-            <ArrowDown size={17} />
-            Down
-          </button>
-          <button className="text-button danger" onClick={onRemove}>
-            <Trash2 size={17} />
-            Remove exercise
-          </button>
-        </div>
-      )}
-      <div className="exercise-load-controls">
-        <label>
-          Load
-          <select
-            aria-label={ex.name + " load type"}
-            value={editableSet?.load ?? "weight"}
-            disabled={timed || !hasEditableSets}
-            onChange={(e) =>
-              changeSets((s) =>
-                changeSetLoad(s, e.target.value as WorkoutSet["load"]),
-              )
-            }
-          >
-            <option value="weight">Weight (kg)</option>
-            <option value="bodyweight">Bodyweight</option>
-            <option value="assisted">Assisted (kg)</option>
-          </select>
-        </label>
-        <label>
-          Measure
-          <select
-            aria-label={ex.name + " measure"}
-            value={timed ? "seconds" : "reps"}
-            disabled={!hasEditableSets}
-            onChange={(e) =>
-              changeSets((s) =>
-                changeSetMeasure(s, e.target.value as "reps" | "seconds"),
-              )
-            }
-          >
-            <option value="reps">Reps</option>
-            <option value="seconds">Seconds</option>
-          </select>
-        </label>
-        {editableSet?.load === "bodyweight" && (
-          <label className="check-label extra-weight-toggle">
-            <input
-              type="checkbox"
-              role="switch"
-              aria-label={`${ex.name} extra weight`}
-              checked={hasExtraWeight(editableSet)}
-              disabled={!hasEditableSets}
-              onChange={(event) =>
-                changeSets((s) => changeExtraWeight(s, event.target.checked))
-              }
-            />
-            Extra weight
-          </label>
-        )}
-      </div>
-      <div className={`set-labels${organizing ? " set-compact-labels" : ""}`}>
+      <div className="set-columns">
         <span>Set</span>
-        <span>
-          {mixedProfiles
-            ? "Load"
-            : editableSet?.load === "bodyweight"
-              ? hasExtraWeight(editableSet)
-                ? "BW + kg"
-                : "Load"
-              : editableSet?.load === "assisted"
-                ? "Assist kg"
-                : "kg"}
-        </span>
-        <span>{mixedMeasures ? "Reps / sec" : timed ? "Seconds" : "Reps"}</span>
-        {organizing && <span className="set-type-label">Type</span>}
+        <span className="set-previous-heading">Previous</span>
+        <button
+          type="button"
+          className="set-heading-btn"
+          aria-haspopup="dialog"
+          onClick={() => setSheet({ kind: "loadCount" })}
+        >
+          {loadHeading(defaultKey)}
+          <ChevronDown size={14} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className="set-heading-btn"
+          aria-haspopup="dialog"
+          onClick={() => setSheet({ kind: "loadCount" })}
+        >
+          {countHeading(sets)}
+          <ChevronDown size={14} aria-hidden="true" />
+        </button>
         <span>Done</span>
-        <span />
       </div>
-      <SortableSetList
-        key={organizing ? "organizing" : "logging"}
-        sets={ex.sets}
-        name={ex.name}
-        onReorder={(sets) => onChange({ ...ex, sets })}
-      >
-        {(s, i, handle) => {
-          const previous = previousSetFor(
-            lastSession?.sets ?? [],
-            s,
-            setProfileOrdinal(ex.sets, i),
-          );
-          return (
-            <SetRow
-              compact={organizing}
-              showProfile={mixedProfiles}
-              reorderHandle={handle}
-              bodyWeightKg={bodyWeightKg}
-              next={nextSetId === s.id}
-              key={s.id}
-              set={s}
-              index={i}
-              name={ex.name}
-              previous={previous ? labelSet(previous) : undefined}
-              previousDate={previous ? lastSession?.date : undefined}
-              onFocus={() => onFocusSet(s.id)}
-              onChange={(next) => {
-                changeSets((x) => (x.id === s.id ? next : x));
-                if (!s.done && next.done) onSetDone();
-              }}
-              onRemove={() =>
-                onChange({ ...ex, sets: ex.sets.filter((x) => x.id !== s.id) })
-              }
-            />
-          );
-        }}
-      </SortableSetList>
+      {sets.map((s, i) => (
+        <SetLine
+          key={s.id}
+          set={s}
+          mode="log"
+          name={ex.name}
+          badge={setBadge(sets, i)}
+          previous={previousOf(i)}
+          marker={loadMarker(s, defaultKey)}
+          bodyWeightKg={bodyWeightKg}
+          next={nextSetId === s.id}
+          editing={openSetId === s.id}
+          canCheck={groupComplete(sets, i)}
+          checkHint={
+            validSet(s) && !groupComplete(sets, i)
+              ? "Fill in or delete its drops to check this set."
+              : undefined
+          }
+          onOpenSheet={() => setSheet({ kind: "set", setId: s.id })}
+          onChange={updateSet}
+          onToggleDone={() => toggleDone(s.id)}
+        />
+      ))}
       <button
-        className="add-set"
-        onClick={() =>
-          onChange({
-            ...ex,
-            sets: [
-              ...ex.sets,
-              ex.sets.length
-                ? newSet(ex.sets.at(-1))
-                : initialSet(ex.exerciseId),
-            ],
-          })
-        }
+        type="button"
+        className="btn-quiet ex-add-set"
+        onClick={() => onChange(appendSet(ex))}
       >
-        <Plus size={18} />
+        <Plus size={18} aria-hidden="true" />
         Add set
       </button>
+      {shown && (
+        <SetSheet
+          open={openSetId !== null}
+          onClose={close}
+          contentRef={setSheetRef}
+          badge={setBadge(sets, shownIndex)}
+          previous={previousOf(shownIndex)}
+          set={shown}
+          dropCount={
+            isDrop(shown) ? 0 : dropGroup(sets, shownIndex).end - shownIndex - 1
+          }
+          exerciseDefault={defaultKey}
+          onSection={(section) =>
+            changeSets(changeSection(sets, shown.id, section))
+          }
+          onLoadKey={(key) => updateSet(withLoadKey(shown, key))}
+          onAddDrop={() => {
+            changeSets(addDrop(sets, shown.id));
+            close();
+          }}
+          onDelete={() => {
+            changeSets(removeSetOrDrop(sets, shown.id));
+            close();
+          }}
+        />
+      )}
+      <LoadCountSheet
+        open={sheet?.kind === "loadCount"}
+        onClose={close}
+        loadKey={defaultKey}
+        measure={exerciseMeasure(sets)}
+        onLoadKey={(key) => changeSets(applyExerciseLoad(sets, key))}
+        onMeasure={(measure) => changeSets(applyExerciseCount(sets, measure))}
+        onDone={close}
+      />
+      <ExerciseMenuSheet
+        open={sheet?.kind === "menu"}
+        onClose={close}
+        name={ex.name}
+        hint={`${loadHeading(defaultKey)} · ${countHeading(sets).toLowerCase()}`}
+        canMoveUp={!isFirst}
+        canMoveDown={!isLast}
+        onLoadAndCount={() => setSheet({ kind: "loadCount" })}
+        onReorder={() => setSheet({ kind: "reorder" })}
+        onMoveUp={() => onMove(-1)}
+        onMoveDown={() => onMove(1)}
+        onRemove={() => {
+          close();
+          onRemove();
+        }}
+      />
+      <ReorderSetsSheet
+        open={sheet?.kind === "reorder"}
+        exercise={ex}
+        onReorder={changeSets}
+        onClose={close}
+      />
     </section>
   );
 }

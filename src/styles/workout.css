@@ -5,21 +5,25 @@
    and the done button. Every control is 44px. Below 360px the Previous column
    is hidden so the rows never scroll sideways. */
 
-.set-line {
-  position: relative;
+.set-line,
+.set-columns {
   display: grid;
   grid-template-columns:
     44px minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1fr)
     44px;
   align-items: center;
   column-gap: var(--gt-space-1);
+}
+.set-line {
+  position: relative;
   row-gap: var(--gt-space-1);
   padding: var(--gt-space-1);
   border-radius: var(--gt-radius-sm);
   transition: background-color var(--gt-motion);
 }
 @media (min-width: 400px) {
-  .set-line {
+  .set-line,
+  .set-columns {
     column-gap: var(--gt-space-2);
   }
 }
@@ -96,10 +100,14 @@
   white-space: nowrap;
 }
 @media (max-width: 359px) {
-  .set-line {
+  .set-line,
+  .set-columns {
     grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) 44px;
   }
   .set-line .set-previous {
+    display: none;
+  }
+  .set-columns .set-previous-heading {
     display: none;
   }
 }
@@ -360,4 +368,60 @@
     calc(44px + 44px + var(--gt-space-2) + var(--gt-space-2));
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-3);
+}
+
+/* Exercise card: name, column headings and rows. */
+.ex-card {
+  padding: var(--gt-space-3) var(--gt-space-2) var(--gt-space-2);
+}
+.ex-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  padding-left: var(--gt-space-2);
+}
+.ex-titles {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ex-title {
+  margin: 0;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.ex-last {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.set-columns {
+  padding: 0 var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  text-align: center;
+}
+.set-columns > span {
+  min-width: 0;
+}
+.set-heading-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.ex-add-set {
+  width: 100%;
+  margin-top: var(--gt-space-1);
 }
