@@ -251,3 +251,9 @@
   font-size: var(--gt-fs-2);
   line-height: 1.4;
 }
+
+/* The list leaves room for an open set's sheet (useKeepAboveSheet), so the last
+   row can still be centred above it. */
+.workout-editor {
+  padding-bottom: var(--sheet-space, 0px);
+}
