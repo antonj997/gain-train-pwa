@@ -37,10 +37,6 @@ select,
   flex-direction: column;
   gap: 8px;
 }
-.app-header {
-  height: calc(68px + env(safe-area-inset-top));
-  padding-top: env(safe-area-inset-top);
-}
 .resume-card.resume-primary {
   border-width: 2px;
 }
@@ -103,36 +99,6 @@ select,
   color: var(--soft);
   font-size: 14px;
 }
-.preference-setting {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.preference-setting select {
-  width: auto;
-  min-width: 130px;
-}
-.preference-toggle {
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-}
-.preference-setting > span {
-  min-width: 0;
-}
-.preference-setting small,
-.preference-toggle small {
-  display: block;
-  font-weight: 400;
-}
-.notice {
-  overflow-wrap: anywhere;
-}
-.app-dialog .notice {
-  margin-inline: 0;
-}
 [data-sonner-toast] {
   font-family: inherit !important;
 }
@@ -186,9 +152,7 @@ select,
   }
 }
 @media (max-width: 479px) {
-  .app-shell main,
-  .app-header,
-  .sync-line {
+  .app-shell main {
     padding-inline: max(12px, env(safe-area-inset-left))
       max(12px, env(safe-area-inset-right));
   }

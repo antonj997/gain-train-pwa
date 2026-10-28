@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import App from "./App";
 import "./index.css";
 import "./styles/usability.css";
+import "./styles/pages.css";
 
 const UPDATE_CHECK_MS = 60 * 60 * 1000;
 let updateReady = false;

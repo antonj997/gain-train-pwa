@@ -1,0 +1,412 @@
+/* Page-level styles for the Quiet screens: the top bar, groups and rows, the
+   week card and Settings. Loaded after index.css so these rules win over the
+   older ones. Colours come from tokens.css only. */
+
+.app-shell main {
+  padding-top: calc(var(--gt-space-3) + env(safe-area-inset-top));
+}
+@media (min-width: 640px) {
+  .app-shell main {
+    padding-top: calc(var(--gt-space-5) + env(safe-area-inset-top));
+  }
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.col-8 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.col-12 {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.btn-block {
+  width: 100%;
+}
+.btn-lg {
+  min-height: 52px;
+  font-size: var(--gt-fs-4);
+}
+
+/* Top bar: a muted eyebrow over the title, with notices below. */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.page-header-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
+.page-header-bar.has-leading {
+  align-items: center;
+  justify-content: flex-start;
+  margin-left: calc(-1 * var(--gt-space-2));
+}
+.page-header-text {
+  flex: 1;
+  min-width: 0;
+}
+.page-eyebrow {
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+}
+.page-header h1 {
+  margin-top: 2px;
+  font-size: var(--gt-fs-6);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--gt-ink);
+}
+.icon-btn.filled {
+  border: 1px solid var(--gt-line);
+  background-color: var(--gt-surface);
+}
+.layout-notices:not(:empty) {
+  margin-bottom: var(--gt-space-4);
+}
+.banners {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.banner > span {
+  flex: 1;
+  min-width: 0;
+}
+.banner a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-block: calc(-1 * var(--gt-space-2));
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Section headings, groups and rows. */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 44px;
+}
+.section-head h2,
+.card-head h2 {
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  color: var(--gt-accent);
+}
+.group-title {
+  margin: 0 var(--gt-space-1) var(--gt-space-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--gt-ink-2);
+}
+.group-note {
+  margin: var(--gt-space-2) var(--gt-space-1) 0;
+}
+.list {
+  overflow: hidden;
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-lg);
+  background-color: var(--gt-surface);
+}
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gt-space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 10px var(--gt-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--gt-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  font-weight: 400;
+  text-align: left;
+  text-decoration: none;
+}
+.row:last-child {
+  border-bottom: 0;
+}
+button.row,
+a.row,
+label.row {
+  cursor: pointer;
+}
+@media (hover: hover) {
+  button.row:hover:not(:disabled),
+  a.row:hover,
+  label.row:hover {
+    background-color: var(--gt-surface-2);
+  }
+}
+.row:focus-visible,
+.row-file:focus-within {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+}
+.row-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.row-title {
+  overflow-wrap: anywhere;
+}
+.row-sub {
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  color: var(--gt-ink-2);
+  overflow-wrap: anywhere;
+}
+.row-value {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-3);
+}
+.chev {
+  flex: none;
+  color: var(--gt-ink-3);
+}
+.row-accent .row-title {
+  color: var(--gt-accent);
+  font-weight: 600;
+}
+.row-danger .row-title {
+  color: var(--gt-danger-fg);
+  font-weight: 600;
+}
+.stat-chip {
+  flex: none;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.stat-chip.done {
+  background-color: var(--gt-done-soft);
+  color: var(--gt-done);
+}
+.stat-chip.warm {
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gt-space-2);
+}
+.card-title {
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Train. */
+.home-page .resume-card {
+  padding: 14px var(--gt-space-4);
+  border-radius: var(--gt-radius-lg);
+}
+.home-page .resume-card small {
+  color: var(--gt-done);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.home-page .resume-card:not(.is-running) small {
+  color: var(--gt-accent);
+}
+.home-page .resume-card strong {
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+}
+.home-page .resume-card .resume-meta {
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+}
+.resume-play {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 12px;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+}
+.home-actions {
+  align-items: stretch;
+}
+.home-actions .btn-quiet {
+  align-self: center;
+}
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--gt-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--gt-fs-1);
+  color: var(--gt-ink-2);
+}
+.dot {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.dot.today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+  color: var(--gt-accent);
+  font-weight: 700;
+}
+.dot.done {
+  background-color: var(--gt-done);
+  color: var(--gt-on-accent);
+}
+.dot.done.today {
+  box-shadow:
+    inset 0 0 0 2px var(--gt-accent),
+    inset 0 0 0 4px var(--gt-surface);
+  color: var(--gt-on-accent);
+}
+.play-round {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.last-card {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+.last-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
+.last-text .row-sub {
+  font-weight: 400;
+}
+
+/* Bottom navigation: four tabs. */
+.bottom-nav {
+  padding-inline: var(--gt-space-2);
+  background-color: var(--gt-surface);
+  border-top-color: var(--gt-line);
+}
+.bottom-nav a {
+  gap: 2px;
+  min-height: 44px;
+  padding: 4px 0;
+  font-size: var(--gt-fs-1);
+  color: var(--gt-ink-2);
+}
+.bottom-nav a.active {
+  color: var(--gt-accent);
+  font-weight: 600;
+}
+
+/* Settings. */
+.settings-page {
+  gap: 18px;
+}
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-weight: 700;
+}
+.account-row {
+  min-height: 72px;
+}
+.account-row .row-title {
+  font-weight: 600;
+}
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.status-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--gt-ink-3);
+}
+.status-dot.ok {
+  background-color: var(--gt-done);
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+}
+.stepper output {
+  font-size: var(--gt-fs-3);
+  color: var(--gt-ink-2);
+}
+.stepper output strong {
+  font-size: var(--gt-fs-5);
+  color: var(--gt-ink);
+}
+.settings-page .card {
+  border-radius: var(--gt-radius-lg);
+}

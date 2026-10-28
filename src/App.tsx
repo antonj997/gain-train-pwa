@@ -57,6 +57,7 @@ function AccountApp() {
               <Route path="history" element={<History />} />
               <Route path="progress" element={<Progress />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="library" element={<Routines />} />
               <Route path="routines" element={<Routines />} />
               <Route path="my-exercises" element={<MyExercises />} />
               <Route path="auth" element={<Auth />} />

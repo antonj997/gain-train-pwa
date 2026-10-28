@@ -1,6 +1,6 @@
-.profile-section > div {
+.profile-section {
   display: grid;
-  gap: 6px;
+  gap: 12px;
 }
 .profile-form {
   display: grid;
