@@ -59,10 +59,20 @@ export default function Home() {
         <Link
           key={r.id}
           to={workoutPath(r.id)}
-          className={"resume-card" + (i === 0 ? " resume-primary" : "")}
+          className={
+            "resume-card" +
+            (i === 0 ? " resume-primary" : "") +
+            // A past workout has no start time and is not "live".
+            (r.payload.startedAt !== null ? " is-running" : "")
+          }
         >
           <span>
-            <small>Resume workout</small>
+            <small>
+              {r.payload.startedAt !== null && (
+                <span className="resume-live" aria-hidden="true" />
+              )}
+              Resume workout
+            </small>
             <strong>{r.payload.name}</strong>
             <span className="resume-meta">
               {localizedDate(r.payload.date)} · {doneSetCount(r.payload)} of{" "}
