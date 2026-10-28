@@ -19,7 +19,7 @@
 .set-drag-handle:hover,
 .set-drag-handle:focus-visible {
   color: var(--blue);
-  background: hsl(var(--primary) / 0.08);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
 }
 .set-drag-handle:focus-visible {
   outline: none;
@@ -35,7 +35,7 @@
   position: relative;
   z-index: 1;
   border-radius: 10px;
-  background: hsl(var(--primary) / 0.08);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
 }
 .is-moving .set-drag-handle {
   color: var(--blue);
@@ -127,8 +127,8 @@
   cursor: default;
 }
 .done-button.unlock-highlight {
-  border: 2px solid hsl(var(--destructive));
-  outline: 2px solid hsl(var(--destructive));
+  border: 2px solid var(--destructive);
+  outline: 2px solid var(--destructive);
   outline-offset: 2px;
 }
 .set-block.set-compact {

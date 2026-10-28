@@ -8,10 +8,10 @@ textarea:focus-visible {
 }
 input[aria-invalid="true"],
 select[aria-invalid="true"] {
-  border-color: hsl(var(--destructive));
+  border-color: var(--destructive);
 }
 .field-error {
-  color: hsl(var(--destructive));
+  color: var(--destructive);
 }
 input[type="number"] {
   appearance: textfield;
@@ -118,7 +118,7 @@ select,
   height: 48px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: hsl(var(--background));
+  background: var(--background);
   color: var(--soft);
   font-size: 19px;
   font-weight: 650;
@@ -218,10 +218,10 @@ select,
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  color: hsl(var(--destructive));
+  color: var(--destructive);
   font-size: 14px;
   padding: 12px;
-  border: 1px solid hsl(var(--destructive) / 0.4);
+  border: 1px solid color-mix(in srgb, var(--destructive) 40%, transparent);
   border-radius: 10px;
 }
 .app-dialog .routine-exercise {

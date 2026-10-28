@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.classList.add(theme);
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", theme === "dark" ? "#0d1016" : "#f5f6f9");
+      ?.setAttribute("content", theme === "dark" ? "#0F1115" : "#F4F5F7");
   }, [theme]);
 
   // Follow the system appearance until the user picks one in Settings.

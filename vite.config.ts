@@ -23,8 +23,8 @@ export default defineConfig({
         scope: base,
         display: "standalone",
         // Match the dark app background so the splash and title bar don't flash.
-        background_color: "#0d1016",
-        theme_color: "#0d1016",
+        background_color: "#0F1115",
+        theme_color: "#0F1115",
         shortcuts: [
           {
             name: "Start or resume workout",
