@@ -44,16 +44,10 @@ export default function ProfileForm() {
               : "No bodyweight saved."
             : "Saved on this device.";
   return (
-    <section
-      className="settings-card profile-section"
-      aria-labelledby="profile-heading"
-    >
-      <div>
-        <h2 id="profile-heading">Profile</h2>
-        <p className="small-note">
-          Your bodyweight appears when you choose BW in a workout.
-        </p>
-      </div>
+    <section className="profile-section">
+      <p className="small-note">
+        Your bodyweight appears when you choose BW in a workout.
+      </p>
       <form className="profile-form" onSubmit={save} noValidate>
         <label htmlFor="profile-bodyweight">Bodyweight (kg)</label>
         <div className="profile-input-row">

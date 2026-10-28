@@ -1,34 +1,74 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Play, ChevronRight } from "lucide-react";
+import { Plus, Play, Repeat, Settings } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import type { RoutineRecord } from "@/data/model";
+import PageHeader from "@/components/PageHeader";
+import ListRow from "@/components/ui/ListRow";
+import type { RoutineRecord, Workout } from "@/data/model";
 import {
   completedWorkouts,
   doneSetCount,
   draftWorkouts,
   routines as routineRecords,
   setCount,
+  workouts as allWorkouts,
 } from "@/data/selectors";
+import { isDrop } from "@/data/drops";
 import { newWorkout } from "@/data/start";
+import { today } from "@/data/model";
 import { localizedDate } from "@/lib/dates";
-import { countLabel, durationLabel } from "@/lib/labels";
+import { countLabel, durationLabel, timeTrainedLabel } from "@/lib/labels";
 import { historyPath, workoutPath } from "@/lib/routes";
+import { nextHeadline } from "@/lib/headlines";
+import { readTrainingPreferences } from "@/lib/preferences";
+import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
+
+/** The first unchecked set of a workout, such as "Bench Press set 3". */
+function nextSet(workout: Workout) {
+  for (const exercise of workout.exercises) {
+    let number = 0;
+    for (const set of exercise.sets) {
+      if (isDrop(set)) continue;
+      number++;
+      if (!set.done) return `${exercise.name} set ${number}`;
+    }
+  }
+  return null;
+}
+
+/** The current time, refreshed every 30 seconds while a workout runs. */
+function useNow(active: boolean) {
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, [active]);
+  return now;
+}
 
 export default function Home() {
   const { state } = useData();
   const {
     start: requestStart,
+    repeat,
     busy: starting,
     confirmation,
   } = useStartWorkout();
   const drafts = draftWorkouts(state.records);
-  const last = completedWorkouts(state.records)[0];
-  const routines = routineRecords(state.records);
+  const completed = useMemo(
+    () => completedWorkouts(state.records),
+    [state.records],
+  );
+  const last = completed[0];
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const handledShortcut = useRef(false);
+  const [headline] = useState(() => nextHeadline());
+  const [goal] = useState(() => readTrainingPreferences().weeklyGoal);
+  const now = useNow(drafts.some((r) => r.payload.startedAt !== null));
   const start = (past = false, routine?: RoutineRecord) =>
     requestStart(newWorkout(Object.values(state.records), { routine, past }));
   // The home-screen shortcut resumes a running workout instead of replacing it.
@@ -40,55 +80,111 @@ export default function Home() {
     if (running) navigate(workoutPath(running.id), { replace: true });
     else void start();
   });
+
+  const day = today();
+  const week = useMemo(() => {
+    const dates = completed.map((r) => r.payload.date);
+    const totals = weekTotals(
+      completed.map((r) => r.payload),
+      day,
+    );
+    return {
+      days: weekStrip(dates, day),
+      totals,
+      streak: goalStreak(dates, goal, day),
+    };
+  }, [completed, goal, day]);
+
+  // Routines last used first; those never used keep their saved order.
+  const recentRoutines = useMemo(() => {
+    const lastUsed = new Map<string, number>();
+    allWorkouts(state.records).forEach((r, index) => {
+      const id = r.payload.routineId;
+      if (id && !lastUsed.has(id)) lastUsed.set(id, index);
+    });
+    return routineRecords(state.records)
+      .map((routine, order) => ({ routine, order }))
+      .sort(
+        (a, b) =>
+          (lastUsed.get(a.routine.id) ?? Infinity) -
+            (lastUsed.get(b.routine.id) ?? Infinity) || a.order - b.order,
+      )
+      .slice(0, 3)
+      .map(({ routine }) => routine);
+  }, [state.records]);
+
+  const { totals } = week;
+  const goalMet = goal !== null && totals.workouts >= goal;
+
   return (
-    <div className="stack home-page">
+    <div className="page home-page">
       {confirmation}
-      <div className="page-title">
-        <div>
-          <p className="eyebrow">
-            {new Date().toLocaleDateString(undefined, {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-          <h1>Ready for your next set?</h1>
-        </div>
-      </div>
-      {drafts.map((r, i) => (
-        <Link
-          key={r.id}
-          to={workoutPath(r.id)}
-          className={
-            "resume-card" +
-            (i === 0 ? " resume-primary" : "") +
-            // A past workout has no start time and is not "live".
-            (r.payload.startedAt !== null ? " is-running" : "")
-          }
-        >
-          <span>
-            <small>
-              {r.payload.startedAt !== null && (
-                <span className="resume-live" aria-hidden="true" />
-              )}
-              Resume workout
-            </small>
-            <strong>{r.payload.name}</strong>
-            <span className="resume-meta">
-              {localizedDate(r.payload.date)} · {doneSetCount(r.payload)} of{" "}
-              {setCount(r.payload)} sets done
+      <PageHeader
+        eyebrow={new Date().toLocaleDateString(undefined, {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        })}
+        title={headline}
+        status
+        action={
+          <Link
+            to="/settings"
+            className="icon-btn filled"
+            aria-label="Settings"
+          >
+            <Settings size={22} aria-hidden="true" />
+          </Link>
+        }
+      />
+      {drafts.map((r, i) => {
+        const running = r.payload.startedAt !== null;
+        const next = nextSet(r.payload);
+        return (
+          <Link
+            key={r.id}
+            to={workoutPath(r.id)}
+            className={
+              "resume-card" +
+              (i === 0 ? " resume-primary" : "") +
+              // A past workout has no start time and is not "live".
+              (running ? " is-running" : "")
+            }
+          >
+            <span>
+              <small>
+                {running && <span className="resume-live" aria-hidden="true" />}
+                {running
+                  ? `In progress · ${timeTrainedLabel(
+                      Math.max(
+                        0,
+                        Math.floor((now - r.payload.startedAt!) / 60000),
+                      ),
+                    )}`
+                  : "Resume workout"}
+              </small>
+              <strong>{r.payload.name}</strong>
+              <span className="resume-meta">
+                {!running && `${localizedDate(r.payload.date)} · `}
+                {doneSetCount(r.payload)} of {setCount(r.payload)} sets
+                {next && ` · next: ${next}`}
+              </span>
             </span>
-          </span>
-          <Play size={24} />
-        </Link>
-      ))}
+            <Play className="resume-play" fill="currentColor" stroke="none" />
+          </Link>
+        );
+      })}
       <div className="home-actions">
         <button
-          className={drafts.length ? "secondary" : "primary large"}
+          className={
+            drafts.length
+              ? "btn-secondary btn-block"
+              : "btn-primary btn-block btn-lg"
+          }
           disabled={starting}
           onClick={() => void start()}
         >
-          <Plus size={21} />
+          <Plus size={20} aria-hidden="true" />
           {starting
             ? "Starting…"
             : drafts.length
@@ -96,69 +192,128 @@ export default function Home() {
               : "Start workout"}
         </button>
         <button
-          className="text-button"
+          className="btn-quiet"
           disabled={starting}
           onClick={() => void start(true)}
         >
           Log a past workout
         </button>
       </div>
-      <section>
-        <div className="section-heading">
-          <h2>Your routines</h2>
-          <Link to="/routines">Manage</Link>
+      <section className="card col-12" aria-labelledby="week-heading">
+        <div className="card-head">
+          <h2 id="week-heading">This week</h2>
+          <span className={"stat-chip" + (goalMet ? " done" : "")}>
+            {goal !== null
+              ? `${totals.workouts} of ${goal} workouts`
+              : countLabel(totals.workouts, "workout")}
+          </span>
         </div>
-        {routines.length ? (
-          routines.map((r) => (
-            <button
-              className="list-card"
-              disabled={starting}
-              key={r.id}
-              onClick={() => void start(false, r)}
+        <ol className="week">
+          {week.days.map((d) => (
+            <li
+              key={d.date}
+              className="day"
+              aria-label={
+                localizedDate(d.date, { weekday: "long", day: "numeric" }) +
+                (d.done ? ", workout done" : "") +
+                (d.today ? ", today" : "")
+              }
             >
-              <span>
-                <strong>{r.payload.name}</strong>
-                <small>
-                  {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
-                  {r.payload.exercises
-                    .slice(0, 3)
-                    .map((exercise) => exercise.name)
-                    .join(" · ")}
-                </small>
+              <span aria-hidden="true">{d.label}</span>
+              <span
+                className={
+                  "dot" + (d.done ? " done" : "") + (d.today ? " today" : "")
+                }
+                aria-hidden="true"
+              >
+                {d.day}
               </span>
-              <Play size={19} />
-            </button>
-          ))
+            </li>
+          ))}
+        </ol>
+        <p className="row-sub">
+          {totals.workouts
+            ? [
+                countLabel(totals.sets, "set"),
+                timeTrainedLabel(totals.minutes),
+                week.streak >= 2 && `${week.streak} weeks in a row on goal`,
+              ]
+                .filter(Boolean)
+                .join(" · ")
+            : week.streak >= 2
+              ? `${week.streak} weeks in a row on goal`
+              : "Nothing logged yet this week."}
+        </p>
+      </section>
+      <section aria-labelledby="routines-heading">
+        <div className="section-head">
+          <h2 id="routines-heading">Start a routine</h2>
+          <Link className="text-link" to="/library">
+            All routines
+          </Link>
+        </div>
+        {recentRoutines.length ? (
+          <div className="list">
+            {recentRoutines.map((r) => (
+              <ListRow
+                key={r.id}
+                disabled={starting}
+                onClick={() => void start(false, r)}
+                title={r.payload.name}
+                sub={
+                  countLabel(r.payload.exercises.length, "exercise") +
+                  r.payload.exercises
+                    .slice(0, 3)
+                    .map((exercise) => " · " + exercise.name)
+                    .join("")
+                }
+                trailing={
+                  <span className="play-round">
+                    <Play size={18} fill="currentColor" stroke="none" />
+                    <span className="sr-only">Start</span>
+                  </span>
+                }
+              />
+            ))}
+          </div>
         ) : (
-          <div className="empty-card">
-            <h3>A routine makes next time easier</h3>
-            <p>
+          <div className="card col-12">
+            <h3 className="card-title">A routine makes next time easier</h3>
+            <p className="row-sub">
               Save a workout as a routine after finishing, or create one now.
             </p>
-            <Link className="secondary" to="/routines">
+            <Link className="btn-secondary" to="/library">
               Create a routine
             </Link>
           </div>
         )}
       </section>
       {last && (
-        <section>
-          <div className="section-heading">
-            <h2>Last workout</h2>
-            <Link to="/history">View all</Link>
-          </div>
-          <Link className="list-card" to={historyPath(last.id)}>
-            <span>
-              <strong>{last.payload.name}</strong>
-              <small>
-                {localizedDate(last.payload.date)} ·{" "}
-                {countLabel(doneSetCount(last.payload), "set")}
-                {last.payload.duration !== null &&
-                  ` · ${durationLabel(last.payload.duration)}`}
-              </small>
+        <section className="card last-card" aria-label="Last workout">
+          <Link className="last-text" to={historyPath(last.id)}>
+            <span className="row-sub">
+              Last workout ·{" "}
+              {localizedDate(last.payload.date, {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+              })}
             </span>
-            <ChevronRight size={20} />
+            <span className="card-title">
+              {last.payload.name} ·{" "}
+              {countLabel(doneSetCount(last.payload), "set")}
+              {last.payload.duration !== null &&
+                ` · ${durationLabel(last.payload.duration)}`}
+            </span>
           </Link>
+          <button
+            className="btn-secondary"
+            disabled={starting}
+            onClick={() => void repeat(last.payload)}
+          >
+            <Repeat size={18} aria-hidden="true" />
+            Repeat
+          </button>
         </section>
       )}
     </div>
