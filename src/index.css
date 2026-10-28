@@ -153,38 +153,6 @@ summary {
   max-width: 800px;
   margin: auto;
 }
-.app-header {
-  height: 68px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--line);
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--ink);
-  font-weight: 800;
-  font-size: 18px;
-}
-.brand svg {
-  color: var(--blue);
-}
-.sync-line {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 35px;
-  font-size: 12px;
-  color: var(--soft);
-  padding: 5px 20px;
-}
-.sync-line a {
-  margin-left: auto;
-  font-weight: 600;
-}
 .app-shell main {
   padding: 20px 18px 116px;
 }
@@ -271,30 +239,6 @@ summary {
   font-size: 14px;
   font-weight: 600;
 }
-.list-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-  padding: 17px 18px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 15px;
-  width: 100%;
-  color: var(--ink);
-  margin-bottom: 10px;
-}
-.list-card > span {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-.list-card strong {
-  font-size: 17px;
-  overflow-wrap: anywhere;
-}
 .resume-card {
   display: flex;
   align-items: center;
@@ -312,9 +256,84 @@ summary {
   gap: 7px;
 }
 .resume-card small {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
   color: var(--blue);
   font-weight: 800;
   letter-spacing: normal;
+}
+
+/* A running workout draws attention: its border is a highlight that turns
+   slowly around the card, and a small dot pulses by the label. Without motion
+   (or without @property support) the border is a plain accent line. */
+@property --resume-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.resume-card.is-running {
+  --resume-fill: var(--gt-accent-soft);
+  --resume-track: color-mix(in srgb, var(--gt-accent) 28%, var(--gt-surface));
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--resume-fill), var(--resume-fill)) padding-box,
+    conic-gradient(
+        from var(--resume-angle),
+        var(--gt-accent) 0deg,
+        var(--gt-done) 70deg,
+        var(--resume-track) 170deg,
+        var(--resume-track) 290deg,
+        var(--gt-accent) 360deg
+      )
+      border-box;
+}
+.resume-live {
+  position: relative;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gt-done);
+}
+.resume-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--gt-done);
+}
+@keyframes resume-turn {
+  to {
+    --resume-angle: 360deg;
+  }
+}
+@keyframes resume-pulse {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.6);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .resume-card.is-running {
+    animation: resume-turn 5s linear infinite;
+  }
+  .resume-live::after {
+    animation: resume-pulse 2s ease-out infinite;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .resume-card.is-running {
+    border-color: var(--gt-accent);
+    background: var(--resume-fill);
+  }
+  .resume-live::after {
+    display: none;
+  }
 }
 .resume-card strong {
   font-size: 21px;
@@ -367,16 +386,6 @@ summary {
 .empty {
   padding: 40px 20px;
   text-align: center;
-}
-.notice {
-  margin: 8px 18px;
-  padding: 12px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-  font-size: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 }
 .error-text {
   color: var(--destructive);
@@ -475,22 +484,6 @@ summary {
   color: var(--gt-ink-2);
   font-weight: 600;
 }
-.settings-card,
-.routine-card,
-.progress-card {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  padding: 21px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface);
-}
-.settings-card h2 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .file-label {
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -502,15 +495,6 @@ summary {
   padding: 0;
   border: 0;
   min-height: 30px;
-}
-.performance {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.performance > strong {
-  font-size: 27px;
-  letter-spacing: -0.04em;
 }
 .chart {
   height: 180px;
@@ -537,8 +521,7 @@ summary {
     background: color-mix(in srgb, var(--gt-accent) 88%, var(--gt-ink));
   }
   .secondary:hover,
-  .icon-button:hover,
-  .list-card:hover {
+  .icon-button:hover {
     background: color-mix(in srgb, var(--primary) 7%, transparent);
   }
 }
@@ -583,11 +566,9 @@ h2,
 h3,
 .resume-card strong,
 .history-set strong,
-.exercise-choice strong,
-.settings-card p {
+.exercise-choice strong {
   overflow-wrap: anywhere;
 }
-.list-card > svg,
 .resume-card > svg,
 .exercise-choice > svg {
   flex-shrink: 0;
@@ -610,9 +591,6 @@ h3,
 @media (max-width: 639px) {
   .file-label input {
     font-size: 16px;
-  }
-  .sync-line {
-    flex-wrap: wrap;
   }
 }
 
@@ -657,8 +635,7 @@ h3,
 .home-page h1 {
   font-size: clamp(23px, 5vw, 30px);
 }
-.home-page .resume-card,
-.home-page .list-card {
+.home-page .resume-card {
   padding: 12px 14px;
 }
 .home-page .resume-card strong {
@@ -674,83 +651,6 @@ h3,
 .home-page .empty-card {
   padding: 16px;
   gap: 10px;
-}
-.metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-}
-.metric {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow-wrap: anywhere;
-}
-.metric > span,
-.metric small {
-  font-size: 11px;
-  color: var(--soft);
-}
-.metric strong {
-  font-size: 20px;
-  letter-spacing: -0.03em;
-}
-.history-week .section-heading {
-  margin: 4px 0 6px;
-}
-.history-week h2 {
-  font-size: 14px;
-}
-.history-week .list-card {
-  padding: 10px 12px;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.history-week .history-date {
-  flex: 0 0 48px;
-  font-size: 12px;
-  color: var(--soft);
-}
-.history-week .history-name {
-  flex: 1;
-  min-width: 0;
-  gap: 1px;
-}
-.history-week strong {
-  font-size: 14px;
-  overflow-wrap: anywhere;
-}
-.history-week small {
-  font-size: 12px;
-  color: var(--soft);
-}
-.progress-card {
-  padding: 14px;
-  gap: 10px;
-}
-.progress-card h2 {
-  font-size: 18px;
-}
-.progress-card .performance > strong {
-  font-size: 22px;
-}
-.progress-card .chart {
-  height: 145px;
-}
-.progress-metrics {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-.progress-metrics .metric {
-  padding: 8px;
-}
-.progress-metrics strong {
-  font-size: 16px;
 }
 .session-summary {
   list-style: none;
@@ -770,61 +670,6 @@ h3,
 }
 details[open] > .session-summary > svg {
   transform: rotate(180deg);
-}
-@media (min-width: 640px) {
-  .history-page > .metrics-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (max-width: 359px) {
-  .progress-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .progress-metrics .metric:last-child {
-    grid-column: 1 / -1;
-  }
-}
-
-.history-page > .metrics-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-.history-page .metric {
-  padding: 8px;
-}
-@media (max-width: 359px) {
-  .history-page > .metrics-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.settings-disclosure {
-  display: block;
-}
-.settings-disclosure > summary {
-  padding: 0;
-}
-.settings-disclosure > summary > span {
-  min-width: 0;
-}
-.settings-disclosure summary strong {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  font-size: 17px;
-}
-.settings-disclosure summary small {
-  display: block;
-  color: var(--soft);
-  font-size: 12px;
-  margin-top: 5px;
-  overflow-wrap: anywhere;
-}
-.settings-disclosure[open] > .stack {
-  margin-top: 18px;
-}
-.progress-details {
-  gap: 12px;
-  padding-top: 10px;
 }
 .theme-setting {
   display: flex;
@@ -923,10 +768,6 @@ details[open] > .session-summary > svg {
   opacity: 1;
   transform: translateY(0);
 }
-.delete-account-button {
-  background: var(--gt-danger-fg);
-  color: var(--gt-on-accent);
-}
 select {
   appearance: none;
   padding-right: 36px;
@@ -946,12 +787,10 @@ select {
 @media (prefers-reduced-motion: no-preference) {
   html.theme-fading body,
   html.theme-fading .app-shell,
-  html.theme-fading .app-header,
   html.theme-fading .bottom-nav,
   html.theme-fading main,
   html.theme-fading section,
   html.theme-fading details,
-  html.theme-fading .metric,
   html.theme-fading input,
   html.theme-fading select,
   html.theme-fading button:not(.theme-switch),
@@ -1005,9 +844,7 @@ select {
 }
 h1,
 h2,
-h3,
-.settings-disclosure summary strong,
-.settings-disclosure summary svg {
+h3 {
   color: var(--ink);
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -1030,13 +867,6 @@ h3,
   }
 }
 
-/* Explicit colors prevent nested inherited transitions from lagging behind headings. */
-.app-header .brand > span,
-.app-header > .icon-button,
-.app-header > .icon-button > svg {
-  color: var(--ink);
-}
-
 /* Use one animation clock for primary text, including nested header controls.
    The endpoints are the light and dark --gt-ink values, written out because an
    animation between themes cannot read a variable that is changing. */
@@ -1057,31 +887,11 @@ h3,
   }
 }
 @media (prefers-reduced-motion: no-preference) {
-  html.theme-fading
-    :is(
-      h1,
-      h2,
-      h3,
-      .brand > span,
-      .app-header > .icon-button,
-      .app-header > .icon-button > svg,
-      .settings-disclosure summary strong,
-      .settings-disclosure summary svg
-    ) {
+  html.theme-fading :is(h1, h2, h3) {
     transition-property: background-color, border-color, box-shadow, transform;
     animation: ink-to-light 0.65s ease both;
   }
-  html.dark.theme-fading
-    :is(
-      h1,
-      h2,
-      h3,
-      .brand > span,
-      .app-header > .icon-button,
-      .app-header > .icon-button > svg,
-      .settings-disclosure summary strong,
-      .settings-disclosure summary svg
-    ) {
+  html.dark.theme-fading :is(h1, h2, h3) {
     animation-name: ink-to-dark;
   }
 }

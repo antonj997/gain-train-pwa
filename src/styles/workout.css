@@ -2,17 +2,28 @@
    tokens.css only; spacing, type sizes, radii and motion use its tokens too.
 
    A set row is one grid line (.set-line): badge, previous result, load, count
-   and the done button. Every control is 44px. Below 360px the Previous column
+   and the done button. Every control is 44px tall. The load and count fields
+   are only as wide as three digits need; Previous takes the rest and wraps
+   rather than truncates. A load marker ("+", "−", "kg") widens just its own
+   row's load field by what the marker needs. Below 360px the Previous column
    is hidden so the rows never scroll sideways. */
 
 .set-line,
 .set-columns {
+  --set-load-w: 52px;
+  --set-count-w: 48px;
   display: grid;
   grid-template-columns:
-    44px minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 1fr)
+    44px minmax(0, 1fr) var(--set-load-w) var(--set-count-w)
     44px;
   align-items: center;
   column-gap: var(--gt-space-1);
+}
+.set-line.load-prefix {
+  --set-load-w: 68px;
+}
+.set-line.load-suffix {
+  --set-load-w: 74px;
 }
 .set-line {
   position: relative;
@@ -91,18 +102,19 @@
   color: var(--gt-on-accent);
 }
 
-/* Previous result. It is hidden below 360px; the Set sheet still shows it. */
+/* Previous result. It wraps to a second line instead of truncating. It is
+   hidden below 360px; the Set sheet still shows it. */
 .set-line .set-previous {
   display: block;
   min-width: 0;
   margin: 0;
   padding: 0;
-  overflow: hidden;
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
+  line-height: 1.2;
   text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-wrap: balance;
+  overflow-wrap: break-word;
 }
 @media (max-width: 359px) {
   .set-line,
@@ -126,12 +138,13 @@
   width: 100%;
   min-height: 44px;
   height: 44px;
-  padding: 0 var(--gt-space-1);
+  padding: 0;
   border: 1px solid transparent;
   border-radius: var(--gt-radius-sm);
   background-color: var(--gt-surface-2);
   color: var(--gt-ink);
   font-size: var(--gt-fs-4);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   text-align: center;
   transition:
@@ -174,17 +187,17 @@
 /* The value sits right against its marker ("+10", "40 kg"), so it is aligned
    to the marker's side instead of the centre. */
 .set-marker-prefix {
-  left: var(--gt-space-3);
+  left: var(--gt-space-2);
   color: var(--gt-accent);
   font-size: var(--gt-fs-4);
 }
 .set-marker-suffix {
-  right: var(--gt-space-2);
+  right: var(--gt-space-1);
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-1);
 }
 .set-line .set-field.has-prefix input {
-  padding-left: calc(var(--gt-space-3) + 1ch);
+  padding-left: calc(var(--gt-space-2) + 1ch + var(--gt-space-1));
   text-align: left;
 }
 .set-line .set-field.has-suffix input {

@@ -1,5 +1,28 @@
 # Changelog
 
+## 28 October 2026 — app pages, Library and the training plan
+
+Navigation and pages (part 3)
+
+- Four tabs: Train, History, Progress and Library. The global header and sync line are gone; each page has its own top bar and shows sync, sign-in and conflict notices as banners under its title. Settings opens from the gear on Train and has a back button.
+- Train: a rotating headline, the This week card (Monday-to-Sunday dots, workouts against your goal, sets and time trained), the three most recent routines with a play button, and a Repeat button on the last workout.
+- New: a weekly goal (1–14 workouts, off by default) in Settings → Training, with "N weeks in a row on goal" on Train. It is stored on the phone with the other training preferences.
+- History groups workouts by week in rows and marks a workout that set a best with a "New best" badge. Progress has a 4 weeks / 3 months / Year control, four tiles with their change, Recent bests and exercises with sparklines.
+- Settings is a set of grouped rows that open sheets; the links to routines and exercises moved to Library.
+- Library (`/library`) holds Routines and Exercises in two tabs (`?tab=`); `/routines` and `/my-exercises` redirect to them. Routines are cards with Start, Edit and a ⋯ sheet for Delete. Exercises has search, the chips All / Yours / Recently used, Recently used and A–Z groups and a favourite star; a custom exercise opens its editor, which now also deletes it.
+- New, optional: a training plan (Library → Routines → "Plan your weeks"). A Monday-to-Sunday template and dated changes up to three months ahead, stored on the phone per account (it does not sync). With a plan, Train shows "Today: <routine>" with Start (or "Rest day") and outlines planned days in the week strip. Without one nothing changes. "Clear plan" removes it.
+
+Fixes
+
+- Set rows give Previous more room, so the row no longer crowds the load and count fields.
+- The resume card of a running workout has an animated border and a pulsing live dot; a past workout keeps the plain accent border, and reduced motion gets a static one.
+- Workouts per week counts finished weeks only, so a quiet start to the week no longer lowers it; it shows a dash until a finished week has a workout.
+- History opens on the simple calendar (restyled with 44 px days, a ring for today and a dot for workout days).
+
+Code
+
+- `src/lib/library.ts` and `src/lib/plan.ts` are new pure helpers with unit tests. `pages/Routines.tsx` and `pages/MyExercises.tsx` became `components/library/RoutinesPanel.tsx` and `ExercisesPanel.tsx`; superseded list-card, routine-card and settings-card styles and the layout notice fallback are deleted.
+
 ## 28 October 2026 — workout screen and the Quiet look
 
 Workout screen

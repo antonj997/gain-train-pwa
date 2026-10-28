@@ -1,11 +1,12 @@
 import { newWorkout } from "@/data/start";
-import { routines } from "@/data/selectors";
+import { completedWorkouts, routines, setCount } from "@/data/selectors";
+import { today } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
 import { toastWithUndo } from "@/lib/undo-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import { Plus, Play, Trash2, Pencil } from "lucide-react";
+import { Plus, Play, Trash2, MoreHorizontal } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { type Exercise, type Routine } from "@/data/model";
@@ -13,6 +14,11 @@ import { initialSet, hasLoggedExercise } from "@/data/workouts";
 import { draftKey, parseRoutineDraft } from "@/lib/drafts";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import ExercisePicker from "@/components/ExercisePicker";
+import ListRow from "@/components/ui/ListRow";
+import Sheet from "@/components/ui/Sheet";
+import { countLabel } from "@/lib/labels";
+import { lastUsedLabel } from "@/lib/library";
+import { readPlan } from "@/lib/plan";
 import RoutinePlan from "@/components/RoutinePlan";
 import { toast } from "sonner";
 import {
@@ -23,7 +29,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-export default function Routines() {
+/** Library → Routines: a card per routine, the routine editor and a link to the training plan. */
+export default function RoutinesPanel() {
   const { state, save, deleteRecord } = useData();
   const { account } = useAuth();
   const workoutStart = useStartWorkout();
@@ -52,7 +59,20 @@ export default function Routines() {
     setRemoving(null);
   };
   const lock = useRef(false);
+  const [menu, setMenu] = useState<string | null>(null);
   const records = routines(state.records);
+  const now = today();
+  // The newest finished workout that started from each routine.
+  const lastDone = useMemo(() => {
+    const dates = new Map<string, string>();
+    for (const r of completedWorkouts(state.records)) {
+      const id = r.payload.routineId;
+      if (id && !dates.has(id)) dates.set(id, r.payload.date);
+    }
+    return dates;
+  }, [state.records]);
+  const hasPlan = readPlan(account) !== null;
+  const menuRoutine = records.find((r) => r.id === menu);
   const update = (exercise: Exercise) => {
     if (edit)
       setEdit({
@@ -106,25 +126,85 @@ export default function Routines() {
     setError(null);
     setOpen(true);
   };
+  const create = () => {
+    if (!edit)
+      setEdit({
+        id: crypto.randomUUID(),
+        data: { name: "", exercises: [] },
+      });
+    setError(null);
+    setOpen(true);
+  };
+  const remove = (r: (typeof records)[number]) =>
+    run(async () => {
+      await deleteRecord(r.id);
+      setMenu(null);
+      toastWithUndo(
+        "Routine deleted",
+        () => save(r.id, "routine", r.payload),
+        "Could not restore the routine. Retry from a backup.",
+      );
+    });
   return (
-    <div className="stack">
+    <div className="col-12">
       {workoutStart.confirmation}
-      <h1>Routines</h1>
-      <button
-        className="primary"
-        onClick={() => {
-          if (!edit)
-            setEdit({
-              id: crypto.randomUUID(),
-              data: { name: "", exercises: [] },
-            });
-          setError(null);
-          setOpen(true);
-        }}
-      >
-        <Plus size={20} />
-        {edit ? "Resume routine draft" : "Create routine"}
-      </button>
+      {records.map((r) => {
+        const done = lastDone.get(r.id);
+        return (
+          <section className="card col-12" key={r.id}>
+            <div className="card-head routine-head">
+              <div className="routine-title">
+                <h2 className="card-title">{r.payload.name}</h2>
+                <span className="row-sub">
+                  {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
+                  {countLabel(setCount(r.payload), "set")} ·{" "}
+                  {done
+                    ? `last done ${lastUsedLabel(done, now)}`
+                    : "never done"}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="icon-btn routine-more"
+                aria-label={r.payload.name + " options"}
+                disabled={busy}
+                onClick={() => setMenu(r.id)}
+              >
+                <MoreHorizontal size={22} aria-hidden="true" />
+              </button>
+            </div>
+            <p className="routine-exercises">
+              {r.payload.exercises.map((ex) => ex.name).join(" · ")}
+            </p>
+            <div className="routine-actions">
+              <button
+                className="btn-primary"
+                disabled={busy || workoutStart.busy}
+                onClick={() =>
+                  void workoutStart.start(
+                    newWorkout(Object.values(state.records), { routine: r }),
+                  )
+                }
+              >
+                <Play size={16} fill="currentColor" stroke="none" />
+                Start
+              </button>
+              <button
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => startEdit(r.id, r.payload)}
+              >
+                Edit
+              </button>
+            </div>
+          </section>
+        );
+      })}
+      {!records.length && !edit && (
+        <p className="empty">
+          Plan your usual exercises and sets once, then start them together.
+        </p>
+      )}
       {edit && !open && (
         <p className="draft-receipt" role="status">
           Unfinished routine: {edit.data.name || "Untitled routine"}.{" "}
@@ -133,63 +213,36 @@ export default function Routines() {
             : "Keep this page open; storage is unavailable."}
         </p>
       )}
-      {!records.length && !edit && (
-        <p className="empty">
-          Plan your usual exercises and sets once, then start them together.
-        </p>
-      )}
-      {records.map((r) => (
-        <div className="routine-card" key={r.id}>
-          <h2>{r.payload.name}</h2>
-          <p className="muted">
-            {r.payload.exercises
-              .map(
-                (ex) =>
-                  `${ex.name} · ${ex.sets.length} ${ex.sets.length === 1 ? "set" : "sets"}`,
-              )
-              .join(" / ")}
-          </p>
-          <div className="button-row">
-            <button
-              className="primary"
-              disabled={busy || workoutStart.busy}
-              onClick={() =>
-                void workoutStart.start(
-                  newWorkout(Object.values(state.records), { routine: r }),
-                )
-              }
-            >
-              <Play size={18} />
-              Start
-            </button>
-            <button
-              className="secondary"
+      <button type="button" className="btn-dashed" onClick={create}>
+        <Plus size={20} aria-hidden="true" />
+        {edit ? "Resume routine draft" : "New routine"}
+      </button>
+      <div className="list">
+        <ListRow
+          to="/library/plan"
+          className="row-quiet"
+          title="Plan your weeks · optional"
+          value={hasPlan ? "On" : undefined}
+          chevron
+        />
+      </div>
+      <Sheet
+        open={!!menuRoutine}
+        onClose={() => setMenu(null)}
+        title={menuRoutine?.payload.name}
+      >
+        {menuRoutine && (
+          <div className="list">
+            <ListRow
+              tone="danger"
+              title="Delete routine"
+              leading={<Trash2 size={20} aria-hidden="true" />}
               disabled={busy}
-              onClick={() => startEdit(r.id, r.payload)}
-            >
-              <Pencil size={18} />
-              Edit
-            </button>
-            <button
-              className="icon-button danger"
-              disabled={busy}
-              aria-label={"Delete " + r.payload.name}
-              onClick={() =>
-                void run(async () => {
-                  await deleteRecord(r.id);
-                  toastWithUndo(
-                    "Routine deleted",
-                    () => save(r.id, "routine", r.payload),
-                    "Could not restore the routine. Retry from a backup.",
-                  );
-                })
-              }
-            >
-              <Trash2 size={19} />
-            </button>
+              onClick={() => void remove(menuRoutine)}
+            />
           </div>
-        </div>
-      ))}
+        )}
+      </Sheet>
       <Dialog
         open={open && !!edit}
         onOpenChange={(value) => {

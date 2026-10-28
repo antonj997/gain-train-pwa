@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/useAuth";
@@ -14,8 +14,8 @@ import NotFound from "@/pages/NotFound";
 const History = lazy(() => import("@/pages/History"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const Settings = lazy(() => import("@/pages/Settings"));
-const Routines = lazy(() => import("@/pages/Routines"));
-const MyExercises = lazy(() => import("@/pages/MyExercises"));
+const Library = lazy(() => import("@/pages/Library"));
+const Plan = lazy(() => import("@/pages/Plan"));
 const Progress = lazy(() => import("@/pages/Progress"));
 function AppToaster() {
   const { theme } = useTheme();
@@ -57,8 +57,16 @@ function AccountApp() {
               <Route path="history" element={<History />} />
               <Route path="progress" element={<Progress />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="routines" element={<Routines />} />
-              <Route path="my-exercises" element={<MyExercises />} />
+              <Route path="library" element={<Library />} />
+              <Route path="library/plan" element={<Plan />} />
+              <Route
+                path="routines"
+                element={<Navigate to="/library" replace />}
+              />
+              <Route
+                path="my-exercises"
+                element={<Navigate to="/library?tab=exercises" replace />}
+              />
               <Route path="auth" element={<Auth />} />
               <Route path="*" element={<NotFound />} />
             </Route>

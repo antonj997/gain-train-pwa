@@ -13,3 +13,10 @@ export function finishSummary(completed: number, unchecked: number) {
     ? `${saved} · ${countLabel(unchecked, "unchecked set")} left out`
     : saved;
 }
+/** Total training time: "45 min", "1 h 53 min", "2 h". */
+export function timeTrainedLabel(minutes: number) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (!h) return `${m} min`;
+  return m ? `${h} h ${m} min` : `${h} h`;
+}

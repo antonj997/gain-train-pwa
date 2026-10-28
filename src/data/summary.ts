@@ -37,9 +37,20 @@ export function shiftDate(date: string, days: number) {
   return dateKey(new Date(dateAt(date).getTime() + days * dayMs));
 }
 export function historyPeriod(month: string, now: string) {
-  if (month === "6m" || month === "12m") {
+  if (month === "4w") {
+    const start = shiftDate(now, -27);
+    return {
+      start,
+      end: now,
+      days: 28,
+      previousStart: shiftDate(start, -28),
+      previousEnd: shiftDate(start, -1),
+      previousDays: 28,
+    };
+  }
+  if (month === "3m" || month === "6m" || month === "12m") {
     const date = dateAt(now);
-    const count = month === "6m" ? 6 : 12;
+    const count = Number.parseInt(month);
     const target = new Date(
       Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - count, 1),
     );
@@ -95,7 +106,21 @@ export function historyPeriod(month: string, now: string) {
 export function weekStart(date: string) {
   return shiftDate(date, -((dateAt(date).getUTCDay() + 6) % 7));
 }
-export function summarize(workouts: Workout[], days: number) {
+/**
+ * Workouts per active week, over finished weeks only: the Monday-Sunday week
+ * that contains `now` is left out until it is over, so a quiet start to the
+ * week does not drag the figure down. An active week has at least one workout.
+ * Null, shown as a dash, when no finished week has a workout.
+ */
+function perWeek(workouts: Workout[], now: string) {
+  const thisWeek = weekStart(now);
+  const finished = workouts.filter(
+    (workout) => weekStart(workout.date) < thisWeek,
+  );
+  const activeWeeks = new Set(finished.map((w) => weekStart(w.date))).size;
+  return activeWeeks ? finished.length / activeWeeks : null;
+}
+export function summarize(workouts: Workout[], days: number, now: string) {
   const durations = workouts.flatMap((w) =>
     w.duration === null ? [] : [w.duration],
   );
@@ -114,10 +139,7 @@ export function summarize(workouts: Workout[], days: number) {
       0,
     ),
     workouts: workouts.length,
-    perWeek: workouts.length
-      ? workouts.length /
-        new Set(workouts.map((workout) => weekStart(workout.date))).size
-      : 0,
+    perWeek: perWeek(workouts, now),
     duration: durations.length
       ? durations.reduce((sum, value) => sum + value, 0) / durations.length
       : null,

@@ -152,8 +152,11 @@ test("seconds never become lifted kilograms or an estimated one-rep maximum", ()
   const weightedTime = set({ weight: 50, reps: 8, measure: "seconds" });
   assert.equal(estimate(weightedTime), null);
   assert.equal(
-    summarize([record([exercise([weightedTime])]).payload as Workout], 30)
-      .volume,
+    summarize(
+      [record([exercise([weightedTime])]).payload as Workout],
+      30,
+      "2026-12-31",
+    ).volume,
     0,
   );
 });

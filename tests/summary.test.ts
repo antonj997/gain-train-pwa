@@ -54,6 +54,7 @@ test("summary excludes missing durations and unchecked sets, counts zero-minute 
   const summary = summarize(
     [workout, { ...workout, duration: null }, { ...workout, duration: 60 }],
     30,
+    "2026-09-30",
   );
   assert.equal(summary.duration, 30);
   assert.equal(summary.minutes, 60);
@@ -66,21 +67,44 @@ test("summary excludes missing durations and unchecked sets, counts zero-minute 
       sets: ex.sets.map((set) => ({ ...set, load: "assisted" as const })),
     })),
   };
-  assert.equal(summarize([assisted], 30).volume, 0);
+  assert.equal(summarize([assisted], 30, "2026-09-30").volume, 0);
   assert.equal(summary.perWeek, 3);
   assert.equal(
-    summarize([workout, { ...workout, date: "2026-08-03" }], 60).perWeek,
+    summarize([workout, { ...workout, date: "2026-08-03" }], 60, "2026-09-30")
+      .perWeek,
     1,
   );
   assert.equal(
-    summarize([workout, workout, { ...workout, date: "2026-08-03" }], 60)
-      .perWeek,
+    summarize(
+      [workout, workout, { ...workout, date: "2026-08-03" }],
+      60,
+      "2026-09-30",
+    ).perWeek,
     1.5,
   );
-  assert.equal(summarize([], 30).perWeek, 0);
-  assert.equal(summarize([], 30).duration, null);
+  assert.equal(summarize([], 30, "2026-09-30").perWeek, null);
+  assert.equal(summarize([], 30, "2026-09-30").duration, null);
   assert.equal(metricChange(null, 20), "No comparison");
   assert.equal(metricChange(1.04, 1, 1), "→ No change");
+});
+test("workouts per week only count finished weeks", () => {
+  const on = (date: string) =>
+    ({ date, duration: null, exercises: [] }) as unknown as Workout;
+  // 2026-09-16 is a Wednesday; the week of Monday 14 September is unfinished.
+  const sessions = ["2026-09-14", "2026-09-10", "2026-09-08", "2026-09-01"].map(
+    on,
+  );
+  const perWeek = (workouts: Workout[], now: string) =>
+    summarize(workouts, 30, now).perWeek;
+  // The weeks of 7 September and 31 August are finished: 3 workouts / 2 weeks.
+  assert.equal(perWeek(sessions, "2026-09-16"), 1.5);
+  // The week of the 14th counts once its Sunday is over.
+  assert.equal(perWeek(sessions, "2026-09-21"), 4 / 3);
+  // Sunday itself is still part of the unfinished week.
+  assert.equal(perWeek([on("2026-09-13")], "2026-09-13"), null);
+  assert.equal(perWeek([on("2026-09-13")], "2026-09-14"), 1);
+  // Nothing finished yet: a dash, not zero and not a division by zero.
+  assert.equal(perWeek([on("2026-09-14")], "2026-09-16"), null);
 });
 test("summary counts a set and its drops as one set", () => {
   const workout: Workout = {
@@ -102,7 +126,7 @@ test("summary counts a set and its drops as one set", () => {
       },
     ],
   };
-  const summary = summarize([workout], 30);
+  const summary = summarize([workout], 30, "2026-09-30");
   assert.equal(summary.sets, 2);
   assert.equal(summary.workingSets, 1);
 });

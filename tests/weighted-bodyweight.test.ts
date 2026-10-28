@@ -254,7 +254,10 @@ test("progress selects extra-bodyweight performance at the latest added kg witho
   assert.equal(progress.points[0].set.weight, 10);
   assert.equal(progress.points[0].set.reps, 9);
   assert.equal(progress.points[0].e1rm, null);
-  assert.equal(summarize([session.payload as Workout], 30).volume, 0);
+  assert.equal(
+    summarize([session.payload as Workout], 30, "2026-12-31").volume,
+    0,
+  );
   assert.equal(
     improvementRate(
       [

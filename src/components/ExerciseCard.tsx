@@ -67,6 +67,17 @@ type OpenSheet =
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
+/**
+ * Previous wraps in the narrow column, so tie the words that belong together
+ * ("12.5 kg", "× 8") with no-break spaces: "BW + 12.5 kg" / "× 12" rather than
+ * "BW + 12.5" / "kg × 12".
+ */
+const keepTogether = (label: string) =>
+  label
+    .replace(/BW \+ /, "BW +\u00a0")
+    .replace(/(\d) kg/, "$1\u00a0kg")
+    .replace(/× (\d)/, "×\u00a0$1");
+
 export default function ExerciseCard({
   exercise: planned,
   isFirst,
@@ -117,7 +128,7 @@ export default function ExerciseCard({
   };
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
-    return result ? labelSet(result) : undefined;
+    return result ? keepTogether(labelSet(result)) : undefined;
   };
 
   return (

@@ -11,27 +11,29 @@ import { workoutPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
 import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { weekStart } from "@/data/summary";
+import { shiftDate, weekStart } from "@/data/summary";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import {
-  Repeat,
-  ChevronRight,
-  Trash2,
-  Pencil,
-  CalendarDays,
-} from "lucide-react";
+import { Repeat, Trash2, Pencil, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
-import { today, repeatExercises } from "@/data/model";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { today } from "@/data/model";
+import PageHeader from "@/components/PageHeader";
+import ListRow from "@/components/ui/ListRow";
+import Sheet from "@/components/ui/Sheet";
+import { newBestWorkoutIds } from "@/data/analytics";
+/** "This week", or the Monday–Sunday span such as "19–25 Oct". */
+function weekTitle(week: string, now: string) {
+  if (week === weekStart(now)) return "This week";
+  const end = shiftDate(week, 6);
+  const day = (date: string) => localizedDate(date, { day: "numeric" });
+  const month = (date: string) => localizedDate(date, { month: "short" });
+  return month(week) === month(end)
+    ? `${day(week)}–${day(end)} ${month(end)}`
+    : `${day(week)} ${month(week)}–${day(end)} ${month(end)}`;
+}
+
 export default function History() {
   const { state, deleteRecord, restoreWorkout } = useData();
   const workoutStart = useStartWorkout();
@@ -44,6 +46,7 @@ export default function History() {
     () => completedWorkouts(state.records),
     [state.records],
   );
+  const bests = useMemo(() => newBestWorkoutIds(records), [records]);
   const period = historyCalendarBounds(calendar, now);
   const filtered = records.filter(
     ({ payload: { date } }) =>
@@ -54,18 +57,8 @@ export default function History() {
   const w = selected?.payload;
   const repeat = async () => {
     if (!w || busy || workoutStart.busy) return;
-    const now = Date.now();
     setParams({});
-    await workoutStart.start({
-      ...w,
-      date: today(),
-      duration: null,
-      startedAt: now,
-      createdAt: now,
-      completedAt: undefined,
-      status: "draft",
-      exercises: repeatExercises(w.exercises),
-    });
+    await workoutStart.repeat(w);
   };
   const remove = async () => {
     if (!selected || busy) return;
@@ -87,75 +80,78 @@ export default function History() {
       setBusy(false);
     }
   };
+  const monthName = localizedDate(calendar.month + "-01", { month: "long" });
+  const inMonth = records.filter(
+    (r) => r.payload.date.slice(0, 7) === calendar.month,
+  ).length;
+  const groups = weeks.map((week) => {
+    const items = filtered.filter((r) => weekStart(r.payload.date) === week);
+    return {
+      week,
+      items,
+      sets: items.reduce((sum, r) => sum + doneSetCount(r.payload), 0),
+    };
+  });
   return (
-    <div className="stack history-page">
+    <div className="page history-page">
       {workoutStart.confirmation}
-      <div className="section-heading">
-        <h1>History</h1>
-        <span className="muted">{countLabel(records.length, "workout")}</span>
-      </div>
+      <PageHeader
+        eyebrow={`${countLabel(inMonth, "workout")} in ${monthName}`}
+        title="History"
+      />
       <HistoryCalendar
         value={calendar}
         now={now}
         records={records}
         onChange={setCalendar}
       />
-      {period && (
-        <p className="small-note" aria-live="polite">
-          {countLabel(filtered.length, "workout")} ·{" "}
-          <time dateTime={period.start}>{localizedDate(period.start)}</time>
-          {period.start !== period.end && (
-            <>
-              {" "}
-              – <time dateTime={period.end}>{localizedDate(period.end)}</time>
-            </>
-          )}
-        </p>
-      )}
-      {weeks.map((week) => (
-        <section className="history-week" key={week}>
-          <div className="section-heading">
-            <h2>
-              Week of {localizedDate(week, { day: "numeric", month: "short" })}
-            </h2>
-            <small>
-              {countLabel(
-                filtered.filter((r) => weekStart(r.payload.date) === week)
-                  .length,
-                "workout",
-              )}
-            </small>
-          </div>
-          {filtered
-            .filter((r) => weekStart(r.payload.date) === week)
-            .map((r) => {
+      {groups.map(({ week, items, sets }) => (
+        <section key={week} aria-label={weekTitle(week, now)}>
+          <h2 className="group-title">
+            {weekTitle(week, now)} · {countLabel(items.length, "workout")} ·{" "}
+            {countLabel(sets, "set")}
+          </h2>
+          <div className="list">
+            {items.map((r) => {
               const w = r.payload;
-              return (
-                <button
-                  className="list-card"
-                  key={r.id}
-                  onClick={() => setParams({ workout: r.id })}
-                >
-                  <span className="history-date">
-                    {localizedDate(w.date, {
+              const sub = [
+                w.date === now
+                  ? "Today"
+                  : localizedDate(w.date, {
                       weekday: "short",
                       day: "numeric",
-                    })}
-                  </span>
-                  <span className="history-name">
-                    <strong>{w.name}</strong>
-                    <small>
-                      {countLabel(w.exercises.length, "exercise")} ·{" "}
-                      {countLabel(doneSetCount(w), "set")}
-                      {w.duration !== null
-                        ? " · " + durationLabel(w.duration)
-                        : ""}
-                    </small>
-                  </span>
-                  <ChevronRight size={18} />
-                </button>
+                      month: "short",
+                    }),
+                w.duration !== null ? durationLabel(w.duration) : null,
+                countLabel(doneSetCount(w), "set"),
+                w.exercises
+                  .slice(0, 2)
+                  .map((ex) => ex.name)
+                  .join(", ") || null,
+              ]
+                .filter(Boolean)
+                .join(" · ");
+              return (
+                <ListRow
+                  key={r.id}
+                  className={
+                    calendar.selectedDate === w.date
+                      ? "row-selected"
+                      : undefined
+                  }
+                  title={w.name}
+                  sub={sub}
+                  trailing={
+                    bests.has(r.id) ? (
+                      <span className="badge-new">New best</span>
+                    ) : undefined
+                  }
+                  chevron
+                  onClick={() => setParams({ workout: r.id })}
+                />
               );
             })}
+          </div>
         </section>
       ))}
       {!period && (
@@ -177,50 +173,44 @@ export default function History() {
           </Link>
         </div>
       )}
-      <Dialog
+      <Sheet
         open={!!selected}
-        onOpenChange={(v) => {
-          if (!v) setParams({});
-        }}
+        onClose={() => setParams({})}
+        title={w?.name}
+        description={
+          w &&
+          localizedDate(w.date) +
+            (w.duration !== null ? " · " + durationLabel(w.duration) : "")
+        }
+        className="detail-dialog"
       >
-        <DialogContent className="detail-dialog">
-          <DialogHeader>
-            <DialogTitle>{w?.name}</DialogTitle>
-            <DialogDescription>
-              {w && localizedDate(w.date)}
-              {w?.duration !== null && w?.duration !== undefined
-                ? " · " + durationLabel(w.duration)
-                : ""}
-            </DialogDescription>
-          </DialogHeader>
-          {w?.exercises.map((ex) => (
-            <section key={ex.id}>
-              <h3>{ex.name}</h3>
-              <HistorySetList sets={ex.sets} />
-            </section>
-          ))}
-          <button
-            className="primary"
-            disabled={busy || workoutStart.busy}
-            onClick={() => void repeat()}
-          >
-            <Repeat size={18} />
-            {busy ? "Please wait…" : "Repeat workout"}
-          </button>
-          <Link className="secondary" to={workoutPath(selected?.id ?? "")}>
-            <Pencil size={18} />
-            Edit workout
-          </Link>
-          <button
-            className="text-button danger"
-            disabled={busy}
-            onClick={() => setConfirmDelete(true)}
-          >
-            <Trash2 size={17} />
-            Delete workout
-          </button>
-        </DialogContent>
-      </Dialog>
+        {w?.exercises.map((ex) => (
+          <section key={ex.id}>
+            <h3 className="group-title">{ex.name}</h3>
+            <HistorySetList sets={ex.sets} />
+          </section>
+        ))}
+        <button
+          className="btn-primary"
+          disabled={busy || workoutStart.busy}
+          onClick={() => void repeat()}
+        >
+          <Repeat size={18} aria-hidden="true" />
+          {busy ? "Please wait…" : "Repeat workout"}
+        </button>
+        <Link className="btn-secondary" to={workoutPath(selected?.id ?? "")}>
+          <Pencil size={18} aria-hidden="true" />
+          Edit workout
+        </Link>
+        <button
+          className="btn-danger"
+          disabled={busy}
+          onClick={() => setConfirmDelete(true)}
+        >
+          <Trash2 size={17} aria-hidden="true" />
+          Delete workout
+        </button>
+      </Sheet>
       <ConfirmDialog
         open={confirmDelete && !!selected}
         title={`Delete ${w?.name ?? "this workout"}?`}

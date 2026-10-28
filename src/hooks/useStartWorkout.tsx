@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
-import { type Workout } from "@/data/model";
+import { type Workout, repeatExercises, today } from "@/data/model";
 import {
   WorkoutInProgressError,
   type StartedWorkout,
@@ -54,6 +54,20 @@ export function useStartWorkout() {
   };
   const start = (workout: Workout) =>
     attempt({ id: crypto.randomUUID(), workout });
+  /** A new running workout with the same exercises as a finished one, today. */
+  const repeat = (workout: Workout) => {
+    const now = Date.now();
+    return start({
+      ...workout,
+      date: today(),
+      duration: null,
+      startedAt: now,
+      createdAt: now,
+      completedAt: undefined,
+      status: "draft",
+      exercises: repeatExercises(workout.exercises),
+    });
+  };
   const replacing = pending?.replacing ?? [];
   const confirmation = (
     <ConfirmDialog
@@ -71,5 +85,5 @@ export function useStartWorkout() {
       onConfirm={() => pending && void attempt(pending)}
     />
   );
-  return { start, busy, confirmation };
+  return { start, repeat, busy, confirmation };
 }
