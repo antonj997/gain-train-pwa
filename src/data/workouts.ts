@@ -6,6 +6,7 @@ import {
   type WorkoutRecord,
   type WorkoutSet,
 } from "./model";
+import { dropGroup, isDrop } from "./drops";
 import { completedWorkouts, sortWorkoutsNewest } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 
@@ -49,10 +50,12 @@ export function setProfileMatches(left: WorkoutSet, right: WorkoutSet) {
   );
 }
 
+/** Position among earlier sets with the same profile. Drops are not counted. */
 export function setProfileOrdinal(sets: WorkoutSet[], index: number) {
   return sets
     .slice(0, index)
-    .filter((set) => setProfileMatches(set, sets[index])).length;
+    .filter((set) => !isDrop(set) && setProfileMatches(set, sets[index]))
+    .length;
 }
 
 /** Completed sessions before this one, newest first, for previous-result hints. */
@@ -79,6 +82,35 @@ export function previousSetFor(
     set.done && validSet(set) && setProfileMatches(set, current);
   const matching = prior.filter(matches);
   return matching[index] ?? matching.at(-1);
+}
+
+/**
+ * What this row did last time. A set is matched among the earlier session's
+ * sets, ignoring its drops. A drop is matched to the drop at the same position
+ * after that set's result, or the last one if there are fewer.
+ */
+export function previousResult(
+  prior: WorkoutSet[],
+  sets: WorkoutSet[],
+  index: number,
+): WorkoutSet | undefined {
+  const current = sets[index];
+  if (!isDrop(current))
+    return previousSetFor(
+      prior.filter((set) => !isDrop(set)),
+      current,
+      setProfileOrdinal(sets, index),
+    );
+  const { start } = dropGroup(sets, index);
+  // A drop with no set above it (older app versions) has nothing to follow.
+  if (isDrop(sets[start])) return undefined;
+  const parent = previousResult(prior, sets, start);
+  if (!parent) return undefined;
+  const parentIndex = prior.indexOf(parent);
+  const drops = prior
+    .slice(parentIndex + 1, dropGroup(prior, parentIndex).end)
+    .filter((set) => set.done && validSet(set));
+  return drops[index - start - 1] ?? drops.at(-1);
 }
 
 export type LastSession = { date: string; sets: WorkoutSet[] };

@@ -7,7 +7,7 @@ import {
   repeatExercises,
   today,
 } from "./model";
-import { previousSetFor, setProfileOrdinal } from "./workouts";
+import { previousResult } from "./workouts";
 import { completedWorkouts } from "./selectors";
 
 export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
@@ -25,8 +25,7 @@ export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
     return {
       ...ex,
       sets: ex.sets.map((set, index) => {
-        const ordinal = setProfileOrdinal(ex.sets, index);
-        const previous = previousSetFor(prior, set, ordinal);
+        const previous = previousResult(prior, ex.sets, index);
         return newSet(
           previous
             ? { ...set, reps: previous.reps, weight: previous.weight }

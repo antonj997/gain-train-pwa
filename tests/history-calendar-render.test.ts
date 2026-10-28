@@ -11,6 +11,7 @@ import * as dates from "../src/lib/dates";
 import * as labels from "../src/lib/labels";
 import * as summary from "../src/data/summary";
 import * as model from "../src/data/model";
+import * as drops from "../src/data/drops";
 import * as workouts from "../src/data/workouts";
 import * as analytics from "../src/data/analytics";
 import * as presentation from "../src/lib/progressPresentation";
@@ -200,8 +201,13 @@ test("History places its only calendar before current-month workouts and removes
   (records[0].payload as model.Workout).name = "Current session";
   (records[1].payload as model.Workout).name = "Previous month session";
   const ConfirmDialog = await component("../src/components/ConfirmDialog.tsx");
+  const HistorySetList = await component(
+    "../src/components/HistorySetList.tsx",
+    { "@/data/drops": drops },
+  );
   const History = await component("../src/pages/History.tsx", {
     "@/components/HistoryCalendar": { default: Calendar },
+    "@/components/HistorySetList": { default: HistorySetList },
     "@/components/ConfirmDialog": { default: ConfirmDialog },
     "@/contexts/useData": {
       useData: () => ({
@@ -274,4 +280,39 @@ test("Progress keeps the recent summary and the existing exercise results togeth
   assert.match(html, /Bench press/);
   assert.match(html, /Best working set/);
   assert.match(html, /href="\/history\?workout=/);
+});
+
+test("History details number only checked sets and show a drop under its set", async () => {
+  const SetList = await component("../src/components/HistorySetList.tsx", {
+    "@/data/drops": drops,
+  });
+  const set = (values: Partial<model.WorkoutSet> = {}): model.WorkoutSet => ({
+    ...model.newSet(),
+    weight: 100,
+    reps: 5,
+    done: true,
+    ...values,
+  });
+  const html = renderToStaticMarkup(
+    createElement(SetList, {
+      sets: [
+        set({ section: "warmup", weight: 40, reps: 8 }),
+        set(),
+        set({ weight: 80, reps: 4, drop: true }),
+        set({ done: false, weight: 90 }),
+        set({ weight: 105, reps: 3 }),
+        set({ weight: 20, reps: 12, section: "winddown" }),
+      ],
+    }),
+  );
+  assert.match(html, /Set 1 · Warm-up<\/span><strong>40 kg × 8</);
+  assert.match(html, /Set 2<\/span><strong>100 kg × 5</);
+  assert.match(html, /<strong>↳ 80 kg × 4<\/strong>/);
+  assert.ok(html.indexOf("↳ 80 kg × 4") > html.indexOf("100 kg × 5"));
+  assert.ok(html.indexOf("↳ 80 kg × 4") < html.indexOf("105 kg × 3"));
+  assert.match(html, /Set 3<\/span><strong>105 kg × 3</);
+  assert.match(html, /Set 4 · Cool-down<\/span><strong>20 kg × 12</);
+  assert.doesNotMatch(html, /Set 5|90 kg/);
+  assert.equal((html.match(/class="history-set"/g) ?? []).length, 5);
+  assert.doesNotMatch(html, /Set \d+<\/span><strong>80 kg/);
 });
