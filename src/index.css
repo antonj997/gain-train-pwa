@@ -239,30 +239,6 @@ summary {
   font-size: 14px;
   font-weight: 600;
 }
-.list-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  text-align: left;
-  padding: 17px 18px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 15px;
-  width: 100%;
-  color: var(--ink);
-  margin-bottom: 10px;
-}
-.list-card > span {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-.list-card strong {
-  font-size: 17px;
-  overflow-wrap: anywhere;
-}
 .resume-card {
   display: flex;
   align-items: center;
@@ -508,21 +484,6 @@ summary {
   color: var(--gt-ink-2);
   font-weight: 600;
 }
-.settings-card,
-.routine-card {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  padding: 21px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: var(--surface);
-}
-.settings-card h2 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .file-label {
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -560,8 +521,7 @@ summary {
     background: color-mix(in srgb, var(--gt-accent) 88%, var(--gt-ink));
   }
   .secondary:hover,
-  .icon-button:hover,
-  .list-card:hover {
+  .icon-button:hover {
     background: color-mix(in srgb, var(--primary) 7%, transparent);
   }
 }
@@ -606,11 +566,9 @@ h2,
 h3,
 .resume-card strong,
 .history-set strong,
-.exercise-choice strong,
-.settings-card p {
+.exercise-choice strong {
   overflow-wrap: anywhere;
 }
-.list-card > svg,
 .resume-card > svg,
 .exercise-choice > svg {
   flex-shrink: 0;
@@ -677,8 +635,7 @@ h3,
 .home-page h1 {
   font-size: clamp(23px, 5vw, 30px);
 }
-.home-page .resume-card,
-.home-page .list-card {
+.home-page .resume-card {
   padding: 12px 14px;
 }
 .home-page .resume-card strong {

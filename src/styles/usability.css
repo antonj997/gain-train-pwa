@@ -129,8 +129,6 @@ select,
     padding-inline: max(12px, env(safe-area-inset-left))
       max(12px, env(safe-area-inset-right));
   }
-  .settings-card,
-  .routine-card,
   .empty-card {
     padding-inline: 16px;
   }

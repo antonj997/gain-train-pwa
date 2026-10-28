@@ -1,13 +1,17 @@
 # Gain Train
+
 <!-- impeccable:product-schema 1 -->
 
 ## Platform
+
 web — phone-first React PWA, also usable on desktop.
 
 ## Users and purpose
+
 A lifter logging sets between exercises, often one-handed. Start, resume, record actual performance, finish, and review comparable history with minimal administration.
 
 ## Operating context
+
 Local IndexedDB saves precede cloud synchronization. The app remains usable without an account and caches production files for offline use. Routines and prior results speed repeated sessions. Numeric keyboard hints, clear save status and readable completed values are core affordances.
 
 Settings Profile saves bodyweight in kg to an account-scoped local cache first. Decimal points and commas are accepted; blank clears the value, and a saved value must be greater than zero and at most 1000 kg. Signed-in changes queue for Supabase Auth metadata synchronization under gain_train_profile. A connection captures its account and access token, stops after account changes, and leaves failed or in-flight later edits queued. Profile metadata is editable data, never authorization. No database migration is required.
@@ -32,18 +36,32 @@ Incomplete strings such as “1e” belong to the local editor's optional inputT
 
 Bodyweight exercises and routine plans offer an Extra weight switch (“Add extra weight” in the Load and count sheet) for unfinished sets. The optional extraWeight flag keeps load:"bodyweight"; the normal weight field holds added kg only, with a valid completed value greater than zero and at most 10000 kg. A blank added-load field can remain unfinished. “BW + kg” and the “+” marker distinguish this mode from profile bodyweight. The independent bodyWeightKg snapshot retains profile kg at completion. New/repeated sets preserve added-load mode and kilograms while clearing completion/snapshots. Routines, backup validation, suggestions and previous-result matching preserve the mode; matching and analytics distinguish plain BW, added BW, assisted and weighted results, as well as reps and seconds. Added BW results compare reps/seconds at the same added kg and do not introduce a bodyweight estimated 1RM. The server load enum is unchanged and no database migration is required.
 
-History opens on the current month and contains one calendar/date controller followed by the workout list. Two icon-only toggle buttons on one line change Month/Date range and Detailed/Simple; the date-filter icon offers connected From/To endpoints or a return-to-month calendar, while the view icon reflects the active display. Accessible labels, pressed states and titles explain them. Detailed retains the Monday-first grid; Simple uses 12px squares and compact 32px day controls, increased to 36px for coarse pointers, with full accessible date/workout counts. Selected ranges form a continuous band across adjacent dates with caps at visible row/month boundaries. Month mode filters by whole month or selected day. Date range uses compact From/To buttons and that same calendar for inclusive bounds across months. Browsing preserves chosen bounds; future dates are unavailable. One “Show current month” reset appears only away from the unfiltered current month. History has no general stats, “More periods” or second date picker.
+The app has four bottom tabs: Train, History, Progress and Library. Each page has its own top bar (a muted line over a 28px title) and shows the sync, sign-in and conflict notices as banners beneath it; there is no global header. Settings opens from the gear on Train and has a back button. The workout screen hides the tabs.
 
-Progress retains exercise progress and receives the original three general metrics and explanation: Workouts / active week, Avg duration · min and Exercises improving. Its clearly labelled Last 30 days summary shows the current and preceding 30-day dates and is independent of History's calendar selection.
+Train (`/`) is the start screen. Its title is one line picked at random from about 25 (plain, dry, encouraging, odd; under 40 characters, no emoji or exclamation marks, never the previous pick), with today's date above it. It shows a resume card for each running workout, Start workout (secondary “Start a new workout” while one is running) and “Log a past workout”. The This week card has Monday-to-Sunday dots, “N of G workouts” (or “N workouts” without a goal) and a line with sets, time trained and, from two weeks, “W weeks in a row on goal”. Start a routine lists the three most recently used routines; the last workout has a Repeat button.
+
+The weekly goal is 1–14 workouts a week, off by default, set in Settings → Training and stored with the other training preferences on the device. The streak counts consecutive finished Monday-to-Sunday weeks that met it; the current week joins once it does.
+
+History opens on the current month with the simple calendar. Workouts are grouped by week (“This week”, “D–D Mon”, with workout and set totals) in rows that open the details sheet; a warm “New best” badge marks a workout that set a best estimated 1RM against all earlier ones (drops never count). The calendar controls are described in DESIGN.md.
+
+Progress has a 4 weeks / 3 months / Year control driving four tiles (workouts per week over finished weeks only, working sets, volume, time trained, each against the previous period), up to four Recent bests and the exercise list with sparklines; an exercise opens its detail and chart in a sheet.
+
+Library (`/library`) has Routines and Exercises, chosen with the Segmented control and kept in `?tab=`; `/routines` and `/my-exercises` redirect to the matching tab. Routine cards show exercises, sets and when it was last done, with Start, Edit and a ⋯ sheet for Delete (with undo); “New routine” opens the editor sheet. Exercises has search, the chips All / Yours / Recently used, the groups Recently used (up to five) and A–Z, a favourite star and “New exercise”. A custom exercise opens its editor, which also deletes it; built-in rows are not editable.
+
+Settings groups the account row, Training (bodyweight, weekly goal, rest timer, theme), Your data (backup, restore, storage) and Account (sign out, delete). Conflict and quarantine notices stay as cards above the groups.
+
+The training plan is optional and off until used (Library → Routines → “Plan your weeks”, `/library/plan`). It holds a Monday-to-Sunday template (a routine, Rest or Not planned per day) and dated changes up to three months ahead, set from the Upcoming month view; past dates are read-only and dated entries older than today are dropped on save. It is stored on the device per account and does not sync. “Clear plan” removes it. Only when a plan exists does Train show “Today: <routine>” with Start (or “Rest day”) at the top of Start a routine, and outline planned days in the week strip. A deleted routine is ignored and shows as “Deleted routine” in the plan.
 
 ## Constraints
+
 Preserve existing records and sync compatibility. No destructive migration or real-account testing. Keep top mobile-wide toasts. Abandon lives in the Finish sheet; the owner approved moving it there from the top bar on 28 October 2026. It keeps the undo toast. The user explicitly requires immediate set deletion; confirm exercise deletion only when its sets contain values or completed data. No set/exercise Undo feature.
 
-Allow one running workout: a nondeleted draft with a non-null startedAt. Blank starts, routine starts from Home or Routines, and History Repeat share the same confirmation when another workout is running. “Keep current workout” cancels without changing it; “Abandon and start” replaces and creates atomically, checking localVersion and revision so newly changed work requires confirmation again. Historical draft entries with startedAt:null remain allowed alongside a running workout.
+Allow one running workout: a nondeleted draft with a non-null startedAt. Blank starts, routine starts from Train or Library, and History Repeat share the same confirmation when another workout is running. “Keep current workout” cancels without changing it; “Abandon and start” replaces and creates atomically, checking localVersion and revision so newly changed work requires confirmation again. Historical draft entries with startedAt:null remain allowed alongside a running workout.
 
 Saving cannot resurrect a removed workout. Existing whole-workout Undo uses guarded restoreWorkout and cannot create a second running draft. Backup restore rejects the whole transaction if it would introduce two running drafts. These local storage guards require no record migration.
 
 ## Delegated decisions
+
 On 8 October 2026 the owner authorized implementing the complete three-agent review and delegated implementation/design decisions while unavailable. On 9 October 2026 the owner rejected the resulting design and requested the original Gain Train design from GitHub Pages and repository commit 3d2514862f7babecb964eb01b09230d804b86e77, while retaining quality-of-life improvements and bug fixes. This supersedes the Training Ledger visual direction. Preserve the original blue/navy/light-grey palette, rounded components, brand header, navigation, theme switch and identity assets documented in DESIGN.md. Adapt usability controls in src/styles/usability.css and their existing scoped stylesheets; the workout screen's are in src/styles/workout.css. The 18 October profile, set-editing, search and calendar features and 26 October workout refinements extend this original system.
 
-On 28 October 2026 the owner asked for a calmer, less cluttered workout screen and chose the Quiet look (light grey ground, white cards, one blue accent, light and dark themes). This replaces the original palette and the “Edit sets” mode, compact rows, per-row type select, per-row remove button and top-bar Abandon; the brand header, navigation, theme switch and identity assets stay. He approved Abandon moving into the Finish sheet, and per-set loads and drop sets. See the [workout screen design](docs/superpowers/specs/2026-10-28-workout-screen-design.md).
+On 28 October 2026 the owner asked for a calmer, less cluttered workout screen and chose the Quiet look (light grey ground, white cards, one blue accent, light and dark themes). This replaces the original palette and the “Edit sets” mode, compact rows, per-row type select, per-row remove button and top-bar Abandon; the brand header, navigation, theme switch and identity assets stay. He approved Abandon moving into the Finish sheet, and per-set loads and drop sets. See the [workout screen design](docs/superpowers/specs/2026-10-28-workout-screen-design.md). The same day he approved the same look for every other screen, four tabs with a Library, a weekly goal and the optional training plan; see the [app pages design](docs/superpowers/specs/2026-10-28-app-pages-design.md).

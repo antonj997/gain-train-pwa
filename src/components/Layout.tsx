@@ -4,19 +4,12 @@ import { Outlet, Link, Navigate, useLocation } from "react-router-dom";
 import { Dumbbell, History, TrendingUp, Library } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
-import SyncNotices from "@/components/SyncNotices";
 
-// Library also owns the older routine and exercise addresses until they redirect.
 const tabs = [
-  { to: "/", title: "Train", Icon: Dumbbell, also: [] as string[] },
-  { to: "/history", title: "History", Icon: History, also: [] },
-  { to: "/progress", title: "Progress", Icon: TrendingUp, also: [] },
-  {
-    to: "/library",
-    title: "Library",
-    Icon: Library,
-    also: ["/routines", "/my-exercises"],
-  },
+  { to: "/", title: "Train", Icon: Dumbbell },
+  { to: "/history", title: "History", Icon: History },
+  { to: "/progress", title: "Progress", Icon: TrendingUp },
+  { to: "/library", title: "Library", Icon: Library },
 ];
 
 export default function Layout() {
@@ -30,22 +23,13 @@ export default function Layout() {
   }, [path]);
   if (passwordRecovery && path !== "/auth")
     return <Navigate to="/auth" replace />;
-  // Pages with a PageHeader show the notices themselves. The rest get them here
-  // until they move over; the workout screen stays free of banners.
-  const showsOwnNotices =
-    activeWorkout || ["/", "/settings", "/history", "/progress"].includes(path);
   const isActive = (tab: (typeof tabs)[number]) =>
-    [tab.to, ...tab.also].some((to) =>
-      to === "/" ? path === "/" : path === to || path.startsWith(to + "/"),
-    );
+    tab.to === "/"
+      ? path === "/"
+      : path === tab.to || path.startsWith(tab.to + "/");
   return (
     <div className="app-shell">
       <main>
-        {ready && !showsOwnNotices && (
-          <div className="layout-notices">
-            <SyncNotices />
-          </div>
-        )}
         {ready ? (
           <Suspense
             fallback={

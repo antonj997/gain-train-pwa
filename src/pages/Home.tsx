@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Play, Repeat, Settings } from "lucide-react";
 import { useData } from "@/contexts/useData";
+import { useAuth } from "@/contexts/useAuth";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import PageHeader from "@/components/PageHeader";
 import ListRow from "@/components/ui/ListRow";
@@ -22,6 +23,7 @@ import { countLabel, durationLabel, timeTrainedLabel } from "@/lib/labels";
 import { historyPath, workoutPath } from "@/lib/routes";
 import { nextHeadline } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
+import { REST, plannedFor, readPlan } from "@/lib/plan";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
 
 /** The first unchecked set of a workout, such as "Bench Press set 3". */
@@ -51,6 +53,7 @@ function useNow(active: boolean) {
 
 export default function Home() {
   const { state } = useData();
+  const { account } = useAuth();
   const {
     start: requestStart,
     repeat,
@@ -68,6 +71,7 @@ export default function Home() {
   const handledShortcut = useRef(false);
   const [headline] = useState(() => nextHeadline());
   const [goal] = useState(() => readTrainingPreferences().weeklyGoal);
+  const [plan] = useState(() => readPlan(account));
   const now = useNow(drafts.some((r) => r.payload.startedAt !== null));
   const start = (past = false, routine?: RoutineRecord) =>
     requestStart(newWorkout(Object.values(state.records), { routine, past }));
@@ -112,6 +116,16 @@ export default function Home() {
       .slice(0, 3)
       .map(({ routine }) => routine);
   }, [state.records]);
+
+  // A planned routine that was deleted since is ignored, as if nothing were planned.
+  const plannedRoutine = (date: string) => {
+    const entry = plannedFor(plan, date);
+    return entry && entry !== REST
+      ? routineRecords(state.records).find((r) => r.id === entry)
+      : undefined;
+  };
+  const todayPlan = plannedRoutine(day);
+  const restDay = plannedFor(plan, day) === REST;
 
   const { totals } = week;
   const goalMet = goal !== null && totals.workouts >= goal;
@@ -209,27 +223,34 @@ export default function Home() {
           </span>
         </div>
         <ol className="week">
-          {week.days.map((d) => (
-            <li
-              key={d.date}
-              className="day"
-              aria-label={
-                localizedDate(d.date, { weekday: "long", day: "numeric" }) +
-                (d.done ? ", workout done" : "") +
-                (d.today ? ", today" : "")
-              }
-            >
-              <span aria-hidden="true">{d.label}</span>
-              <span
-                className={
-                  "dot" + (d.done ? " done" : "") + (d.today ? " today" : "")
+          {week.days.map((d) => {
+            const planned = plannedRoutine(d.date);
+            return (
+              <li
+                key={d.date}
+                className="day"
+                aria-label={
+                  localizedDate(d.date, { weekday: "long", day: "numeric" }) +
+                  (d.done ? ", workout done" : "") +
+                  (d.today ? ", today" : "") +
+                  (planned ? `, planned: ${planned.payload.name}` : "")
                 }
-                aria-hidden="true"
               >
-                {d.day}
-              </span>
-            </li>
-          ))}
+                <span aria-hidden="true">{d.label}</span>
+                <span
+                  className={
+                    "dot" +
+                    (d.done ? " done" : "") +
+                    (d.today ? " today" : "") +
+                    (planned ? " planned" : "")
+                  }
+                  aria-hidden="true"
+                >
+                  {d.day}
+                </span>
+              </li>
+            );
+          })}
         </ol>
         <p className="row-sub">
           {totals.workouts
@@ -252,6 +273,24 @@ export default function Home() {
             All routines
           </Link>
         </div>
+        {todayPlan && (
+          <div className="card plan-today">
+            <span className="plan-today-text">
+              <span className="row-sub">From your plan</span>
+              <strong className="card-title">
+                Today: {todayPlan.payload.name}
+              </strong>
+            </span>
+            <button
+              className="btn-primary btn-sm"
+              disabled={starting}
+              onClick={() => void start(false, todayPlan)}
+            >
+              Start
+            </button>
+          </div>
+        )}
+        {restDay && <p className="row-sub plan-rest">Today: Rest day</p>}
         {recentRoutines.length ? (
           <div className="list">
             {recentRoutines.map((r) => (
