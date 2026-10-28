@@ -95,7 +95,21 @@ export function historyPeriod(month: string, now: string) {
 export function weekStart(date: string) {
   return shiftDate(date, -((dateAt(date).getUTCDay() + 6) % 7));
 }
-export function summarize(workouts: Workout[], days: number) {
+/**
+ * Workouts per active week, over finished weeks only: the Monday-Sunday week
+ * that contains `now` is left out until it is over, so a quiet start to the
+ * week does not drag the figure down. An active week has at least one workout.
+ * Null, shown as a dash, when no finished week has a workout.
+ */
+function perWeek(workouts: Workout[], now: string) {
+  const thisWeek = weekStart(now);
+  const finished = workouts.filter(
+    (workout) => weekStart(workout.date) < thisWeek,
+  );
+  const activeWeeks = new Set(finished.map((w) => weekStart(w.date))).size;
+  return activeWeeks ? finished.length / activeWeeks : null;
+}
+export function summarize(workouts: Workout[], days: number, now: string) {
   const durations = workouts.flatMap((w) =>
     w.duration === null ? [] : [w.duration],
   );
@@ -114,10 +128,7 @@ export function summarize(workouts: Workout[], days: number) {
       0,
     ),
     workouts: workouts.length,
-    perWeek: workouts.length
-      ? workouts.length /
-        new Set(workouts.map((workout) => weekStart(workout.date))).size
-      : 0,
+    perWeek: perWeek(workouts, now),
     duration: durations.length
       ? durations.reduce((sum, value) => sum + value, 0) / durations.length
       : null,

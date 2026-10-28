@@ -23,10 +23,15 @@ export default function ProgressSummary({
     completed
       .map((record) => record.payload)
       .filter(({ date }) => date >= start && date <= end);
-  const current = summarize(workoutsIn(period.start, period.end), period.days);
+  const current = summarize(
+    workoutsIn(period.start, period.end),
+    period.days,
+    now,
+  );
   const previous = summarize(
     workoutsIn(period.previousStart, period.previousEnd),
     period.previousDays,
+    now,
   );
   const metrics = [
     {
@@ -96,7 +101,8 @@ export default function ProgressSummary({
         </summary>
         <p className="small-note">
           Active weeks are Monday–Sunday weeks with at least one workout in this
-          period. Duration averages exclude sessions without a recorded
+          period. The current week is left out of workouts per active week until
+          it is over. Duration averages exclude sessions without a recorded
           duration. Exercises improving compares your latest working result with
           the last session before the period, or the first session within it.
           Only comparable load and measure count: estimated strength for
