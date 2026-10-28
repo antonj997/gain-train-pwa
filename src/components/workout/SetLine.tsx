@@ -134,6 +134,11 @@ export default function SetLine({
 
   const classes = [
     "set-line",
+    // Only a field that shows a marker gets wider than three digits need.
+    !plainBodyweight &&
+      (marker === "plus" || marker === "minus") &&
+      "load-prefix",
+    !plainBodyweight && marker === "kg" && "load-suffix",
     set.done && "is-done",
     drop && "is-drop",
     next && "is-next",
