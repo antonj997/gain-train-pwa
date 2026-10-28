@@ -152,7 +152,19 @@ export default function SetLine({
       {next && <span className="sr-only">Next set</span>}
       <SetBadge badge={badge} editing={editing} onClick={onOpenSheet} />
       {mode === "log" && (
-        <span className="set-previous">{previous || "–"}</span>
+        <span className="set-previous">
+          {previous ? (
+            <>
+              <span className="sr-only">Previous: </span>
+              {previous}
+            </>
+          ) : (
+            <>
+              <span aria-hidden="true">–</span>
+              <span className="sr-only">No previous result</span>
+            </>
+          )}
+        </span>
       )}
       {plainBodyweight ? (
         <span className="set-field set-bodyweight">

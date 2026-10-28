@@ -112,8 +112,9 @@ export function groupComplete(sets: WorkoutSet[], index: number) {
 }
 
 /**
- * Checks or unchecks a set together with its drops. A set can only be checked
- * once each of its drops is complete.
+ * Checks or unchecks a set together with its drops: the set decides, and every
+ * drop follows it, even a drop an older app version left in the other state.
+ * A set can only be checked once each of its drops is complete.
  */
 export function toggleGroupCompletion(
   sets: WorkoutSet[],
@@ -123,9 +124,12 @@ export function toggleGroupCompletion(
   const index = sets.findIndex((set) => set.id === setId);
   if (index < 0) return sets;
   const { start, end } = dropGroup(sets, index);
-  if (!sets[start].done && !groupComplete(sets, start)) return sets;
+  const done = !sets[start].done;
+  if (done && !groupComplete(sets, start)) return sets;
   return sets.map((set, i) =>
-    i >= start && i < end ? toggleSetCompletion(set, profileWeight) : set,
+    i >= start && i < end && set.done !== done
+      ? toggleSetCompletion(set, profileWeight)
+      : set,
   );
 }
 

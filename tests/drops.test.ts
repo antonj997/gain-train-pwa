@@ -344,6 +344,15 @@ test("unchecking a group works even if a drop is incomplete", () => {
   );
 });
 
+test("checking a mixed group checks every member instead of inverting it", () => {
+  const parent = set();
+  const sets = [parent, drop({ done: true })];
+  assert.deepEqual(
+    toggleGroupCompletion(sets, parent.id, null).map((s) => s.done),
+    [true, true],
+  );
+});
+
 test("checking a group records bodyweight for each bodyweight set in it", () => {
   const parent = set({ load: "bodyweight", weight: null });
   const sets = [parent, drop({ load: "bodyweight", weight: null }), set()];

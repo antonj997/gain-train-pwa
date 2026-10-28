@@ -317,9 +317,15 @@ test("the badge is a labelled button carrying its tone", async () => {
 test("the previous result sits in its own column, with a dash when there is none", async () => {
   const set = { ...model.newSet(), weight: 80, reps: 5 };
   const withPrevious = await setLine({ set, previous: "97.5 × 5" });
-  assert.match(withPrevious, /<span class="set-previous">97\.5 × 5<\/span>/);
+  assert.match(
+    withPrevious,
+    /<span class="set-previous"><span class="sr-only">Previous: <\/span>97\.5 × 5<\/span>/,
+  );
   const without = await setLine({ set });
-  assert.match(without, /<span class="set-previous">–<\/span>/);
+  assert.match(
+    without,
+    /<span class="set-previous"><span aria-hidden="true">–<\/span><span class="sr-only">No previous result<\/span><\/span>/,
+  );
 });
 
 test("the next set is announced to screen readers", async () => {
