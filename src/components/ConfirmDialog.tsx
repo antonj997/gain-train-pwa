@@ -1,11 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import Sheet from "@/components/ui/Sheet";
 
 type Props = {
   open: boolean;
@@ -52,30 +46,26 @@ export default function ConfirmDialog({
     </button>
   );
   return (
-    <Dialog
+    <Sheet
       open={open}
-      onOpenChange={(next) => {
-        if (!next && !busy) onCancel();
+      title={title}
+      description={description}
+      onClose={() => {
+        if (!busy) onCancel();
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        {children}
-        {tone === "danger" ? (
-          <>
-            {cancel}
-            {confirm}
-          </>
-        ) : (
-          <>
-            {confirm}
-            {cancel}
-          </>
-        )}
-      </DialogContent>
-    </Dialog>
+      {children}
+      {tone === "danger" ? (
+        <>
+          {cancel}
+          {confirm}
+        </>
+      ) : (
+        <>
+          {confirm}
+          {cancel}
+        </>
+      )}
+    </Sheet>
   );
 }

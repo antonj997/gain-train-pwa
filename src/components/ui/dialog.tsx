@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
 
 // Base classes live in styles/primitives.css; callers add their own.
 const classes = (base: string, extra?: string) =>
@@ -20,21 +19,30 @@ const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+type DialogContentProps = React.ComponentPropsWithoutRef<
+  typeof DialogPrimitive.Content
+> & {
+  /** How strongly the page behind is dimmed: "light" keeps it readable. */
+  backdrop?: "dim" | "light";
+};
+
+// Every dialog is a bottom sheet on phones and a centred panel from 640px up.
+// The Close control is the sheet's grab handle. It comes last in the markup so
+// the first field or button still receives focus, and is drawn first.
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  DialogContentProps
+>(({ className, children, backdrop = "dim", ...props }, ref) => (
   <DialogPrimitive.Portal>
-    <DialogOverlay />
+    <DialogOverlay data-backdrop={backdrop} />
     <DialogPrimitive.Content
       ref={ref}
       className={classes("app-dialog dialog-content", className)}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="dialog-close">
-        <X className="dialog-close-icon" />
-        <span className="sr-only">Close</span>
+      <DialogPrimitive.Close className="dialog-handle" aria-label="Close">
+        <span className="dialog-handle-bar" aria-hidden="true" />
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
   </DialogPrimitive.Portal>

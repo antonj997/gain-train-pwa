@@ -1,6 +1,7 @@
 @import "./styles/tokens.css";
 @import "./styles/reset.css";
 @import "./styles/primitives.css";
+@import "./styles/components.css";
 /* The names below predate tokens.css and many rules still use them. They are
    defined from the tokens, so every screen follows the Quiet palette and the
    .dark class switches them with no per-theme copy. */
@@ -218,9 +219,9 @@ summary {
   transition: background 0.15s;
 }
 .primary {
-  background: #365de9;
-  color: white;
-  border: 1px solid #365de9;
+  background: var(--gt-accent);
+  color: var(--gt-on-accent);
+  border: 1px solid var(--gt-accent);
 }
 .secondary {
   background: var(--surface);
@@ -254,7 +255,7 @@ summary {
   color: var(--destructive);
 }
 .starred {
-  color: #b98508;
+  color: var(--gt-warm-fg);
 }
 .button-row {
   display: flex;
@@ -302,7 +303,7 @@ summary {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border: 1px solid #587af5;
+  border: 1px solid var(--gt-accent);
   border-radius: 16px;
   background: linear-gradient(
     125deg,
@@ -486,9 +487,9 @@ summary {
   color: var(--soft);
 }
 .done-button.checked {
-  background: #167d58;
-  color: #fff;
-  border-color: #167d58;
+  background: var(--gt-done);
+  color: var(--gt-on-accent);
+  border-color: var(--gt-done);
 }
 .set-row .icon-button {
   width: 32px;
@@ -496,8 +497,8 @@ summary {
   padding: 4px;
 }
 .set-done input {
-  background: hsl(150 50% 40%/0.09);
-  border-color: hsl(150 50% 40%/0.35);
+  background: var(--gt-done-soft);
+  border-color: color-mix(in srgb, var(--gt-done) 35%, transparent);
 }
 .set-meta {
   display: flex;
@@ -565,12 +566,6 @@ summary {
   align-items: center;
   gap: 12px;
 }
-.picker-dialog {
-  max-height: 90dvh;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
 .picker-list {
   overflow-y: auto;
   flex: 1;
@@ -630,10 +625,6 @@ summary {
 .exercise-choice.chosen {
   color: var(--blue);
   background: color-mix(in srgb, var(--primary) 6%, transparent);
-}
-.detail-dialog {
-  max-height: 88dvh;
-  overflow-y: auto;
 }
 .history-set {
   display: flex;
@@ -730,7 +721,7 @@ summary {
 }
 @media (hover: hover) {
   .primary:hover {
-    background: #284bc4;
+    background: color-mix(in srgb, var(--gt-accent) 88%, var(--gt-ink));
   }
   .secondary:hover,
   .icon-button:hover,
@@ -795,26 +786,7 @@ h3,
   grid-template-columns: minmax(0, 1fr);
 }
 
-/* All dialogs, including nested exercise pickers, fit above the keyboard. */
-.app-dialog,
-.app-dialog.detail-dialog,
-.app-dialog.picker-dialog {
-  position: fixed;
-  left: 50%;
-  top: calc(var(--viewport-top, 0px) + var(--viewport-height, 100dvh) / 2);
-  transform: translate(-50%, -50%);
-  width: min(512px, calc(100% - 24px));
-  max-height: calc(
-    var(--viewport-height, 100dvh) - 32px - env(safe-area-inset-top) -
-      env(safe-area-inset-bottom)
-  );
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scroll-padding-block: 20px;
-  -webkit-overflow-scrolling: touch;
-  grid-template-columns: minmax(0, 1fr);
-}
+/* Dialog placement (bottom sheet, centred panel, keyboard) lives in styles/primitives.css. */
 .app-dialog > * {
   flex-shrink: 0;
 }
@@ -825,17 +797,11 @@ h3,
 .app-dialog [id^="radix-"] {
   overflow-wrap: anywhere;
 }
-.app-dialog h2 {
-  padding-inline: 24px;
-}
 [data-keyboard-open] .bottom-nav,
 [data-keyboard-open] .workout-footer {
   display: none;
 }
 @media (max-width: 639px) {
-  .app-dialog {
-    padding: 20px 16px;
-  }
   .load-label select,
   .set-meta select,
   .file-label input {
@@ -854,23 +820,6 @@ h3,
   }
 }
 
-.app-dialog.picker-dialog {
-  width: min(640px, calc(100% - 24px));
-  height: min(
-    760px,
-    calc(
-      var(--viewport-height, 100dvh) - 24px - env(safe-area-inset-top) -
-        env(safe-area-inset-bottom)
-    )
-  );
-  max-height: calc(
-    var(--viewport-height, 100dvh) - 24px - env(safe-area-inset-top) -
-      env(safe-area-inset-bottom)
-  );
-  overflow-x: hidden;
-  overflow-y: auto;
-  gap: 12px;
-}
 .routine-exercise {
   display: flex;
   align-items: center;
@@ -897,12 +846,12 @@ h3,
   color-scheme: dark;
 }
 .finish-ready {
-  background: #168044;
-  color: #fff;
-  border-color: #168044;
+  background: var(--gt-done);
+  color: var(--gt-on-accent);
+  border-color: var(--gt-done);
 }
 .finish-ready:hover {
-  background: #116837;
+  background: color-mix(in srgb, var(--gt-done) 88%, var(--gt-ink));
 }
 .finish-pending {
   background: transparent;
@@ -1229,8 +1178,8 @@ details[open] > .session-summary > svg {
   transform: translateY(0);
 }
 .delete-account-button {
-  background: #b42332;
-  color: white;
+  background: var(--gt-danger-fg);
+  color: var(--gt-on-accent);
 }
 select {
   appearance: none;

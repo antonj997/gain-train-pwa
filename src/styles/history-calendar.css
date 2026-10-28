@@ -140,8 +140,8 @@
   border-color: var(--blue);
 }
 .calendar-day.is-selected {
-  background: #365de9;
-  color: white;
+  background: var(--gt-accent);
+  color: var(--gt-on-accent);
 }
 .calendar-day.is-range-start,
 .calendar-day.is-range-end {

@@ -227,9 +227,6 @@ select,
 .app-dialog .routine-exercise {
   display: block;
 }
-.app-dialog .exercise-heading h2 {
-  padding-inline: 0;
-}
 .routine-plan {
   padding-block: 12px;
 }
@@ -373,19 +370,6 @@ select,
   min-height: 44px;
 }
 @media (max-width: 639px) {
-  .app-dialog.picker-dialog {
-    width: calc(100% - 16px);
-    height: calc(
-      var(--viewport-height, 100dvh) - 16px - env(safe-area-inset-top) -
-        env(safe-area-inset-bottom)
-    );
-    max-height: calc(
-      var(--viewport-height, 100dvh) - 16px - env(safe-area-inset-top) -
-        env(safe-area-inset-bottom)
-    );
-    padding: 16px 12px;
-    gap: 10px;
-  }
   .picker-dialog.is-searching .picker-description {
     display: none;
   }

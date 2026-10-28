@@ -185,8 +185,8 @@
 }
 .set-row input::selection,
 .routine-planned-set input::selection {
-  color: #fff;
-  background: var(--blue);
+  color: var(--gt-on-accent);
+  background: var(--gt-accent);
 }
 @media (min-width: 640px) {
   .set-compact .set-row {
