@@ -26,6 +26,14 @@ test("plannedFor gives a dated choice first, then the weekday", () => {
   assert.equal(plannedFor(plan, "2026-10-27"), null);
   assert.equal(plannedFor(null, "2026-10-28"), null);
   assert.equal(weeklyFor(plan, "2026-10-29"), REST);
+  // 2026-11-01 is a Sunday, the last weekday of the plan.
+  assert.equal(
+    plannedFor(
+      { ...plan, weekly: [...plan.weekly.slice(0, 6), "long"] },
+      "2026-11-01",
+    ),
+    "long",
+  );
 });
 
 test("prunePlan drops dated entries before today and leaves the rest", () => {
