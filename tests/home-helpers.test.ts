@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { HEADLINES, pickHeadline } from "../src/lib/headlines.ts";
+import { HEADLINES, headlineFor } from "../src/lib/headlines.ts";
 import { goalStreak, weekStrip, weekTotals } from "../src/lib/week-summary.ts";
 import {
   normalizeTrainingPreferences,
@@ -8,26 +8,25 @@ import {
 } from "../src/lib/preferences.ts";
 import { timeTrainedLabel } from "../src/lib/labels.ts";
 
-test("headlines fit the rules and never repeat the previous pick", () => {
+test("headlines fit the rules and change once a day without repeats", () => {
   assert.ok(HEADLINES.length >= 24);
   assert.equal(new Set(HEADLINES).size, HEADLINES.length);
   for (const line of HEADLINES) {
     assert.ok(line.length < 40, line);
     assert.ok(!line.includes("!"), line);
   }
-  for (const previous of HEADLINES) {
-    for (const r of [0, 0.3, 0.999999]) {
-      assert.notEqual(
-        pickHeadline(previous, () => r),
-        previous,
-      );
-    }
+  const morning = new Date(2026, 9, 28, 7, 0);
+  const evening = new Date(2026, 9, 28, 22, 30);
+  assert.equal(headlineFor(morning), headlineFor(evening));
+  const seen = new Set<string>();
+  let previous = "";
+  for (let i = 0; i < HEADLINES.length; i++) {
+    const line = headlineFor(new Date(2026, 9, 28 + i, 12));
+    assert.notEqual(line, previous);
+    seen.add(line);
+    previous = line;
   }
-  assert.ok(HEADLINES.includes(pickHeadline(null, () => 0.5)));
-  assert.equal(
-    pickHeadline("a", () => 0, ["a"]),
-    "a",
-  );
+  assert.equal(seen.size, HEADLINES.length);
 });
 
 test("week strip runs Monday to Sunday and marks done days and today", () => {
