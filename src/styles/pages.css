@@ -2,8 +2,9 @@
    week card and Settings. Loaded after index.css so these rules win over the
    older ones. Colours come from tokens.css only. */
 
+/* iOS fades content under the status bar; start the page below that fade. */
 .app-shell main {
-  padding-top: calc(var(--gt-space-3) + env(safe-area-inset-top));
+  padding-top: calc(var(--gt-space-6) + env(safe-area-inset-top));
 }
 @media (min-width: 640px) {
   .app-shell main {

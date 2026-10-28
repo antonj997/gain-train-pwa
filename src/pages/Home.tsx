@@ -21,7 +21,7 @@ import { today } from "@/data/model";
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel, timeTrainedLabel } from "@/lib/labels";
 import { historyPath, workoutPath } from "@/lib/routes";
-import { nextHeadline } from "@/lib/headlines";
+import { headlineFor } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
 import { REST, plannedFor, readPlan } from "@/lib/plan";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
@@ -69,7 +69,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const handledShortcut = useRef(false);
-  const [headline] = useState(() => nextHeadline());
+  const [headline] = useState(() => headlineFor());
   const [goal] = useState(() => readTrainingPreferences().weeklyGoal);
   const [plan] = useState(() => readPlan(account));
   const now = useNow(drafts.some((r) => r.payload.startedAt !== null));

@@ -1,59 +1,63 @@
-import { session } from "./storage";
-
-/** Train's title. Short enough for two lines at 28px; no slogans, no exclamation marks. */
+/**
+ * Train's title: dry, a little sarcastic, or a random fact. One line per day.
+ * Short enough for two lines at 28px; no slogans, no exclamation marks.
+ */
 export const HEADLINES = [
-  // Plain
-  "Ready to train?",
-  "Ready when you are",
-  "Time for a session?",
-  "What are we lifting?",
-  "Today's session",
-  // Dry
-  "The weights won't lift themselves",
-  "Legs again? Legs again.",
-  "The bar is just sitting there",
-  "Rest days are earned",
-  "Chalk is optional, effort isn't",
-  "Warm-up counts as a set",
-  "Another day, another rep",
-  "Skipping leg day is a choice",
-  // Encouraging
-  "One more good session",
-  "Show up, then see",
-  "A small session still counts",
-  "Just the first set",
-  "Good to see you back",
-  "Steady beats heroic",
-  "Future you will approve",
-  // Random
-  "Somewhere a pigeon is doing push-ups",
-  "A kettlebell is an iron teapot",
-  "Squirrels do pull-ups on feeders",
-  "The treadmill remembers nothing",
-  "Gravity is not on holiday",
-  "The dumbbell rack has opinions",
+  // Dry and sarcastic
+  "The couch will survive without you",
+  "Your muscles have filed a complaint",
+  "Lift now, complain later",
+  "Cardio is a rumour",
+  "Today's excuse has been noted",
+  "Rest days are not a personality",
+  "The barbell misses you. Probably",
+  "Sore tomorrow, smug today",
+  "Leg day called. Again.",
+  "Gravity: still undefeated",
+  "Heavy things won't lift themselves",
+  "The mirror can wait",
+  "Warm-ups count. Sadly",
+  "Nobody needs that many rest days",
+  "Your phone is a very good rest timer",
+  // Random facts
+  "Octopuses have three hearts",
+  "Honey never really spoils",
+  "A day on Venus outlasts its year",
+  "Bananas are berries; strawberries not",
+  "Sharks are older than trees",
+  "Wombat droppings are cube-shaped",
+  "Sloths hold their breath for 40 min",
+  "Oxford is older than the Aztec empire",
+  "The Eiffel Tower grows in summer",
+  "A group of flamingos is a flamboyance",
+  "Scotland's national animal is a unicorn",
+  "Muscles can't push, they only pull",
+  "Your heart beats ~100,000 times a day",
 ];
 
-const KEY = "gt-headline";
-
-/** A random line that differs from `previous` whenever there is more than one. */
-export function pickHeadline(
-  previous: string | null,
-  random: () => number = Math.random,
-  lines: readonly string[] = HEADLINES,
-) {
-  const choices = lines.filter((line) => line !== previous);
-  const pool = choices.length ? choices : lines;
-  return pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
+/** Days since 1970-01-01 in local time, so the line changes at local midnight. */
+function localDay(date: Date) {
+  return Math.floor(
+    (date.getTime() - date.getTimezoneOffset() * 60_000) / 86_400_000,
+  );
 }
 
-/** Picks a headline and remembers it for this browser session, so the next pick differs. */
-export function nextHeadline(random?: () => number) {
-  const line = pickHeadline(session.getItem(KEY), random);
-  try {
-    session.setItem(KEY, line);
-  } catch {
-    /* Without session storage a repeat is possible but harmless. */
-  }
-  return line;
+/**
+ * The line for `date`. Stepping through the list by a stride that shares no
+ * factor with its length visits every line before repeating, and two
+ * consecutive days never get the same one.
+ */
+export function headlineFor(
+  date: Date = new Date(),
+  lines: readonly string[] = HEADLINES,
+) {
+  const n = lines.length;
+  if (n === 0) return "";
+  let stride = 7;
+  while (gcd(stride, n) !== 1) stride++;
+  return lines[(((localDay(date) * stride) % n) + n) % n];
+}
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
 }
