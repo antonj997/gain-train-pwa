@@ -171,21 +171,25 @@
   font-weight: 600;
   pointer-events: none;
 }
+/* The value sits right against its marker ("+10", "40 kg"), so it is aligned
+   to the marker's side instead of the centre. */
 .set-marker-prefix {
-  left: var(--gt-space-2);
+  left: var(--gt-space-3);
   color: var(--gt-accent);
   font-size: var(--gt-fs-4);
 }
 .set-marker-suffix {
-  right: var(--gt-space-1);
+  right: var(--gt-space-2);
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-1);
 }
-.set-field.has-prefix input {
-  padding-left: calc(var(--gt-space-3) + var(--gt-space-2));
+.set-line .set-field.has-prefix input {
+  padding-left: calc(var(--gt-space-3) + 1ch);
+  text-align: left;
 }
-.set-field.has-suffix input {
-  padding-right: calc(var(--gt-space-3) + var(--gt-space-2));
+.set-line .set-field.has-suffix input {
+  padding-right: var(--gt-space-5);
+  text-align: right;
 }
 
 /* Plain bodyweight is text, not a field. */
@@ -335,11 +339,19 @@
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+/* The date chip is taller than the line, so only the sides are clipped. */
+@supports (overflow: clip) {
+  .top-bar-status {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+}
 .top-bar-status .is-error {
   color: var(--gt-danger-fg);
   font-weight: 600;
 }
 .date-chip {
+  position: relative;
   display: inline-block;
   min-height: 28px;
   margin-block: -5px;
@@ -351,6 +363,12 @@
   font-size: var(--gt-fs-2);
   font-weight: 600;
   vertical-align: baseline;
+}
+/* The 28px chip keeps a 44px target. It opens the same sheet as the title. */
+.date-chip::before {
+  content: "";
+  position: absolute;
+  inset: -8px 0;
 }
 .top-bar > .btn-primary {
   flex: none;
@@ -553,6 +571,51 @@
     calc(44px + 44px + var(--gt-space-2) + var(--gt-space-2));
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-3);
+}
+
+/* The drag handle SortableSetList draws for each set. */
+.set-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-sm);
+  background: transparent;
+  color: var(--gt-ink-2);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  font-size: var(--gt-fs-1);
+  font-variant-numeric: tabular-nums;
+}
+.set-drag-handle:hover,
+.set-drag-handle:focus-visible {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.set-drag-handle:focus-visible {
+  outline: none;
+}
+.set-drag-handle:focus-visible svg {
+  stroke-width: 3;
+}
+.set-drag-handle:focus-visible span {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.sortable-set-item.is-moving {
+  position: relative;
+  z-index: 1;
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-accent-soft);
+}
+.is-moving .set-drag-handle {
+  color: var(--gt-accent);
+  cursor: grabbing;
 }
 
 /* Exercise card: name, column headings and rows. */

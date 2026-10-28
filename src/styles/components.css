@@ -30,8 +30,17 @@
     color var(--gt-motion);
 }
 .btn-sm {
+  position: relative;
   min-height: 40px;
   padding: 0 var(--gt-space-3);
+  border-radius: var(--gt-radius-sm);
+}
+/* The 40px button keeps a 44px target: its 1px border makes the padding box
+   38px, so the invisible layer reaches 3px past it on every side. */
+.btn-sm::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
 }
 .btn-primary:disabled,
 .btn-secondary:disabled,

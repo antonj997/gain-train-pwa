@@ -11,7 +11,7 @@ export default function HistorySetList({ sets }: { sets: WorkoutSet[] }) {
     <>
       {done.map((s, i) =>
         isDrop(s) ? (
-          <div className="history-set" key={s.id}>
+          <div className="history-set history-drop" key={s.id}>
             <strong>{"↳ " + labelSet(s)}</strong>
           </div>
         ) : (

@@ -17,7 +17,7 @@ import {
   type SetReorder,
   type SetReorderEvent,
 } from "@/lib/set-editing";
-import "@/styles/set-editing.css";
+import "@/styles/workout.css";
 
 type Drag = {
   pointerId?: number;
@@ -234,13 +234,13 @@ export default function SortableSetList({
         dispatch({ type: "pointer-cancel", pointerId: event.pointerId })
       }
     >
-      <p id={instructionsId} className="set-editing-sr-only">
+      <p id={instructionsId} className="sr-only">
         Drag to reorder. With a keyboard, press Space or Enter to grab, use
         arrow keys to move, then Space or Enter to drop. Escape cancels the
         move.
       </p>
       <p
-        className="set-editing-sr-only"
+        className="sr-only"
         role="status"
         aria-live="polite"
         aria-atomic="true"
