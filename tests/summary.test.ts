@@ -82,6 +82,30 @@ test("summary excludes missing durations and unchecked sets, counts zero-minute 
   assert.equal(metricChange(null, 20), "No comparison");
   assert.equal(metricChange(1.04, 1, 1), "→ No change");
 });
+test("summary counts a set and its drops as one set", () => {
+  const workout: Workout = {
+    name: "Test",
+    date: "2026-09-14",
+    duration: 30,
+    status: "completed",
+    startedAt: null,
+    exercises: [
+      {
+        id: crypto.randomUUID(),
+        exerciseId: "bench",
+        name: "Bench",
+        sets: [
+          { ...newSet(), weight: 100, reps: 5, done: true },
+          { ...newSet(), weight: 80, reps: 4, done: true, drop: true },
+          { ...newSet(), weight: 20, reps: 8, done: true, section: "warmup" },
+        ],
+      },
+    ],
+  };
+  const summary = summarize([workout], 30);
+  assert.equal(summary.sets, 2);
+  assert.equal(summary.workingSets, 1);
+});
 test("routine origin survives validation while old workouts remain valid", () => {
   const workout = {
     name: "Routine session",
