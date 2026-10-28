@@ -44,7 +44,7 @@ export function createHistoryCalendar(now: string): HistoryCalendarState {
   return {
     month: validDate(now).slice(0, 7),
     mode: "month",
-    display: "detailed",
+    display: "simple",
     selectedDate: null,
     from: null,
     to: null,

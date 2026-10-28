@@ -15,10 +15,21 @@ import * as drops from "../src/data/drops";
 import * as workouts from "../src/data/workouts";
 import * as analytics from "../src/data/analytics";
 import * as presentation from "../src/lib/progressPresentation";
+import * as segmentedKeys from "../src/lib/segmented-keys";
 import { StaticRouter } from "react-router-dom/server";
 
 // Real React server rendering verifies markup without installing a DOM runtime.
 // Browser layout, focus movement and device touch behavior are verified separately.
+// The calendar draws its display control with the shared Segmented component.
+async function calendarComponent() {
+  const Segmented = await component("../src/components/ui/Segmented.tsx", {
+    "@/lib/segmented-keys": segmentedKeys,
+  });
+  return component("../src/components/HistoryCalendar.tsx", {
+    "@/components/ui/Segmented": { default: Segmented },
+  });
+}
+
 async function component(path: string, aliases: Record<string, unknown> = {}) {
   const source = await readFile(new URL(path, import.meta.url), "utf8");
   const compiled = ts.transpileModule(source, {
@@ -72,7 +83,7 @@ function workout(
 }
 
 test("simple calendar renders exactly the month's squares, accessible dates and workout markers", async () => {
-  const Calendar = await component("../src/components/HistoryCalendar.tsx");
+  const Calendar = await calendarComponent();
   const html = renderToStaticMarkup(
     createElement(Calendar, {
       value: {
@@ -99,17 +110,19 @@ test("simple calendar renders exactly the month's squares, accessible dates and 
     html,
     /aria-label="[^"]*(?:29 February|February 29)[^"]*2024[^"]*1 workout/,
   );
-  assert.match(html, /aria-label="Simple view" aria-pressed="true"/);
-  assert.equal((html.match(/class="calendar-icon-toggle"/g) ?? []).length, 2);
-  assert.doesNotMatch(html, /class="calendar-toggle"/);
+  assert.match(html, /role="radio" aria-checked="true"[^>]*>Simple</);
+  assert.match(html, /role="radio" aria-checked="false"[^>]*>Detailed</);
   assert.doesNotMatch(html, /outside-month|calendar-weekdays/);
 });
 
 test("detailed calendar exposes future guards, a current-date label and one keyboard entry point", async () => {
-  const Calendar = await component("../src/components/HistoryCalendar.tsx");
+  const Calendar = await calendarComponent();
   const html = renderToStaticMarkup(
     createElement(Calendar, {
-      value: calendar.createHistoryCalendar("2026-10-26"),
+      value: {
+        ...calendar.createHistoryCalendar("2026-10-26"),
+        display: "detailed",
+      },
       now: "2026-10-26",
       records: [],
       onChange: () => {},
@@ -124,7 +137,7 @@ test("detailed calendar exposes future guards, a current-date label and one keyb
 });
 
 test("range calendar exposes chosen bounds and the active boundary without another date picker", async () => {
-  const Calendar = await component("../src/components/HistoryCalendar.tsx");
+  const Calendar = await calendarComponent();
   const html = renderToStaticMarkup(
     createElement(Calendar, {
       value: {
@@ -156,8 +169,8 @@ test("range calendar exposes chosen bounds and the active boundary without anoth
   assert.doesNotMatch(html, /type="date"|More periods/);
 });
 
-test("the default calendar has two icon toggles and no redundant reset action", async () => {
-  const Calendar = await component("../src/components/HistoryCalendar.tsx");
+test("the default calendar is simple, with a display control, a range switch and no redundant reset action", async () => {
+  const Calendar = await calendarComponent();
   const html = renderToStaticMarkup(
     createElement(Calendar, {
       value: calendar.createHistoryCalendar("2026-10-26"),
@@ -166,9 +179,13 @@ test("the default calendar has two icon toggles and no redundant reset action", 
       onChange() {},
     }),
   );
-  assert.equal((html.match(/class="calendar-icon-toggle"/g) ?? []).length, 2);
+  assert.match(html, /class="history-calendar calendar-simple"/);
+  assert.match(html, /role="radiogroup" aria-label="Calendar display"/);
+  assert.match(html, /role="radio" aria-checked="true"[^>]*>Simple</);
   assert.match(html, /aria-label="Date range" aria-pressed="false"/);
-  assert.match(html, /aria-label="Simple view" aria-pressed="false"/);
+  // The month moves with 44px icon buttons.
+  assert.match(html, /class="icon-btn" aria-label="Previous month"/);
+  assert.match(html, /class="icon-btn" aria-label="Next month"/);
   assert.doesNotMatch(html, />Show current month<|>Whole month<|>This month</);
 });
 
@@ -196,7 +213,7 @@ test("recent summary uses an inclusive 30-day window and an explicit preceding c
 });
 
 test("History places its only calendar before current-month workouts and removes general stats", async () => {
-  const Calendar = await component("../src/components/HistoryCalendar.tsx");
+  const Calendar = await calendarComponent();
   const records = [workout("2026-10-26"), workout("2026-09-26")];
   (records[0].payload as model.Workout).name = "Current session";
   (records[1].payload as model.Workout).name = "Previous month session";

@@ -1,8 +1,6 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import {
-  Calendar,
-  CalendarDays,
-  Grid3X3,
+  CalendarRange,
   RotateCcw,
   ChevronLeft,
   ChevronRight,
@@ -21,29 +19,8 @@ import {
 } from "@/lib/history-calendar";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
+import Segmented from "@/components/ui/Segmented";
 import "@/styles/history-calendar.css";
-
-function DateRangeIcon() {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="4" width="18" height="18" rx="2" />
-      <path d="M8 2v4m8-4v4M3 10h18" />
-      <circle cx="7" cy="16" r="1.5" />
-      <circle cx="17" cy="16" r="1.5" />
-      <path d="M9 16h6m-2-2 2 2-2 2" />
-    </svg>
-  );
-}
 
 export default function HistoryCalendar({
   value,
@@ -110,14 +87,82 @@ export default function HistoryCalendar({
       className={`history-calendar calendar-${display}`}
       aria-label="Workout calendar"
     >
+      <div className="calendar-header">
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Previous month"
+          disabled={month <= "1900-01"}
+          onClick={() => browse(moveCalendarMonth(month, -1))}
+        >
+          <ChevronLeft size={22} aria-hidden="true" />
+        </button>
+        <h2 className="sr-only" id={headingId} aria-live="polite">
+          {localizedDate(month + "-01", { month: "long", year: "numeric" })}
+        </h2>
+        <div className="calendar-month-selects">
+          <select
+            aria-label="Calendar month"
+            value={month.slice(5)}
+            onChange={(event) => browse(`${year}-${event.target.value}`)}
+          >
+            {Array.from({ length: 12 }, (_, index) => {
+              const number = String(index + 1).padStart(2, "0");
+              return (
+                <option
+                  key={number}
+                  value={number}
+                  disabled={`${year}-${number}` > currentMonth}
+                >
+                  {localizedDate(`2024-${number}-01`, { month: "long" })}
+                </option>
+              );
+            })}
+          </select>
+          <select
+            aria-label="Calendar year"
+            value={year}
+            onChange={(event) =>
+              browse(`${event.target.value}-${month.slice(5)}`)
+            }
+          >
+            {Array.from(
+              { length: currentYear - 1899 },
+              (_, index) => currentYear - index,
+            ).map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label="Next month"
+          disabled={month >= currentMonth}
+          onClick={() => browse(moveCalendarMonth(month, 1))}
+        >
+          <ChevronRight size={22} aria-hidden="true" />
+        </button>
+      </div>
       <div
         className="calendar-toolbar"
         role="group"
         aria-label="Calendar controls"
       >
+        <Segmented
+          label="Calendar display"
+          value={display}
+          options={[
+            { value: "simple", label: "Simple" },
+            { value: "detailed", label: "Detailed" },
+          ]}
+          onChange={(next) => change({ type: "display", display: next })}
+        />
         <button
           type="button"
-          className="calendar-icon-toggle"
+          className="calendar-range-toggle"
           aria-label="Date range"
           aria-pressed={mode === "range"}
           title={
@@ -129,34 +174,7 @@ export default function HistoryCalendar({
             change({ type: "mode", mode: mode === "month" ? "range" : "month" })
           }
         >
-          {mode === "month" ? (
-            <DateRangeIcon />
-          ) : (
-            <Calendar size={20} aria-hidden="true" />
-          )}
-        </button>
-        <button
-          type="button"
-          className="calendar-icon-toggle"
-          aria-label="Simple view"
-          aria-pressed={display === "simple"}
-          title={
-            display === "detailed"
-              ? "Detailed calendar · switch to simple"
-              : "Simple calendar · switch to detailed"
-          }
-          onClick={() =>
-            change({
-              type: "display",
-              display: display === "detailed" ? "simple" : "detailed",
-            })
-          }
-        >
-          {display === "detailed" ? (
-            <CalendarDays size={18} aria-hidden="true" />
-          ) : (
-            <Grid3X3 size={18} aria-hidden="true" />
-          )}
+          <CalendarRange size={22} aria-hidden="true" />
         </button>
       </div>
       {mode === "range" && (
@@ -186,67 +204,8 @@ export default function HistoryCalendar({
           ))}
         </div>
       )}
-      <div className="calendar-heading">
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Previous month"
-          disabled={month <= "1900-01"}
-          onClick={() => browse(moveCalendarMonth(month, -1))}
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <h2 className="sr-only" id={headingId} aria-live="polite">
-          {localizedDate(month + "-01", { month: "long", year: "numeric" })}
-        </h2>
-        <div className="calendar-month-selects">
-          <select
-            aria-label="Calendar month"
-            value={month.slice(5)}
-            onChange={(event) => browse(`${year}-${event.target.value}`)}
-          >
-            {Array.from({ length: 12 }, (_, index) => {
-              const number = String(index + 1).padStart(2, "0");
-              return (
-                <option
-                  key={number}
-                  value={number}
-                  disabled={`${year}-${number}` > currentMonth}
-                >
-                  {localizedDate(`2024-${number}-01`, { month: "short" })}
-                </option>
-              );
-            })}
-          </select>
-          <select
-            aria-label="Calendar year"
-            value={year}
-            onChange={(event) =>
-              browse(`${event.target.value}-${month.slice(5)}`)
-            }
-          >
-            {Array.from(
-              { length: currentYear - 1899 },
-              (_, index) => currentYear - index,
-            ).map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="button"
-          className="icon-button"
-          aria-label="Next month"
-          disabled={month >= currentMonth}
-          onClick={() => browse(moveCalendarMonth(month, 1))}
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
       <p
-        className={`calendar-instructions${mode === "month" && !selectedDate ? " sr-only" : ""}`}
+        className="calendar-instructions"
         id={instructionsId}
         aria-live="polite"
       >
@@ -328,15 +287,8 @@ export default function HistoryCalendar({
       </div>
       <div className="calendar-footer">
         <span>
-          <span
-            className={
-              display === "simple"
-                ? "calendar-square is-filled"
-                : "calendar-workout-dot"
-            }
-            aria-hidden="true"
-          />{" "}
-          Workout day
+          <span className="calendar-workout-dot" aria-hidden="true" /> Workout
+          day
         </span>
         {canReset && (
           <button
