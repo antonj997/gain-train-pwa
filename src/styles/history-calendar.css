@@ -206,7 +206,7 @@
   background: var(--blue);
 }
 .calendar-day.is-selected .calendar-workout-dot {
-  background: white;
+  background: var(--gt-on-accent);
 }
 .calendar-range .calendar-day.is-selected .calendar-workout-dot {
   background: var(--blue);

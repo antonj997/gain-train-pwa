@@ -144,7 +144,7 @@
 .segmented button {
   flex: 1 1 0;
   min-width: 0;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 var(--gt-space-1);
   border: 1px solid transparent;
   border-radius: var(--gt-radius-sm);

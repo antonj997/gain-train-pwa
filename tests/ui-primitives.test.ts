@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -352,4 +352,17 @@ test("loadModule shares one copy of an import, compiles JSX, stubs css and lets 
   });
   assert.equal(a, 42);
   await assert.rejects(loadModule(join(dir, "none.tsx")), /no file at/);
+});
+
+test("segmented options and the icon button keep a 44px target", () => {
+  const css = readFileSync(
+    new URL("../src/styles/components.css", import.meta.url),
+    "utf8",
+  );
+  const height = (selector: string) =>
+    css.match(
+      new RegExp(`${selector}\\s*\\{[^}]*?(?:min-)?height:\\s*(\\d+)px`),
+    )?.[1];
+  assert.equal(height("\\.segmented button"), "44");
+  assert.equal(height("\\.icon-btn"), "44");
 });
