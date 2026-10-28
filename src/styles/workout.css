@@ -257,3 +257,107 @@
 .workout-editor {
   padding-bottom: var(--sheet-space, 0px);
 }
+
+/* Sheet content: the Set, Load and count, exercise menu and Reorder sheets. */
+.sheet-title-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+}
+.sheet-title-aside {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
+}
+.sheet-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.sheet-label {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.sheet-hint,
+.sheet-note {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.sheet-note {
+  font-size: var(--gt-fs-3);
+}
+.sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-2);
+}
+.sheet-actions > * {
+  flex: 1 1 140px;
+}
+.sheet-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+}
+.sheet-menu .btn-danger {
+  margin-top: var(--gt-space-2);
+}
+.sheet-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  min-height: 48px;
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  border-radius: var(--gt-radius-md);
+  background: transparent;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  text-align: left;
+}
+.sheet-menu-item svg {
+  flex: none;
+  color: var(--gt-ink-2);
+}
+.sheet-menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.sheet-menu-hint {
+  margin-left: auto;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
+}
+@media (hover: hover) {
+  .sheet-menu-item:hover:not(:disabled) {
+    background-color: var(--gt-surface-2);
+  }
+}
+
+/* Reorder sets: a handle, the set's badge and values; its drops nest below. */
+.reorder-item {
+  padding-block: var(--gt-space-1);
+  border-bottom: 1px solid var(--gt-line);
+}
+.reorder-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+}
+.reorder-summary {
+  min-width: 0;
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+}
+.reorder-drop {
+  margin: 0 0 var(--gt-space-1)
+    calc(44px + 44px + var(--gt-space-2) + var(--gt-space-2));
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-3);
+}
