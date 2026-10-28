@@ -108,6 +108,8 @@ test("addDrop inserts after existing drops and leaves its input and unfit target
   );
   assert.equal(result.length, 4);
   assert.equal(result[2].drop, true);
+  // The new drop follows the 80 kg drop: 80 × 0.8 = 64, and the nearest 2.5 kg is 65.
+  assert.equal(result[2].weight, 65);
   assert.equal(result[3], next);
   assert.equal(sets.length, 3);
 
@@ -126,6 +128,30 @@ test("addDrop inserts after existing drops and leaves its input and unfit target
   const winddownSets = [winddown];
   assert.equal(addDrop(winddownSets, winddown.id), winddownSets);
   assert.equal(addDrop(sets, "missing"), sets);
+});
+
+test("addDrop copies load and weight from the row it follows", () => {
+  const parent = set({ weight: 100 });
+
+  const assisted = drop({ load: "assisted", weight: 20, measure: "reps" });
+  const afterAssisted = addDrop([parent, assisted], parent.id)[2];
+  assert.equal(afterAssisted.load, "assisted");
+  assert.equal(afterAssisted.measure, "reps");
+  assert.equal(afterAssisted.weight, null);
+
+  const plainBodyweight = drop({ load: "bodyweight", weight: null });
+  const afterBodyweight = addDrop([parent, plainBodyweight], parent.id)[2];
+  assert.equal(afterBodyweight.load, "bodyweight");
+  assert.equal(afterBodyweight.weight, null);
+  assert.equal("extraWeight" in afterBodyweight, false);
+
+  const added = drop({ load: "bodyweight", extraWeight: true, weight: 20 });
+  const afterAdded = addDrop([parent, added], parent.id)[2];
+  assert.equal(afterAdded.extraWeight, true);
+  assert.equal(afterAdded.weight, 15);
+
+  const blank = drop({ weight: null });
+  assert.equal(addDrop([parent, blank], parent.id)[2].weight, null);
 });
 
 test("dropGroup spans a set and its drops from any member", () => {

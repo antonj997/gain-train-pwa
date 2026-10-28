@@ -58,30 +58,34 @@ export function normalizeDrops(sets: WorkoutSet[]): WorkoutSet[] {
 const dropWeight = (weight: number | null) =>
   weight === null ? null : Math.round((weight * 0.8) / 2.5) * 2.5;
 
-/** Adds a blank drop after the set's existing drops. */
+/**
+ * Adds a blank drop after the set's existing drops. It continues the last row
+ * of the group: same load, and 80% of that row's weight.
+ */
 export function addDrop(sets: WorkoutSet[], setId: string): WorkoutSet[] {
   const index = sets.findIndex((set) => set.id === setId);
   const target = sets[index];
   if (!target || target.done || target.section !== "working") return sets;
-  const extra = hasExtraWeight(target);
+  const { end } = dropGroup(sets, index);
+  const above = sets[end - 1];
+  const extra = hasExtraWeight(above);
   const weight =
-    target.load === "weight" || extra ? dropWeight(target.weight) : null;
+    above.load === "weight" || extra ? dropWeight(above.weight) : null;
   // Added weight that rounds down to 0 kg is plain bodyweight.
   const plain = extra && weight === 0;
   const added: WorkoutSet = {
     id: crypto.randomUUID(),
     reps: null,
     weight: plain ? null : weight,
-    load: target.load,
-    ...(target.measure ? { measure: target.measure } : {}),
-    ...(target.extraWeight !== undefined && !plain
-      ? { extraWeight: target.extraWeight }
+    load: above.load,
+    ...(above.measure ? { measure: above.measure } : {}),
+    ...(above.extraWeight !== undefined && !plain
+      ? { extraWeight: above.extraWeight }
       : {}),
     section: "working",
     done: false,
     drop: true,
   };
-  const { end } = dropGroup(sets, index);
   return [...sets.slice(0, end), added, ...sets.slice(end)];
 }
 
