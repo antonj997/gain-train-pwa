@@ -126,24 +126,27 @@ test("completed rows still expose errors on invalid values", async () => {
 test("BW controls render current profile kilograms without replacing a recorded snapshot", async () => {
   const set = { ...model.newSet(), load: "bodyweight", reps: 8 };
   const active = await setLine({ set, bodyWeightKg: 80 });
-  assert.match(active, /class="sr-only">Bodyweight 80 kilograms</);
+  assert.match(
+    active,
+    /class="sr-only">Bench Press set 1: Bodyweight 80 kilograms</,
+  );
   assert.match(active, /aria-hidden="true">BW<small> 80 kg<\/small>/);
   assert.equal(tags(active, "input").length, 1, "plain BW has no load field");
   const recorded = await setLine({
     set: { ...set, done: true, bodyWeightKg: 78.5 },
     bodyWeightKg: 80,
   });
-  assert.match(recorded, />Bodyweight 78.5 kilograms</);
+  assert.match(recorded, /: Bodyweight 78.5 kilograms</);
   assert.doesNotMatch(recorded, /Bodyweight 80 kilograms/);
   const legacy = await setLine({
     set: { ...set, done: true },
     bodyWeightKg: 80,
   });
   assert.match(legacy, /aria-hidden="true">BW<\/span>/);
-  assert.match(legacy, /class="sr-only">Bodyweight</);
+  assert.match(legacy, /class="sr-only">Bench Press set 1: Bodyweight</);
   assert.doesNotMatch(legacy, /Bodyweight 80 kilograms/);
   const unknown = await setLine({ set, bodyWeightKg: null });
-  assert.match(unknown, /class="sr-only">Bodyweight</);
+  assert.match(unknown, /class="sr-only">Bench Press set 1: Bodyweight</);
 });
 
 test("a BW exception marker shows the text BW instead of a field", async () => {
@@ -307,8 +310,7 @@ test("the badge is a labelled button carrying its tone", async () => {
     /aria-label="Set 1, working set\. Change type, load or delete"/,
   );
   assert.match(working, />1</);
-  // Names stay readable without the number: "Bench Press warm-up set".
-  assert.match(warm, /aria-label="Complete Bench Press warm-up set"/);
+  assert.match(warm, /aria-label="Complete Bench Press warm-up set 1"/);
 });
 
 test("the previous result sits in its own column, with a dash when there is none", async () => {
@@ -346,4 +348,46 @@ test("the workout stylesheet hides Previous on narrow phones, uses tokens only a
     "utf8",
   );
   assert.match(line, /import "@\/styles\/workout\.css";/);
+});
+
+test("rows of the same kind get different names", async () => {
+  const sets: model.WorkoutSet[] = [
+    { ...model.newSet(), section: "warmup", weight: 40, reps: 8 },
+    { ...model.newSet(), section: "warmup", weight: 50, reps: 5 },
+    { ...model.newSet(), weight: 80, reps: 5 },
+    { ...model.newSet(), weight: 64, reps: 5, drop: true },
+    { ...model.newSet(), weight: 52, reps: 5, drop: true },
+  ];
+  const html = await Promise.all(
+    sets.map((set, i) =>
+      setLine({
+        set: { ...set, load: i === 1 ? "bodyweight" : set.load },
+        badge: setBadge(sets, i),
+      }),
+    ),
+  );
+  const names = html.map(
+    (row) => row.match(/aria-label="(Complete [^"]+)"/)?.[1],
+  );
+  // Drops have no check of their own: their input names tell them apart.
+  assert.deepEqual(names.slice(0, 3), [
+    "Complete Bench Press warm-up set 1",
+    "Complete Bench Press warm-up set 2",
+    "Complete Bench Press set 1",
+  ]);
+  assert.equal(names[3], undefined);
+  const inputNames = html.flatMap((row) =>
+    tags(row, "input").map((tag) => tag.match(/aria-label="([^"]+)"/)![1]),
+  );
+  assert.equal(
+    new Set(inputNames).size,
+    inputNames.length,
+    "no two fields share a name",
+  );
+  assert.ok(inputNames.includes("Bench Press warm-up set 1 kilograms"));
+  assert.ok(inputNames.includes("Bench Press warm-up set 2 reps"));
+  assert.ok(inputNames.includes("Bench Press drop 1 after set 1 kilograms"));
+  assert.ok(inputNames.includes("Bench Press drop 2 after set 1 reps"));
+  // The bodyweight text of the second warm-up names its row too.
+  assert.match(html[1], /Bench Press warm-up set 2: Bodyweight/);
 });

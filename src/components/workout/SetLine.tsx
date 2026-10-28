@@ -78,8 +78,8 @@ export default function SetLine({
   if (lockedAttempt && !set.done) setLockedAttempt(false);
 
   const drop = isDrop(set);
-  // "Set 1" reads as "Bench Press set 1"; "Warm-up set" as "Bench Press warm-up set".
-  const label = `${name} ${badge.title.charAt(0).toLowerCase()}${badge.title.slice(1)}`;
+  // Unique within the exercise: "Bench Press set 2", "Bench Press drop 1 after set 2".
+  const label = `${name} ${badge.name}`;
   const timed = set.measure === "seconds";
   const extraWeight = hasExtraWeight(set);
   const plainBodyweight =
@@ -156,8 +156,8 @@ export default function SetLine({
           </span>
           <span className="sr-only">
             {displayedBodyWeight === null
-              ? "Bodyweight"
-              : `Bodyweight ${displayedBodyWeight} kilograms`}
+              ? `${label}: Bodyweight`
+              : `${label}: Bodyweight ${displayedBodyWeight} kilograms`}
           </span>
         </span>
       ) : (

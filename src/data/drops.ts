@@ -10,6 +10,11 @@ export type SetBadgeInfo = {
   tone: SetTone;
   label: string;
   title: string;
+  /**
+   * Names the set to assistive technology, unique within an exercise: "set 2",
+   * "warm-up set 1", "cool-down set 1" or "drop 1 after set 2".
+   */
+  name: string;
 };
 
 export const isDrop = (set: WorkoutSet) => set.drop === true;
@@ -118,26 +123,33 @@ export function changeSection(
   });
 }
 
-/** Working sets are numbered among working sets that are not drops. */
+/** Sets of a section are numbered among those that are not drops. */
 export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
   const set = sets[index];
-  const ordinal = (through: number) =>
+  const ordinal = (section: WorkoutSet["section"], through: number) =>
     sets
       .slice(0, through + 1)
-      .filter((s) => s.section === "working" && !isDrop(s)).length;
-  if (isDrop(set))
+      .filter((s) => s.section === section && !isDrop(s)).length;
+  if (isDrop(set)) {
+    const { start } = dropGroup(sets, index);
+    // Position within the group; a drop with no set above it still counts from 1.
+    const position = index - start + (isDrop(sets[start]) ? 1 : 0);
+    const parent = ordinal("working", start);
     return {
       text: "↓",
       tone: "drop",
-      label: `Drop after set ${ordinal(dropGroup(sets, index).start)}. Change load or delete`,
+      label: `Drop after set ${parent}. Change load or delete`,
       title: "Drop",
+      name: `drop ${position} after set ${parent}`,
     };
+  }
   if (set.section === "warmup")
     return {
       text: "W",
       tone: "warmup",
       label: "Warm-up set. Change type, load or delete",
       title: "Warm-up set",
+      name: `warm-up set ${ordinal("warmup", index)}`,
     };
   if (set.section === "winddown")
     return {
@@ -145,12 +157,14 @@ export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
       tone: "winddown",
       label: "Cool-down set. Change type, load or delete",
       title: "Cool-down set",
+      name: `cool-down set ${ordinal("winddown", index)}`,
     };
-  const n = ordinal(index);
+  const n = ordinal("working", index);
   return {
     text: String(n),
     tone: "working",
     label: `Set ${n}, working set. Change type, load or delete`,
     title: `Set ${n}`,
+    name: `set ${n}`,
   };
 }

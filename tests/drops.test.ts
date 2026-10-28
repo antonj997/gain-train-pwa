@@ -241,12 +241,14 @@ test("setBadge numbers working sets only", () => {
     tone: "warmup",
     label: "Warm-up set. Change type, load or delete",
     title: "Warm-up set",
+    name: "warm-up set 1",
   });
   assert.deepEqual(badges[1], {
     text: "1",
     tone: "working",
     label: "Set 1, working set. Change type, load or delete",
     title: "Set 1",
+    name: "set 1",
   });
   assert.equal(badges[2].label, "Drop after set 1. Change load or delete");
   assert.equal(badges[2].title, "Drop");
@@ -259,7 +261,36 @@ test("setBadge numbers working sets only", () => {
     tone: "winddown",
     label: "Cool-down set. Change type, load or delete",
     title: "Cool-down set",
+    name: "cool-down set 1",
   });
+});
+
+test("setBadge names are unique within an exercise", () => {
+  const sets = [
+    set({ section: "warmup" }),
+    set({ section: "warmup" }),
+    set(),
+    drop(),
+    drop(),
+    set(),
+    set({ section: "winddown" }),
+  ];
+  const names = sets.map((_, i) => setBadge(sets, i).name);
+  assert.deepEqual(names, [
+    "warm-up set 1",
+    "warm-up set 2",
+    "set 1",
+    "drop 1 after set 1",
+    "drop 2 after set 1",
+    "set 2",
+    "cool-down set 1",
+  ]);
+  assert.equal(new Set(names).size, names.length);
+  // A second cool-down and a drop after the second set keep counting.
+  const more = [...sets, set({ section: "winddown" })];
+  assert.equal(setBadge(more, 7).name, "cool-down set 2");
+  const second = [set(), set(), drop()];
+  assert.equal(setBadge(second, 2).name, "drop 1 after set 2");
 });
 
 test("a set with an empty drop cannot be checked", () => {
