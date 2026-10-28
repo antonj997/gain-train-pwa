@@ -1,5 +1,6 @@
 import { type Workout, type RecordDoc, validSet } from "./model";
 import { comparableSets, progressFor } from "./analytics";
+import { isDrop } from "./drops";
 
 export function improvementRate(
   records: RecordDoc[],
@@ -101,6 +102,8 @@ export function summarize(workouts: Workout[], days: number) {
   const sets = workouts
     .flatMap((w) => w.exercises.flatMap((ex) => ex.sets))
     .filter((set) => set.done && validSet(set));
+  // A set and its drops count as one set; volume still includes every drop.
+  const counted = sets.filter((set) => !isDrop(set));
   return {
     volume: sets.reduce(
       (sum, set) =>
@@ -121,8 +124,8 @@ export function summarize(workouts: Workout[], days: number) {
     minutes: durations.length
       ? durations.reduce((sum, value) => sum + value, 0)
       : null,
-    sets: sets.length,
-    workingSets: sets.filter((set) => set.section === "working").length,
+    sets: counted.length,
+    workingSets: counted.filter((set) => set.section === "working").length,
   };
 }
 export function metricChange(

@@ -25,7 +25,7 @@
 }
 .calendar-icon-toggle[aria-pressed="true"] {
   border-color: var(--blue);
-  background: hsl(var(--primary) / 0.08);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
   color: var(--blue);
 }
 .calendar-range-fields {
@@ -56,7 +56,7 @@
 }
 .calendar-bound[aria-pressed="true"] {
   border-color: var(--blue);
-  background: hsl(var(--primary) / 0.08);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
 }
 .calendar-bound time,
 .calendar-bound strong {
@@ -140,8 +140,8 @@
   border-color: var(--blue);
 }
 .calendar-day.is-selected {
-  background: #365de9;
-  color: white;
+  background: var(--gt-accent);
+  color: var(--gt-on-accent);
 }
 .calendar-day.is-range-start,
 .calendar-day.is-range-end {
@@ -177,14 +177,14 @@
 }
 .calendar-simple .calendar-day.is-selected {
   border-color: var(--blue);
-  background: hsl(var(--primary) / 0.12);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
   color: var(--ink);
 }
 .calendar-range .calendar-day.is-selected {
   border-radius: 0;
   border-color: var(--blue);
   border-inline-width: 0;
-  background: hsl(var(--primary) / 0.12);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
   color: var(--ink);
 }
 .calendar-range .calendar-day.range-row-start {
@@ -206,7 +206,7 @@
   background: var(--blue);
 }
 .calendar-day.is-selected .calendar-workout-dot {
-  background: white;
+  background: var(--gt-on-accent);
 }
 .calendar-range .calendar-day.is-selected .calendar-workout-dot {
   background: var(--blue);
@@ -250,7 +250,7 @@
 @media (hover: hover) {
   .calendar-icon-toggle:hover,
   .calendar-day:not(:disabled):not(.is-selected):hover {
-    background: hsl(var(--primary) / 0.08);
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
   }
   .calendar-bound:hover {
     border-color: var(--blue);

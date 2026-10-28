@@ -1,4 +1,5 @@
 import HistoryCalendar from "@/components/HistoryCalendar";
+import HistorySetList from "@/components/HistorySetList";
 import {
   createHistoryCalendar,
   historyCalendarBounds,
@@ -23,7 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
-import { today, repeatExercises, labelSet } from "@/data/model";
+import { today, repeatExercises } from "@/data/model";
 import {
   Dialog,
   DialogContent,
@@ -195,20 +196,7 @@ export default function History() {
           {w?.exercises.map((ex) => (
             <section key={ex.id}>
               <h3>{ex.name}</h3>
-              {ex.sets
-                .filter((s) => s.done)
-                .map((s, i) => (
-                  <div className="history-set" key={s.id}>
-                    <span>
-                      Set {i + 1}
-                      {s.section !== "working"
-                        ? " · " +
-                          (s.section === "warmup" ? "Warm-up" : "Cool-down")
-                        : ""}
-                    </span>
-                    <strong>{labelSet(s)}</strong>
-                  </div>
-                ))}
+              <HistorySetList sets={ex.sets} />
             </section>
           ))}
           <button

@@ -1,6 +1,6 @@
-import { useMemo, useReducer, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Plus, Crosshair } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
@@ -9,7 +9,6 @@ import {
   type Workout,
   type Exercise,
   newSet,
-  today,
   validSet,
   isFromNewerApp,
 } from "@/data/model";
@@ -21,21 +20,23 @@ import {
   lastSessions,
 } from "@/data/workouts";
 import { finishWorkout } from "@/lib/workout-editor";
-import { selectInputValue } from "@/lib/set-editing";
-import { changeExerciseOptions } from "@/lib/exercise-options";
 import { trainingHaptic } from "@/lib/preferences";
 import { requestPersistenceOnce } from "@/lib/persistence";
 import { errorMessage } from "@/lib/errors";
-import { countLabel } from "@/lib/labels";
+import { countLabel, durationLabel } from "@/lib/labels";
+import { localizedDate } from "@/lib/dates";
 import { historyPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
-import { useCloseOptionsOutside } from "@/hooks/useCloseOptionsOutside";
 import ExercisePicker from "@/components/ExercisePicker";
 import ExerciseCard from "@/components/ExerciseCard";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import "@/styles/set-editing.css";
+import FinishSheet from "@/components/workout/FinishSheet";
+import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
+import RestBar from "@/components/workout/RestBar";
+import NextSetChip from "@/components/workout/NextSetChip";
+import "@/styles/workout.css";
 
 export default function ActiveWorkout() {
   const { id } = useParams();
@@ -86,15 +87,11 @@ function Editor({
   const { workout: w, change, editing, saved, error, setError } = autosave;
   const [picker, setPicker] = useState(false);
   const [finish, setFinish] = useState(false);
-  const [menu, changeOptions] = useReducer(changeExerciseOptions, null);
   const [routine, setRoutine] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [abandon, setAbandon] = useState(false);
+  const [details, setDetails] = useState(false);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
-  const [focusedSetId, setFocusedSetId] = useState<string | null>(null);
-  const editorRef = useRef<HTMLDivElement>(null);
-  useCloseOptionsOutside(editorRef, menu?.id, changeOptions);
   const rest = useRestTimer(account, id);
   const dirty = JSON.stringify(w) !== JSON.stringify(initial);
   const completed = doneSetCount(w);
@@ -105,9 +102,22 @@ function Editor({
   const unfinished = w.exercises
     .flatMap((ex) => ex.sets)
     .filter((s) => !s.done);
-  const nextSet =
-    unfinished.find((s) => s.id === focusedSetId) ?? unfinished[0];
+  const nextSet = unfinished[0];
   const fromRoutine = !!w.routineId;
+  // A live timer for a running workout, refreshed every 30 s and on return.
+  const [now, setNow] = useState(Date.now);
+  const timed = !editing && !!w.startedAt;
+  useEffect(() => {
+    if (!timed) return;
+    const tick = () => setNow(Date.now());
+    tick();
+    const interval = window.setInterval(tick, 30_000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [timed]);
   // Previous results per exercise, rebuilt only when the log or date changes.
   const previous = useMemo(
     () =>
@@ -148,7 +158,6 @@ function Editor({
     });
   const remove = (ex: Exercise) => {
     change({ ...w, exercises: w.exercises.filter((e) => e.id !== ex.id) });
-    changeOptions({ type: "close" });
     setRemoveExercise(null);
   };
   const move = (index: number, step: number) => {
@@ -160,19 +169,6 @@ function Editor({
       exercises[index],
     ];
     change({ ...w, exercises });
-  };
-  const focusNext = () => {
-    if (!nextSet) return;
-    const input = editorRef.current?.querySelector<HTMLInputElement>(
-      `[data-set-id="${nextSet.id}"] input:not(:disabled)`,
-    );
-    input?.focus();
-    input?.scrollIntoView({
-      block: "center",
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "auto"
-        : "smooth",
-    });
   };
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
@@ -245,140 +241,130 @@ function Editor({
       );
     }, "Could not abandon. The workout is still here; retry.");
 
+  const saveStatus = editing
+    ? dirty
+      ? "Unsaved"
+      : "Saved"
+    : error
+      ? "Needs attention"
+      : saved
+        ? "Saved"
+        : "Saving…";
+  const status = [
+    timed ? (
+      <span key="time">
+        {durationLabel(
+          Math.max(0, Math.floor((now - (w.startedAt ?? now)) / 60000)),
+        )}
+      </span>
+    ) : (
+      <button
+        key="date"
+        type="button"
+        className="date-chip"
+        aria-haspopup="dialog"
+        aria-label={`Date ${localizedDate(w.date)}. Edit workout details`}
+        disabled={busy}
+        onClick={() => setDetails(true)}
+      >
+        {localizedDate(w.date, { day: "numeric", month: "short" })}
+      </button>
+    ),
+    <span key="sets">
+      {completed} of {total} sets
+    </span>,
+    <span
+      key="save"
+      role="status"
+      className={error && !editing ? "is-error" : undefined}
+    >
+      {saveStatus}
+    </span>,
+  ];
+
   return (
-    <div ref={editorRef} className="workout-editor stack" aria-busy={busy}>
-      <div className="editor-heading editor-toolbar">
+    <div className="workout-editor" aria-busy={busy}>
+      <div className="top-bar" data-top-bar>
         <button
-          className="icon-button"
+          type="button"
+          className="icon-btn"
           aria-label={editing ? "Back to history" : "Leave workout"}
           onClick={leave}
           disabled={busy}
         >
-          <ArrowLeft size={23} />
+          <ArrowLeft size={23} aria-hidden="true" />
         </button>
-        <div className="editor-title">
-          <h1>
-            {editing ? "Edit " : ""}
-            {w.name || "Workout"}
+        <div className="top-bar-text">
+          <h1 className="top-bar-title">
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              disabled={busy}
+              onClick={() => setDetails(true)}
+            >
+              {editing ? "Edit " : ""}
+              {w.name || "Workout"}
+            </button>
           </h1>
-          <span
-            className={error ? "error-text save-state" : "muted save-state"}
-            role="status"
-          >
-            {editing
-              ? dirty
-                ? "Unsaved changes"
-                : "Save changes when ready"
-              : error
-                ? "Draft needs attention"
-                : saved
-                  ? "Draft saved on this phone"
-                  : "Saving…"}
-          </span>
+          <p className="top-bar-status">
+            {status.map((part, index) => (
+              <Fragment key={part.key}>
+                {index > 0 && <span aria-hidden="true"> · </span>}
+                {part}
+              </Fragment>
+            ))}
+          </p>
         </div>
-        {editing ? (
-          <button
-            className="text-button"
-            onClick={() => setDiscardChanges(true)}
-            disabled={busy || !dirty}
-          >
-            Discard changes
-          </button>
-        ) : (
-          <button
-            className="text-button danger"
-            onClick={() => setAbandon(true)}
-            disabled={busy}
-          >
-            Abandon
-          </button>
-        )}
+        <button
+          type="button"
+          className="btn-primary"
+          disabled={
+            busy ||
+            invalidChecked ||
+            (!editing && !!error) ||
+            (editing && !dirty)
+          }
+          onClick={() => setFinish(true)}
+        >
+          {editing ? "Save" : "Finish"}
+        </button>
       </div>
       {autosave.changedElsewhere && !busy && (
-        <div className="save-error" role="alert">
+        <div className="banner workout-banner" role="alert">
           <p>This workout was changed in another tab or on another device.</p>
-          <button className="secondary" onClick={autosave.loadLatest}>
-            Load the latest version
-          </button>
-          <button className="text-button" onClick={autosave.keepMine}>
-            Keep my entries
-          </button>
+          <div className="banner-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={autosave.loadLatest}
+            >
+              Load the latest version
+            </button>
+            <button
+              type="button"
+              className="btn-quiet"
+              onClick={autosave.keepMine}
+            >
+              Keep my entries
+            </button>
+          </div>
         </div>
       )}
       {error && (
-        <div className="save-error" role="alert">
+        <div className="banner banner-danger workout-banner" role="alert">
           <p>{error}</p>
           {!editing && (
-            <button
-              className="secondary"
-              disabled={busy}
-              onClick={() => change(w)}
-            >
-              Retry saving
-            </button>
+            <div className="banner-actions">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => change(w)}
+              >
+                Retry saving
+              </button>
+            </div>
           )}
-        </div>
-      )}
-      <details className="workout-details" open={!w.startedAt || editing}>
-        <summary className="session-summary">
-          Workout details
-          <ChevronDown size={18} />
-        </summary>
-        <div className="details-grid">
-          <label>
-            Name
-            <input
-              value={w.name}
-              maxLength={100}
-              aria-invalid={!w.name.trim()}
-              onChange={(e) => change({ ...w, name: e.target.value })}
-            />
-          </label>
-          <label>
-            Date
-            <input
-              type="date"
-              value={w.date}
-              max={today()}
-              onChange={(e) => change({ ...w, date: e.target.value })}
-            />
-          </label>
-          <label>
-            Duration (optional, minutes)
-            <input
-              type="number"
-              inputMode="numeric"
-              min="0"
-              max="1440"
-              step="1"
-              placeholder={w.startedAt ? "Automatic timer" : "Not recorded"}
-              value={w.duration ?? ""}
-              onFocus={selectInputValue}
-              onClick={selectInputValue}
-              onChange={(e) =>
-                change({
-                  ...w,
-                  duration:
-                    e.target.value === "" ? null : Number(e.target.value),
-                })
-              }
-            />
-          </label>
-        </div>
-      </details>
-      {!editing && (rest.remaining > 0 || rest.elapsed) && (
-        <div className="rest-timer">
-          <span role="timer" aria-label="Rest time remaining">
-            {rest.elapsed
-              ? "Rest complete"
-              : `Rest ${Math.floor(rest.remaining / 60)}:${String(rest.remaining % 60).padStart(2, "0")}`}
-          </span>
-          <button className="text-button" onClick={rest.extend}>
-            +30 seconds
-          </button>
-          <button className="text-button" onClick={rest.skip}>
-            {rest.elapsed ? "Dismiss" : "Skip rest"}
-          </button>
         </div>
       )}
       {w.exercises.map((ex, ei) => (
@@ -387,12 +373,9 @@ function Editor({
           exercise={ex}
           isFirst={ei === 0}
           isLast={ei === w.exercises.length - 1}
-          options={menu}
-          changeOptions={changeOptions}
           lastSession={previous.get(ex.exerciseId)}
           bodyWeightKg={bodyWeightKg}
           nextSetId={nextSet?.id}
-          onFocusSet={setFocusedSetId}
           onChange={update}
           onMove={(step) => move(ei, step)}
           onRemove={() =>
@@ -405,53 +388,41 @@ function Editor({
           }}
         />
       ))}
-      {!w.exercises.length && (
-        <div className="empty-card">
-          <h2>{w.startedAt ? "Log your first set" : "What did you train?"}</h2>
-          <p>
-            Add exercises. Previous results will be suggested when available.
-          </p>
-        </div>
-      )}
-      <button
-        className="secondary large"
-        onClick={() => setPicker(true)}
-        disabled={busy}
-      >
-        <Plus size={21} />
-        Add exercises
-      </button>
-      {nextSet && (
-        <button className="text-button next-set-action" onClick={focusNext}>
-          <Crosshair size={18} />
-          Go to active set
-        </button>
-      )}
-      <div className="workout-footer">
-        <span>
-          {completed} of {total} sets done
-        </span>
+      {w.exercises.length ? (
         <button
-          className={
-            completed > 0 && completed === total
-              ? "primary finish-ready"
-              : "secondary finish-pending"
-          }
-          disabled={
-            busy ||
-            invalidChecked ||
-            (!editing && !!error) ||
-            (editing && !dirty)
-          }
-          onClick={() => setFinish(true)}
+          type="button"
+          className="add-exercise"
+          onClick={() => setPicker(true)}
+          disabled={busy}
         >
-          {editing ? "Save changes" : "Finish workout"}
+          <Plus size={18} aria-hidden="true" />
+          Add exercise
         </button>
+      ) : (
+        <button
+          type="button"
+          className="btn-primary add-first"
+          onClick={() => setPicker(true)}
+          disabled={busy}
+        >
+          <Plus size={21} aria-hidden="true" />
+          Add your first exercise
+        </button>
+      )}
+      <div className="float-stack">
+        <NextSetChip setId={nextSet?.id} />
+        {!editing && <RestBar rest={rest} />}
       </div>
       <ExercisePicker
         open={picker}
         onClose={() => setPicker(false)}
         onAdd={add}
+      />
+      <WorkoutDetailsSheet
+        open={details}
+        onClose={() => setDetails(false)}
+        workout={w}
+        onChange={change}
       />
       <ConfirmDialog
         open={!!removeExercise}
@@ -463,16 +434,6 @@ function Editor({
         onConfirm={() => removeExercise && remove(removeExercise)}
       />
       <ConfirmDialog
-        open={abandon}
-        title="Abandon this workout?"
-        description="This removes the draft from your log. You can undo immediately afterwards."
-        cancelLabel="Keep workout"
-        confirmLabel={busy ? "Abandoning…" : "Abandon workout"}
-        busy={busy}
-        onCancel={() => setAbandon(false)}
-        onConfirm={() => void abandonWorkout()}
-      />
-      <ConfirmDialog
         open={discardChanges}
         title="Discard your changes?"
         description="Your saved workout will stay as it was before editing."
@@ -481,51 +442,50 @@ function Editor({
         onCancel={() => setDiscardChanges(false)}
         onConfirm={() => navigate(historyPath(id))}
       />
-      <ConfirmDialog
-        open={finish}
-        tone="primary"
-        title={
-          <>
-            {editing ? "Save changes to " : "Finish "}
-            {w.name}?
-          </>
-        }
-        description={
-          <>
-            {countLabel(completed, "completed set")} will be saved.
-            {total > completed ? " Unchecked sets will be left out." : ""}
-          </>
-        }
-        cancelLabel={editing ? "Keep editing" : "Keep logging"}
-        confirmLabel={
-          busy ? "Saving…" : editing ? "Save changes" : "Save workout"
-        }
-        busy={busy}
-        confirmDisabled={!completed || invalidChecked}
-        onCancel={() => setFinish(false)}
-        onConfirm={() => void complete()}
-      >
-        {completed < total && (
-          <p className="completion-warning" role="alert">
-            {countLabel(total - completed, "unchecked set")} will be left out.
-          </p>
-        )}
-        {!completed && (
-          <p className="completion-warning">
-            Complete at least one set before saving.
-          </p>
-        )}
-        {!editing && !fromRoutine && (
-          <label className="check-label">
-            <input
-              type="checkbox"
-              checked={routine}
-              onChange={(e) => setRoutine(e.target.checked)}
-            />
-            Save as a routine for next time
-          </label>
-        )}
-      </ConfirmDialog>
+      {editing ? (
+        <ConfirmDialog
+          open={finish}
+          tone="primary"
+          title={<>Save changes to {w.name}?</>}
+          description={
+            <>
+              {countLabel(completed, "completed set")} will be saved.
+              {total > completed ? " Unchecked sets will be left out." : ""}
+            </>
+          }
+          cancelLabel="Keep editing"
+          confirmLabel={busy ? "Saving…" : "Save changes"}
+          busy={busy}
+          confirmDisabled={!completed || invalidChecked}
+          onCancel={() => setFinish(false)}
+          onConfirm={() => void complete()}
+        >
+          {completed < total && (
+            <p className="completion-warning" role="alert">
+              {countLabel(total - completed, "unchecked set")} will be left out.
+            </p>
+          )}
+          {!completed && (
+            <p className="completion-warning">
+              Complete at least one set before saving.
+            </p>
+          )}
+        </ConfirmDialog>
+      ) : (
+        <FinishSheet
+          open={finish}
+          onClose={() => setFinish(false)}
+          completed={completed}
+          unchecked={total - completed}
+          showRoutineSwitch={!fromRoutine}
+          saveRoutine={routine}
+          busy={busy}
+          onSaveRoutine={setRoutine}
+          onSave={() => void complete()}
+          onKeepLogging={() => setFinish(false)}
+          onAbandon={() => void abandonWorkout()}
+        />
+      )}
     </div>
   );
 }

@@ -17,7 +17,7 @@ import {
   type SetReorder,
   type SetReorderEvent,
 } from "@/lib/set-editing";
-import "@/styles/set-editing.css";
+import "@/styles/workout.css";
 
 type Drag = {
   pointerId?: number;
@@ -54,11 +54,14 @@ export default function SortableSetList({
   sets,
   name,
   onReorder,
+  onMovingChange,
   children,
 }: {
   sets: WorkoutSet[];
   name: string;
   onReorder: (sets: WorkoutSet[]) => void;
+  /** Called with true when a keyboard or pointer move starts, false when it ends. */
+  onMovingChange?: (moving: boolean) => void;
   children: (set: WorkoutSet, index: number, handle: ReactNode) => ReactNode;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -68,8 +71,10 @@ export default function SortableSetList({
   const focusAfterMove = useRef<HTMLButtonElement | null>(null);
   const setsRef = useRef(sets);
   const onReorderRef = useRef(onReorder);
+  const onMovingChangeRef = useRef(onMovingChange);
   setsRef.current = sets;
   onReorderRef.current = onReorder;
+  onMovingChangeRef.current = onMovingChange;
   const [order, setOrder] = useState<SetReorder | null>(null);
   const [announcement, setAnnouncement] = useState("");
   const instructionsId = useId();
@@ -180,6 +185,13 @@ export default function SortableSetList({
     return () => window.removeEventListener("keydown", cancel, true);
   }, [dispatch]);
 
+  const moving = order !== null;
+  useEffect(() => {
+    if (!moving) return;
+    onMovingChangeRef.current?.(true);
+    return () => onMovingChangeRef.current?.(false);
+  }, [moving]);
+
   useEffect(() => {
     const current = controller.current.current();
     if (current && !sets.some((set) => set.id === current.id))
@@ -222,13 +234,13 @@ export default function SortableSetList({
         dispatch({ type: "pointer-cancel", pointerId: event.pointerId })
       }
     >
-      <p id={instructionsId} className="set-editing-sr-only">
+      <p id={instructionsId} className="sr-only">
         Drag to reorder. With a keyboard, press Space or Enter to grab, use
         arrow keys to move, then Space or Enter to drop. Escape cancels the
         move.
       </p>
       <p
-        className="set-editing-sr-only"
+        className="sr-only"
         role="status"
         aria-live="polite"
         aria-atomic="true"

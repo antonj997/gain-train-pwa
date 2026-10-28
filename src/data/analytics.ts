@@ -1,4 +1,5 @@
 import { type RecordDoc, type WorkoutSet, validSet } from "./model";
+import { isDrop } from "./drops";
 import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 export function estimate(s: WorkoutSet) {
@@ -47,8 +48,9 @@ export function progressFor(records: RecordDoc[]) {
       grouped.set(ex.exerciseId, group);
     }
     for (const [exerciseId, ex] of grouped) {
+      // A drop continues the set above it, so it is never a session's best set.
       const sets = ex.sets.filter(
-        (s) => s.done && s.section === "working" && validSet(s),
+        (s) => s.done && s.section === "working" && !isDrop(s) && validSet(s),
       );
       if (!sets.length) continue;
       const latestProfile = sets.at(-1)!;

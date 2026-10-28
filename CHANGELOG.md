@@ -1,5 +1,27 @@
 # Changelog
 
+## 28 October 2026 — workout screen and the Quiet look
+
+Workout screen
+
+- Each exercise is a calm card: name, "Last: 19 Oct", ⋯, then one 44 px line per set (badge, previous result, load, count, ✓). Warm-up shows W, cool-down C, working sets are numbered 1, 2, 3.
+- Anything rarely used opens a sheet instead of sitting on the card: the Set sheet (tap the badge: type, load for this set, add drop, delete), Load and count (tap a column heading), the ⋯ sheet, Reorder sets, Finish and Workout details. The edited row stays visible above its sheet.
+- Each set keeps its own load. The exercise's most common load names the heading; sets that differ show a marker in the field (BW, +10, −25, or 40 with kg). The Load and count sheet changes unchecked sets only.
+- New: drop sets. A drop continues the set above at a lower weight with no rest, has no ✓ of its own, and is checked, saved and counted with its set. History shows it as "↳ 80 kg × 4" under the set.
+- The top bar is the only fixed element (back, name, one status line, Finish). The footer, "Go to active set" and the Workout details disclosure are gone; a "Next set" chip appears only when that row is off screen, and a floating rest bar replaces the rest panel.
+- Removed: the "Edit sets" switch, compact mode, the per-row type select and remove button, and Abandon in the top bar. Abandon moved into the Finish sheet with the owner's approval; it keeps the undo toast.
+- Routine planning uses the same rows and sheets.
+
+Look
+
+- New Quiet colours (light grey ground, white cards, one blue accent, light and dark themes) through `styles/tokens.css`, the system font and one type, spacing and radius scale. Every screen gets the palette.
+- Every dialog is now a bottom sheet on phones and a centred panel from 640 px up. The Home resume card is flat; shadows remain only on sheets, the rest bar and the next-set chip.
+
+Data and code
+
+- `drop` is a new optional field on a set; no schema version change, database or sync change. A misplaced drop in a record from an older app version is repaired by validation instead of rejected.
+- `SetRow`, `useCloseOptionsOutside` and `styles/set-editing.css` are replaced by `SetLine`, the sheets in `components/workout/` and `styles/workout.css`; superseded rules are deleted.
+
 ## 27 October 2026 — reliability, PWA and code-health pass
 
 Installing and updating

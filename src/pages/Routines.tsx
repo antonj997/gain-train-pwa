@@ -5,7 +5,7 @@ import { toastWithUndo } from "@/lib/undo-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useRef, useState } from "react";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import { Plus, Play, Trash2, Pencil, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Play, Trash2, Pencil } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { type Exercise, type Routine } from "@/data/model";
@@ -227,41 +227,17 @@ export default function Routines() {
                 />
               </label>
               {edit.data.exercises.map((ex, index) => (
-                <section className="routine-exercise" key={ex.id}>
-                  <div className="exercise-heading">
-                    <h2>{ex.name}</h2>
-                    <div className="routine-exercise-actions">
-                      <button
-                        className="icon-button"
-                        aria-label={"Move " + ex.name + " up"}
-                        disabled={index === 0}
-                        onClick={() => moveExercise(ex.id, -1)}
-                      >
-                        <ArrowUp size={18} />
-                      </button>
-                      <button
-                        className="icon-button"
-                        aria-label={"Move " + ex.name + " down"}
-                        disabled={index === edit.data.exercises.length - 1}
-                        onClick={() => moveExercise(ex.id, 1)}
-                      >
-                        <ArrowDown size={18} />
-                      </button>
-                      <button
-                        className="icon-button danger"
-                        aria-label={"Remove " + ex.name}
-                        onClick={() =>
-                          hasLoggedExercise(ex)
-                            ? setRemoving(ex)
-                            : removeExercise(ex)
-                        }
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                  <RoutinePlan exercise={ex} onChange={update} />
-                </section>
+                <RoutinePlan
+                  key={ex.id}
+                  exercise={ex}
+                  isFirst={index === 0}
+                  isLast={index === edit.data.exercises.length - 1}
+                  onChange={update}
+                  onMove={(step) => moveExercise(ex.id, step)}
+                  onRemove={() =>
+                    hasLoggedExercise(ex) ? setRemoving(ex) : removeExercise(ex)
+                  }
+                />
               ))}
               <button
                 className="secondary"

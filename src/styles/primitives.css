@@ -22,106 +22,207 @@
   animation: spin 1s linear infinite;
 }
 
+/* Dialogs. Every dialog is a bottom sheet on phones and a centred panel from
+   640px up. The overlay's data-backdrop picks how far the page is dimmed: "light"
+   keeps it readable behind a sheet that edits it. The scrim and shadow are
+   translucent neutrals, so they read the same in both themes. */
 .dialog-overlay {
   position: fixed;
   inset: 0px;
   z-index: 50;
-  background-color: rgb(0 0 0 / 0.8);
+  background-color: rgb(20 22 26 / 0.38);
+}
+.dialog-overlay[data-backdrop="light"] {
+  background-color: rgb(20 22 26 / 0.08);
 }
 
 .dialog-content {
+  --sheet-gap: var(--gt-space-3);
+  position: fixed;
   z-index: 50;
-  display: grid;
-  gap: 1rem;
-  border-width: 1px;
-  border-radius: var(--radius);
-  background-color: hsl(var(--background));
-  padding: 1.5rem;
-  box-shadow:
-    0 10px 15px -3px rgb(0 0 0 / 0.1),
-    0 4px 6px -4px rgb(0 0 0 / 0.1);
-  transition-duration: 200ms;
+  left: 0;
+  right: 0;
+  /* Rest on the visual viewport's bottom edge, so an on-screen keyboard that
+     shrinks it (useVisualViewport) does not cover the sheet. */
+  bottom: max(
+    0px,
+    calc(100dvh - var(--viewport-top, 0px) - var(--viewport-height, 100dvh))
+  );
+  display: flex;
+  flex-direction: column;
+  gap: var(--sheet-gap);
+  width: 100%;
+  /* As tall as its content, up to 70% of the screen, then it scrolls. */
+  max-height: min(
+    70vh,
+    calc(var(--viewport-height, 100vh) - var(--gt-space-4))
+  );
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: var(--gt-space-5);
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--gt-space-4)
+    calc(var(--gt-space-4) + env(safe-area-inset-bottom));
+  border: 1px solid var(--gt-line);
+  border-bottom-width: 0;
+  border-radius: var(--gt-radius-xl) var(--gt-radius-xl) 0 0;
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  box-shadow: 0 -8px 32px rgb(20 22 26 / 0.16);
 }
 
-.dialog-close {
-  position: absolute;
-  right: 1rem;
-  top: 1rem;
-  border-radius: calc(var(--radius) - 4px);
-  padding: 0.5rem;
-  opacity: 0.7;
-  transition-property: opacity;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+/* The exercise picker keeps a full-height sheet, with a strip of page above. */
+.dialog-content.picker-dialog {
+  height: calc(
+    var(--viewport-height, 100dvh) - var(--gt-space-6) -
+      env(safe-area-inset-top)
+  );
+  max-height: calc(
+    var(--viewport-height, 100dvh) - var(--gt-space-6) -
+      env(safe-area-inset-top)
+  );
 }
-.dialog-close-icon {
-  height: 1.25rem;
-  width: 1.25rem;
+
+/* The Close button is the grab handle. It is last in the markup, so the first
+   field or button gets focus when the sheet opens, and is drawn first. It stays
+   at the top while the sheet scrolls (sticky works in a flex column, not a grid). */
+.dialog-content:focus {
+  outline: none;
+}
+.dialog-handle {
+  flex: none;
+  order: -1;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 44px;
+  margin: 0 calc(var(--gt-space-4) * -1) calc(var(--sheet-gap) * -1);
+  padding: 0;
+  border: 0;
+  background-color: var(--gt-surface);
+  cursor: pointer;
+}
+.dialog-handle-bar {
+  width: 40px;
+  height: 4px;
+  margin-top: var(--gt-space-3);
+  border-radius: 2px;
+  background-color: var(--gt-ink-3);
+  transition: background-color var(--gt-motion);
+}
+.dialog-handle:hover .dialog-handle-bar {
+  background-color: var(--gt-ink-2);
+}
+.dialog-handle:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+}
+.dialog-handle:disabled {
+  pointer-events: none;
 }
 
 .dialog-header {
   display: flex;
   flex-direction: column;
-  text-align: center;
-}
-.dialog-header > :not([hidden]) ~ :not([hidden]) {
-  margin-top: 0.375rem;
-  margin-bottom: 0;
+  gap: var(--gt-space-1);
+  text-align: left;
 }
 
 .dialog-title {
-  font-size: 1.125rem;
-  line-height: 1;
-  font-weight: 600;
-  letter-spacing: -0.025em;
+  font-size: var(--gt-fs-4);
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: normal;
 }
 
 .dialog-description {
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  color: hsl(var(--muted-foreground));
+  font-size: var(--gt-fs-3);
+  line-height: 1.4;
+  color: var(--gt-ink-2);
 }
 
-.dialog-close:hover {
-  opacity: 1;
-}
-.dialog-close:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-  box-shadow:
-    0 0 0 2px hsl(var(--background)),
-    0 0 0 4px hsl(var(--ring));
-}
-.dialog-close:disabled {
-  pointer-events: none;
-}
-
-/* Fade in and out with the dialog's open state. */
-@keyframes dialog-enter {
+/* Slide a sheet up from the bottom edge, or fade a panel in. The animation
+   duration is the motion token, so it is instant under reduced motion. */
+@keyframes dialog-fade-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 0, 0) scale3d(1, 1, 1) rotate(0);
   }
 }
-@keyframes dialog-exit {
+@keyframes dialog-fade-out {
   to {
     opacity: 0;
-    transform: translate3d(0, 0, 0) scale3d(1, 1, 1) rotate(0);
   }
 }
-.dialog-overlay[data-state="open"],
-.dialog-content[data-state="open"] {
-  animation-name: dialog-enter;
-  animation-duration: 150ms;
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
 }
-.dialog-overlay[data-state="closed"],
+@keyframes sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+@keyframes panel-out {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+.dialog-overlay[data-state="open"] {
+  animation: dialog-fade-in var(--gt-motion);
+}
+.dialog-overlay[data-state="closed"] {
+  animation: dialog-fade-out var(--gt-motion);
+}
+.dialog-content[data-state="open"] {
+  animation: sheet-up var(--gt-motion);
+}
 .dialog-content[data-state="closed"] {
-  animation-name: dialog-exit;
-  animation-duration: 150ms;
+  animation: sheet-down var(--gt-motion);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog-overlay,
+  .dialog-content {
+    animation: none !important;
+  }
 }
 
 @media (min-width: 640px) {
-  .dialog-header {
-    text-align: left;
+  .dialog-content {
+    left: 50%;
+    right: auto;
+    top: calc(var(--viewport-top, 0px) + var(--viewport-height, 100dvh) / 2);
+    bottom: auto;
+    translate: -50% -50%;
+    width: calc(100% - var(--gt-space-6));
+    max-width: 480px;
+    padding-bottom: var(--gt-space-4);
+    border-bottom-width: 1px;
+    border-radius: var(--gt-radius-xl);
+    box-shadow: 0 16px 48px rgb(20 22 26 / 0.24);
+  }
+  .dialog-content.picker-dialog {
+    height: min(
+      760px,
+      calc(var(--viewport-height, 100dvh) - var(--gt-space-6))
+    );
+    max-height: calc(var(--viewport-height, 100dvh) - var(--gt-space-6));
+  }
+  .dialog-content[data-state="open"] {
+    animation-name: panel-in;
+  }
+  .dialog-content[data-state="closed"] {
+    animation-name: panel-out;
   }
 }

@@ -19,7 +19,7 @@
   /* 2 */
   border-style: solid;
   /* 2 */
-  border-color: #e5e7eb;
+  border-color: var(--gt-line);
   /* 2 */
 }
 
@@ -377,14 +377,14 @@ textarea {
 
 /*
 1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
-2. Set the default placeholder color to the user's configured gray 400 color.
+2. Set the default placeholder color to the muted ink token (readable, unlike ink-3).
 */
 
 input::-moz-placeholder,
 textarea::-moz-placeholder {
   opacity: 1;
   /* 1 */
-  color: #9ca3af;
+  color: var(--gt-ink-2);
   /* 2 */
 }
 
@@ -392,7 +392,7 @@ input::placeholder,
 textarea::placeholder {
   opacity: 1;
   /* 1 */
-  color: #9ca3af;
+  color: var(--gt-ink-2);
   /* 2 */
 }
 

@@ -1,0 +1,175 @@
+// A drop (`drop: true`) continues the set above it at a lower weight. These
+// rules keep drops attached to a working set. Type-only imports from ./model:
+// model.ts imports normalizeDrops from here, and a runtime import would be a cycle.
+import type { WorkoutSet } from "./model";
+import { hasExtraWeight } from "../lib/set-load";
+
+export type SetTone = "working" | "warmup" | "winddown" | "drop";
+export type SetBadgeInfo = {
+  text: string;
+  tone: SetTone;
+  /** The badge button's accessible name; it differs for every row of an exercise. */
+  label: string;
+  title: string;
+  /**
+   * Names the set to assistive technology, unique within an exercise: "set 2",
+   * "warm-up set 1", "cool-down set 1" or "drop 1 after set 2".
+   */
+  name: string;
+};
+
+export const isDrop = (set: WorkoutSet) => set.drop === true;
+
+/**
+ * A set and its drops. `start` is the set's index, found by walking back over
+ * drops from `index`; `end` is exclusive, just after its last drop.
+ */
+export function dropGroup(sets: WorkoutSet[], index: number) {
+  let start = index;
+  while (start > 0 && isDrop(sets[start])) start--;
+  let end = start + 1;
+  while (end < sets.length && isDrop(sets[end])) end++;
+  return { start, end };
+}
+
+/**
+ * Older app versions show drops as ordinary sets, so they can leave a drop
+ * first, after a warm-up or cool-down, or checked on its own. Such a drop
+ * becomes an ordinary set instead of making the record invalid.
+ */
+export function normalizeDrops(sets: WorkoutSet[]): WorkoutSet[] {
+  let parent: WorkoutSet | undefined;
+  let changed = false;
+  const result: WorkoutSet[] = [];
+  for (const set of sets) {
+    let next = set;
+    if (isDrop(set)) {
+      const placed =
+        parent?.section === "working" &&
+        set.section === "working" &&
+        set.done === parent.done;
+      if (!placed) {
+        next = { ...set };
+        delete next.drop;
+        changed = true;
+      }
+    }
+    if (!isDrop(next)) parent = next;
+    result.push(next);
+  }
+  return changed ? result : sets;
+}
+
+// A drop starts at 80% of the weight above it, to the nearest 2.5 kg.
+const dropWeight = (weight: number | null) =>
+  weight === null ? null : Math.round((weight * 0.8) / 2.5) * 2.5;
+
+/**
+ * Adds a blank drop after the set's existing drops. It continues the last row
+ * of the group: same load, and 80% of that row's weight.
+ */
+export function addDrop(sets: WorkoutSet[], setId: string): WorkoutSet[] {
+  const index = sets.findIndex((set) => set.id === setId);
+  const target = sets[index];
+  if (!target || target.done || target.section !== "working") return sets;
+  const { end } = dropGroup(sets, index);
+  const above = sets[end - 1];
+  const extra = hasExtraWeight(above);
+  const weight =
+    above.load === "weight" || extra ? dropWeight(above.weight) : null;
+  // Added weight that rounds down to 0 kg is plain bodyweight.
+  const plain = extra && weight === 0;
+  const added: WorkoutSet = {
+    id: crypto.randomUUID(),
+    reps: null,
+    weight: plain ? null : weight,
+    load: above.load,
+    ...(above.measure ? { measure: above.measure } : {}),
+    ...(above.extraWeight !== undefined && !plain
+      ? { extraWeight: above.extraWeight }
+      : {}),
+    section: "working",
+    done: false,
+    drop: true,
+  };
+  return [...sets.slice(0, end), added, ...sets.slice(end)];
+}
+
+/** A set goes with its drops; a drop goes alone. */
+export function removeSetOrDrop(sets: WorkoutSet[], setId: string) {
+  const index = sets.findIndex((set) => set.id === setId);
+  if (index < 0) return sets;
+  const end = isDrop(sets[index]) ? index + 1 : dropGroup(sets, index).end;
+  return [...sets.slice(0, index), ...sets.slice(end)];
+}
+
+/**
+ * Moves a set, and the drops after it, to another section. A section other
+ * than working has no drops, so they become ordinary sets of that section.
+ */
+export function changeSection(
+  sets: WorkoutSet[],
+  setId: string,
+  section: WorkoutSet["section"],
+) {
+  const index = sets.findIndex((set) => set.id === setId);
+  const target = sets[index];
+  if (!target || target.done || target.section === section) return sets;
+  const { end } = dropGroup(sets, index);
+  return sets.map((set, i) => {
+    if (i < index || i >= end) return set;
+    const result = { ...set, section };
+    if (section !== "working") delete result.drop;
+    return result;
+  });
+}
+
+/** Sets of a section are numbered among those that are not drops. */
+export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
+  const set = sets[index];
+  const ordinal = (section: WorkoutSet["section"], through: number) =>
+    sets
+      .slice(0, through + 1)
+      .filter((s) => s.section === section && !isDrop(s)).length;
+  if (isDrop(set)) {
+    const { start } = dropGroup(sets, index);
+    // Position within the group; a drop with no set above it still counts from 1.
+    const position = index - start + (isDrop(sets[start]) ? 1 : 0);
+    const parent = ordinal("working", start);
+    return {
+      text: "↓",
+      tone: "drop",
+      label: `Drop ${position} after set ${parent}. Change load or delete`,
+      title: "Drop",
+      name: `drop ${position} after set ${parent}`,
+    };
+  }
+  if (set.section === "warmup") {
+    const n = ordinal("warmup", index);
+    return {
+      text: "W",
+      tone: "warmup",
+      label: `Warm-up set ${n}. Change type, load or delete`,
+      title: "Warm-up set",
+      name: `warm-up set ${n}`,
+    };
+  }
+  if (set.section === "winddown") {
+    const n = ordinal("winddown", index);
+    return {
+      text: "C",
+      tone: "winddown",
+      label: `Cool-down set ${n}. Change type, load or delete`,
+      title: "Cool-down set",
+      name: `cool-down set ${n}`,
+    };
+  }
+  const n = ordinal("working", index);
+  return {
+    text: String(n),
+    tone: "working",
+    label: `Set ${n}, working set. Change type, load or delete`,
+    title: `Set ${n}`,
+    name: `set ${n}`,
+  };
+}
