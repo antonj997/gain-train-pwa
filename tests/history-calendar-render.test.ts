@@ -309,14 +309,14 @@ test("History details number only checked sets and show a drop under its set", a
       ],
     }),
   );
-  assert.match(html, /Set 1 · Warm-up<\/span><strong>40 kg × 8</);
-  assert.match(html, /Set 2<\/span><strong>100 kg × 5</);
+  assert.match(html, />Warm-up<\/span><strong>40 kg × 8</);
+  assert.match(html, /Set 1<\/span><strong>100 kg × 5</);
   assert.match(html, /<strong>↳ 80 kg × 4<\/strong>/);
   assert.ok(html.indexOf("↳ 80 kg × 4") > html.indexOf("100 kg × 5"));
   assert.ok(html.indexOf("↳ 80 kg × 4") < html.indexOf("105 kg × 3"));
-  assert.match(html, /Set 3<\/span><strong>105 kg × 3</);
-  assert.match(html, /Set 4 · Cool-down<\/span><strong>20 kg × 12</);
-  assert.doesNotMatch(html, /Set 5|90 kg/);
+  assert.match(html, /Set 2<\/span><strong>105 kg × 3</);
+  assert.match(html, />Cool-down<\/span><strong>20 kg × 12</);
+  assert.doesNotMatch(html, /Set 3|90 kg/);
   assert.equal(
     (html.match(/class="history-set(?: history-drop)?"/g) ?? []).length,
     5,

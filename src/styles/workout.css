@@ -327,24 +327,18 @@
 .top-bar-title button:disabled {
   opacity: 1;
 }
-/* The status line tucks under the title's tap area, which is taller than its text. */
+/* The status line tucks under the title's tap area, which is taller than its
+   text. On narrow screens it wraps between parts instead of cutting one off. */
 .top-bar-status {
   position: relative;
   margin: -12px 0 0;
   padding-bottom: var(--gt-space-1);
-  overflow: hidden;
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
   line-height: 18px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
-/* The date chip is taller than the line, so only the sides are clipped. */
-@supports (overflow: clip) {
-  .top-bar-status {
-    overflow-x: clip;
-    overflow-y: visible;
-  }
+.top-bar-status > * {
+  white-space: nowrap;
 }
 .top-bar-status .is-error {
   color: var(--gt-danger-fg);
