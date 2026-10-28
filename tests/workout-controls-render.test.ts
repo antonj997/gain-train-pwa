@@ -233,8 +233,9 @@ test("drops and planned sets have no done button", async () => {
   });
   assert.doesNotMatch(planned, /aria-pressed/);
   assert.doesNotMatch(planned, /<button[^>]*aria-label="(Complete|Uncheck)/);
-  // The empty cell keeps the grid: badge, previous, load, count and one more.
-  assert.match(planned, /set-line-spacer/);
+  // A planned row is three columns: badge, load and count.
+  assert.doesNotMatch(planned, /set-line-spacer|set-previous/);
+  assert.match(planned, /data-mode="plan"/);
   const logged = await setLine({ set: { ...model.newSet(), reps: 5 } });
   assert.match(logged, /aria-pressed="false"/);
   assert.doesNotMatch(logged, /set-line-spacer/);

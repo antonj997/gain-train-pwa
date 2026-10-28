@@ -22,11 +22,7 @@ import {
   setProfileMatches,
   setProfileOrdinal,
 } from "../src/data/workouts.ts";
-import {
-  getSetIssues,
-  finishWorkout,
-  resizePlannedSets,
-} from "../src/lib/workout-editor.ts";
+import { getSetIssues, finishWorkout } from "../src/lib/workout-editor.ts";
 import { parseWorkoutDraft } from "../src/lib/drafts.ts";
 import { toggleSetCompletion } from "../src/lib/set-editing.ts";
 import { summarize, improvementRate } from "../src/data/summary.ts";
@@ -133,7 +129,7 @@ test("record validation allows an unfinished added-load field but rejects invali
   );
 });
 
-test("new, repeated and resized sets preserve added kg while clearing completion snapshots", () => {
+test("new and repeated sets preserve added kg while clearing completion snapshots", () => {
   const prior = set({
     extraWeight: true,
     weight: 12.5,
@@ -142,11 +138,7 @@ test("new, repeated and resized sets preserve added kg while clearing completion
     measure: "seconds",
   });
   const source = exercise([prior]);
-  for (const fresh of [
-    newSet(prior),
-    repeatExercises([source])[0].sets[0],
-    resizePlannedSets(source, 2).sets[1],
-  ]) {
+  for (const fresh of [newSet(prior), repeatExercises([source])[0].sets[0]]) {
     assert.equal(fresh.extraWeight, true);
     assert.equal(fresh.weight, 12.5);
     assert.equal(fresh.reps, 8);

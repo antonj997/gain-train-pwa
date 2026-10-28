@@ -1,10 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  getSetIssues,
-  finishWorkout,
-  resizePlannedSets,
-} from "../src/lib/workout-editor.ts";
+import { getSetIssues, finishWorkout } from "../src/lib/workout-editor.ts";
 import { newSet, type Workout } from "../src/data/model.ts";
 
 test("invalid checked sets explain their fields and cannot silently vanish on save", () => {
@@ -92,20 +88,4 @@ test("editing an old completed workout preserves its completion time", () => {
   };
   assert.equal(finishWorkout(legacy, 500).completedAt, undefined);
   assert.equal(finishWorkout(legacy, 600000).duration, null);
-});
-
-test("routine resizing preserves existing planned sets and copies their settings", () => {
-  const exercise = {
-    id: crypto.randomUUID(),
-    exerciseId: "bench",
-    name: "Bench",
-    sets: [{ ...newSet(), reps: 5, weight: 30, section: "warmup" as const }],
-  };
-  const result = resizePlannedSets(exercise, 3);
-  assert.equal(result.sets.length, 3);
-  assert.equal(result.sets[0].id, exercise.sets[0].id);
-  assert.equal(result.sets[2].section, "warmup");
-  assert.equal(result.sets[2].weight, 30);
-  assert.equal(new Set(result.sets.map((s) => s.id)).size, 3);
-  assert.equal(resizePlannedSets(result, 1).sets.length, 1);
 });

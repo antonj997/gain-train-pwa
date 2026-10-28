@@ -105,13 +105,6 @@ export function finishWorkout(workout: Workout, now = Date.now()): Workout {
   return validate("workout", result);
 }
 
-export function resizePlannedSets(exercise: Exercise, count: number): Exercise {
-  if (!Number.isInteger(count) || count < 1 || count > 100) return exercise;
-  const sets = exercise.sets.slice(0, count);
-  while (sets.length < count) sets.push(newSet(sets.at(-1)));
-  return { ...exercise, sets };
-}
-
 /** True when the set and each of its drops have values that can be checked. */
 export function groupComplete(sets: WorkoutSet[], index: number) {
   const { start, end } = dropGroup(sets, index);

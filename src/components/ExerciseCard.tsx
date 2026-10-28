@@ -42,15 +42,20 @@ type Props = {
   exercise: Exercise;
   isFirst: boolean;
   isLast: boolean;
+  /**
+   * "plan" is a routine's exercise: no previous results, checks, rest or next
+   * set, and its sets are never checked.
+   */
+  mode?: "log" | "plan";
   /** The last session with this exercise, for previous-result hints. */
   lastSession?: LastSession;
-  bodyWeightKg: number | null;
+  bodyWeightKg?: number | null;
   nextSetId?: string;
   onChange: (exercise: Exercise) => void;
   onMove: (step: -1 | 1) => void;
   onRemove: () => void;
   /** Called when a set is newly checked as done. */
-  onSetDone: () => void;
+  onSetDone?: () => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
@@ -63,17 +68,28 @@ type OpenSheet =
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
 export default function ExerciseCard({
-  exercise: ex,
+  exercise: planned,
   isFirst,
   isLast,
+  mode = "log",
   lastSession,
-  bodyWeightKg,
+  bodyWeightKg = null,
   nextSetId,
   onChange,
   onMove,
   onRemove,
   onSetDone,
 }: Props) {
+  // A planned set is never checked, even in a routine saved that way earlier.
+  const ex =
+    mode === "plan" && planned.sets.some((s) => s.done)
+      ? {
+          ...planned,
+          sets: planned.sets.map((s) =>
+            s.done ? { ...s, done: false, bodyWeightKg: undefined } : s,
+          ),
+        }
+      : planned;
   const { sets } = ex;
   const headingId = useId();
   const [sheet, setSheet] = useState<OpenSheet>(null);
@@ -97,7 +113,7 @@ export default function ExerciseCard({
     changeSets(next);
     const was = sets.find((s) => s.id === setId);
     const now = next.find((s) => s.id === setId);
-    if (was && !was.done && now?.done) onSetDone();
+    if (was && !was.done && now?.done) onSetDone?.();
   };
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
@@ -111,7 +127,7 @@ export default function ExerciseCard({
           <h2 id={headingId} className="ex-title">
             {ex.name}
           </h2>
-          {lastSession && (
+          {mode === "log" && lastSession && (
             <p className="ex-last">
               Last:{" "}
               {localizedDate(lastSession.date, {
@@ -131,9 +147,11 @@ export default function ExerciseCard({
           <MoreHorizontal size={23} aria-hidden="true" />
         </button>
       </div>
-      <div className="set-columns">
+      <div className="set-columns" data-mode={mode}>
         <span>Set</span>
-        <span className="set-previous-heading">Previous</span>
+        {mode === "log" && (
+          <span className="set-previous-heading">Previous</span>
+        )}
         <button
           type="button"
           className="set-heading-btn"
@@ -152,18 +170,18 @@ export default function ExerciseCard({
           {countHeading(sets)}
           <ChevronDown size={14} aria-hidden="true" />
         </button>
-        <span>Done</span>
+        {mode === "log" && <span>Done</span>}
       </div>
       {sets.map((s, i) => (
         <SetLine
           key={s.id}
           set={s}
-          mode="log"
+          mode={mode}
           name={ex.name}
           badge={setBadge(sets, i)}
           previous={previousOf(i)}
           marker={loadMarker(s, defaultKey)}
-          bodyWeightKg={bodyWeightKg}
+          bodyWeightKg={mode === "log" ? bodyWeightKg : null}
           next={nextSetId === s.id}
           editing={openSetId === s.id}
           canCheck={groupComplete(sets, i)}

@@ -27,6 +27,11 @@
     column-gap: var(--gt-space-2);
   }
 }
+/* A routine's planned set has no previous result and no check: three columns. */
+.set-line[data-mode="plan"],
+.set-columns[data-mode="plan"] {
+  grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr);
+}
 .set-line.is-done {
   background-color: var(--gt-done-soft);
 }
@@ -271,6 +276,12 @@
 }
 .workout-editor > * {
   min-width: 0;
+}
+/* A routine's form leaves the same room under its last row. */
+.dialog-content.routine-dialog {
+  padding-bottom: calc(
+    var(--gt-space-4) + var(--sheet-space, 0px) + env(safe-area-inset-bottom)
+  );
 }
 
 /* Top bar: back, the name over one status line, and Finish or Save. */

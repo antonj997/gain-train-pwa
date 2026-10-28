@@ -4,10 +4,26 @@ import { centreScrollDelta } from "@/lib/keep-above-sheet";
 // Radix mounts the sheet a render after it opens, so give it a few frames.
 const FRAMES_TO_WAIT = 10;
 
+/** The nearest ancestor that scrolls by itself, such as a routine's form; null for the page. */
+function scrollParent(element: HTMLElement) {
+  for (
+    let parent = element.parentElement;
+    parent && parent !== document.body && parent !== document.documentElement;
+    parent = parent.parentElement
+  )
+    if (
+      /(auto|scroll)/.test(getComputedStyle(parent).overflowY) &&
+      parent.scrollHeight > parent.clientHeight
+    )
+      return parent;
+  return null;
+}
+
 /**
  * While a set's sheet is open, pads the page by the sheet's height
- * (`--sheet-space`, used by the workout list) and scrolls the set's row to sit
- * midway between the top bar and the sheet.
+ * (`--sheet-space`, used by the workout list and a routine's form) and scrolls
+ * the set's row to sit midway between the top of what is visible (the top bar,
+ * or the top of a scrolling form) and the sheet.
  */
 export function useKeepAboveSheet(
   rowId: string | null,
@@ -30,15 +46,17 @@ export function useKeepAboveSheet(
       const sliding = new DOMMatrixReadOnly(getComputedStyle(element).transform)
         .m42;
       const rowRect = row.getBoundingClientRect();
+      const scroller = scrollParent(row);
       const delta = centreScrollDelta({
-        visibleTop:
-          document.querySelector("[data-top-bar]")?.getBoundingClientRect()
-            .bottom ?? 0,
+        visibleTop: scroller
+          ? scroller.getBoundingClientRect().top
+          : (document.querySelector("[data-top-bar]")?.getBoundingClientRect()
+              .bottom ?? 0),
         sheetTop: rect.top - sliding,
         rowTop: rowRect.top,
         rowHeight: rowRect.height,
       });
-      window.scrollBy({
+      (scroller ?? window).scrollBy({
         top: delta,
         behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
           ? "auto"

@@ -20,8 +20,9 @@ const LOAD_NAMES = {
 
 /**
  * One set as a single line: badge, previous result, load, count and done.
- * `mode: "plan"` is a routine's planned set, which is never checked; drops have
- * no check of their own either, since their set above is checked for them.
+ * `mode: "plan"` is a routine's planned set: just badge, load and count, with
+ * no previous result and no check. In a log, drops have no check of their own
+ * either, since their set above is checked for them.
  */
 export default function SetLine({
   set,
@@ -142,10 +143,17 @@ export default function SetLine({
     .filter(Boolean)
     .join(" ");
   return (
-    <div data-set-id={set.id} className={classes} onFocusCapture={onFocus}>
+    <div
+      data-set-id={set.id}
+      data-mode={mode}
+      className={classes}
+      onFocusCapture={onFocus}
+    >
       {next && <span className="sr-only">Next set</span>}
       <SetBadge badge={badge} editing={editing} onClick={onOpenSheet} />
-      <span className="set-previous">{previous || "–"}</span>
+      {mode === "log" && (
+        <span className="set-previous">{previous || "–"}</span>
+      )}
       {plainBodyweight ? (
         <span className="set-field set-bodyweight">
           <span aria-hidden="true">
@@ -245,9 +253,9 @@ export default function SetLine({
             </span>
           )}
         </>
-      ) : (
+      ) : mode === "log" ? (
         <span className="set-line-spacer" aria-hidden="true" />
-      )}
+      ) : null}
       {!!visibleIssues.length && (
         <p id={errorId} className="set-errors field-error">
           {visibleIssues.join(" ")}
