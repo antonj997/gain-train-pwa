@@ -33,7 +33,7 @@ Unchanged: records, sync, drafts, autosave, validation rules not mentioned here,
 
 **Next set chip:** a small floating "Next set ↓" chip appears only when the next unchecked set is outside the visible area; tapping it scrolls that row to the centre and focuses its first input.
 
-**Rest timer:** a floating bar at the bottom while resting: remaining time, "+30 s", "Skip"; after it ends, "Rest done" with Dismiss. Never shown when rest is off in Settings. Rest starts when a set is checked and the next set in that exercise is not an unchecked drop (see §2.5).
+**Rest timer:** a floating bar at the bottom while resting: remaining time, "+30 s", "Skip"; after it ends, "Rest done" with Dismiss. Never shown when rest is off in Settings. Rest starts when a set is checked (drops have no ✓ of their own, see §2.5).
 
 **Finish sheet:** summary ("5 sets will be saved · 1 unchecked set left out", "Complete at least one set" when none), the "Save as a routine" switch (not for workouts started from a routine), then **Save workout** (primary), **Keep logging**, **Abandon workout** (danger; keeps the existing undo toast). Editing a completed workout uses Save directly, with the existing confirmation copy.
 
@@ -56,7 +56,7 @@ The bottom navigation stays hidden on the workout screen.
 - **Previous:** the matching previous result (existing matching; drops matched to drops, see §2.5), e.g. "97.5 × 5", or "–". Hidden below 360 px viewport width (the Set sheet still shows it).
 - **Load value:** a number field; plain bodyweight shows the text "BW" instead of a field.
 - **Count value:** the existing number field (reps or seconds).
-- **✓:** checking tints the row with the done colour and makes its values read-only. An input attempt on a checked row shows "Uncheck this set to edit its values." and highlights its ✓ (existing behaviour).
+- **✓:** checking tints the row with the done colour and makes its values read-only. An input attempt on a checked row shows "Uncheck this set to edit its values." and highlights its ✓ (existing behaviour). Drop rows have no ✓ (§2.5).
 - Existing input behaviour stays: numeric/decimal keyboards, select-all on focus and repeated tap, unfinished-text recovery, invalid-value messages.
 
 ### 2.3 Per-set load and exception markers
@@ -97,8 +97,11 @@ All sheets: bottom sheets built on the shared Sheet component (§4), closable by
 - Valid only directly after a working set or another drop in the same exercise; never first; never after a warm-up or cool-down. Validation message: "A drop must follow a working set."
 - **Add drop** inserts a drop after the set's existing drops, unchecked, reps blank, same load as the set it follows. Prefilled weight: Weight and BW + kg — 80% of the previous value rounded to the nearest 2.5 kg (BW + kg at 0 kg becomes plain BW); Assisted and plain BW — left blank.
 - Add set after a drop creates an ordinary working set.
-- Rest timer: checking a set starts rest unless the next set in the exercise is an unchecked drop, so rest begins after the last drop of a group.
-- Finishing: if a set is unchecked but has checked drops, those drops become ordinary working sets (so no orphan drop is saved).
+- Add drop is offered only while the set is unchecked (uncheck it first to add one).
+- **Completion belongs to the set:** drop rows have no ✓. Checking a set also marks its drops done and locks their values; unchecking it unchecks them. A set can only be checked when each of its drops has valid values (the usual field messages show; an empty drop can be filled in or deleted). Saved drops therefore always share their set's `done` value.
+- Finishing: an unchecked set is left out together with its drops; drops are never saved without their set.
+- Counting: "N of M sets" and the Finish summary count a set and its drops as one set.
+- Rest timer: no special case — checking the set (after its drops) starts rest as usual.
 - Matching and analytics: working-set ordinals ignore drops; a drop is matched to the same-position drop of the matching previous set; drops never count as an exercise's best working set.
 - Display: History details show drops as "↳ 80 kg × 4" under their set.
 - Routines: planned drops are allowed; starting or repeating a workout preserves `drop`.
@@ -142,7 +145,7 @@ The existing variables (`--blue`, `--ink`, `--soft`, `--line`, `--surface`, `--b
 - `setSchema` gains `drop: z.boolean().optional()`; `validate` enforces §2.5 placement. `newSet`, `repeatExercises` and `suggestedExercises` preserve `drop`; Add set after a drop clears it.
 - `setProfileOrdinal` / `previousSetFor` skip drops for working ordinals and match drops by parent ordinal and drop index.
 - `analytics.progressFor` excludes drops from the best working set.
-- `lib/workout-editor.finishWorkout` converts orphaned checked drops (§2.5).
+- Toggling a set's completion updates its drops; `validate` requires a drop's `done` to equal its set's; `finishWorkout` drops unchecked sets with their drops; set counts treat a set and its drops as one (§2.5).
 - A helper computes the exercise default load and each set's marker (§2.3).
 - No server or migration change; `drop` is an extra JSON field the server already accepts.
 
@@ -164,13 +167,13 @@ The existing variables (`--blue`, `--ink`, `--soft`, `--line`, `--surface`, `--b
 
 **Automated (node test runner):**
 
-- Drop rules: placement validation, numbering, previous-result matching, Add set after a drop, reorder groups, finish conversion, History labels, routine and repeat preservation, analytics exclusion.
+- Drop rules: placement validation, numbering, previous-result matching, Add set after a drop, reorder groups, checking/unchecking a set with drops (including blocked check with an empty drop), finishing with an unchecked set and its drops left out, set counts, History labels, routine and repeat preservation, analytics exclusion.
 - Per-set load: default computation, markers, heading sheet affects only unchecked sets, Set sheet affects one set, seconds restriction.
 - `useKeepAboveSheet` centring arithmetic.
 - Component renders: `SetLine` states (done/locked, drop, each marker), each sheet's contents.
 - Records with and without `drop` validate, save, back up and restore unchanged.
 
-**Browser (existing Playwright harness), at 360 and 390 px, light and dark:** logging and checking; Set sheet marking and centring with the sheet no taller than its content; type, load, drop add/delete; immediate set deletion; reorder; Finish sheet save / keep logging / abandon + undo; rest bar waiting for the last drop; next-set chip only when off screen; details sheet; past-workout date chip; editing a completed workout; routine planning; every converted dialog as a sheet.
+**Browser (existing Playwright harness), at 360 and 390 px, light and dark:** logging and checking; Set sheet marking and centring with the sheet no taller than its content; type, load, drop add/delete; immediate set deletion; reorder; Finish sheet save / keep logging / abandon + undo; checking a set with drops (no ✓ on drops) and the rest bar; next-set chip only when off screen; details sheet; past-workout date chip; editing a completed workout; routine planning; every converted dialog as a sheet.
 
 **Accessibility:** axe audit of the workout screen and each sheet; keyboard-only pass (Tab order; Escape closes a sheet and returns focus to its trigger); contrast check of all token pairs in both themes.
 
