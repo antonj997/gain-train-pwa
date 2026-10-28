@@ -32,7 +32,8 @@ export default function Layout() {
     return <Navigate to="/auth" replace />;
   // Pages with a PageHeader show the notices themselves. The rest get them here
   // until they move over; the workout screen stays free of banners.
-  const showsOwnNotices = activeWorkout || path === "/" || path === "/settings";
+  const showsOwnNotices =
+    activeWorkout || ["/", "/settings", "/history", "/progress"].includes(path);
   const isActive = (tab: (typeof tabs)[number]) =>
     [tab.to, ...tab.also].some((to) =>
       to === "/" ? path === "/" : path === to || path.startsWith(to + "/"),

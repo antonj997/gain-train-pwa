@@ -410,3 +410,125 @@ label.row {
 .settings-page .card {
   border-radius: var(--gt-radius-lg);
 }
+
+/* History and Progress. */
+.row-selected {
+  background-color: var(--gt-accent-soft);
+}
+.badge-new {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-1);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gt-space-3);
+}
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tile-wide {
+  grid-column: 1 / -1;
+}
+.tile-value {
+  font-size: var(--gt-fs-6);
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.exercise-detail .tile-value {
+  font-size: var(--gt-fs-5);
+}
+.tile-unit {
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  color: var(--gt-ink-2);
+}
+.tile-change {
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+}
+.tile-change.up {
+  color: var(--gt-done);
+}
+.progress-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.session-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  min-height: 44px;
+  list-style: none;
+  cursor: pointer;
+}
+.session-summary::-webkit-details-marker {
+  display: none;
+}
+.session-summary > svg {
+  flex: none;
+  transition: transform var(--gt-motion);
+}
+details[open] > .session-summary > svg {
+  transform: rotate(180deg);
+}
+.best-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gt-space-3);
+}
+.best-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gt-space-1);
+  min-width: 0;
+  padding: var(--gt-space-3) 14px;
+}
+.best-card strong {
+  font-size: var(--gt-fs-4);
+  overflow-wrap: anywhere;
+}
+.progress-page input[type="search"] {
+  margin-bottom: var(--gt-space-3);
+}
+.sparkline {
+  flex: none;
+}
+.exercise-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-4);
+}
+.performance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+}
+.performance-label {
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+}
+.performance-value {
+  font-size: var(--gt-fs-6);
+  line-height: 1.15;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

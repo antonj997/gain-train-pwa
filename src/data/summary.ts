@@ -37,9 +37,20 @@ export function shiftDate(date: string, days: number) {
   return dateKey(new Date(dateAt(date).getTime() + days * dayMs));
 }
 export function historyPeriod(month: string, now: string) {
-  if (month === "6m" || month === "12m") {
+  if (month === "4w") {
+    const start = shiftDate(now, -27);
+    return {
+      start,
+      end: now,
+      days: 28,
+      previousStart: shiftDate(start, -28),
+      previousEnd: shiftDate(start, -1),
+      previousDays: 28,
+    };
+  }
+  if (month === "3m" || month === "6m" || month === "12m") {
     const date = dateAt(now);
-    const count = month === "6m" ? 6 : 12;
+    const count = Number.parseInt(month);
     const target = new Date(
       Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - count, 1),
     );

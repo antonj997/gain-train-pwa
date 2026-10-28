@@ -91,3 +91,111 @@ export function baseline(
     null
   );
 }
+
+type Progress = ReturnType<typeof progressFor>[number];
+type ProgressPoint = Progress["points"][number];
+
+/** The number a session is compared by: estimated 1RM, else reps or seconds. */
+export const pointValue = (point: ProgressPoint) =>
+  point.e1rm ?? point.set.reps ?? 0;
+
+/**
+ * Sessions that beat every earlier comparable session of the exercise by
+ * estimated 1RM, oldest first. An exercise's first session is a starting point,
+ * not a best. Drops never reach `progressFor`, so they cannot set one.
+ */
+export function bestEvents(records: RecordDoc[]) {
+  const events: (ProgressPoint & {
+    exerciseId: string;
+    name: string;
+    e1rm: number;
+  })[] = [];
+  for (const item of progressFor(records)) {
+    const earlier: ProgressPoint[] = [];
+    for (const point of item.points) {
+      if (point.e1rm !== null) {
+        const before = earlier.filter((p) => comparableSets(p.set, point.set));
+        if (before.length && before.every((p) => point.e1rm! > (p.e1rm ?? 0)))
+          events.push({
+            ...point,
+            e1rm: point.e1rm,
+            exerciseId: item.id,
+            name: item.name,
+          });
+      }
+      earlier.push(point);
+    }
+  }
+  return events.sort(
+    (a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name),
+  );
+}
+
+/** Ids of the workouts that set a new best estimate for any exercise. */
+export function newBestWorkoutIds(records: RecordDoc[]) {
+  return new Set(bestEvents(records).map((event) => event.workoutId));
+}
+
+/** The latest new best of each exercise set from `start` to `end`, newest first. */
+export function recentBests(
+  records: RecordDoc[],
+  start: string,
+  end: string,
+  limit = 4,
+) {
+  const seen = new Set<string>();
+  return bestEvents(records)
+    .filter((event) => event.date >= start && event.date <= end)
+    .reverse()
+    .filter(
+      (event) => !seen.has(event.exerciseId) && seen.add(event.exerciseId),
+    )
+    .slice(0, limit);
+}
+
+/**
+ * What an exercise row and its detail show: the latest result, the earlier
+ * sessions that compare with it, and the best of those.
+ */
+export function exerciseStats(item: Progress) {
+  const latest = item.points.at(-1)!;
+  const weighted = latest.e1rm !== null;
+  const timed = latest.set.measure === "seconds";
+  const comparable = item.points.filter((point) =>
+    comparableSets(point.set, latest.set),
+  );
+  const valueOf = (point: ProgressPoint) =>
+    weighted ? point.e1rm! : (point.set.reps ?? 0);
+  const best = comparable.reduce(
+    (top, point) => (valueOf(point) >= valueOf(top) ? point : top),
+    latest,
+  );
+  return { latest, weighted, timed, comparable, valueOf, best };
+}
+
+/**
+ * Points for an SVG polyline that draws `values` left to right, scaled to the
+ * box with a margin so the stroke is not clipped. One value, or values that are
+ * all equal, make a flat line through the middle.
+ */
+export function sparklinePoints(
+  values: number[],
+  width = 64,
+  height = 28,
+  margin = 2,
+) {
+  if (!values.length) return "";
+  if (values.length === 1) values = [values[0], values[0]];
+  const min = Math.min(...values);
+  const span = Math.max(...values) - min;
+  const step = (width - 2 * margin) / (values.length - 1);
+  const round = (n: number) => Number(n.toFixed(1));
+  return values
+    .map((value, i) => {
+      const y = span
+        ? margin + (1 - (value - min) / span) * (height - 2 * margin)
+        : height / 2;
+      return `${round(margin + i * step)},${round(y)}`;
+    })
+    .join(" ");
+}
