@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { topBarRootMargin } from "../src/components/workout/NextSetChip.tsx";
+import { topBarRootMargin } from "../src/lib/root-margin.ts";
 
 test("the next-set observer margin is always a length Safari accepts", () => {
   assert.equal(topBarRootMargin(64.2), "-65px 0px 0px 0px");
