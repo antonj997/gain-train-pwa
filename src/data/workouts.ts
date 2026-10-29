@@ -11,8 +11,14 @@ import { dropGroup, isDrop } from "./drops";
 import { completedWorkouts, sortWorkoutsNewest } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 
-export function initialSet(exerciseId: string): WorkoutSet {
+/**
+ * A new exercise's first set. A catalogue exercise knows its own category; a
+ * custom exercise passes the category it was saved with.
+ */
+export function initialSet(exerciseId: string, category?: string): WorkoutSet {
   const defaults = catalogueById.get(exerciseId);
+  if (defaults?.measure === "cardio" || category === "Cardio")
+    return { ...newSet(), measure: "cardio" };
   return {
     ...newSet(),
     load: defaults?.load ?? "weight",
@@ -22,7 +28,13 @@ export function initialSet(exerciseId: string): WorkoutSet {
 
 export function hasLoggedExercise(ex: Exercise) {
   return ex.sets.some(
-    (set) => set.done || set.reps !== null || set.weight !== null,
+    (set) =>
+      set.done ||
+      set.reps !== null ||
+      set.weight !== null ||
+      [set.durationSec, set.distanceM, set.level, set.calories].some(
+        (value) => value !== null && value !== undefined,
+      ),
   );
 }
 

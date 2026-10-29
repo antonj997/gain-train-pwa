@@ -26,7 +26,7 @@ export default function ExercisePicker({
 }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (items: { id: string; name: string }[]) => void;
+  onAdd: (items: { id: string; name: string; category?: string }[]) => void;
 }) {
   const { state, save } = useData();
   const { hidden } = useHiddenExercises();
@@ -125,7 +125,7 @@ export default function ExercisePicker({
         note: "",
         favourite: false,
       });
-      onAdd([{ id, name: name.trim() }]);
+      onAdd([{ id, name: name.trim(), category }]);
       setSelected([]);
       setSearch("");
       creationDraft.replace(null);

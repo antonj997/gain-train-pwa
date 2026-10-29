@@ -5,8 +5,12 @@ import type { WorkoutSet } from "../data/model";
 export const setInputTextSchema = z.object({
   weight: z.string().max(32).optional(),
   reps: z.string().max(32).optional(),
+  durationSec: z.string().max(32).optional(),
+  distanceM: z.string().max(32).optional(),
+  level: z.string().max(32).optional(),
+  calories: z.string().max(32).optional(),
 });
-type InputField = "weight" | "reps";
+export type InputField = keyof z.infer<typeof setInputTextSchema>;
 type EditableSet = WorkoutSet & {
   inputText?: z.infer<typeof setInputTextSchema>;
 };
@@ -17,9 +21,8 @@ export function getSetInputText(set: WorkoutSet, field: InputField) {
 
 export function hasSetInputText(set: WorkoutSet) {
   return (
-    getSetInputText(set, "weight") !== undefined ||
-    getSetInputText(set, "reps") !== undefined
-  );
+    ["weight", "reps", "durationSec", "distanceM", "level", "calories"] as const
+  ).some((field) => getSetInputText(set, field) !== undefined);
 }
 
 export function clearSetInputText(

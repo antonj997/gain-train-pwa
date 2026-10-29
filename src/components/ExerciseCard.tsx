@@ -31,6 +31,7 @@ import {
   withLoadKey,
 } from "@/lib/load-keys";
 import { localizedDate } from "@/lib/dates";
+import { cardioTotals, isCardioSet, totalsLabel } from "@/lib/cardio";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import SetLine from "@/components/workout/SetLine";
 import SetSheet from "@/components/workout/SetSheet";
@@ -113,6 +114,7 @@ export default function ExerciseCard({
   const shownIndex = sets.findIndex((s) => s.id === shownSetId.current);
   const shown = shownIndex >= 0 ? sets[shownIndex] : undefined;
 
+  const cardio = sets.some(isCardioSet);
   const defaultKey = defaultLoadKey(sets);
   const close = () => setSheet(null);
   const changeSets = (next: WorkoutSet[]) => onChange({ ...ex, sets: next });
@@ -141,10 +143,18 @@ export default function ExerciseCard({
           {mode === "log" && lastSession && (
             <p className="ex-last">
               Last:{" "}
-              {localizedDate(lastSession.date, {
-                day: "numeric",
-                month: "short",
-              })}
+              {cardio
+                ? totalsLabel(
+                    cardioTotals(
+                      lastSession.sets.filter(
+                        (set) => isCardioSet(set) && set.done && validSet(set),
+                      ),
+                    ),
+                  )
+                : localizedDate(lastSession.date, {
+                    day: "numeric",
+                    month: "short",
+                  })}
             </p>
           )}
         </div>
@@ -158,31 +168,42 @@ export default function ExerciseCard({
           <MoreHorizontal size={23} aria-hidden="true" />
         </button>
       </div>
-      <div className="set-columns" data-mode={mode}>
-        <span>Set</span>
-        {mode === "log" && (
-          <span className="set-previous-heading">Previous</span>
-        )}
-        <button
-          type="button"
-          className="set-heading-btn"
-          aria-haspopup="dialog"
-          onClick={() => setSheet({ kind: "loadCount" })}
-        >
-          {loadHeading(defaultKey)}
-          <ChevronDown size={14} aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          className="set-heading-btn"
-          aria-haspopup="dialog"
-          onClick={() => setSheet({ kind: "loadCount" })}
-        >
-          {countHeading(sets)}
-          <ChevronDown size={14} aria-hidden="true" />
-        </button>
-        {mode === "log" && <span>Done</span>}
-      </div>
+      {cardio ? (
+        <div className="set-columns" data-mode={mode} data-kind="cardio">
+          <span>Set</span>
+          <span>Time</span>
+          <span>km</span>
+          <span>Level</span>
+          <span>kcal</span>
+          {mode === "log" && <span>Done</span>}
+        </div>
+      ) : (
+        <div className="set-columns" data-mode={mode}>
+          <span>Set</span>
+          {mode === "log" && (
+            <span className="set-previous-heading">Previous</span>
+          )}
+          <button
+            type="button"
+            className="set-heading-btn"
+            aria-haspopup="dialog"
+            onClick={() => setSheet({ kind: "loadCount" })}
+          >
+            {loadHeading(defaultKey)}
+            <ChevronDown size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className="set-heading-btn"
+            aria-haspopup="dialog"
+            onClick={() => setSheet({ kind: "loadCount" })}
+          >
+            {countHeading(sets)}
+            <ChevronDown size={14} aria-hidden="true" />
+          </button>
+          {mode === "log" && <span>Done</span>}
+        </div>
+      )}
       {sets.map((s, i) => (
         <SetLine
           key={s.id}
@@ -226,6 +247,7 @@ export default function ExerciseCard({
             isDrop(shown) ? 0 : dropGroup(sets, shownIndex).end - shownIndex - 1
           }
           exerciseDefault={defaultKey}
+          cardio={isCardioSet(shown)}
           onSection={(section) =>
             changeSets(changeSection(sets, shown.id, section))
           }
@@ -240,23 +262,31 @@ export default function ExerciseCard({
           }}
         />
       )}
-      <LoadCountSheet
-        open={sheet?.kind === "loadCount"}
-        onClose={close}
-        loadKey={defaultKey}
-        measure={exerciseMeasure(sets)}
-        onLoadKey={(key) => changeSets(applyExerciseLoad(sets, key))}
-        onMeasure={(measure) => changeSets(applyExerciseCount(sets, measure))}
-        onDone={close}
-      />
+      {!cardio && (
+        <LoadCountSheet
+          open={sheet?.kind === "loadCount"}
+          onClose={close}
+          loadKey={defaultKey}
+          measure={exerciseMeasure(sets)}
+          onLoadKey={(key) => changeSets(applyExerciseLoad(sets, key))}
+          onMeasure={(measure) => changeSets(applyExerciseCount(sets, measure))}
+          onDone={close}
+        />
+      )}
       <ExerciseMenuSheet
         open={sheet?.kind === "menu"}
         onClose={close}
         name={ex.name}
-        hint={`${loadHeading(defaultKey)} · ${countHeading(sets).toLowerCase()}`}
+        hint={
+          cardio
+            ? undefined
+            : `${loadHeading(defaultKey)} · ${countHeading(sets).toLowerCase()}`
+        }
         canMoveUp={!isFirst}
         canMoveDown={!isLast}
-        onLoadAndCount={() => setSheet({ kind: "loadCount" })}
+        onLoadAndCount={
+          cardio ? undefined : () => setSheet({ kind: "loadCount" })
+        }
         onReorder={() => setSheet({ kind: "reorder" })}
         onMoveUp={() => onMove(-1)}
         onMoveDown={() => onMove(1)}

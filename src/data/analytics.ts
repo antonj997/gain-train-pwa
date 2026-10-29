@@ -2,8 +2,10 @@ import { type RecordDoc, type WorkoutSet, validSet } from "./model";
 import { isDrop } from "./drops";
 import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
+import { cardioTotals, isCardioSet } from "../lib/cardio";
 export function estimate(s: WorkoutSet) {
   return s.measure !== "seconds" &&
+    s.measure !== "cardio" &&
     validSet(s) &&
     s.load === "weight" &&
     s.weight &&
@@ -49,8 +51,14 @@ export function progressFor(records: RecordDoc[]) {
     }
     for (const [exerciseId, ex] of grouped) {
       // A drop continues the set above it, so it is never a session's best set.
+      // Cardio has no best set: it is listed by cardioProgressFor instead.
       const sets = ex.sets.filter(
-        (s) => s.done && s.section === "working" && !isDrop(s) && validSet(s),
+        (s) =>
+          s.done &&
+          s.section === "working" &&
+          !isDrop(s) &&
+          !isCardioSet(s) &&
+          validSet(s),
       );
       if (!sets.length) continue;
       const latestProfile = sets.at(-1)!;
@@ -82,6 +90,57 @@ export function progressFor(records: RecordDoc[]) {
         a.name.localeCompare(b.name),
     );
 }
+export type CardioSession = {
+  date: string;
+  workoutId: string;
+  durationSec: number;
+  distanceM: number;
+  calories: number;
+};
+
+/**
+ * Cardio exercises with one entry per workout: the time, distance and calories
+ * of its checked sets added up. Oldest session first; the exercise trained most
+ * recently comes first.
+ */
+export function cardioProgressFor(records: RecordDoc[]) {
+  const map = new Map<string, { name: string; sessions: CardioSession[] }>();
+  for (const record of completedWorkouts(records).reverse()) {
+    const w = record.payload;
+    const grouped = new Map<string, { name: string; sets: WorkoutSet[] }>();
+    for (const ex of w.exercises) {
+      const sets = ex.sets.filter(
+        (s) => isCardioSet(s) && s.done && validSet(s),
+      );
+      if (!sets.length) continue;
+      const group = grouped.get(ex.exerciseId) ?? { name: ex.name, sets: [] };
+      group.sets.push(...sets);
+      grouped.set(ex.exerciseId, group);
+    }
+    for (const [exerciseId, group] of grouped) {
+      const item = map.get(exerciseId) ?? { name: group.name, sessions: [] };
+      item.name = group.name;
+      item.sessions.push({
+        date: w.date,
+        workoutId: record.id,
+        ...cardioTotals(group.sets),
+      });
+      map.set(exerciseId, item);
+    }
+  }
+  return [...map.entries()]
+    .map(([id, x]) => ({
+      id,
+      ...x,
+      sessions: x.sessions.sort((a, b) => a.date.localeCompare(b.date)),
+    }))
+    .sort(
+      (a, b) =>
+        b.sessions.at(-1)!.date.localeCompare(a.sessions.at(-1)!.date) ||
+        a.name.localeCompare(b.name),
+    );
+}
+
 export function baseline(
   points: { date: string; e1rm: number | null }[],
   cutoff: string,

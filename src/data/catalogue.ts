@@ -34,7 +34,7 @@ export type CatalogueExercise = {
   aliases: string[];
   /** The load and measure a new set starts with. */
   load: "weight" | "bodyweight" | "assisted";
-  measure: "reps" | "seconds";
+  measure: "reps" | "seconds" | "cardio";
 };
 
 // name, category, equipment, aliases (semicolon separated), optional load/measure.
@@ -614,7 +614,7 @@ const rows: Row[] = [
   ["Suitcase Carry", "Full body", "dumbbell", "väskbärning"],
   ["Burpee", "Full body", "bodyweight", "burpees; burpe"],
   ["Sled Push", "Full body", "machine", "prowler; sled; släde"],
-  // Cardio machines. B2 adds cardio sets; for now they log reps and weight.
+  // Cardio machines. Their sets log time, distance, level and calories.
   [
     "Treadmill",
     "Cardio",
@@ -663,7 +663,7 @@ export const catalogue: CatalogueExercise[] = rows.map(
     aliases: aliases.split(";").map((alias) => alias.trim()),
     load:
       options?.load ?? (equipment === "bodyweight" ? "bodyweight" : "weight"),
-    measure: options?.measure ?? "reps",
+    measure: options?.measure ?? (category === "Cardio" ? "cardio" : "reps"),
   }),
 );
 

@@ -131,7 +131,7 @@ function Editor({
     [state.records, id, initial, w.date],
   );
 
-  const add = (items: { id: string; name: string }[]) =>
+  const add = (items: { id: string; name: string; category?: string }[]) =>
     change({
       ...w,
       exercises: [
@@ -146,7 +146,7 @@ function Editor({
             name: item.name,
             sets: prior?.length
               ? prior.map((s) => newSet(s))
-              : [initialSet(item.id)],
+              : [initialSet(item.id, item.category)],
           };
         }),
       ],

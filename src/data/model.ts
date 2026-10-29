@@ -2,6 +2,7 @@ import { z } from "zod";
 import { hasSetInputText } from "../lib/set-input";
 import { hasExtraWeight } from "../lib/set-load";
 import { isoDate } from "../lib/dates";
+import { CARDIO_MAX, cardioLabel } from "../lib/cardio";
 import { normalizeDrops } from "./drops";
 export const setSchema = z.object({
   id: z.string().uuid(),
@@ -10,7 +11,12 @@ export const setSchema = z.object({
   bodyWeightKg: z.number().finite().positive().max(1000).optional(),
   extraWeight: z.boolean().optional(),
   load: z.enum(["weight", "bodyweight", "assisted"]),
-  measure: z.enum(["reps", "seconds"]).optional(),
+  measure: z.enum(["reps", "seconds", "cardio"]).optional(),
+  /** Cardio sets (gym machines) only: reps and weight stay null. */
+  durationSec: z.number().int().min(0).max(CARDIO_MAX.durationSec).nullish(),
+  distanceM: z.number().finite().min(0).max(CARDIO_MAX.distanceM).nullish(),
+  level: z.number().finite().min(0).max(CARDIO_MAX.level).nullish(),
+  calories: z.number().finite().min(0).max(CARDIO_MAX.calories).nullish(),
   section: z.enum(["working", "warmup", "winddown"]),
   done: z.boolean(),
   /** Continues the set above at a lower weight. See drops.ts. */
@@ -25,7 +31,8 @@ export const exerciseSchema = z.object({
 // Records without a schemaVersion were written by version 1. Bump SCHEMA_VERSION
 // when a release changes what existing fields mean; older apps then open those
 // records read-only instead of saving over them.
-export const SCHEMA_VERSION = 1;
+// 2: cardio sets (measure "cardio" with durationSec, distanceM, level, calories).
+export const SCHEMA_VERSION = 2;
 const schemaVersion = z.number().int().positive().optional();
 export const workoutSchema = z.object({
   schemaVersion,
@@ -206,6 +213,7 @@ export const newSet = (prior?: WorkoutSet): WorkoutSet => ({
   reps: prior?.reps ?? null,
   weight: prior?.weight ?? null,
   load: prior?.load ?? "weight",
+  // A cardio set starts blank: the time and distance are not copied.
   ...(prior?.measure ? { measure: prior.measure } : {}),
   ...(prior?.extraWeight !== undefined
     ? { extraWeight: prior.extraWeight }
@@ -214,7 +222,27 @@ export const newSet = (prior?: WorkoutSet): WorkoutSet => ({
   done: false,
   ...(prior?.drop ? { drop: true } : {}),
 });
+const inRange = (value: number | null | undefined, max: number) =>
+  value === null ||
+  value === undefined ||
+  (Number.isFinite(value) && value >= 0 && value <= max);
+/** A cardio set has a time and no reps or weight; its other values are optional. */
+function validCardioSet(s: WorkoutSet) {
+  return (
+    !hasSetInputText(s) &&
+    s.reps === null &&
+    s.weight === null &&
+    typeof s.durationSec === "number" &&
+    Number.isInteger(s.durationSec) &&
+    s.durationSec > 0 &&
+    s.durationSec <= CARDIO_MAX.durationSec &&
+    inRange(s.distanceM, CARDIO_MAX.distanceM) &&
+    inRange(s.level, CARDIO_MAX.level) &&
+    inRange(s.calories, CARDIO_MAX.calories)
+  );
+}
 export function validSet(s: WorkoutSet) {
+  if (s.measure === "cardio") return validCardioSet(s);
   return (
     !hasSetInputText(s) &&
     s.reps !== null &&
@@ -301,6 +329,10 @@ export function validate(kind: Kind, payload: unknown): Payload {
         "Bodyweight must be greater than 0 and no more than 1000 kg.",
       extraWeight: "Choose whether this bodyweight set uses extra weight.",
       measure: "Choose reps or seconds for this set.",
+      durationSec: "Time must be from 0:00 to 24:00:00, or blank.",
+      distanceM: "Distance must be from 0 to 1,000 km, or blank.",
+      level: "Level must be a number from 0 to 100, or blank.",
+      calories: "Calories must be a number from 0 to 100,000, or blank.",
       load: "Choose weight, bodyweight or assisted load.",
       section: "Choose working, warm-up or cool-down for this set.",
       exercises: "Use no more than 100 exercises in a session.",
@@ -341,6 +373,17 @@ export function validate(kind: Kind, payload: unknown): Payload {
     for (const ex of (p as Workout | Routine).exercises) {
       ex.sets = normalizeDrops(ex.sets);
       for (const s of ex.sets) {
+        if (s.measure === "cardio") {
+          if (s.reps !== null || s.weight !== null)
+            throw new RecordValidationError(
+              "Cardio sets have a time and distance, not reps or weight.",
+            );
+          if (s.done && !validSet(s))
+            throw new RecordValidationError(
+              "Checked cardio sets need a time. Uncheck the set to leave it unfinished.",
+            );
+          continue;
+        }
         if (s.extraWeight === true && s.load !== "bodyweight")
           throw new RecordValidationError(
             "Extra weight is available for bodyweight sets only.",
@@ -379,15 +422,17 @@ export function validate(kind: Kind, payload: unknown): Payload {
   return p;
 }
 export const labelSet = (s: WorkoutSet) =>
-  hasExtraWeight(s)
-    ? `BW + ${s.weight} kg${s.measure === "seconds" ? ` · ${s.reps} sec` : ` × ${s.reps}`}`
-    : s.measure === "seconds"
-      ? s.reps + " sec"
-      : s.load === "bodyweight"
-        ? "BW × " + s.reps
-        : s.load === "assisted"
-          ? s.weight + " kg assist × " + s.reps
-          : s.weight + " kg × " + s.reps;
+  s.measure === "cardio"
+    ? cardioLabel(s)
+    : hasExtraWeight(s)
+      ? `BW + ${s.weight} kg${s.measure === "seconds" ? ` · ${s.reps} sec` : ` × ${s.reps}`}`
+      : s.measure === "seconds"
+        ? s.reps + " sec"
+        : s.load === "bodyweight"
+          ? "BW × " + s.reps
+          : s.load === "assisted"
+            ? s.weight + " kg assist × " + s.reps
+            : s.weight + " kg × " + s.reps;
 export const repeatExercises = (items: Exercise[]) =>
   items.map((e) => ({
     ...e,

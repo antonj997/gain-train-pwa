@@ -6,7 +6,12 @@ import { getSetIssues } from "@/lib/workout-editor";
 import { bodyWeightForSet } from "@/lib/set-editing";
 import { hasExtraWeight } from "@/lib/set-load";
 import type { LoadMarker } from "@/lib/load-keys";
-import { changeSetNumber, getSetInputText } from "@/lib/set-input";
+import {
+  changeSetNumber,
+  getSetInputText,
+  type InputField,
+} from "@/lib/set-input";
+import { formatDuration, formatKm, parseDuration, parseKm } from "@/lib/cardio";
 import SetNumberInput from "@/components/SetNumberInput";
 import SetBadge from "@/components/workout/SetBadge";
 import "@/styles/workout.css";
@@ -82,6 +87,7 @@ export default function SetLine({
   // Unique within the exercise: "Bench Press set 2", "Bench Press drop 1 after set 2".
   const label = `${name} ${badge.name}`;
   const timed = set.measure === "seconds";
+  const cardio = set.measure === "cardio";
   const extraWeight = hasExtraWeight(set);
   const plainBodyweight =
     marker === "bw" || (set.load === "bodyweight" && !extraWeight);
@@ -107,13 +113,13 @@ export default function SetLine({
   const visibleIssues = Object.entries(issues)
     .filter(
       ([field]) =>
-        getSetInputText(set, field as "weight" | "reps") !== undefined ||
-        (field === "weight" ? set.weight !== null : set.reps !== null),
+        getSetInputText(set, field as InputField) !== undefined ||
+        (set[field as InputField] ?? null) !== null,
     )
     .map(([, issue]) => issue);
   if (set.done && !validSet(set) && !visibleIssues.length)
     visibleIssues.push("Uncheck this set to correct its missing values.");
-  const describedBy = (field: "weight" | "reps") =>
+  const describedBy = (field: InputField) =>
     [
       visibleIssues.length && issues[field] ? errorId : "",
       showLock ? lockId : "",
@@ -121,7 +127,7 @@ export default function SetLine({
       .filter(Boolean)
       .join(" ") || undefined;
   const updateNumber = (
-    field: "weight" | "reps",
+    field: InputField,
     value: number | null,
     unfinishedText?: string,
   ) => {
@@ -132,6 +138,41 @@ export default function SetLine({
     onChange(changeSetNumber(set, field, value, unfinishedText));
   };
 
+  const cardioFields = [
+    {
+      field: "durationSec",
+      name: "time",
+      placeholder: "mm:ss",
+      inputMode: "text",
+      parse: parseDuration,
+      format: formatDuration,
+    },
+    {
+      field: "distanceM",
+      name: "distance in kilometres",
+      placeholder: "km",
+      inputMode: "decimal",
+      parse: parseKm,
+      format: formatKm,
+    },
+    {
+      field: "level",
+      name: "level",
+      placeholder: "lvl",
+      inputMode: "numeric",
+      parse: undefined,
+      format: undefined,
+    },
+    {
+      field: "calories",
+      name: "calories",
+      placeholder: "kcal",
+      inputMode: "numeric",
+      parse: undefined,
+      format: undefined,
+    },
+  ] as const;
+
   const classes = [
     "set-line",
     // Only a field that shows a marker gets wider than three digits need.
@@ -139,6 +180,7 @@ export default function SetLine({
       (marker === "plus" || marker === "minus") &&
       "load-prefix",
     !plainBodyweight && marker === "kg" && "load-suffix",
+    cardio && "is-cardio",
     set.done && "is-done",
     drop && "is-drop",
     next && "is-next",
@@ -156,7 +198,7 @@ export default function SetLine({
     >
       {next && <span className="sr-only">Next set</span>}
       <SetBadge badge={badge} editing={editing} onClick={onOpenSheet} />
-      {mode === "log" && (
+      {mode === "log" && !cardio && (
         <span className="set-previous">
           {previous ? (
             <>
@@ -171,75 +213,115 @@ export default function SetLine({
           )}
         </span>
       )}
-      {plainBodyweight ? (
-        <span className="set-field set-bodyweight">
-          <span aria-hidden="true">
-            BW
-            {displayedBodyWeight !== null && (
-              <small>{` ${displayedBodyWeight} kg`}</small>
-            )}
-          </span>
-          <span className="sr-only">
-            {displayedBodyWeight === null
-              ? `${label}: Bodyweight`
-              : `${label}: Bodyweight ${displayedBodyWeight} kilograms`}
-          </span>
-        </span>
+      {cardio ? (
+        <>
+          {cardioFields.map(({ field, ...props }) => (
+            <div className="set-field" key={field}>
+              <SetNumberInput
+                aria-label={`${label} ${props.name}`}
+                aria-invalid={
+                  !!issues[field] &&
+                  ((set[field] ?? null) !== null ||
+                    getSetInputText(set, field) !== undefined)
+                }
+                aria-describedby={describedBy(field)}
+                inputMode={props.inputMode}
+                placeholder={props.placeholder}
+                value={set[field] ?? null}
+                inputText={getSetInputText(set, field)}
+                parse={props.parse}
+                format={props.format}
+                readOnly={set.done}
+                onLockedAttempt={() => setLockedAttempt(true)}
+                onValueChange={(value, text) =>
+                  updateNumber(field, value, text)
+                }
+              />
+            </div>
+          ))}
+        </>
       ) : (
-        <div
-          className={`set-field${marker === "plus" || marker === "minus" ? " has-prefix" : ""}${marker === "kg" ? " has-suffix" : ""}`}
-        >
-          {(marker === "plus" || marker === "minus") && (
-            <span className="set-marker set-marker-prefix" aria-hidden="true">
-              {marker === "plus" ? "+" : "−"}
+        <>
+          {plainBodyweight ? (
+            <span className="set-field set-bodyweight">
+              <span aria-hidden="true">
+                BW
+                {displayedBodyWeight !== null && (
+                  <small>{` ${displayedBodyWeight} kg`}</small>
+                )}
+              </span>
+              <span className="sr-only">
+                {displayedBodyWeight === null
+                  ? `${label}: Bodyweight`
+                  : `${label}: Bodyweight ${displayedBodyWeight} kilograms`}
+              </span>
             </span>
+          ) : (
+            <div
+              className={`set-field${marker === "plus" || marker === "minus" ? " has-prefix" : ""}${marker === "kg" ? " has-suffix" : ""}`}
+            >
+              {(marker === "plus" || marker === "minus") && (
+                <span
+                  className="set-marker set-marker-prefix"
+                  aria-hidden="true"
+                >
+                  {marker === "plus" ? "+" : "−"}
+                </span>
+              )}
+              <SetNumberInput
+                aria-label={`${label} ${loadName}`}
+                aria-invalid={
+                  !!issues.weight &&
+                  (set.weight !== null ||
+                    getSetInputText(set, "weight") !== undefined)
+                }
+                aria-describedby={describedBy("weight")}
+                inputMode="decimal"
+                min="0"
+                max="10000"
+                step="any"
+                placeholder={marker === "kg" ? undefined : "kg"}
+                value={set.weight}
+                inputText={getSetInputText(set, "weight")}
+                readOnly={set.done}
+                onLockedAttempt={() => setLockedAttempt(true)}
+                onValueChange={(value, text) =>
+                  updateNumber("weight", value, text)
+                }
+              />
+              {marker === "kg" && (
+                <span
+                  className="set-marker set-marker-suffix"
+                  aria-hidden="true"
+                >
+                  kg
+                </span>
+              )}
+            </div>
           )}
-          <SetNumberInput
-            aria-label={`${label} ${loadName}`}
-            aria-invalid={
-              !!issues.weight &&
-              (set.weight !== null ||
-                getSetInputText(set, "weight") !== undefined)
-            }
-            aria-describedby={describedBy("weight")}
-            inputMode="decimal"
-            min="0"
-            max="10000"
-            step="any"
-            placeholder={marker === "kg" ? undefined : "kg"}
-            value={set.weight}
-            inputText={getSetInputText(set, "weight")}
-            readOnly={set.done}
-            onLockedAttempt={() => setLockedAttempt(true)}
-            onValueChange={(value, text) => updateNumber("weight", value, text)}
-          />
-          {marker === "kg" && (
-            <span className="set-marker set-marker-suffix" aria-hidden="true">
-              kg
-            </span>
-          )}
-        </div>
+          <div className="set-field">
+            <SetNumberInput
+              aria-label={`${label} ${timed ? "seconds" : "reps"}`}
+              aria-invalid={
+                !!issues.reps &&
+                (set.reps !== null ||
+                  getSetInputText(set, "reps") !== undefined)
+              }
+              aria-describedby={describedBy("reps")}
+              inputMode="numeric"
+              min="1"
+              max="10000"
+              step="1"
+              placeholder={timed ? "sec" : "reps"}
+              value={set.reps}
+              inputText={getSetInputText(set, "reps")}
+              readOnly={set.done}
+              onLockedAttempt={() => setLockedAttempt(true)}
+              onValueChange={(value, text) => updateNumber("reps", value, text)}
+            />
+          </div>
+        </>
       )}
-      <div className="set-field">
-        <SetNumberInput
-          aria-label={`${label} ${timed ? "seconds" : "reps"}`}
-          aria-invalid={
-            !!issues.reps &&
-            (set.reps !== null || getSetInputText(set, "reps") !== undefined)
-          }
-          aria-describedby={describedBy("reps")}
-          inputMode="numeric"
-          min="1"
-          max="10000"
-          step="1"
-          placeholder={timed ? "sec" : "reps"}
-          value={set.reps}
-          inputText={getSetInputText(set, "reps")}
-          readOnly={set.done}
-          onLockedAttempt={() => setLockedAttempt(true)}
-          onValueChange={(value, text) => updateNumber("reps", value, text)}
-        />
-      </div>
       {mode === "log" && !drop ? (
         <>
           <button

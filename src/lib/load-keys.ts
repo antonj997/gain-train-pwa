@@ -39,7 +39,9 @@ export function defaultLoadKey(sets: WorkoutSet[]): LoadKey {
   return mostCommon(sets.map(loadKeyOf), "weight");
 }
 
-const measureOf = (set: WorkoutSet): Measure => set.measure ?? "reps";
+// Cardio sets never reach the load and count sheet, so they count as reps here.
+const measureOf = (set: WorkoutSet): Measure =>
+  set.measure === "seconds" ? "seconds" : "reps";
 
 export function exerciseMeasure(sets: WorkoutSet[]): Measure {
   return mostCommon(sets.map(measureOf), "reps");

@@ -3,6 +3,7 @@ import { TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useData } from "@/contexts/useData";
 import {
+  cardioProgressFor,
   exerciseStats,
   progressFor,
   recentBests,
@@ -10,6 +11,7 @@ import {
 } from "@/data/analytics";
 import { labelSet, today } from "@/data/model";
 import { historyPeriod } from "@/data/summary";
+import CardioProgressDetail from "@/components/CardioProgressDetail";
 import ExerciseProgressDetail from "@/components/ExerciseProgressDetail";
 import PageHeader from "@/components/PageHeader";
 import ProgressSummary from "@/components/ProgressSummary";
@@ -18,6 +20,7 @@ import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
 import { daysAgo, localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
+import { totalsLabel } from "@/lib/cardio";
 
 const periods = [
   { value: "4w", label: "4 weeks", before: "the 4 weeks before" },
@@ -62,40 +65,54 @@ export default function Progress() {
   // Recomputed only when the log changes, not while typing in the search box.
   const items = useMemo(() => progressFor(records), [records]);
   const period = historyPeriod(range, now);
-  const rows = useMemo(
-    () =>
-      items
-        .map((item) => ({
-          item,
-          stats: exerciseStats(item),
-          sessions: item.points.filter(
-            ({ date }) => date >= period.start && date <= period.end,
-          ).length,
-        }))
-        .filter((row) => row.sessions > 0)
-        .sort(
-          (a, b) =>
-            b.sessions - a.sessions || a.item.name.localeCompare(b.item.name),
-        ),
-    [items, period.start, period.end],
-  );
+  const cardioItems = useMemo(() => cardioProgressFor(records), [records]);
+  // Strength and cardio exercises share one list, most trained first. A strength
+  // row shows its best set; a cardio row shows its latest time and distance.
+  const rows = useMemo(() => {
+    const inPeriod = ({ date }: { date: string }) =>
+      date >= period.start && date <= period.end;
+    return [
+      ...items.map((item) => {
+        const stats = exerciseStats(item);
+        return {
+          id: item.id,
+          name: item.name,
+          sessions: item.points.filter(inPeriod).length,
+          best: `Best ${labelSet(stats.best.set)}`,
+          trend: stats.comparable.slice(-8).map(stats.valueOf),
+        };
+      }),
+      ...cardioItems.map((item) => {
+        const latest = item.sessions.at(-1)!;
+        return {
+          id: item.id,
+          name: item.name,
+          sessions: item.sessions.filter(inPeriod).length,
+          best: `Latest ${totalsLabel(latest)}`,
+          trend: item.sessions.slice(-8).map((x) => x.durationSec),
+        };
+      }),
+    ]
+      .filter((row) => row.sessions > 0)
+      .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name));
+  }, [items, cardioItems, period.start, period.end]);
   const bests = useMemo(
     () => recentBests(records, period.start, period.end),
     [records, period.start, period.end],
   );
   const query = search.trim().toLowerCase();
-  const shown = rows.filter((row) =>
-    row.item.name.toLowerCase().includes(query),
-  );
+  const shown = rows.filter((row) => row.name.toLowerCase().includes(query));
   const open = items.find((item) => item.id === openId);
+  const openCardio = cardioItems.find((item) => item.id === openId);
+  const hasData = items.length > 0 || cardioItems.length > 0;
   const before = periods.find((p) => p.value === range)!.before;
   return (
     <div className="page progress-page">
       <PageHeader
-        eyebrow={items.length ? `Compared with ${before}` : undefined}
+        eyebrow={hasData ? `Compared with ${before}` : undefined}
         title="Progress"
       />
-      {items.length > 0 && (
+      {hasData && (
         <>
           <Segmented<Period>
             label="Period"
@@ -144,18 +161,14 @@ export default function Progress() {
             )}
             {shown.length > 0 && (
               <div className="list">
-                {shown.map(({ item, stats, sessions }) => (
+                {shown.map((row) => (
                   <ListRow
-                    key={item.id}
-                    title={item.name}
-                    sub={`Best ${labelSet(stats.best.set)} · ${countLabel(sessions, "session")}`}
-                    trailing={
-                      <Sparkline
-                        values={stats.comparable.slice(-8).map(stats.valueOf)}
-                      />
-                    }
+                    key={row.id}
+                    title={row.name}
+                    sub={`${row.best} · ${countLabel(row.sessions, "session")}`}
+                    trailing={<Sparkline values={row.trend} />}
                     chevron
-                    onClick={() => setOpenId(item.id)}
+                    onClick={() => setOpenId(row.id)}
                   />
                 ))}
               </div>
@@ -183,7 +196,7 @@ export default function Progress() {
           </section>
         </>
       )}
-      {!items.length && (
+      {!hasData && (
         <div className="empty-card">
           <TrendingUp size={30} />
           <h2>Your working sets will appear here</h2>
@@ -197,14 +210,17 @@ export default function Progress() {
         </div>
       )}
       <Sheet
-        open={!!open}
+        open={!!open || !!openCardio}
         onClose={() => setOpenId(null)}
-        title={open?.name}
+        title={open?.name ?? openCardio?.name}
         description="Results, sessions and chart"
         size="full"
       >
         {open && (
           <ExerciseProgressDetail item={open} cutoffDate={daysAgo(30)} />
+        )}
+        {openCardio && (
+          <CardioProgressDetail item={openCardio} cutoffDate={daysAgo(30)} />
         )}
       </Sheet>
     </div>
