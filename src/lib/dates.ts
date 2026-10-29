@@ -49,3 +49,51 @@ export function daysBetween(from: string, to: string) {
       86_400_000,
   );
 }
+
+// Calendar arithmetic on YYYY-MM-DD strings, done in UTC so a date never
+// shifts with the device's time zone or a daylight-saving change.
+const DAY_MS = 86_400_000;
+const atUtc = (date: string) => new Date(date + "T00:00:00Z");
+const dayOf = (date: Date) => date.toISOString().slice(0, 10);
+
+/** `date` moved by `days` (negative for earlier). */
+export function shiftDate(date: string, days: number) {
+  return dayOf(new Date(atUtc(date).getTime() + days * DAY_MS));
+}
+
+/** Monday = 0 ... Sunday = 6. */
+export function weekdayIndex(date: string) {
+  return (atUtc(date).getUTCDay() + 6) % 7;
+}
+
+/** The Monday of the week that holds `date`. */
+export const weekStart = (date: string) => shiftDate(date, -weekdayIndex(date));
+
+/** True for a real calendar day written as YYYY-MM-DD (no 31 April). */
+export function isIsoDay(day: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+  const date = new Date(day + "T12:00:00Z");
+  return !Number.isNaN(date.getTime()) && dayOf(date) === day;
+}
+
+/** The last day of `month` (YYYY-MM) as YYYY-MM-DD. */
+export function endOfMonth(month: string) {
+  const first = atUtc(month + "-01");
+  return dayOf(
+    new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)),
+  );
+}
+
+/**
+ * `date` moved by whole months, keeping its day of the month where that
+ * month has it and using the month's last day otherwise (31 Jan + 1 = 28 Feb).
+ */
+export function addMonths(date: string, months: number) {
+  const from = atUtc(date);
+  const first = new Date(
+    Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + months, 1),
+  );
+  const month = dayOf(first).slice(0, 7);
+  const last = Number(endOfMonth(month).slice(8));
+  return `${month}-${String(Math.min(from.getUTCDate(), last)).padStart(2, "0")}`;
+}

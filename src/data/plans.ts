@@ -4,8 +4,7 @@ import {
   type RecordDoc,
   type RoutineGroup,
 } from "./model";
-import { weekStart } from "./summary";
-import { daysBetween } from "../lib/dates";
+import { addMonths, daysBetween, weekStart, weekdayIndex } from "../lib/dates";
 
 /**
  * Plan cells are plain strings: a routine's id, "rest", "type:<day type id>",
@@ -56,11 +55,6 @@ export function activePlans(
 
 type Period = Pick<Plan, "startDate" | "endDate">;
 type PlanLike = Period & Pick<Plan, "cycleWeeks" | "template" | "overrides">;
-
-/** Monday is 0. */
-function weekdayIndex(date: string) {
-  return (new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7;
-}
 
 /** The template's cell for a date, looping the cycle from the plan's first week. */
 function templateCell(plan: PlanLike, date: string) {
@@ -192,18 +186,7 @@ export function cellText(cell: string | null | undefined, names: Names) {
 }
 
 /** The last day of the default period for an imported plan: three months after `today`. */
-export function threeMonthsAfter(today: string) {
-  const year = Number(today.slice(0, 4));
-  const month = Number(today.slice(5, 7)) - 1 + 3;
-  const target = new Date(
-    Date.UTC(year + Math.floor(month / 12), month % 12, 1),
-  );
-  const lastDay = new Date(
-    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-  const day = Math.min(Number(today.slice(8, 10)), lastDay);
-  return target.toISOString().slice(0, 8) + String(day).padStart(2, "0");
-}
+export const threeMonthsAfter = (today: string) => addMonths(today, 3);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 

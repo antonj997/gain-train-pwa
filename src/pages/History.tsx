@@ -12,7 +12,7 @@ import { workoutPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
 import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { shiftDate, weekStart } from "@/data/summary";
+import { shiftDate, weekStart } from "@/lib/dates";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";

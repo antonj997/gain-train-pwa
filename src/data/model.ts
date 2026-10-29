@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { hasSetInputText } from "../lib/set-input";
 import { hasExtraWeight } from "../lib/set-load";
-import { isoDate } from "../lib/dates";
+import { isIsoDay, isoDate } from "../lib/dates";
 import { CARDIO_MAX, cardioLabel } from "../lib/cardio";
 import { normalizeDrops } from "./drops";
 export const setSchema = z.object({
@@ -70,12 +70,7 @@ export const customSchema = z.object({
 const isoDay = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .refine((day) => {
-    const date = new Date(day + "T12:00:00Z");
-    return (
-      !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === day
-    );
-  });
+  .refine(isIsoDay);
 
 /** One day of a plan: a routine id, "rest", a day type or group (see part D), or nothing. */
 const planCell = z.string().min(1).max(100).nullable();
@@ -430,11 +425,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
   }
   if (kind === "workout") {
     const w = p as Workout;
-    const date = new Date(w.date + "T12:00:00Z");
-    if (
-      Number.isNaN(date.getTime()) ||
-      date.toISOString().slice(0, 10) !== w.date
-    )
+    if (!isIsoDay(w.date))
       throw new RecordValidationError("Choose a valid workout date.");
     if (
       w.status === "completed" &&

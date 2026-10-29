@@ -1,12 +1,7 @@
-import { shiftDate } from "../data/summary";
+import { shiftDate, weekdayIndex } from "./dates";
 
 /** The heatmap always shows this many Monday-first week columns, ending with the current week. */
 export const HEATMAP_WEEKS = 53;
-
-/** Monday = 0 ... Sunday = 6. */
-export function weekdayIndex(date: string) {
-  return (new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7;
-}
 
 /** The dates the heatmap covers: the Monday 52 weeks before this week's, through `end`. */
 export function heatmapWindow(end: string) {

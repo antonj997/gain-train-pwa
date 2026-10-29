@@ -1,6 +1,4 @@
-import { shiftDate } from "../data/summary";
-import { daysBetween, localizedDate } from "./dates";
-import { weekdayIndex } from "./heatmap";
+import { daysBetween, localizedDate, shiftDate, weekdayIndex } from "./dates";
 
 /** Hold this long, without moving, before a drag selects dates. */
 export const LONG_PRESS_MS = 550;

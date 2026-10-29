@@ -7,7 +7,6 @@ import {
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
-import { shiftDate } from "@/data/summary";
 import { useDragSelect } from "@/hooks/useDragSelect";
 import {
   heatmapDragSelection,
@@ -15,13 +14,12 @@ import {
   selectionEdges,
   type DragSelection,
 } from "@/lib/drag-selection";
-import { localizedDate } from "@/lib/dates";
+import { localizedDate, shiftDate, weekdayIndex } from "@/lib/dates";
 import {
   heatmapMonthLabels,
   heatmapWeeks,
   heatClass,
   monthTone,
-  weekdayIndex,
 } from "@/lib/heatmap";
 import {
   type HistoryCalendarAction,
