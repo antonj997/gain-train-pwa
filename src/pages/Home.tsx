@@ -4,7 +4,7 @@ import { Plus, Play, Repeat, Settings } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import PageHeader from "@/components/PageHeader";
-import ListRow from "@/components/ui/ListRow";
+import { RoutineRow, RoutinePreviewSheet } from "@/components/RoutinePreview";
 import type { RoutineRecord, Workout } from "@/data/model";
 import {
   completedWorkouts,
@@ -20,7 +20,8 @@ import { today } from "@/data/model";
 import { activePlans, groupsOf, plannedFor, resolveCell } from "@/data/plans";
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel, timeTrainedLabel } from "@/lib/labels";
-import { historyPath, workoutPath } from "@/lib/routes";
+import { historyPath, routineEditPath, workoutPath } from "@/lib/routes";
+import { routineAverageMinutes } from "@/lib/routine-preview";
 import { headlineFor } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
@@ -113,6 +114,25 @@ export default function Home() {
       .slice(0, 3)
       .map(({ routine }) => routine);
   }, [state.records]);
+
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const previewRoutine =
+    routineRecords(state.records).find((r) => r.id === previewId) ?? null;
+  const routineStats = (id: string) => ({
+    minutes: routineAverageMinutes(id, state.records),
+    lastDone:
+      completed.find((r) => r.payload.routineId === id)?.payload.date ?? null,
+  });
+  const renderRoutine = (r: RoutineRecord) => (
+    <RoutineRow
+      key={r.id}
+      routine={r}
+      stats={routineStats(r.id)}
+      disabled={starting}
+      onPreview={() => setPreviewId(r.id)}
+      onStart={() => void start(false, r)}
+    />
+  );
 
   // What the plans hold for a date. A deleted routine or group is ignored, as if
   // nothing were planned.
@@ -324,23 +344,7 @@ export default function Home() {
         {todayPlan?.kind === "group" && (
           <div className="plan-today-group">
             {planRoutines.length > 0 && (
-              <div className="list">
-                {planRoutines.map((r) => (
-                  <ListRow
-                    key={r.id}
-                    disabled={starting}
-                    onClick={() => void start(false, r)}
-                    title={r.payload.name}
-                    sub={countLabel(r.payload.exercises.length, "exercise")}
-                    trailing={
-                      <span className="play-round">
-                        <Play size={18} fill="currentColor" stroke="none" />
-                        <span className="sr-only">Start</span>
-                      </span>
-                    }
-                  />
-                ))}
-              </div>
+              <div className="list">{planRoutines.map(renderRoutine)}</div>
             )}
             {todayPlan.categories.length > 0 && (
               <button
@@ -354,29 +358,7 @@ export default function Home() {
           </div>
         )}
         {recentRoutines.length ? (
-          <div className="list">
-            {recentRoutines.map((r) => (
-              <ListRow
-                key={r.id}
-                disabled={starting}
-                onClick={() => void start(false, r)}
-                title={r.payload.name}
-                sub={
-                  countLabel(r.payload.exercises.length, "exercise") +
-                  r.payload.exercises
-                    .slice(0, 3)
-                    .map((exercise) => " · " + exercise.name)
-                    .join("")
-                }
-                trailing={
-                  <span className="play-round">
-                    <Play size={18} fill="currentColor" stroke="none" />
-                    <span className="sr-only">Start</span>
-                  </span>
-                }
-              />
-            ))}
-          </div>
+          <div className="list">{recentRoutines.map(renderRoutine)}</div>
         ) : (
           <div className="card col-12">
             <h3 className="card-title">A routine makes next time easier</h3>
@@ -389,6 +371,25 @@ export default function Home() {
           </div>
         )}
       </section>
+      <RoutinePreviewSheet
+        routine={previewRoutine}
+        stats={
+          previewRoutine
+            ? routineStats(previewRoutine.id)
+            : { minutes: null, lastDone: null }
+        }
+        now={day}
+        disabled={starting}
+        onClose={() => setPreviewId(null)}
+        onStart={() => {
+          if (!previewRoutine) return;
+          setPreviewId(null);
+          void start(false, previewRoutine);
+        }}
+        onEdit={() => {
+          if (previewRoutine) navigate(routineEditPath(previewRoutine.id));
+        }}
+      />
       {last && (
         <section className="card last-card" aria-label="Last workout">
           <Link className="last-text" to={historyPath(last.id)}>
