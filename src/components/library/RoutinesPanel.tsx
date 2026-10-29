@@ -365,7 +365,7 @@ export default function RoutinesPanel() {
                     id: crypto.randomUUID(),
                     exerciseId: item.id,
                     name: item.name,
-                    sets: [initialSet(item.id)],
+                    sets: [initialSet(item.id, item.category)],
                   })),
                 ],
               },

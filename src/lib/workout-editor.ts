@@ -11,14 +11,48 @@ import {
   type WorkoutSet,
 } from "../data/model";
 import { hasExtraWeight } from "./set-load";
+import { CARDIO_MAX } from "./cardio";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
 
-export function getSetIssues(set: WorkoutSet): {
-  weight?: string;
-  reps?: string;
-} {
-  const issues: { weight?: string; reps?: string } = {};
+export type SetIssues = Partial<
+  Record<
+    "weight" | "reps" | "durationSec" | "distanceM" | "level" | "calories",
+    string
+  >
+>;
+
+function getCardioIssues(set: WorkoutSet): SetIssues {
+  const issues: SetIssues = {};
+  const bad = (value: number | null | undefined, max: number, min = 0) =>
+    value !== null &&
+    value !== undefined &&
+    (!Number.isFinite(value) || value < min || value > max);
+  if (set.durationSec === null || set.durationSec === undefined)
+    issues.durationSec = "Enter a time to complete this set.";
+  else if (bad(set.durationSec, CARDIO_MAX.durationSec, 1))
+    issues.durationSec = "Enter a time from 0:01 to 24:00:00.";
+  if (bad(set.distanceM, CARDIO_MAX.distanceM))
+    issues.distanceM = "Enter a distance from 0 to 1,000 km.";
+  if (bad(set.level, CARDIO_MAX.level))
+    issues.level = "Enter a level from 0 to 100.";
+  if (bad(set.calories, CARDIO_MAX.calories))
+    issues.calories = "Enter calories from 0 to 100,000.";
+  // Text that is not a number yet ("20:", "3.") is not a value either.
+  if (getSetInputText(set, "durationSec") !== undefined)
+    issues.durationSec = "Enter a time like 20:00, or minutes like 20.";
+  if (getSetInputText(set, "distanceM") !== undefined)
+    issues.distanceM = "Enter a distance from 0 to 1,000 km.";
+  if (getSetInputText(set, "level") !== undefined)
+    issues.level = "Enter a level from 0 to 100.";
+  if (getSetInputText(set, "calories") !== undefined)
+    issues.calories = "Enter calories from 0 to 100,000.";
+  return issues;
+}
+
+export function getSetIssues(set: WorkoutSet): SetIssues {
+  if (set.measure === "cardio") return getCardioIssues(set);
+  const issues: SetIssues = {};
   const unit = set.measure === "seconds" ? "seconds" : "reps";
   if (set.reps === null) issues.reps = `Enter ${unit} to complete this set.`;
   else if (!Number.isInteger(set.reps) || set.reps < 1 || set.reps > 10000)
