@@ -9,10 +9,11 @@ import Sheet from "@/components/ui/Sheet";
 
 type BodyProps = {
   /** The current load and count, for example "kg · reps". */
-  hint: string;
+  hint?: string;
   canMoveUp: boolean;
   canMoveDown: boolean;
-  onLoadAndCount: () => void;
+  /** Left out for cardio, which has no load or count to change. */
+  onLoadAndCount?: () => void;
   onReorder: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -32,15 +33,17 @@ export function ExerciseMenuSheetBody({
 }: BodyProps) {
   return (
     <div className="sheet-menu">
-      <button
-        type="button"
-        className="sheet-menu-item"
-        onClick={onLoadAndCount}
-      >
-        <SlidersHorizontal size={18} aria-hidden="true" />
-        <span>Load and count</span>
-        <span className="sheet-menu-hint">{hint}</span>
-      </button>
+      {onLoadAndCount && (
+        <button
+          type="button"
+          className="sheet-menu-item"
+          onClick={onLoadAndCount}
+        >
+          <SlidersHorizontal size={18} aria-hidden="true" />
+          <span>Load and count</span>
+          <span className="sheet-menu-hint">{hint}</span>
+        </button>
+      )}
       <button type="button" className="sheet-menu-item" onClick={onReorder}>
         <ListOrdered size={18} aria-hidden="true" />
         <span>Reorder sets</span>

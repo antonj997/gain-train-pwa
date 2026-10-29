@@ -13,9 +13,13 @@ type Props = Omit<
   onValueChange: (value: number | null, unfinishedText?: string) => void;
   inputText?: string;
   onLockedAttempt?: () => void;
+  /** Text to number, NaN while unfinished. Defaults to a plain decimal number. */
+  parse?: (text: string) => number | null;
+  /** The text shown for a value. Defaults to the number itself. */
+  format?: (value: number | null) => string;
 };
 
-const textFor = (value: number | null) =>
+const plainText = (value: number | null) =>
   value === null || !Number.isFinite(value) ? "" : String(value);
 
 export default function SetNumberInput({
@@ -24,9 +28,13 @@ export default function SetNumberInput({
   onValueChange,
   onLockedAttempt,
   onBlur,
+  parse = parseSetNumber,
+  format = plainText,
   className = "",
   ...props
 }: Props) {
+  const textFor = (v: number | null) =>
+    v === null || !Number.isFinite(v) ? "" : format(v);
   const [draft, setDraft] = useState({
     value,
     inputText,
@@ -84,7 +92,7 @@ export default function SetNumberInput({
           return;
         }
         const text = event.target.value;
-        const parsed = parseSetNumber(text);
+        const parsed = parse(text);
         const unfinished =
           typeof parsed === "number" && !Number.isFinite(parsed);
         const next = unfinished ? null : parsed;

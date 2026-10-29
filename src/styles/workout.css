@@ -129,6 +129,40 @@
   }
 }
 
+/* A cardio row: badge, time, distance, level, kcal and done. No Previous
+   column. Every field is at least 44px wide from 360px up, so the gap between
+   columns is 2px on phones (the usual gap again from 400px); the time field
+   takes the most room. The type is one step smaller than a strength field.
+   Below 360px the fields shrink rather than scroll sideways. */
+.set-line.is-cardio,
+.set-columns[data-kind="cardio"] {
+  column-gap: 2px;
+  grid-template-columns:
+    44px minmax(0, 1.3fr) minmax(0, 1.1fr) minmax(0, 0.9fr)
+    minmax(0, 1fr) 44px;
+}
+@media (min-width: 360px) {
+  .set-line.is-cardio,
+  .set-columns[data-kind="cardio"] {
+    grid-template-columns:
+      44px minmax(52px, 1.3fr) minmax(46px, 1.1fr) minmax(44px, 0.9fr)
+      minmax(44px, 1fr) 44px;
+  }
+}
+@media (min-width: 400px) {
+  .set-line.is-cardio,
+  .set-columns[data-kind="cardio"] {
+    column-gap: var(--gt-space-2);
+  }
+}
+.set-line.is-cardio[data-mode="plan"],
+.set-columns[data-kind="cardio"][data-mode="plan"] {
+  grid-template-columns: 44px repeat(4, minmax(0, 1fr));
+}
+.set-line.is-cardio .set-field input {
+  font-size: var(--gt-fs-3);
+}
+
 /* Load and count fields. A marker sits inside the load field. */
 .set-field {
   position: relative;

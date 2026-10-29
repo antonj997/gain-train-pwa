@@ -14,6 +14,8 @@ type BodyProps = {
   /** How many drops follow this set. */
   dropCount: number;
   exerciseDefault: LoadKey;
+  /** Cardio sets have no load, and no drops. */
+  cardio?: boolean;
   onSection: (section: WorkoutSet["section"]) => void;
   onLoadKey: (key: LoadKey) => void;
   onAddDrop: () => void;
@@ -47,6 +49,7 @@ export function SetSheetBody({
   set,
   dropCount,
   exerciseDefault,
+  cardio = false,
   onSection,
   onLoadKey,
   onAddDrop,
@@ -54,8 +57,10 @@ export function SetSheetBody({
 }: BodyProps) {
   const drop = isDrop(set);
   const key = loadKeyOf(set);
-  const allowed = allowedLoadKeys(set.measure ?? "reps");
-  const canAddDrop = !set.done && set.section === "working";
+  const allowed = allowedLoadKeys(
+    set.measure === "seconds" ? "seconds" : "reps",
+  );
+  const canAddDrop = !cardio && !set.done && set.section === "working";
   return (
     <>
       {drop ? (
@@ -79,28 +84,30 @@ export function SetSheetBody({
           />
         </div>
       )}
-      <div className="sheet-field">
-        <span className="sheet-label" aria-hidden="true">
-          Load for this set
-        </span>
-        <Segmented
-          label="Load for this set"
-          value={key}
-          options={LOAD_OPTIONS.map((option) => ({
-            ...option,
-            disabled: set.done || !allowed.includes(option.value),
-          }))}
-          onChange={onLoadKey}
-        />
-        <p className="sheet-hint">
-          {key === exerciseDefault
-            ? "Same as the exercise"
-            : "Differs from the exercise"}
-        </p>
-      </div>
+      {!cardio && (
+        <div className="sheet-field">
+          <span className="sheet-label" aria-hidden="true">
+            Load for this set
+          </span>
+          <Segmented
+            label="Load for this set"
+            value={key}
+            options={LOAD_OPTIONS.map((option) => ({
+              ...option,
+              disabled: set.done || !allowed.includes(option.value),
+            }))}
+            onChange={onLoadKey}
+          />
+          <p className="sheet-hint">
+            {key === exerciseDefault
+              ? "Same as the exercise"
+              : "Differs from the exercise"}
+          </p>
+        </div>
+      )}
       {set.done && (
         <p className="sheet-hint">
-          Uncheck this set to change its type or load.
+          Uncheck this set to change its type{cardio ? "" : " or load"}.
         </p>
       )}
       <div className="sheet-actions">
