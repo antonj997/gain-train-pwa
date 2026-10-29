@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -84,6 +84,8 @@ export default function PlanEditor({
     };
   });
   const [target, setTarget] = useState<Target | null>(null);
+  // Which day of the period the calendar asks for next.
+  const [step, setStep] = useState<"start" | "end">("start");
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
@@ -101,6 +103,22 @@ export default function PlanEditor({
       : overlap
         ? `This period overlaps “${overlap.name}” (${range(overlap.startDate)} – ${range(overlap.endDate)}). Only one plan can be active on a date; change these dates or edit that plan.`
         : "";
+
+  const pickDay = (date: string) => {
+    if (step === "start" || !draft.startDate || date < draft.startDate) {
+      set({ startDate: date, endDate: "" });
+      setStep("end");
+    } else {
+      set({ endDate: date });
+      setStep("start");
+    }
+  };
+  const pickRange = draft.startDate
+    ? {
+        start: draft.startDate,
+        end: draft.endDate >= draft.startDate ? draft.endDate : draft.startDate,
+      }
+    : null;
 
   const changeCycle = (weeks: number) => {
     const template = Array.from(
@@ -228,6 +246,38 @@ export default function PlanEditor({
             />
           </label>
         </div>
+        <section aria-labelledby="period-heading">
+          <div className="section-head">
+            <h3 className="group-title" id="period-heading">
+              {step === "start" ? "Tap the first day" : "Now tap the last day"}
+            </h3>
+            <button
+              type="button"
+              className="btn-quiet btn-sm"
+              onClick={() => {
+                set({ startDate: "", endDate: "" });
+                setStep("start");
+              }}
+            >
+              <X size={16} aria-hidden="true" />
+              Clear
+            </button>
+          </div>
+          <PlanCalendar
+            today={today}
+            first={shiftDate(
+              draft.startDate && draft.startDate < today
+                ? draft.startDate
+                : today,
+              -366,
+            )}
+            last={shiftDate(today, 5 * 366)}
+            range={pickRange}
+            label="Plan period"
+            initialMonth={(draft.startDate || today).slice(0, 7)}
+            onPick={pickDay}
+          />
+        </section>
         {problem && draft.name.trim() && (
           <p className="field-error" role="alert">
             {problem}

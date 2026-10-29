@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { calendarCells, moveCalendarMonth } from "@/lib/history-calendar";
+import {
+  calendarCells,
+  calendarRangeEdges,
+  moveCalendarMonth,
+} from "@/lib/history-calendar";
 import { localizedDate } from "@/lib/dates";
 import "@/styles/history-calendar.css";
 
@@ -13,29 +17,40 @@ export type PlanDay = {
 };
 
 /**
- * A month grid for a plan's Upcoming view, from `first` to `last`. It borrows
- * the History calendar's day cells; days outside that span are read-only.
+ * A month grid from `first` to `last` that borrows the History calendar's day
+ * cells; days outside that span are read-only. With `describe` it is a plan's
+ * Upcoming view (a marker under each date). With `range` it picks a period: the
+ * chosen days get the History calendar's range band.
  */
 export default function PlanCalendar({
   today,
   first,
   last,
   describe,
+  range,
+  label = "Upcoming plan",
+  initialMonth = first.slice(0, 7),
   onPick,
 }: {
   today: string;
   first: string;
   last: string;
-  describe: (date: string) => PlanDay;
+  describe?: (date: string) => PlanDay;
+  /** The period being picked; null when nothing is chosen yet. */
+  range?: { start: string; end: string } | null;
+  label?: string;
+  initialMonth?: string;
   onPick: (date: string) => void;
 }) {
-  const [month, setMonth] = useState(first.slice(0, 7));
+  const [month, setMonth] = useState(initialMonth);
   const title = localizedDate(month + "-01", {
     month: "long",
     year: "numeric",
   });
+  const picking = range !== undefined;
+  const cells = calendarCells(month);
   return (
-    <section className="card plan-calendar" aria-label="Upcoming plan">
+    <section className="card plan-calendar" aria-label={label}>
       <div className="calendar-header">
         <button
           type="button"
@@ -69,44 +84,70 @@ export default function PlanCalendar({
           </span>
         ))}
       </div>
-      <div className="calendar-days">
-        {calendarCells(month).map((cell) => {
-          const day = describe(cell.date);
+      <div className={"calendar-days" + (picking ? " calendar-range" : "")}>
+        {cells.map((cell, index) => {
+          const day = describe?.(cell.date);
+          const edges = picking
+            ? calendarRangeEdges(cells, index, range)
+            : null;
+          const isStart = !!edges && cell.date === range?.start;
+          const isEnd = !!edges && cell.date === range?.end;
+          const spoken = localizedDate(cell.date, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: picking ? "numeric" : undefined,
+          });
           return (
             <button
               type="button"
               key={cell.date}
               className={
-                "calendar-day plan-day" +
+                "calendar-day" +
+                (day ? " plan-day" : "") +
                 (cell.date === today ? " is-today" : "") +
-                (day.override ? " is-override" : "") +
+                (day?.override ? " is-override" : "") +
+                (edges ? " is-selected" : "") +
+                (isStart ? " is-range-start" : "") +
+                (isEnd ? " is-range-end" : "") +
+                (edges?.start ? " range-row-start" : "") +
+                (edges?.end ? " range-row-end" : "") +
                 (!cell.inMonth ? " outside-month" : "")
               }
               disabled={!cell.inMonth || cell.date < first || cell.date > last}
               aria-current={cell.date === today ? "date" : undefined}
-              aria-label={`${localizedDate(cell.date, { weekday: "long", day: "numeric", month: "long" })}, ${day.label}${day.override ? ", changed for this date" : ""}`}
+              aria-pressed={picking ? !!edges : undefined}
+              aria-label={
+                day
+                  ? `${spoken}, ${day.label}${day.override ? ", changed for this date" : ""}`
+                  : spoken + (isStart ? ", start" : "") + (isEnd ? ", end" : "")
+              }
               onClick={() => onPick(cell.date)}
             >
               <span>{cell.day}</span>
-              <span
-                className={"plan-mark" + (day.kind ? " " + day.kind : "")}
-                aria-hidden="true"
-              />
+              {day && (
+                <span
+                  className={"plan-mark" + (day.kind ? " " + day.kind : "")}
+                  aria-hidden="true"
+                />
+              )}
             </button>
           );
         })}
       </div>
-      <div className="calendar-footer plan-legend">
-        <span>
-          <span className="plan-mark planned" aria-hidden="true" /> Planned
-        </span>
-        <span>
-          <span className="plan-mark rest" aria-hidden="true" /> Rest
-        </span>
-        <span>
-          <span className="plan-swatch" aria-hidden="true" /> Changed
-        </span>
-      </div>
+      {describe && (
+        <div className="calendar-footer plan-legend">
+          <span>
+            <span className="plan-mark planned" aria-hidden="true" /> Planned
+          </span>
+          <span>
+            <span className="plan-mark rest" aria-hidden="true" /> Rest
+          </span>
+          <span>
+            <span className="plan-swatch" aria-hidden="true" /> Changed
+          </span>
+        </div>
+      )}
     </section>
   );
 }
