@@ -172,6 +172,14 @@
   flex-wrap: wrap;
   gap: var(--gt-space-2);
 }
+/* A dismissible banner: its close button sits in the right padding. */
+.banner-closable {
+  padding-right: var(--gt-space-1);
+}
+.banner-closable > .icon-btn {
+  flex: none;
+  margin-block: calc(-1 * var(--gt-space-2));
+}
 .banner-danger {
   border-color: color-mix(in srgb, var(--gt-danger-fg) 30%, transparent);
   background-color: var(--gt-danger-bg);
