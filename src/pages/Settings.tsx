@@ -24,7 +24,7 @@ import Switch from "@/components/ui/Switch";
 import { removeProfileCache } from "@/lib/profile";
 import { readAccount } from "@/data/database";
 import { requestPersistentStorage } from "@/lib/persistence";
-import { type RecordDoc } from "@/data/model";
+import { recordLabel, type RecordDoc } from "@/data/model";
 import { countLabel } from "@/lib/labels";
 import {
   readTrainingPreferences,
@@ -211,7 +211,7 @@ export default function Settings() {
           <ul className="sync-rejections">
             {rejected.map((r) => (
               <li key={r.id}>
-                <strong>{r.payload.name}</strong>
+                <strong>{recordLabel(r)}</strong>
                 <small>{r.syncError}</small>
               </li>
             ))}
@@ -237,7 +237,7 @@ export default function Settings() {
         <section key={r.id} className="card col-12">
           <h2 className="card-title">Choose which version to keep</h2>
           <p className="row-sub">
-            {r.payload.name} changed on another device. Export a backup first to
+            {recordLabel(r)} changed on another device. Export a backup first to
             keep your local version separately.
           </p>
           <button

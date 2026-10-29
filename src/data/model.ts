@@ -51,13 +51,78 @@ export const customSchema = z.object({
   note: z.string().max(1000),
   favourite: z.boolean().default(false),
 });
+const isoDay = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((day) => {
+    const date = new Date(day + "T12:00:00Z");
+    return (
+      !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === day
+    );
+  });
+
+/** One day of a plan: a routine id, "rest", a day type or group (see part D), or nothing. */
+const planCell = z.string().min(1).max(100).nullable();
+export const planSchema = z
+  .object({
+    schemaVersion,
+    name: z.string().trim().min(1).max(100),
+    startDate: isoDay,
+    endDate: isoDay,
+    cycleWeeks: z.number().int().min(1).max(6),
+    /** cycleWeeks rows of seven days, Monday first. The rows repeat from startDate. */
+    template: z.array(z.array(planCell).length(7)).min(1).max(6),
+    /** ISO date to cell. A dated cell replaces the template for that day. */
+    overrides: z.record(isoDay, planCell),
+    goalIds: z.array(z.string().uuid()).max(50),
+  })
+  .superRefine((plan, ctx) => {
+    if (plan.endDate < plan.startDate)
+      ctx.addIssue({ code: "custom", path: ["endDate"], message: "end" });
+    if (plan.template.length !== plan.cycleWeeks)
+      ctx.addIssue({ code: "custom", path: ["template"], message: "weeks" });
+  });
+
+export const goalSchema = z
+  .object({
+    schemaVersion,
+    kind: z.enum(["bodyweight", "lift"]),
+    /** Bodyweight goal: the weight to reach. Lift goal: the weight to lift. */
+    targetKg: z.number().finite().positive().max(10000),
+    /** Lift goal: the exercise, and the reps the weight is lifted for. */
+    exerciseId: z.string().min(1).max(200).optional(),
+    exerciseName: z.string().trim().min(1).max(100).optional(),
+    reps: z.number().int().min(1).max(1000).optional(),
+    /** True when the target is an estimated one-rep max rather than a set. */
+    estimated: z.boolean().optional(),
+    byDate: isoDay,
+    createdAt: z.number().finite().min(0),
+    /** Set when the goal is reached. */
+    reachedOn: isoDay.optional(),
+  })
+  .superRefine((goal, ctx) => {
+    if (goal.kind === "lift" && !goal.exerciseId)
+      ctx.addIssue({ code: "custom", path: ["exerciseId"], message: "lift" });
+  });
+
+/** The user's synced exercise settings. One record per account. */
+export const librarySchema = z.object({
+  schemaVersion,
+  hiddenExerciseIds: z.array(z.string().min(1).max(200)).max(5000),
+});
+
 export type Workout = z.infer<typeof workoutSchema>;
 export type Exercise = z.infer<typeof exerciseSchema>;
 export type WorkoutSet = z.infer<typeof setSchema>;
 export type Routine = z.infer<typeof routineSchema>;
 export type CustomExercise = z.infer<typeof customSchema>;
-export type Kind = "workout" | "routine" | "exercise";
-export type Payload = Workout | Routine | CustomExercise;
+export type Plan = z.infer<typeof planSchema>;
+export type Goal = z.infer<typeof goalSchema>;
+export type Library = z.infer<typeof librarySchema>;
+export type Kind =
+  "workout" | "routine" | "exercise" | "plan" | "goal" | "library";
+export type Payload =
+  Workout | Routine | CustomExercise | Plan | Goal | Library;
 interface RecordBase {
   id: string;
   revision: number;
@@ -75,7 +140,37 @@ export type ExerciseRecord = RecordBase & {
   kind: "exercise";
   payload: CustomExercise;
 };
-export type RecordDoc = WorkoutRecord | RoutineRecord | ExerciseRecord;
+export type PlanRecord = RecordBase & { kind: "plan"; payload: Plan };
+export type GoalRecord = RecordBase & { kind: "goal"; payload: Goal };
+export type LibraryRecord = RecordBase & { kind: "library"; payload: Library };
+export type RecordDoc =
+  | WorkoutRecord
+  | RoutineRecord
+  | ExerciseRecord
+  | PlanRecord
+  | GoalRecord
+  | LibraryRecord;
+
+/** Every record kind this version understands. Older versions park the others. */
+export const recordKinds = [
+  "workout",
+  "routine",
+  "exercise",
+  "plan",
+  "goal",
+  "library",
+] as const satisfies readonly Kind[];
+
+/** A short name for lists and messages; goals and library records have none. */
+export function recordLabel(record: RecordDoc | RemoteDoc) {
+  const p = record.payload as { name?: unknown };
+  if (typeof p.name === "string") return p.name;
+  return record.kind === "goal"
+    ? "Goal"
+    : record.kind === "library"
+      ? "Exercise settings"
+      : "Record";
+}
 export interface RemoteDoc {
   id: string;
   kind: Kind;
@@ -169,17 +264,21 @@ export function keepUnknownFields<T>(original: unknown, parsed: T): T {
 export function validate(kind: "workout", payload: unknown): Workout;
 export function validate(kind: "routine", payload: unknown): Routine;
 export function validate(kind: "exercise", payload: unknown): CustomExercise;
+export function validate(kind: "plan", payload: unknown): Plan;
+export function validate(kind: "goal", payload: unknown): Goal;
+export function validate(kind: "library", payload: unknown): Library;
 export function validate(kind: Kind, payload: unknown): Payload;
 export function validate(kind: Kind, payload: unknown): Payload {
-  if (!["workout", "routine", "exercise"].includes(kind))
-    throw new RecordValidationError("Unknown record type.");
-  const result = (
-    kind === "workout"
-      ? workoutSchema
-      : kind === "routine"
-        ? routineSchema
-        : customSchema
-  ).safeParse(payload);
+  const schema = {
+    workout: workoutSchema,
+    routine: routineSchema,
+    exercise: customSchema,
+    plan: planSchema,
+    goal: goalSchema,
+    library: librarySchema,
+  }[kind as string] as z.ZodTypeAny | undefined;
+  if (!schema) throw new RecordValidationError("Unknown record type.");
+  const result = schema.safeParse(payload);
   if (!result.success) {
     const issue = result.error.issues[0];
     const field = issue.path.at(-1);
@@ -206,6 +305,18 @@ export function validate(kind: Kind, payload: unknown): Payload {
       section: "Choose working, warm-up or cool-down for this set.",
       exercises: "Use no more than 100 exercises in a session.",
       sets: "Use no more than 100 sets per exercise.",
+      startDate: "Choose a valid plan start date.",
+      endDate: "A plan must end on or after the day it starts.",
+      cycleWeeks: "A plan repeats every 1 to 6 weeks.",
+      template:
+        "The plan needs one row of seven days for each week of the cycle.",
+      overrides: "Check the dates you changed in this plan.",
+      goalIds: "A plan can link up to 50 goals.",
+      kind: "Choose a bodyweight or lift goal.",
+      targetKg: "The target must be greater than 0 and no more than 10000 kg.",
+      exerciseId: "Choose the exercise for this lift goal.",
+      byDate: "Choose a valid date for this goal.",
+      hiddenExerciseIds: "Check the list of hidden exercises.",
     };
     if (field === "reps") {
       const timed = candidateSet?.measure === "seconds";
