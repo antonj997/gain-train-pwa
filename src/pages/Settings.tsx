@@ -25,6 +25,7 @@ import { removeProfileCache } from "@/lib/profile";
 import { readAccount } from "@/data/database";
 import { requestPersistentStorage } from "@/lib/persistence";
 import { recordLabel, type RecordDoc } from "@/data/model";
+import { importSummary } from "@/data/actions";
 import { countLabel } from "@/lib/labels";
 import {
   readTrainingPreferences,
@@ -131,8 +132,9 @@ export default function Settings() {
         !Array.isArray(data.records)
       )
         throw Error("This is not a Gain Train backup.");
-      await importRecords(data.records as RecordDoc[]);
-      toast.success("Backup restored. Existing workouts were kept.");
+      toast.success(
+        importSummary(await importRecords(data.records as RecordDoc[])),
+      );
     } catch (e) {
       toast.error(errorMessage(e, "Could not restore backup"));
     } finally {

@@ -378,3 +378,52 @@ test("parked downloads are applied once this version can read them", async () =>
   assert.equal(state.records[id].revision, 4);
   assert.deepEqual(state.quarantine, {});
 });
+test("a restored record the server already has takes its revision instead of conflicting", async () => {
+  const { account, id } = await setup(),
+    cloud = server();
+  await syncAccount(account, cloud.transport, () => {});
+  const remote = cloud.records.get(id)!;
+  // A backup restored on a fresh install: the same content, sent as new.
+  const fresh = crypto.randomUUID();
+  await transact(fresh, (s) => {
+    s.records[id] = {
+      id,
+      kind: "workout",
+      // Key order differs from the server's copy, as jsonb does not keep it.
+      payload: Object.fromEntries(
+        Object.entries(remote.payload).reverse(),
+      ) as Workout,
+      revision: 0,
+      localVersion: 1,
+      deleted: false,
+      dirty: true,
+    };
+  });
+  await syncAccount(fresh, cloud.transport, () => {});
+  const local = (await readAccount(fresh)).records[id];
+  assert.equal(local.conflict, undefined);
+  assert.equal(local.dirty, false);
+  assert.equal(local.revision, remote.revision);
+});
+test("a different restored record still asks which version to keep", async () => {
+  const { account, id } = await setup(),
+    cloud = server();
+  await syncAccount(account, cloud.transport, () => {});
+  const remote = cloud.records.get(id)!;
+  const fresh = crypto.randomUUID();
+  await transact(fresh, (s) => {
+    s.records[id] = {
+      id,
+      kind: "workout",
+      payload: { ...(remote.payload as Workout), name: "Edited" },
+      revision: 0,
+      localVersion: 1,
+      deleted: false,
+      dirty: true,
+    };
+  });
+  await syncAccount(fresh, cloud.transport, () => {});
+  const local = (await readAccount(fresh)).records[id];
+  assert.equal(local.conflict?.payload.name, "Test");
+  assert.equal(local.dirty, true);
+});

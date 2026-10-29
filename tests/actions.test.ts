@@ -7,7 +7,13 @@ import {
   type RecordDoc,
   type Workout,
 } from "../src/data/model";
-import { saveRecordIn, startsRunning } from "../src/data/actions";
+import {
+  importRecordsIn,
+  importSummary,
+  parseImport,
+  saveRecordIn,
+  startsRunning,
+} from "../src/data/actions";
 import { WorkoutInProgressError } from "../src/data/workout-start";
 import { runningWorkouts } from "../src/data/selectors";
 
@@ -117,5 +123,28 @@ test("the most recently started workout is the running one", () => {
   assert.deepEqual(
     runningWorkouts(s.records).map((r) => r.id),
     [mine, theirs],
+  );
+});
+
+test("a restore counts added, brought back and kept records", () => {
+  const s = emptyState(),
+    live = crypto.randomUUID(),
+    gone = crypto.randomUUID(),
+    fresh = crypto.randomUUID();
+  s.records[live] = record(live, workout(null, "Live"));
+  s.records[gone] = { ...record(gone, workout(null, "Gone")), deleted: true };
+  const backup = [live, gone, fresh].map((id) =>
+    record(id, workout(null, "Backup")),
+  );
+  const result = importRecordsIn(s, parseImport(backup));
+  assert.deepEqual(result, { added: 1, restored: 1, kept: 1 });
+  assert.equal((s.records[live].payload as Workout).name, "Live");
+  assert.equal(s.records[gone].deleted, false);
+  assert.match(importSummary(result), /1 record added/);
+  assert.match(importSummary(result), /1 deleted record brought back/);
+  assert.match(importSummary(result), /1 already here was kept/);
+  assert.match(
+    importSummary({ added: 0, restored: 0, kept: 4 }),
+    /Nothing to restore/,
   );
 });

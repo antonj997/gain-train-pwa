@@ -154,12 +154,29 @@ export function parseImport(records: RecordDoc[]) {
   return restored;
 }
 
+export type ImportResult = {
+  /** Records this log did not have. */
+  added: number;
+  /** Records deleted here that the backup brought back. */
+  restored: number;
+  /** Records this log already has; the version here was kept. */
+  kept: number;
+};
+
 /** Adds checked backup records that are missing here, or deleted here. Live records are kept. */
-export function importRecordsIn(s: LocalState, restored: RecordDoc[]) {
+export function importRecordsIn(
+  s: LocalState,
+  restored: RecordDoc[],
+): ImportResult {
+  const result: ImportResult = { added: 0, restored: 0, kept: 0 };
   let restoredStartedWorkout = false;
   for (const r of restored) {
     const old = s.records[r.id];
-    if (old && !old.deleted) continue;
+    if (old && !old.deleted) {
+      result.kept++;
+      continue;
+    }
+    result[old ? "restored" : "added"]++;
     if (old && old.kind !== r.kind)
       throw new RecordValidationError(
         "A backup record does not match its saved record type.",
@@ -186,4 +203,20 @@ export function importRecordsIn(s: LocalState, restored: RecordDoc[]) {
     throw new RecordValidationError(
       "A workout is already in progress. Finish or abandon it before restoring a backup with another started workout. No backup records were changed.",
     );
+  return result;
+}
+
+/** The toast after a restore: what was added and brought back, and what was kept. */
+export function importSummary({ added, restored, kept }: ImportResult) {
+  if (!added && !restored)
+    return "Nothing to restore: this log already has everything in the backup.";
+  const parts = [
+    added && `${added} ${added === 1 ? "record" : "records"} added`,
+    restored &&
+      `${restored} deleted ${restored === 1 ? "record" : "records"} brought back`,
+  ].filter(Boolean);
+  return (
+    `Backup restored: ${parts.join(", ")}.` +
+    (kept ? ` ${kept} already here ${kept === 1 ? "was" : "were"} kept.` : "")
+  );
 }

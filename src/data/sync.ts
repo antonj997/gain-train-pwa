@@ -36,8 +36,56 @@ const readable = (row: RemoteDoc) => {
   }
 };
 
+/** JSON with sorted keys: the server's jsonb does not keep key order. */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
+  if (value && typeof value === "object")
+    return (
+      "{" +
+      Object.keys(value)
+        .sort()
+        .filter((key) => (value as Record<string, unknown>)[key] !== undefined)
+        .map(
+          (key) =>
+            JSON.stringify(key) +
+            ":" +
+            canonical((value as Record<string, unknown>)[key]),
+        )
+        .join(",") +
+      "}"
+    );
+  return JSON.stringify(value) ?? "null";
+}
+
+/**
+ * True when the server's row holds exactly this content. A "conflict" with an
+ * identical row, such as a restored backup the server already has, is no
+ * conflict: the local record takes the server's revision instead.
+ */
+export function sameContent(
+  remote: Pick<RemoteDoc, "payload" | "deleted">,
+  local: Pick<RemoteDoc, "payload" | "deleted">,
+) {
+  return (
+    remote.deleted === local.deleted &&
+    canonical(remote.payload) === canonical(local.payload)
+  );
+}
+
 function applyRemote(s: LocalState, row: RemoteDoc) {
   const current = s.records[row.id];
+  if (
+    current?.dirty &&
+    row.revision > current.revision &&
+    !current.conflict &&
+    !s.outbox.some((o) => o.id === row.id) &&
+    sameContent(row, current)
+  ) {
+    current.revision = row.revision;
+    current.dirty = false;
+    delete current.syncError;
+    return;
+  }
   if (!current || (!current.dirty && row.revision > current.revision)) {
     s.records[row.id] = {
       ...row,
@@ -115,7 +163,7 @@ export async function syncAccount(
       const current = s.records[sent.id];
       s.outbox = s.outbox.filter((x) => x.opId !== sent.opId);
       if (!current) return;
-      if (result.conflict) {
+      if (result.conflict && !sameContent(result.record, sent)) {
         current.conflict = result.record;
         return;
       }

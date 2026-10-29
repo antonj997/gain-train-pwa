@@ -22,6 +22,7 @@ import {
   resolveConflictIn,
   retryRejectedIn,
   saveRecordIn,
+  type ImportResult,
 } from "@/data/actions";
 import {
   createWorkout,
@@ -92,6 +93,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     reload,
     setError,
   });
+  const syncRef = useRef(sync);
+  syncRef.current = sync;
   useEffect(() => onOtherTabChange(() => void reload()), [reload]);
 
   const actions = useMemo(() => {
@@ -161,17 +164,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
       commit(() => change(retryRejectedIn), {
         storage: "Could not retry on this phone. Try again.",
       });
-    const importRecords: Data["importRecords"] = (records) =>
-      commit(
+    const importRecords: Data["importRecords"] = async (records) => {
+      // Download what the server has first, so records it already holds are
+      // kept as they are instead of being sent again as new.
+      await syncRef.current();
+      let result: ImportResult = { added: 0, restored: 0, kept: 0 };
+      await commit(
         () => {
           const restored = parseImport(records);
-          return change((s) => importRecordsIn(s, restored));
+          return change((s) => {
+            result = importRecordsIn(s, restored);
+          });
         },
         {
           storage:
             "Could not restore the backup on this phone. Free some storage and try again.",
         },
       );
+      return result;
+    };
     return {
       save,
       deleteRecord,
