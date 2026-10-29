@@ -21,6 +21,7 @@ import {
 } from "@/data/drops";
 import {
   appendSet,
+  checkHintFor,
   groupComplete,
   toggleGroupCompletion,
   withoutChecks,
@@ -242,11 +243,7 @@ function ExerciseCard({
           next={nextSetId === s.id}
           editing={openSetId === s.id}
           canCheck={groupComplete(sets, i)}
-          checkHint={
-            validSet(s) && !groupComplete(sets, i)
-              ? "Fill in or delete its drops to check this set."
-              : undefined
-          }
+          checkHint={checkHintFor(sets, i)}
           onOpenSheet={openSet}
           onChange={updateSet}
           onToggleDone={toggleDone}

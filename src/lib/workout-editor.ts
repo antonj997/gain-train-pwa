@@ -150,6 +150,34 @@ export function groupComplete(sets: WorkoutSet[], index: number) {
 }
 
 /**
+ * Why a set's ✓ can't be pressed yet, in one short line, or undefined when it
+ * can: names the empty fields ("Add kg and reps to check this set."), else
+ * the drops it waits on, else asks for its values to be fixed.
+ */
+export function checkHintFor(sets: WorkoutSet[], index: number) {
+  const set = sets[index];
+  if (!set || set.done || groupComplete(sets, index)) return undefined;
+  if (validSet(set)) return "Fill in or delete its drops to check this set.";
+  const empty = (field: "weight" | "reps" | "durationSec") =>
+    (set[field] ?? null) === null && getSetInputText(set, field) === undefined;
+  const issues = getSetIssues(set);
+  const missing = isCardioSet(set)
+    ? [issues.durationSec && empty("durationSec") && "a time"]
+    : [
+        issues.weight &&
+          empty("weight") &&
+          (hasExtraWeight(set) ? "added kg" : "kg"),
+        issues.reps &&
+          empty("reps") &&
+          (set.measure === "seconds" ? "seconds" : "reps"),
+      ];
+  const names = missing.filter(Boolean);
+  return names.length && names.length === Object.keys(issues).length
+    ? `Add ${names.join(" and ")} to check this set.`
+    : "Fix this set's values to check it.";
+}
+
+/**
  * Checks or unchecks a set together with its drops: the set decides, and every
  * drop follows it, even a drop an older app version left in the other state.
  * A set can only be checked once each of its drops is complete.

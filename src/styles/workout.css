@@ -283,6 +283,10 @@
   background-color: var(--gt-done);
   color: var(--gt-on-accent);
 }
+/* Not ready to check: still tappable, to show why under the row. */
+.set-check[aria-disabled="true"] {
+  color: var(--gt-ink-3);
+}
 /* A checked row refused an edit: point at the way to unlock it. */
 .set-check.unlock-highlight {
   border: 2px solid var(--gt-danger-fg);
@@ -315,6 +319,9 @@
   padding: 0 var(--gt-space-1) var(--gt-space-1);
   font-size: var(--gt-fs-2);
   line-height: 1.4;
+}
+.set-line .set-hint {
+  color: var(--gt-ink-2);
 }
 
 /* The workout screen: a sticky top bar, the cards and two floating controls.

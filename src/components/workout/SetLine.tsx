@@ -60,7 +60,7 @@ export default function SetLine({
   editing?: boolean;
   /** The set, and any drops it has, can be checked. */
   canCheck: boolean;
-  /** Why the check is disabled, for screen readers. */
+  /** Why the check can't be pressed yet; shown under the row when tapped. */
   checkHint?: string;
   /** Called with this set's id, so one function can serve every row. */
   onOpenSheet: (setId: string) => void;
@@ -70,6 +70,7 @@ export default function SetLine({
 }) {
   const [checkedNow, setCheckedNow] = useState(false);
   const [lockedAttempt, setLockedAttempt] = useState(false);
+  const [hintShown, setHintShown] = useState(false);
   const wasDone = useRef(set.done);
   useEffect(() => {
     if (set.done && !wasDone.current) {
@@ -83,13 +84,16 @@ export default function SetLine({
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
   if (lockedAttempt && !set.done) setLockedAttempt(false);
-  // The notice belongs to this row: it goes away once a tap or focus lands
+  // The notices belong to this row: they go away once a tap or focus lands
   // anywhere outside it.
   const row = useRef<HTMLDivElement>(null);
+  const noticeShown = lockedAttempt || hintShown;
   useEffect(() => {
-    if (!lockedAttempt) return;
+    if (!noticeShown) return;
     const away = (event: Event) => {
-      if (!row.current?.contains(event.target as Node)) setLockedAttempt(false);
+      if (row.current?.contains(event.target as Node)) return;
+      setLockedAttempt(false);
+      setHintShown(false);
     };
     document.addEventListener("pointerdown", away, true);
     document.addEventListener("focusin", away, true);
@@ -97,7 +101,7 @@ export default function SetLine({
       document.removeEventListener("pointerdown", away, true);
       document.removeEventListener("focusin", away, true);
     };
-  }, [lockedAttempt]);
+  }, [noticeShown]);
 
   const drop = isDrop(set);
   // Unique within the exercise: "Bench Press set 2", "Bench Press drop 1 after set 2".
@@ -126,6 +130,8 @@ export default function SetLine({
   const showLock = set.done && lockedAttempt;
   const checkDisabled = !set.done && !canCheck;
   const showHint = checkDisabled && !!checkHint;
+  // Once the set can be checked, the reason it couldn't is old news.
+  if (hintShown && !showHint) setHintShown(false);
   const visibleIssues = Object.entries(issues)
     .filter(
       ([field]) =>
@@ -359,15 +365,17 @@ export default function SetLine({
                     ? errorId
                     : undefined
             }
-            disabled={checkDisabled}
+            // Not `disabled`, so a tap still lands and can say why.
+            aria-disabled={checkDisabled || undefined}
             onClick={() => {
               setLockedAttempt(false);
-              onToggleDone?.(set.id);
+              if (checkDisabled) setHintShown(!!checkHint);
+              else onToggleDone?.(set.id);
             }}
           >
             <Check size={21} />
           </button>
-          {showHint && (
+          {showHint && !hintShown && (
             <span id={hintId} className="sr-only">
               {checkHint}
             </span>
@@ -379,6 +387,11 @@ export default function SetLine({
       {!!visibleIssues.length && (
         <p id={errorId} className="set-errors field-error">
           {visibleIssues.join(" ")}
+        </p>
+      )}
+      {showHint && hintShown && (
+        <p id={hintId} className="set-errors set-hint" role="status">
+          {checkHint}
         </p>
       )}
       {showLock && (
