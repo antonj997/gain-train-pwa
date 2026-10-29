@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { type RecordDoc } from "@/data/model";
 import { shiftDate } from "@/data/summary";
+import { useDragSelect } from "@/hooks/useDragSelect";
+import { monthDragRange } from "@/lib/drag-selection";
 import ActivityGridIcon from "@/components/ActivityGridIcon";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
 import HistoryFooter from "@/components/HistoryFooter";
@@ -44,7 +46,7 @@ export default function HistoryCalendar({
   const bounds = historyCalendarBounds(value, now);
   const currentMonth = now.slice(0, 7);
   const heat = display === "simple";
-  const canReset = !!selectedDate || !!from || !!to;
+  const canReset = !!selectedDate || !!from || !!to || !!value.dates;
   const caption = historyCaption(value, counts, now);
   const [picking, setPicking] = useState(false);
   const instructionsId = useId();
@@ -60,6 +62,17 @@ export default function HistoryCalendar({
         : month + "-01";
   const change = (action: HistoryCalendarAction) =>
     onChange(changeHistoryCalendar(value, action, now));
+  const grid = useRef<HTMLDivElement>(null);
+  const anchor = useRef<string | null>(null);
+  const { drag, handlers } = useDragSelect({
+    containerRef: grid,
+    onCommit: ({ start, current }) => {
+      anchor.current = null;
+      const range = monthDragRange(start, current);
+      change({ type: "range", ...range });
+    },
+  });
+  const preview = drag ? monthDragRange(drag.start, drag.current) : null;
   const browse = (month: string) => change({ type: "browse", month });
 
   useEffect(() => {
@@ -83,6 +96,16 @@ export default function HistoryCalendar({
     event.preventDefault();
     const target = shiftDate(date, offsets[event.key]);
     if (target > now || target < "1900-01-01") return;
+    if (event.shiftKey) {
+      // Shift+Arrow grows a range from the selected day.
+      anchor.current ??= (mode === "range" ? from : selectedDate) ?? date;
+      const a = anchor.current;
+      change({
+        type: "range",
+        from: a <= target ? a : target,
+        to: a <= target ? target : a,
+      });
+    } else anchor.current = null;
     pendingFocus.current = target;
     setFocused(target);
     if (!target.startsWith(month)) browse(target.slice(0, 7));
@@ -242,8 +265,9 @@ export default function HistoryCalendar({
         </div>
       )}
       <p className="sr-only" id={instructionsId}>
-        Use arrow keys to move between days, Home and End to move within a week.
-        Date ranges include both dates.
+        Use arrow keys to move between days, Home and End to move within a week,
+        and Shift with an arrow key to select a range. With a pointer, press and
+        hold a day, then drag to select a range. Date ranges include both dates.
       </p>
       <div className="month-weekdays" aria-hidden="true">
         {Array.from({ length: 7 }, (_, i) => (
@@ -255,19 +279,29 @@ export default function HistoryCalendar({
           </span>
         ))}
       </div>
-      <div className="month-grid" role="group" aria-labelledby={headingId}>
+      <div
+        className={`month-grid${drag ? " is-dragging" : ""}`}
+        role="group"
+        aria-labelledby={headingId}
+        ref={grid}
+        {...handlers}
+      >
         {cells.map((cell) => {
           const count = cell.inMonth ? (counts.get(cell.date) ?? 0) : 0;
+          const band = preview
+            ? { start: preview.from, end: preview.to }
+            : bounds;
           const inRange =
-            mode === "range" &&
+            (mode === "range" || !!preview) &&
             cell.inMonth &&
-            !!bounds &&
-            cell.date >= bounds.start &&
-            cell.date <= bounds.end;
+            !!band &&
+            cell.date >= band.start &&
+            cell.date <= band.end;
           const selected =
-            mode === "range" ? inRange : selectedDate === cell.date;
-          const isEnd =
-            mode === "range" && (from === cell.date || to === cell.date);
+            mode === "range" || preview ? inRange : selectedDate === cell.date;
+          const isEnd = preview
+            ? preview.from === cell.date || preview.to === cell.date
+            : mode === "range" && (from === cell.date || to === cell.date);
           return (
             <button
               type="button"
@@ -276,7 +310,10 @@ export default function HistoryCalendar({
                 if (node) buttons.current.set(cell.date, node);
                 else buttons.current.delete(cell.date);
               }}
-              className={`month-day ${heatClass(count)}${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${inRange ? " in-range" : ""}${isEnd ? " is-range-end" : ""}${!cell.inMonth ? " outside-month" : ""}`}
+              className={`month-day ${heatClass(count)}${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${inRange ? " in-range" : ""}${isEnd ? " is-range-end" : ""}${drag?.start === cell.date ? " is-armed" : ""}${!cell.inMonth ? " outside-month" : ""}`}
+              data-date={
+                cell.inMonth && cell.date <= now ? cell.date : undefined
+              }
               disabled={!cell.inMonth || cell.date > now}
               tabIndex={cell.date === focusable ? 0 : -1}
               aria-current={cell.date === now ? "date" : undefined}

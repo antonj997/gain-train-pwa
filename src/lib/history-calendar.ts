@@ -31,6 +31,8 @@ export type HistoryCalendarState = {
   from: string | null;
   to: string | null;
   activeBound: "from" | "to";
+  /** Separate dates picked by a horizontal heatmap drag, such as every Monday. */
+  dates: { dates: string[]; label: string } | null;
 };
 
 export type HistoryCalendarAction =
@@ -39,6 +41,9 @@ export type HistoryCalendarAction =
   | { type: "display"; display: HistoryCalendarState["display"] }
   | { type: "bound"; bound: HistoryCalendarState["activeBound"] }
   | { type: "date"; date: string }
+  | { type: "day"; date: string; toggle?: boolean }
+  | { type: "range"; from: string; to: string }
+  | { type: "dates"; dates: string[]; label: string }
   | { type: "clear" }
   | { type: "reset" };
 
@@ -51,8 +56,17 @@ export function createHistoryCalendar(now: string): HistoryCalendarState {
     from: null,
     to: null,
     activeBound: "from",
+    dates: null,
   };
 }
+
+const NO_SELECTION = {
+  selectedDate: null,
+  from: null,
+  to: null,
+  activeBound: "from",
+  dates: null,
+} as const;
 
 export function changeHistoryCalendar(
   state: HistoryCalendarState,
@@ -62,37 +76,25 @@ export function changeHistoryCalendar(
   switch (action.type) {
     case "reset":
       return { ...createHistoryCalendar(now), display: state.display };
-    case "display":
-      // A from–to range only exists in the detailed calendar.
-      return action.display === "simple"
-        ? {
-            ...state,
-            display: "simple",
-            mode: "month",
-            selectedDate: null,
-            from: null,
-            to: null,
-            activeBound: "from",
-          }
-        : { ...state, display: action.display };
+    case "display": {
+      if (action.display === state.display) return state;
+      // A set of weekdays only exists in the heatmap; a half-chosen range
+      // cannot be shown there. A day or a finished range goes either way.
+      const keepRange = !!state.from && !!state.to;
+      const base = { ...state, display: action.display, dates: null };
+      if (state.mode === "range" && !keepRange)
+        return { ...base, ...NO_SELECTION, mode: "month" };
+      if (action.display === "detailed") {
+        const shown = state.mode === "range" ? state.from : state.selectedDate;
+        return shown ? { ...base, month: shown.slice(0, 7) } : base;
+      }
+      return base;
+    }
     case "clear":
-      return {
-        ...state,
-        selectedDate: null,
-        from: null,
-        to: null,
-        activeBound: "from",
-      };
+      return { ...state, ...NO_SELECTION };
     case "mode":
       if (action.mode === state.mode) return state;
-      return {
-        ...state,
-        mode: action.mode,
-        selectedDate: null,
-        from: null,
-        to: null,
-        activeBound: "from",
-      };
+      return { ...state, ...NO_SELECTION, mode: action.mode };
     case "bound":
       return { ...state, activeBound: action.bound };
     case "browse": {
@@ -103,6 +105,42 @@ export function changeHistoryCalendar(
         ...state,
         month,
         selectedDate: state.mode === "month" ? null : state.selectedDate,
+      };
+    }
+    case "day": {
+      const date = validDate(action.date);
+      if (date > now) return state;
+      return {
+        ...state,
+        ...NO_SELECTION,
+        mode: "month",
+        month: date.slice(0, 7),
+        selectedDate:
+          action.toggle && state.mode === "month" && state.selectedDate === date
+            ? null
+            : date,
+      };
+    }
+    case "range": {
+      const a = validDate(action.from);
+      const b = validDate(action.to);
+      if (a > now || b > now) return state;
+      return {
+        ...state,
+        ...NO_SELECTION,
+        mode: "range",
+        from: a <= b ? a : b,
+        to: a <= b ? b : a,
+      };
+    }
+    case "dates": {
+      const dates = action.dates.map(validDate).filter((d) => d <= now);
+      if (!dates.length) return state;
+      return {
+        ...state,
+        ...NO_SELECTION,
+        mode: "month",
+        dates: { dates: dates.sort(), label: action.label },
       };
     }
     case "date": {
@@ -130,6 +168,10 @@ export function historyCalendarBounds(
   state: HistoryCalendarState,
   now: string,
 ) {
+  if (state.dates) {
+    const { dates } = state.dates;
+    return { start: dates[0], end: dates[dates.length - 1] };
+  }
   if (state.mode === "range") {
     if (!state.from && !state.to) return null;
     return { start: state.from ?? state.to!, end: state.to ?? state.from! };
@@ -198,4 +240,41 @@ export function calendarRangeEdges(
     start: index % 7 === 0 || !selected(cells[index - 1]),
     end: index % 7 === 6 || !selected(cells[index + 1]),
   };
+}
+
+export type HistorySelection =
+  | { kind: "day"; date: string }
+  | { kind: "range"; from: string; to: string }
+  | { kind: "dates"; dates: string[]; label: string };
+
+/** What the person has chosen, or null while History shows the default view. */
+export function historySelection(
+  state: HistoryCalendarState,
+): HistorySelection | null {
+  if (state.dates) return { kind: "dates", ...state.dates };
+  if (state.mode === "range") {
+    const from = state.from ?? state.to;
+    const to = state.to ?? state.from;
+    return from && to ? { kind: "range", from, to } : null;
+  }
+  return state.selectedDate ? { kind: "day", date: state.selectedDate } : null;
+}
+
+/** The records History lists: those on the chosen day, range or dates, else in the default period. */
+export function filterBySelection<T extends { payload: { date: string } }>(
+  records: readonly T[],
+  state: HistoryCalendarState,
+  now: string,
+) {
+  const selection = historySelection(state);
+  if (selection?.kind === "dates") {
+    const wanted = new Set(selection.dates);
+    return records.filter((r) => wanted.has(r.payload.date));
+  }
+  const period = historyCalendarBounds(state, now);
+  return period
+    ? records.filter(
+        ({ payload: { date } }) => date >= period.start && date <= period.end,
+      )
+    : [];
 }

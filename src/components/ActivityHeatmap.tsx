@@ -7,6 +7,12 @@ import {
   type KeyboardEvent,
 } from "react";
 import { shiftDate } from "@/data/summary";
+import { useDragSelect } from "@/hooks/useDragSelect";
+import {
+  heatmapDragSelection,
+  selectionDates,
+  type DragSelection,
+} from "@/lib/drag-selection";
 import { localizedDate } from "@/lib/dates";
 import {
   heatmapMonthLabels,
@@ -45,7 +51,7 @@ export default function ActivityHeatmap({
   headingId: string;
   change: (action: HistoryCalendarAction) => void;
 }) {
-  const { selectedDate } = value;
+  const { selectedDate, mode, from, to, dates } = value;
   const { start, weeks } = heatmapWeeks(now);
   const monthLabels = heatmapMonthLabels(weeks);
   const [focused, setFocused] = useState(selectedDate ?? now);
@@ -53,6 +59,29 @@ export default function ActivityHeatmap({
   const pendingFocus = useRef<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const focusable = focused >= start && focused <= now ? focused : now;
+  const container = useRef<HTMLDivElement>(null);
+  const anchor = useRef<string | null>(null);
+
+  const apply = (selection: DragSelection) => {
+    anchor.current = null;
+    if (selection.kind === "day") change({ type: "day", date: selection.date });
+    else if (selection.kind === "range")
+      change({ type: "range", from: selection.from, to: selection.to });
+    else
+      change({ type: "dates", dates: selection.dates, label: selection.label });
+  };
+  const { drag, handlers } = useDragSelect({
+    containerRef: container,
+    scrollerRef: scroller,
+    onCommit: ({ start: a, current: b }) =>
+      apply(heatmapDragSelection(a, b, start)),
+  });
+  const preview = drag
+    ? new Set(
+        selectionDates(heatmapDragSelection(drag.start, drag.current, start)),
+      )
+    : null;
+  const chosen = dates ? new Set(dates.dates) : null;
 
   // Start on the most recent week.
   useLayoutEffect(() => {
@@ -82,6 +111,17 @@ export default function ActivityHeatmap({
     event.preventDefault();
     const target = shiftDate(date, offsets[event.key]);
     if (target < start || target > now) return;
+    if (event.shiftKey) {
+      // Shift+Arrow grows a range from the selected day.
+      anchor.current ??=
+        selectedDate ?? (mode === "range" ? from : null) ?? date;
+      const a = anchor.current;
+      change({
+        type: "range",
+        from: a <= target ? a : target,
+        to: a <= target ? target : a,
+      });
+    } else anchor.current = null;
     pendingFocus.current = target;
     setFocused(target);
   };
@@ -90,9 +130,15 @@ export default function ActivityHeatmap({
     <>
       <p className="sr-only" id={instructionsId}>
         Select a day to filter workouts. Use arrow keys to move between days,
-        Home and End to move within a week.
+        Home and End to move within a week, and Shift with an arrow key to
+        select a period. With a pointer, press and hold a day, then drag to
+        select a week, a weekday across weeks, or a period.
       </p>
-      <div className="heatmap">
+      <div
+        className={`heatmap${drag ? " is-dragging" : ""}`}
+        ref={container}
+        {...handlers}
+      >
         <div className="heatmap-weekdays" aria-hidden="true">
           {WEEKDAY_LETTERS.map((letter, row) => (
             <span key={row}>{letter}</span>
@@ -119,7 +165,14 @@ export default function ActivityHeatmap({
                 week.days.map((date, row) => {
                   if (!date) return null;
                   const count = counts.get(date) ?? 0;
-                  const selected = selectedDate === date;
+                  const inPreview = !!preview?.has(date);
+                  const selected =
+                    !preview &&
+                    (mode === "range"
+                      ? !!from && !!to && date >= from && date <= to
+                      : chosen
+                        ? chosen.has(date)
+                        : selectedDate === date);
                   return (
                     <button
                       type="button"
@@ -128,16 +181,20 @@ export default function ActivityHeatmap({
                         if (node) buttons.current.set(date, node);
                         else buttons.current.delete(date);
                       }}
-                      className={`heatmap-day ${heatClass(count)} tone-${monthTone(date)}${date === now ? " is-today" : ""}${selected ? " is-selected" : ""}`}
+                      className={`heatmap-day ${heatClass(count)} tone-${monthTone(date)}${date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${inPreview ? " is-preview" : ""}${drag?.start === date ? " is-armed" : ""}`}
+                      data-date={date}
                       style={{ gridColumn: column + 1, gridRow: row + 1 }}
                       tabIndex={date === focusable ? 0 : -1}
                       aria-current={date === now ? "date" : undefined}
-                      aria-pressed={selected}
+                      aria-pressed={selected || inPreview}
                       aria-describedby={instructionsId}
                       aria-label={`${localizedDate(date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })}, ${countLabel(count, "workout")}`}
                       onFocus={() => setFocused(date)}
                       onKeyDown={(event) => onKey(event, date)}
-                      onClick={() => change({ type: "date", date })}
+                      onClick={() => {
+                        anchor.current = null;
+                        change({ type: "day", date, toggle: true });
+                      }}
                     >
                       {count >= 2 && (
                         <span className="heatmap-count" aria-hidden="true">

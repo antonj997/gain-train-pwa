@@ -492,3 +492,30 @@
     background-color: var(--gt-surface-2);
   }
 }
+
+/* Press-and-hold drag selection. The pointer never selects text or opens a
+   callout while holding, and each state differs by outline, not only colour:
+   committed cells have a solid 2px ink outline, the live preview a dashed
+   one, and the armed start cell a thick accent outline that is also larger. */
+.heatmap,
+.month-grid {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.heatmap.is-dragging,
+.month-grid.is-dragging {
+  cursor: grabbing;
+}
+.history-calendar .heat.is-preview {
+  z-index: 1;
+  outline: 2px dashed var(--gt-ink);
+  outline-offset: 1px;
+}
+.history-calendar.calendar-heatmap .heatmap-day.heat.is-armed,
+.history-calendar.calendar-month .month-day.heat.is-armed {
+  z-index: 2;
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 1px;
+  transform: scale(1.12);
+}
