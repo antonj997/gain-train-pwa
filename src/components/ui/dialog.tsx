@@ -24,6 +24,8 @@ type DialogContentProps = React.ComponentPropsWithoutRef<
 > & {
   /** How strongly the page behind is dimmed: "light" keeps it readable. */
   backdrop?: "dim" | "light";
+  /** "full" is a near full-screen panel for editors; "sheet" is a short bottom sheet. */
+  size?: "sheet" | "full";
 };
 
 /** How far (px) a sheet must be pulled, or how fast (px/ms) flicked, to close. */
@@ -112,37 +114,46 @@ function useDragToClose(content: React.RefObject<HTMLDivElement>) {
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, backdrop = "dim", ...props }, ref) => {
-  const content = React.useRef<HTMLDivElement>(null);
-  const setRefs = React.useCallback(
-    (node: HTMLDivElement | null) => {
-      (content as React.MutableRefObject<HTMLDivElement | null>).current = node;
-      if (typeof ref === "function") ref(node);
-      else if (ref) ref.current = node;
-    },
-    [ref],
-  );
-  const handle = useDragToClose(content);
-  return (
-    <DialogPrimitive.Portal>
-      <DialogOverlay data-backdrop={backdrop} />
-      <DialogPrimitive.Content
-        ref={setRefs}
-        className={classes("app-dialog dialog-content", className)}
-        {...props}
-      >
-        {children}
-        <DialogPrimitive.Close
-          className="dialog-handle"
-          aria-label="Close"
-          {...handle}
+>(
+  (
+    { className, children, backdrop = "dim", size = "sheet", ...props },
+    ref,
+  ) => {
+    const content = React.useRef<HTMLDivElement>(null);
+    const setRefs = React.useCallback(
+      (node: HTMLDivElement | null) => {
+        (content as React.MutableRefObject<HTMLDivElement | null>).current =
+          node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref],
+    );
+    const handle = useDragToClose(content);
+    return (
+      <DialogPrimitive.Portal>
+        <DialogOverlay data-backdrop={backdrop} />
+        <DialogPrimitive.Content
+          ref={setRefs}
+          className={classes(
+            `app-dialog dialog-content${size === "full" ? " dialog-full" : ""}`,
+            className,
+          )}
+          {...props}
         >
-          <span className="dialog-handle-bar" aria-hidden="true" />
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
-    </DialogPrimitive.Portal>
-  );
-});
+          {children}
+          <DialogPrimitive.Close
+            className="dialog-handle"
+            aria-label="Close"
+            {...handle}
+          >
+            <span className="dialog-handle-bar" aria-hidden="true" />
+          </DialogPrimitive.Close>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    );
+  },
+);
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({

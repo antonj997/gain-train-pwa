@@ -252,7 +252,7 @@ export default function RoutinesPanel() {
           }
         }}
       >
-        <DialogContent className="detail-dialog routine-dialog">
+        <DialogContent size="full" className="routine-dialog">
           <DialogHeader>
             <DialogTitle>
               {edit && state.records[edit.id]

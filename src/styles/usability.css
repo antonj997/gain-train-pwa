@@ -81,10 +81,6 @@ select,
   min-height: 44px;
   overscroll-behavior: contain;
 }
-.app-dialog.picker-dialog.is-creating {
-  height: auto;
-  overflow-y: auto;
-}
 .picker-dialog .search-field input {
   min-width: 0;
   padding-right: 4px;

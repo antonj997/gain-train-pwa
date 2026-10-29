@@ -182,7 +182,7 @@ export default function History() {
           localizedDate(w.date) +
             (w.duration !== null ? " · " + durationLabel(w.duration) : "")
         }
-        className="detail-dialog"
+        size="full"
       >
         {w?.exercises.map((ex) => (
           <section key={ex.id}>

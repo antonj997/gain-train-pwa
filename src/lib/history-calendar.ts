@@ -61,7 +61,18 @@ export function changeHistoryCalendar(
     case "reset":
       return { ...createHistoryCalendar(now), display: state.display };
     case "display":
-      return { ...state, display: action.display };
+      // A from–to range only exists in the detailed calendar.
+      return action.display === "simple"
+        ? {
+            ...state,
+            display: "simple",
+            mode: "month",
+            selectedDate: null,
+            from: null,
+            to: null,
+            activeBound: "from",
+          }
+        : { ...state, display: action.display };
     case "clear":
       return {
         ...state,
