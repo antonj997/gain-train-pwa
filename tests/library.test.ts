@@ -4,6 +4,7 @@ import {
   filterExercises,
   groupExercises,
   exerciseSub,
+  libraryExercises,
   type LibraryExercise,
 } from "../src/lib/library.ts";
 
@@ -91,4 +92,24 @@ test("the muted line lists category, last date and best set", () => {
     "Chest · last today · best 100 kg × 5",
   );
   assert.equal(exerciseSub(all[2], "2026-10-28"), "Chest · never logged");
+});
+
+test("the library lists the catalogue and own exercises with their flags", () => {
+  const own = crypto.randomUUID();
+  const records = {
+    [own]: {
+      id: own,
+      kind: "exercise" as const,
+      payload: { name: "Sled", category: "Legs", note: "", favourite: true },
+      revision: 1,
+      localVersion: 1,
+      dirty: false,
+      deleted: false,
+    },
+  };
+  const all = libraryExercises(records, new Set(["builtin:bench-press"]));
+  const bench = all.find((e) => e.id === "builtin:bench-press")!;
+  assert.deepEqual([bench.hidden, bench.custom, bench.favourite], [true, false, false]);
+  const sled = all.find((e) => e.id === own)!;
+  assert.deepEqual([sled.custom, sled.favourite, sled.lastDate], [true, true, null]);
 });
