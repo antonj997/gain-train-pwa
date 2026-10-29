@@ -97,3 +97,12 @@ export function addMonths(date: string, months: number) {
   const last = Number(endOfMonth(month).slice(8));
   return `${month}-${String(Math.min(from.getUTCDate(), last)).padStart(2, "0")}`;
 }
+
+/** The weekdays' names in the device's language, Monday first ("long" or "short"). */
+export const weekdayNames = (format: "long" | "short" = "long") =>
+  Array.from({ length: 7 }, (_, i) =>
+    new Date(Date.UTC(2024, 0, i + 1)).toLocaleDateString(undefined, {
+      weekday: format,
+      timeZone: "UTC",
+    }),
+  );

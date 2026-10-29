@@ -5,8 +5,10 @@ import {
   calendarRangeEdges,
   moveCalendarMonth,
 } from "@/lib/history-calendar";
-import { localizedDate } from "@/lib/dates";
+import { localizedDate, weekdayNames } from "@/lib/dates";
 import "@/styles/history-calendar.css";
+
+const shortDays = weekdayNames("short");
 
 export type PlanDay = {
   kind: "planned" | "rest" | null;
@@ -81,13 +83,8 @@ export default function PlanCalendar({
         </button>
       </div>
       <div className="calendar-weekdays" aria-hidden="true">
-        {Array.from({ length: 7 }, (_, i) => (
-          <span key={i}>
-            {new Date(Date.UTC(2024, 0, i + 1)).toLocaleDateString(undefined, {
-              weekday: "short",
-              timeZone: "UTC",
-            })}
-          </span>
+        {shortDays.map((name, i) => (
+          <span key={i}>{name}</span>
         ))}
       </div>
       <div className={"calendar-days" + (picking ? " calendar-range" : "")}>

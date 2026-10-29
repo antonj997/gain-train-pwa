@@ -4,7 +4,13 @@ import {
   type RecordDoc,
   type RoutineGroup,
 } from "./model";
-import { addMonths, daysBetween, weekStart, weekdayIndex } from "../lib/dates";
+import {
+  addMonths,
+  daysBetween,
+  shiftDate,
+  weekStart,
+  weekdayIndex,
+} from "../lib/dates";
 
 /**
  * Plan cells are plain strings: a routine's id, "rest", "type:<day type id>",
@@ -235,3 +241,69 @@ export function legacyPlanToPlan(
     goalIds: [],
   };
 }
+
+const emptyWeek = (): (string | null)[] => Array(7).fill(null);
+
+/** A new plan: eight empty weeks from the day after the last plan ends, or today. */
+export function defaultNewPlan(
+  plans: readonly { endDate: string }[],
+  today: string,
+): Plan {
+  const lastEnd = plans.reduce(
+    (end, p) => (p.endDate > end ? p.endDate : end),
+    "",
+  );
+  const startDate = lastEnd >= today ? shiftDate(lastEnd, 1) : today;
+  return {
+    name: "",
+    startDate,
+    endDate: shiftDate(startDate, 8 * 7 - 1),
+    cycleWeeks: 1,
+    template: [emptyWeek()],
+    overrides: {},
+    goalIds: [],
+  };
+}
+
+/** The plan repeating every `weeks` weeks; weeks it keeps stay as they were. */
+export const withCycle = (plan: Plan, weeks: number): Plan => ({
+  ...plan,
+  cycleWeeks: weeks,
+  template: Array.from(
+    { length: weeks },
+    (_, i) => plan.template[i] ?? emptyWeek(),
+  ),
+});
+
+/** The plan with one template day set; null empties it. */
+export const withTemplateCell = (
+  plan: Plan,
+  week: number,
+  day: number,
+  cell: string | null,
+): Plan => ({
+  ...plan,
+  template: plan.template.map((row, w) =>
+    w === week ? row.map((c, d) => (d === day ? cell : c)) : row,
+  ),
+});
+
+/** The plan with a dated change; undefined goes back to the template. */
+export function withOverride(
+  plan: Plan,
+  date: string,
+  cell: string | null | undefined,
+): Plan {
+  const overrides = { ...plan.overrides };
+  if (cell === undefined) delete overrides[date];
+  else overrides[date] = cell;
+  return { ...plan, overrides };
+}
+
+/** Dated changes inside the plan's period; ones left outside by a new period are dropped. */
+export const trimOverrides = (plan: Plan): Plan["overrides"] =>
+  Object.fromEntries(
+    Object.entries(plan.overrides).filter(
+      ([date]) => date >= plan.startDate && date <= plan.endDate,
+    ),
+  );
