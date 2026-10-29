@@ -1,7 +1,7 @@
 import { Play } from "lucide-react";
 import type { RoutineRecord } from "@/data/model";
 import { setCount } from "@/data/selectors";
-import { countLabel } from "@/lib/labels";
+import { countLabel, durationLabel } from "@/lib/labels";
 import { lastUsedLabel } from "@/lib/library";
 import {
   exerciseExtras,
@@ -94,7 +94,7 @@ export function RoutinePreviewSheet({
         [
           countLabel(exercises.length, "exercise"),
           countLabel(setCount(routine.payload), "set"),
-          stats.minutes && `~${stats.minutes} min`,
+          stats.minutes && `~${durationLabel(stats.minutes)}`,
         ]
           .filter(Boolean)
           .join(" · ")

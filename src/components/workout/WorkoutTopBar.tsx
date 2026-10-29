@@ -4,6 +4,7 @@ import type { Workout } from "@/data/model";
 import { useNow } from "@/hooks/useNow";
 import { localizedDate } from "@/lib/dates";
 import { durationLabel } from "@/lib/labels";
+import { DEFAULT_WORKOUT_NAME, autoWorkoutName } from "@/lib/workout-name";
 
 type Props = {
   workout: Workout;
@@ -88,7 +89,8 @@ export default function WorkoutTopBar({
             onClick={onDetails}
           >
             {editing ? "Edit " : ""}
-            {w.name || "Workout"}
+            {/* A running workout's unnamed title follows its exercises. */}
+            {editing ? w.name || DEFAULT_WORKOUT_NAME : autoWorkoutName(w)}
           </button>
         </h1>
         <p className="top-bar-status">

@@ -10,7 +10,7 @@ import {
   summarize,
 } from "@/data/summary";
 import { localizedDate } from "@/lib/dates";
-import { timeTrainedLabel } from "@/lib/labels";
+import { durationLabel } from "@/lib/labels";
 import { formatKm } from "@/lib/cardio";
 
 /** The change text with its unit, such as "↑ +1.2 t". Arrows only; messages stay as they are. */
@@ -79,7 +79,7 @@ function summaryFor({ records, progress, now, range }: Props) {
     },
     {
       label: "Time trained",
-      value: timeTrainedLabel(Math.round(current.minutes ?? 0)),
+      value: current.minutes ? durationLabel(current.minutes) : "—",
       change: withUnit(
         metricChange(current.minutes ?? 0, previous.minutes ?? 0),
         "min",
@@ -125,7 +125,7 @@ function ProgressSummary(props: Props) {
         <p className="row-sub">
           Cardio{" "}
           <strong>
-            {timeTrainedLabel(Math.round(current.cardioSec / 60))}
+            {current.cardioSec ? durationLabel(current.cardioSec / 60) : "—"}
             {current.cardioM > 0 && ` · ${formatKm(current.cardioM)} km`}
             {current.cardioKcal > 0 && ` · ${current.cardioKcal} kcal`}
           </strong>{" "}
@@ -142,7 +142,7 @@ function ProgressSummary(props: Props) {
       <p className="row-sub">
         {current.duration === null
           ? "No recorded durations"
-          : `Average workout ${Math.round(current.duration)} min`}
+          : `Average workout ${durationLabel(current.duration)}`}
         {" · "}
         {improving === null
           ? "no exercises to compare yet"

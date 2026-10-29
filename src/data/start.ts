@@ -9,6 +9,7 @@ import {
 } from "./model";
 import { previousResult } from "./workouts";
 import { completedWorkouts } from "./selectors";
+import { autoWorkoutName } from "../lib/workout-name";
 
 export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
   const history = completedWorkouts(records);
@@ -47,7 +48,10 @@ export function newWorkout(
 ): Workout {
   return {
     routineId: routine?.id,
-    name: routine?.payload.name || "Workout",
+    name: autoWorkoutName(
+      { name: "", exercises: [] },
+      { routine: routine?.payload.name },
+    ),
     date: today(),
     duration: null,
     startedAt: past ? null : now,

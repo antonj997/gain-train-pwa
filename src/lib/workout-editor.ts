@@ -18,6 +18,7 @@ import { hasExtraWeight } from "./set-load";
 import { CARDIO_MAX, isCardioSet } from "./cardio";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
+import { autoWorkoutName } from "./workout-name";
 
 export type SetIssues = Partial<
   Record<
@@ -118,8 +119,20 @@ export function finishWorkout(workout: Workout, now = Date.now()): Workout {
     )
   )
     throw Error("Correct the checked sets, or uncheck them before saving.");
+  const exercises = workout.exercises
+    .map((ex) => ({
+      ...ex,
+      sets: ex.sets.filter((set) => set.done && validSet(set)),
+    }))
+    .filter((ex) => ex.sets.length > 0);
   const result: Workout = {
     ...workout,
+    // Finishing names an unnamed workout after what was done; saving an edit
+    // keeps the stored name.
+    name:
+      workout.status === "completed"
+        ? workout.name
+        : autoWorkoutName({ ...workout, exercises }),
     status: "completed",
     completedAt:
       workout.status === "completed"
@@ -133,12 +146,7 @@ export function finishWorkout(workout: Workout, now = Date.now()): Workout {
             Math.max(0, Math.floor((now - workout.startedAt) / 60000)),
           )
         : null),
-    exercises: workout.exercises
-      .map((ex) => ({
-        ...ex,
-        sets: ex.sets.filter((set) => set.done && validSet(set)),
-      }))
-      .filter((ex) => ex.sets.length > 0),
+    exercises,
   };
   return validate("workout", result);
 }
