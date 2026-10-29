@@ -102,6 +102,8 @@ export const goalSchema = z
     reps: z.number().int().min(1).max(1000).optional(),
     /** True when the target is an estimated one-rep max rather than a set. */
     estimated: z.boolean().optional(),
+    /** Bodyweight goal: the weight when the goal was set, the progress bar's start. */
+    startKg: z.number().finite().positive().max(1000).optional(),
     byDate: isoDay,
     createdAt: z.number().finite().min(0),
     /** Set when the goal is reached. */
@@ -112,10 +114,19 @@ export const goalSchema = z
       ctx.addIssue({ code: "custom", path: ["exerciseId"], message: "lift" });
   });
 
-/** The user's synced exercise settings. One record per account. */
+/** A named day for plans, such as "Legday": routines to start and categories to suggest from. */
+export const groupSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().trim().min(1).max(100),
+  routineIds: z.array(z.string().uuid()).max(50),
+  categories: z.array(z.string().min(1).max(50)).max(20),
+});
+
+/** The user's synced exercise settings and routine groups. One record per account. */
 export const librarySchema = z.object({
   schemaVersion,
   hiddenExerciseIds: z.array(z.string().min(1).max(200)).max(5000),
+  groups: z.array(groupSchema).max(50).optional(),
 });
 
 export type Workout = z.infer<typeof workoutSchema>;
@@ -126,6 +137,7 @@ export type CustomExercise = z.infer<typeof customSchema>;
 export type Plan = z.infer<typeof planSchema>;
 export type Goal = z.infer<typeof goalSchema>;
 export type Library = z.infer<typeof librarySchema>;
+export type RoutineGroup = z.infer<typeof groupSchema>;
 export type Kind =
   "workout" | "routine" | "exercise" | "plan" | "goal" | "library";
 export type Payload =
@@ -349,6 +361,10 @@ export function validate(kind: Kind, payload: unknown): Payload {
       exerciseId: "Choose the exercise for this lift goal.",
       byDate: "Choose a valid date for this goal.",
       hiddenExerciseIds: "Check the list of hidden exercises.",
+      groups: "Check the names and routines of your groups.",
+      routineIds: "A group can hold up to 50 routines.",
+      startKg:
+        "The starting weight must be greater than 0 and at most 1000 kg.",
     };
     if (field === "reps") {
       const timed = candidateSet?.measure === "seconds";

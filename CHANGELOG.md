@@ -1,5 +1,13 @@
 # Changelog
 
+## 29 October 2026 — plans, groups and goals
+
+- Library has a third tab, Plan (`?tab=plan`; `/library/plan` redirects). Plans are now synced: a name, an exact period, a cycle of 1–6 weeks, a weeks × Monday–Sunday template where each day is a routine, a group, a day type, Rest or empty, and dated changes from an Upcoming month view. Overlapping periods are refused with a message. The old device-only plan is imported once into a synced plan and then removed.
+- New day types (Legs, Push, Pull, Upper, Lower, Full body, Cardio) and your own groups (a name, routines and optional categories, saved in the library record). Train shows "Today: <name>" with Start, a group's routines, "Start with suggestions" (opens the exercise picker on a Suggested filter) or "Rest day". The This week card links to the Plan tab.
+- New goals on Progress, with or without a plan: a bodyweight target or a lift (exercise, weight × reps) by a date, with a progress bar, current versus target, days left and "Reached on <date>". Goals are edited and deleted in a sheet.
+- Fix: Add set gives a custom exercise in the Cardio category a cardio set even when all its sets were deleted.
+- Code: `src/data/plans.ts` (plannedFor, overlap, groups, day types, the import) and `src/data/goals.ts` (goalProgress) are pure and tested; `lib/plan.ts`, `pages/Plan.tsx` and their styles are gone. The exercise picker takes `suggested` and `single`.
+
 ## 28 October 2026 — app pages, Library and the training plan
 
 Navigation and pages (part 3)

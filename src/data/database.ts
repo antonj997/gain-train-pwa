@@ -62,7 +62,7 @@ export async function transact(
 }
 export async function eraseAccount(account: string) {
   local.setItem(storageKeys.deleted(account), "true");
-  local.removeItem(storageKeys.plan(account));
+  local.removeItem(storageKeys.legacyPlan(account));
   const d = await db();
   await new Promise<void>((resolve, reject) => {
     const tx = d.transaction("accounts", "readwrite");

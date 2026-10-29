@@ -15,7 +15,6 @@ const History = lazy(() => import("@/pages/History"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const Library = lazy(() => import("@/pages/Library"));
-const Plan = lazy(() => import("@/pages/Plan"));
 const Progress = lazy(() => import("@/pages/Progress"));
 function AppToaster() {
   const { theme } = useTheme();
@@ -58,7 +57,10 @@ function AccountApp() {
               <Route path="progress" element={<Progress />} />
               <Route path="settings" element={<Settings />} />
               <Route path="library" element={<Library />} />
-              <Route path="library/plan" element={<Plan />} />
+              <Route
+                path="library/plan"
+                element={<Navigate to="/library?tab=plan" replace />}
+              />
               <Route
                 path="routines"
                 element={<Navigate to="/library" replace />}

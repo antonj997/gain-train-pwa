@@ -4,6 +4,7 @@ import { Outlet, Link, Navigate, useLocation } from "react-router-dom";
 import { Dumbbell, History, TrendingUp, Library } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
+import { useLegacyPlanImport } from "@/hooks/useLegacyPlanImport";
 
 const tabs = [
   { to: "/", title: "Train", Icon: Dumbbell },
@@ -14,6 +15,7 @@ const tabs = [
 
 export default function Layout() {
   useVisualViewport();
+  useLegacyPlanImport();
   const { ready } = useData();
   const { passwordRecovery } = useAuth();
   const path = useLocation().pathname;
