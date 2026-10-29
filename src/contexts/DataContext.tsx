@@ -16,6 +16,7 @@ import {
   isFromNewerApp,
   RecordValidationError,
   SCHEMA_VERSION,
+  recordKinds,
   type LocalState,
   type Payload,
   type RecordDoc,
@@ -372,8 +373,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           for (const r of records) {
             if (
               !z.string().uuid().safeParse(r.id).success ||
-              !z.enum(["workout", "routine", "exercise"]).safeParse(r.kind)
-                .success
+              !z.enum(recordKinds).safeParse(r.kind).success
             )
               throw new RecordValidationError(
                 "Backup contains an invalid record ID or type.",

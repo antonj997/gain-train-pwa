@@ -1,11 +1,21 @@
 import { useMemo, useState } from "react";
 import { errorMessage } from "@/lib/errors";
-import { Plus, Search, Star, Trash2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
-import { catalogue, categories } from "@/data/catalogue";
+import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
+import { useHiddenExercises } from "@/hooks/useHiddenExercises";
+import FacetChips from "@/components/FacetChips";
 import { progressFor, exerciseStats } from "@/data/analytics";
 import { labelSet, today } from "@/data/model";
 import { completedWorkouts } from "@/data/selectors";
@@ -29,6 +39,7 @@ const filters: { value: ExerciseFilter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "yours", label: "Yours" },
   { value: "recent", label: "Recently used" },
+  { value: "hidden", label: "Hidden" },
 ];
 
 /** Library → Exercises: search, filters, groups and the custom exercise editor. */
@@ -43,6 +54,10 @@ export default function ExercisesPanel() {
   const setEdit = draft.replace;
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<ExerciseFilter>("all");
+  const [category, setCategory] = useState("");
+  const [equipment, setEquipment] = useState("");
+  const { hidden, setHidden } = useHiddenExercises();
+  const [menu, setMenu] = useState<LibraryExercise | null>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -73,19 +88,26 @@ export default function ExercisesPanel() {
         ...e,
         note: "",
         custom: false,
+        hidden: hidden.has(e.id),
         favourite: favourites.has(e.id),
         ...extra(e.id),
       })),
       ...ownExercises(state.records).map((e) => ({
         ...e,
         custom: true,
+        hidden: hidden.has(e.id),
         ...extra(e.id),
       })),
     ];
-  }, [state.records]);
+  }, [state.records, hidden]);
   const groups = useMemo(
-    () => groupExercises(filterExercises(all, search, filter), filter),
-    [all, search, filter],
+    () =>
+      groupExercises(
+        filterExercises(all, search, filter, { category, equipment }),
+        filter,
+        !!search.trim(),
+      ),
+    [all, search, filter, category, equipment],
   );
   const toggleFavourite = async (e: (typeof all)[number]) => {
     try {
@@ -111,6 +133,15 @@ export default function ExercisesPanel() {
         });
     } catch {
       toast.error("Could not update favourite. Retry.");
+    }
+  };
+  const toggleHidden = async (e: LibraryExercise, hide: boolean) => {
+    try {
+      await setHidden(e.id, hide);
+      setMenu(null);
+      toast(hide ? `${e.name} hidden` : `${e.name} is back`);
+    } catch {
+      toast.error(`Could not ${hide ? "hide" : "unhide"} ${e.name}. Retry.`);
     }
   };
   const openEditor = (e: (typeof all)[number]) => {
@@ -149,6 +180,18 @@ export default function ExercisesPanel() {
           </button>
         ))}
       </div>
+      <FacetChips
+        name="Category"
+        options={categories}
+        value={category}
+        onChange={setCategory}
+      />
+      <FacetChips
+        name="Equipment"
+        options={equipmentTypes}
+        value={equipment}
+        onChange={setEquipment}
+      />
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title}>
           <h2 className="group-title">{group.title}</h2>
@@ -177,21 +220,42 @@ export default function ExercisesPanel() {
                   ) : (
                     <span className="row-main">{text}</span>
                   )}
-                  <button
-                    type="button"
-                    className={"icon-btn" + (e.favourite ? " starred" : "")}
-                    aria-label={
-                      (e.favourite ? "Unfavourite " : "Favourite ") + e.name
-                    }
-                    aria-pressed={e.favourite}
-                    onClick={() => void toggleFavourite(e)}
-                  >
-                    <Star
-                      size={20}
-                      aria-hidden="true"
-                      fill={e.favourite ? "currentColor" : "none"}
-                    />
-                  </button>
+                  {e.hidden ? (
+                    <button
+                      type="button"
+                      className="unhide"
+                      aria-label={"Unhide " + e.name}
+                      onClick={() => void toggleHidden(e, false)}
+                    >
+                      Unhide
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className={"icon-btn" + (e.favourite ? " starred" : "")}
+                        aria-label={
+                          (e.favourite ? "Unfavourite " : "Favourite ") + e.name
+                        }
+                        aria-pressed={e.favourite}
+                        onClick={() => void toggleFavourite(e)}
+                      >
+                        <Star
+                          size={20}
+                          aria-hidden="true"
+                          fill={e.favourite ? "currentColor" : "none"}
+                        />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-btn"
+                        aria-label={"More for " + e.name}
+                        onClick={() => setMenu(e)}
+                      >
+                        <MoreHorizontal size={20} aria-hidden="true" />
+                      </button>
+                    </>
+                  )}
                 </div>
               );
             })}
@@ -204,7 +268,9 @@ export default function ExercisesPanel() {
             ? "Exercises you have trained show up here."
             : filter === "yours" && !search.trim()
               ? "Exercises you create show up here."
-              : "No exercises match."}
+              : filter === "hidden" && !search.trim()
+                ? "Exercises you hide show up here."
+                : "No exercises match."}
         </p>
       )}
       {edit && !open && (
@@ -351,6 +417,57 @@ export default function ExercisesPanel() {
               </button>
             </div>
           </>
+        )}
+      </Sheet>
+      <Sheet
+        open={!!menu}
+        onClose={() => setMenu(null)}
+        title={menu?.name ?? ""}
+        description={menu ? exerciseSub(menu, now) : undefined}
+      >
+        {menu && (
+          <div className="exercise-menu-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => {
+                void toggleFavourite(menu);
+                setMenu(null);
+              }}
+            >
+              <Star size={18} aria-hidden="true" />
+              {menu.favourite ? "Unfavourite" : "Favourite"}
+            </button>
+            {menu.custom && (
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  const target = menu;
+                  setMenu(null);
+                  openEditor(target);
+                }}
+              >
+                Edit exercise
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => void toggleHidden(menu, !menu.hidden)}
+            >
+              {menu.hidden ? (
+                <Eye size={18} aria-hidden="true" />
+              ) : (
+                <EyeOff size={18} aria-hidden="true" />
+              )}
+              {menu.hidden ? "Unhide exercise" : "Hide exercise"}
+            </button>
+            <p className="row-sub">
+              Hidden exercises leave the picker and these lists. Saved workouts
+              keep them. Find them under Hidden.
+            </p>
+          </div>
         )}
       </Sheet>
       <ConfirmDialog

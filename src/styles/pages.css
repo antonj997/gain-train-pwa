@@ -612,6 +612,34 @@ details[open] > .session-summary > svg {
   background-color: var(--gt-ink);
   color: var(--gt-ground);
 }
+/* A single row of chips that scrolls sideways instead of wrapping. */
+.facet-chips {
+  display: flex;
+  gap: var(--gt-space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.facet-chips::-webkit-scrollbar {
+  display: none;
+}
+.facet-chips .filter-chip {
+  flex: none;
+  white-space: nowrap;
+}
+.exercise-menu-actions {
+  display: grid;
+  gap: var(--gt-space-2);
+}
+.exercise-row .unhide {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--gt-space-4);
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md);
+  background: var(--gt-surface);
+  color: var(--gt-ink);
+  font-weight: 600;
+}
 .exercise-row {
   padding-block: 0;
   padding-right: var(--gt-space-2);

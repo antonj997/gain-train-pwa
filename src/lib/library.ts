@@ -1,10 +1,20 @@
 import { localizedDate } from "./dates";
+import {
+  matchesFacets,
+  searchExercises,
+  type ExerciseFacets,
+} from "./exercise-search";
 
 /** One row of the Library's exercise list: a built-in or the user's own. */
 export type LibraryExercise = {
   id: string;
   name: string;
   category: string;
+  /** Built-in exercises only. */
+  equipment?: string;
+  aliases?: readonly string[];
+  /** Hidden from the picker and the lists; the Hidden filter shows it. */
+  hidden?: boolean;
   /** Created by the user, so it can be edited. */
   custom: boolean;
   favourite: boolean;
@@ -16,7 +26,7 @@ export type LibraryExercise = {
   best: string | null;
 };
 
-export type ExerciseFilter = "all" | "yours" | "recent";
+export type ExerciseFilter = "all" | "yours" | "recent" | "hidden";
 
 export type ExerciseGroup = {
   title: string;
@@ -30,19 +40,30 @@ const byName = (a: LibraryExercise, b: LibraryExercise) =>
 const byRecent = (a: LibraryExercise, b: LibraryExercise) =>
   b.lastDate!.localeCompare(a.lastDate!) || byName(a, b);
 
-/** Exercises whose name contains the search text, narrowed by the chosen filter. */
+/**
+ * Exercises matching the search text (see exercise-search.ts), best match first,
+ * narrowed by the chosen filter and by category and equipment. Hidden exercises
+ * show only under the Hidden filter.
+ */
 export function filterExercises(
   items: readonly LibraryExercise[],
   query: string,
   filter: ExerciseFilter,
+  facets: ExerciseFacets = {},
 ) {
-  const text = query.trim().toLowerCase();
-  return items.filter(
-    (item) =>
-      item.name.toLowerCase().includes(text) &&
-      (filter === "all" ||
-        (filter === "yours" && item.custom) ||
-        (filter === "recent" && item.lastDate !== null)),
+  return searchExercises(
+    items
+      .filter(
+        (item) =>
+          (filter === "hidden" ? !!item.hidden : !item.hidden) &&
+          matchesFacets(item, facets) &&
+          (filter === "all" ||
+            filter === "hidden" ||
+            (filter === "yours" && item.custom) ||
+            (filter === "recent" && item.lastDate !== null)),
+      )
+      .sort(byName),
+    query,
   );
 }
 
@@ -54,7 +75,15 @@ export function filterExercises(
 export function groupExercises(
   items: readonly LibraryExercise[],
   filter: ExerciseFilter = "all",
+  /** Searching keeps the best match first, in one group. */
+  searching = false,
 ): ExerciseGroup[] {
+  if (searching)
+    return items.length ? [{ title: "Results", items: [...items] }] : [];
+  if (filter === "hidden")
+    return items.length
+      ? [{ title: "Hidden", items: [...items].sort(byName) }]
+      : [];
   const used = items.filter((item) => item.lastDate !== null).sort(byRecent);
   if (filter === "recent")
     return used.length ? [{ title: "Recently used", items: used }] : [];
