@@ -225,7 +225,7 @@ test("cardio is not a strength best, new best or volume", () => {
     ["builtin:bench-press"],
   );
   assert.deepEqual(
-    bestEvents(records).filter(
+    bestEvents(progressFor(records)).filter(
       (event) => event.exerciseId === "builtin:treadmill",
     ),
     [],

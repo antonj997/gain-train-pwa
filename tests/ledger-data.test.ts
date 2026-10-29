@@ -188,7 +188,7 @@ test("improvement does not compare repetitions against timed holds", () => {
     { date: "2026-10-01" },
   );
   assert.equal(
-    improvementRate([reps, seconds], "2026-10-01", "2026-10-08"),
+    improvementRate(progressFor([reps, seconds]), "2026-10-01", "2026-10-08"),
     null,
   );
 });

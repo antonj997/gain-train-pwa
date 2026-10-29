@@ -1,16 +1,17 @@
-import { type Workout, type RecordDoc, validSet } from "./model";
-import { comparableSets, progressFor } from "./analytics";
+import { type Workout, validSet } from "./model";
+import { comparableSets, type ExerciseProgress } from "./analytics";
 import { isDrop } from "./drops";
 import { cardioTotals, isCardioSet } from "../lib/cardio";
 
+/** The share of exercises whose latest result beats their baseline; takes `progressFor`'s result. */
 export function improvementRate(
-  records: RecordDoc[],
+  progress: readonly ExerciseProgress[],
   start: string,
   end: string,
 ) {
   let compared = 0,
     improved = 0;
-  for (const exercise of progressFor(records)) {
+  for (const exercise of progress) {
     const points = exercise.points.filter((point) => point.date <= end);
     const latest = points.at(-1);
     if (!latest || latest.date < start) continue;

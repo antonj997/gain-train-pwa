@@ -1,6 +1,7 @@
 import {
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -53,8 +54,28 @@ export default function ActivityHeatmap({
   change: (action: HistoryCalendarAction) => void;
 }) {
   const { selectedDate, mode, from, to, dates } = value;
-  const { start, weeks } = heatmapWeeks(now);
-  const monthLabels = heatmapMonthLabels(weeks);
+  // The grid and its labels depend on the date only; a drag re-renders often.
+  const { start, weeks, monthLabels, dayLabels } = useMemo(() => {
+    const grid = heatmapWeeks(now);
+    const dayLabels = new Map<string, string>();
+    for (const week of grid.weeks)
+      for (const date of week.days)
+        if (date)
+          dayLabels.set(
+            date,
+            localizedDate(date, {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }),
+          );
+    return {
+      ...grid,
+      monthLabels: heatmapMonthLabels(grid.weeks),
+      dayLabels,
+    };
+  }, [now]);
   const [focused, setFocused] = useState(selectedDate ?? now);
   const buttons = useRef(new Map<string, HTMLButtonElement>());
   const pendingFocus = useRef<string | null>(null);
@@ -204,7 +225,7 @@ export default function ActivityHeatmap({
                       aria-current={date === now ? "date" : undefined}
                       aria-pressed={selected || inPreview}
                       aria-describedby={instructionsId}
-                      aria-label={`${localizedDate(date, { weekday: "short", day: "numeric", month: "short", year: "numeric" })}, ${countLabel(count, "workout")}`}
+                      aria-label={`${dayLabels.get(date)}, ${countLabel(count, "workout")}`}
                       onFocus={() => setFocused(date)}
                       onKeyDown={(event) => onKey(event, date)}
                       onClick={() => {

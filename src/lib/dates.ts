@@ -1,3 +1,19 @@
+// Creating an Intl.DateTimeFormat is far slower than using one, and screens
+// such as the heatmap format hundreds of dates per render.
+const formats = new Map<string, Intl.DateTimeFormat>();
+function dateFormat(
+  locale: string | undefined,
+  options: Intl.DateTimeFormatOptions,
+) {
+  const key = (locale ?? "") + JSON.stringify(options);
+  let format = formats.get(key);
+  if (!format) {
+    format = new Intl.DateTimeFormat(locale, options);
+    formats.set(key, format);
+  }
+  return format;
+}
+
 export function localizedDate(
   value: string,
   options: Intl.DateTimeFormatOptions = {
@@ -10,7 +26,7 @@ export function localizedDate(
   const date = new Date(value + "T12:00:00");
   return Number.isNaN(date.getTime())
     ? value
-    : date.toLocaleDateString(locale, options);
+    : dateFormat(locale, options).format(date);
 }
 /** The local calendar date as YYYY-MM-DD. */
 export function isoDate(date: Date) {

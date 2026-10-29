@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { improvementRate } from "../src/data/summary";
+import { progressFor } from "../src/data/analytics";
 import { type RecordDoc, newSet } from "../src/data/model";
 const workout = (
   date: string,
@@ -35,16 +36,26 @@ test("improvement uses pre-period baseline and excludes future sessions", () => 
     workout("2026-09-02", 8),
     workout("2026-10-01", 3),
   ];
-  assert.equal(improvementRate(records, "2026-09-01", "2026-09-30"), 100);
+  assert.equal(
+    improvementRate(progressFor(records), "2026-09-01", "2026-09-30"),
+    100,
+  );
 });
 test("first sessions and incompatible loads do not count as improvement", () => {
   assert.equal(
-    improvementRate([workout("2026-09-01", 5)], "2026-09-01", "2026-09-30"),
+    improvementRate(
+      progressFor([workout("2026-09-01", 5)]),
+      "2026-09-01",
+      "2026-09-30",
+    ),
     null,
   );
   assert.equal(
     improvementRate(
-      [workout("2026-08-01", 5, "weight"), workout("2026-09-01", 8)],
+      progressFor([
+        workout("2026-08-01", 5, "weight"),
+        workout("2026-09-01", 8),
+      ]),
       "2026-09-01",
       "2026-09-30",
     ),
@@ -54,7 +65,7 @@ test("first sessions and incompatible loads do not count as improvement", () => 
 test("uses first in-period session when no prior baseline exists", () => {
   assert.equal(
     improvementRate(
-      [workout("2026-09-01", 5), workout("2026-09-20", 5)],
+      progressFor([workout("2026-09-01", 5), workout("2026-09-20", 5)]),
       "2026-09-01",
       "2026-09-30",
     ),
@@ -62,7 +73,7 @@ test("uses first in-period session when no prior baseline exists", () => {
   );
   assert.equal(
     improvementRate(
-      [workout("2026-09-01", 5), workout("2026-09-20", 6)],
+      progressFor([workout("2026-09-01", 5), workout("2026-09-20", 6)]),
       "2026-09-01",
       "2026-09-30",
     ),
