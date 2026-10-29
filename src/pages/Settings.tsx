@@ -23,7 +23,14 @@ import Sheet from "@/components/ui/Sheet";
 import Switch from "@/components/ui/Switch";
 import { removeProfileCache } from "@/lib/profile";
 import { requestPersistentStorage } from "@/lib/persistence";
-import { recordLabel, type RecordDoc } from "@/data/model";
+import { recordLabel } from "@/data/model";
+import {
+  MAX_BACKUP_BYTES,
+  backupFileName,
+  parseBackup,
+  serializeBackup,
+} from "@/lib/backup";
+import { kindName, versionSummary } from "@/lib/record-summary";
 import { copySummary, importSummary } from "@/data/actions";
 import { countLabel } from "@/lib/labels";
 import {
@@ -94,47 +101,36 @@ export default function Settings() {
     saveTrainingPreferences(patch);
     setPreferences(readTrainingPreferences());
   };
-  const exportData = () => {
-    const url = URL.createObjectURL(
-      new Blob(
-        [
-          JSON.stringify(
-            {
-              format: "gain-train",
-              version: 2,
-              exportedAt: new Date().toISOString(),
-              records: Object.values(state.records),
-            },
-            null,
-            2,
-          ),
-        ],
-        { type: "application/json" },
-      ),
-    );
+  const exportData = async () => {
+    const text = serializeBackup(Object.values(state.records));
+    const name = backupFileName();
+    // An installed iPhone app cannot download a file; the share sheet can
+    // save it to Files instead.
+    const file = new File([text], name, { type: "application/json" });
+    if (navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "Gain Train backup" });
+        return;
+      } catch (error) {
+        if ((error as Error)?.name === "AbortError") return;
+      }
+    }
+    const url = URL.createObjectURL(file);
     const a = document.createElement("a");
     a.href = url;
-    a.download =
-      "gain-train-backup-" + new Date().toISOString().slice(0, 10) + ".json";
+    a.download = name;
     a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    // Slow devices can still be reading the file a second later.
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
   const restore = async (file?: File) => {
     if (!file) return;
     setImporting(true);
     try {
-      if (file.size > 20_000_000)
+      if (file.size > MAX_BACKUP_BYTES)
         throw Error("Choose a backup smaller than 20 MB.");
-      const data = JSON.parse(await file.text());
-      if (
-        data.format !== "gain-train" ||
-        data.version !== 2 ||
-        !Array.isArray(data.records)
-      )
-        throw Error("This is not a Gain Train backup.");
-      toast.success(
-        importSummary(await importRecords(data.records as RecordDoc[])),
-      );
+      const records = parseBackup(await file.text());
+      toast.success(importSummary(await importRecords(records)));
     } catch (e) {
       toast.error(errorMessage(e, "Could not restore backup"));
     } finally {
@@ -239,9 +235,25 @@ export default function Settings() {
         <section key={r.id} className="card col-12">
           <h2 className="card-title">Choose which version to keep</h2>
           <p className="row-sub">
-            {recordLabel(r)} changed on another device. Export a backup first to
-            keep your local version separately.
+            {kindName(r.kind)} “{recordLabel(r)}” changed on another device.
+            Export a backup first to keep your local version separately.
           </p>
+          <ul className="sync-rejections">
+            <li>
+              <strong>This phone</strong>
+              <small>{versionSummary(r.kind, r.payload, r.deleted)}</small>
+            </li>
+            <li>
+              <strong>Server</strong>
+              <small>
+                {versionSummary(
+                  r.conflict!.kind,
+                  r.conflict!.payload,
+                  r.conflict!.deleted,
+                )}
+              </small>
+            </li>
+          </ul>
           <button
             className="btn-secondary"
             onClick={() => void choose(r.id, false)}
@@ -313,7 +325,11 @@ export default function Settings() {
       <section>
         <h2 className="group-title">Your data</h2>
         <div className="list">
-          <ListRow title="Export a backup" chevron onClick={exportData} />
+          <ListRow
+            title="Export a backup"
+            chevron
+            onClick={() => void exportData()}
+          />
           <label className="row row-file">
             <span className="row-main">
               <span className="row-title">
