@@ -168,7 +168,7 @@ test("month day filtering toggles off and browsing another month clears only the
   });
 });
 
-test("switching to the simple display clears a range, and detailed keeps it", () => {
+test("switching views keeps a day or a finished range and drops dates and half ranges", () => {
   const now = "2026-10-26";
   const ranged = {
     ...calendar.createHistoryCalendar(now),
@@ -182,19 +182,92 @@ test("switching to the simple display clears a range, and detailed keeps it", ()
     { type: "display", display: "simple" },
     now,
   );
-  assert.equal(simple.mode, "month");
-  assert.equal(simple.from, null);
-  assert.equal(simple.to, null);
+  assert.equal(simple.mode, "range");
+  assert.equal(simple.from, "2026-09-29");
   assert.equal(
     calendar.changeHistoryCalendar(simple, { type: "reset" }, now).display,
     "simple",
   );
   const detailed = calendar.changeHistoryCalendar(
-    { ...ranged, display: "simple" },
+    simple,
     { type: "display", display: "detailed" },
     now,
   );
-  assert.equal(detailed.from, "2026-09-29");
+  assert.equal(detailed.to, "2026-10-10");
+  assert.equal(detailed.month, "2026-09");
+  const half = calendar.changeHistoryCalendar(
+    { ...ranged, to: null },
+    { type: "display", display: "simple" },
+    now,
+  );
+  assert.equal(half.mode, "month");
+  assert.equal(half.from, null);
+  const dates = calendar.changeHistoryCalendar(
+    calendar.createHistoryCalendar(now),
+    { type: "dates", dates: ["2026-10-12", "2026-10-05"], label: "Mondays" },
+    now,
+  );
+  assert.deepEqual(dates.dates?.dates, ["2026-10-05", "2026-10-12"]);
+  const month = calendar.changeHistoryCalendar(
+    dates,
+    { type: "display", display: "detailed" },
+    now,
+  );
+  assert.equal(month.dates, null);
+});
+
+test("dragging picks a day, a range or dates, and filtering follows each", () => {
+  const now = "2026-10-28";
+  const record = (date: string) => ({ payload: { date } });
+  const records = ["2026-10-05", "2026-10-06", "2026-10-12", "2026-10-20"].map(
+    record,
+  );
+  const base = calendar.createHistoryCalendar(now);
+  const day = calendar.changeHistoryCalendar(
+    base,
+    { type: "day", date: "2026-10-06" },
+    now,
+  );
+  assert.deepEqual(
+    calendar.filterBySelection(records, day, now).map((r) => r.payload.date),
+    ["2026-10-06"],
+  );
+  const range = calendar.changeHistoryCalendar(
+    base,
+    { type: "range", from: "2026-10-12", to: "2026-10-05" },
+    now,
+  );
+  assert.deepEqual(calendar.historySelection(range), {
+    kind: "range",
+    from: "2026-10-05",
+    to: "2026-10-12",
+  });
+  assert.equal(calendar.filterBySelection(records, range, now).length, 3);
+  const dates = calendar.changeHistoryCalendar(
+    base,
+    { type: "dates", dates: ["2026-10-05", "2026-10-12"], label: "Mondays" },
+    now,
+  );
+  assert.deepEqual(
+    calendar.filterBySelection(records, dates, now).map((r) => r.payload.date),
+    ["2026-10-05", "2026-10-12"],
+  );
+  assert.equal(
+    calendar.historySelection(
+      calendar.changeHistoryCalendar(dates, { type: "clear" }, now),
+    ),
+    null,
+  );
+  assert.equal(calendar.filterBySelection(records, base, now).length, 4);
+  // Tapping the chosen day again clears it; a drag release keeps it.
+  assert.equal(
+    calendar.changeHistoryCalendar(
+      day,
+      { type: "day", date: "2026-10-06", toggle: true },
+      now,
+    ).selectedDate,
+    null,
+  );
 });
 
 test("month calendar starts on Monday and includes every leap-day exactly once", () => {

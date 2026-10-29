@@ -2,6 +2,7 @@ import HistoryCalendar from "@/components/HistoryCalendar";
 import HistorySetList from "@/components/HistorySetList";
 import {
   createHistoryCalendar,
+  filterBySelection,
   historyCalendarBounds,
 } from "@/lib/history-calendar";
 import { localizedDate } from "@/lib/dates";
@@ -48,10 +49,7 @@ export default function History() {
   );
   const bests = useMemo(() => newBestWorkoutIds(records), [records]);
   const period = historyCalendarBounds(calendar, now);
-  const filtered = records.filter(
-    ({ payload: { date } }) =>
-      period && date >= period.start && date <= period.end,
-  );
+  const filtered = filterBySelection(records, calendar, now);
   const weeks = [...new Set(filtered.map((r) => weekStart(r.payload.date)))];
   const selected = records.find((r) => r.id === params.get("workout"));
   const w = selected?.payload;

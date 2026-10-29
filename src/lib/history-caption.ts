@@ -13,12 +13,19 @@ export function historyCaption(
   value: Pick<
     HistoryCalendarState,
     "mode" | "selectedDate" | "from" | "to" | "activeBound"
-  >,
+  > &
+    Partial<Pick<HistoryCalendarState, "dates">>,
   counts: ReadonlyMap<string, number>,
   now: string,
 ) {
   const day = (date: string) =>
     `${shortDay(date)} · ${countLabel(counts.get(date) ?? 0, "workout")}`;
+  if (value.dates) {
+    const wanted = new Set(value.dates.dates);
+    let total = 0;
+    for (const [date, count] of counts) if (wanted.has(date)) total += count;
+    return `${value.dates.label} · ${countLabel(total, "workout")}`;
+  }
   if (value.mode === "range") {
     const { from, to } = value;
     if (!from && !to) return "Choose a start date";
