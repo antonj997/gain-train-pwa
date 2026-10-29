@@ -42,7 +42,13 @@ export default function PlanCalendar({
   initialMonth?: string;
   onPick: (date: string) => void;
 }) {
-  const [month, setMonth] = useState(initialMonth);
+  const firstMonth = first.slice(0, 7),
+    lastMonth = last.slice(0, 7);
+  const [chosen, setMonth] = useState(initialMonth);
+  // The span can move under the calendar (a new start or end date); keep the
+  // shown month inside it so the chevrons always lead somewhere.
+  const month =
+    chosen < firstMonth ? firstMonth : chosen > lastMonth ? lastMonth : chosen;
   const title = localizedDate(month + "-01", {
     month: "long",
     year: "numeric",
@@ -56,7 +62,7 @@ export default function PlanCalendar({
           type="button"
           className="icon-btn"
           aria-label="Previous month"
-          disabled={month <= first.slice(0, 7)}
+          disabled={month <= firstMonth}
           onClick={() => setMonth(moveCalendarMonth(month, -1))}
         >
           <ChevronLeft size={22} aria-hidden="true" />
@@ -68,7 +74,7 @@ export default function PlanCalendar({
           type="button"
           className="icon-btn"
           aria-label="Next month"
-          disabled={month >= last.slice(0, 7)}
+          disabled={month >= lastMonth}
           onClick={() => setMonth(moveCalendarMonth(month, 1))}
         >
           <ChevronRight size={22} aria-hidden="true" />

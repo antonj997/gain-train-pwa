@@ -524,3 +524,10 @@
 .month-grid.is-dragging {
   cursor: grabbing;
 }
+/* The plan calendars' header: chevrons either side of the month. */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
