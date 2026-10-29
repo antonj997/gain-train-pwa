@@ -336,11 +336,15 @@
 .workout-editor > * {
   min-width: 0;
 }
-/* A routine's form leaves the same room under its last row. */
+/* A routine's form leaves the same room under its last row. Its Save footer
+   then sticks that much lower, out of sight under the set's sheet. */
 .dialog-content.routine-dialog {
   padding-bottom: calc(
     var(--gt-space-4) + var(--sheet-space, 0px) + env(safe-area-inset-bottom)
   );
+}
+.dialog-content.routine-dialog .sheet-footer {
+  bottom: calc(var(--sheet-space, 0px) * -1);
 }
 
 /* Top bar: back, the name over one status line, and Finish or Save. */

@@ -84,6 +84,25 @@
   padding: 0 var(--gt-space-4) var(--gt-space-2);
   background-color: var(--gt-surface);
 }
+/* A long editor's Save stays in reach: a footer stuck to the sheet's bottom
+   edge. Its negative margin takes over the sheet's bottom padding, safe area
+   included; the sheet already sits above an on-screen keyboard. */
+.dialog-full .sheet-footer {
+  --sheet-bottom: calc(var(--gt-space-4) + env(safe-area-inset-bottom));
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+  margin: auto calc(var(--gt-space-4) * -1) calc(var(--sheet-bottom) * -1);
+  padding: var(--gt-space-3) var(--gt-space-4) var(--sheet-bottom);
+  border-top: 1px solid var(--gt-line);
+  background-color: var(--gt-surface);
+}
+.dialog-full .sheet-footer > button {
+  min-height: 44px;
+}
 
 /* The Close button is the grab handle. It is last in the markup, so the first
    field or button gets focus when the sheet opens, and is drawn first. It stays
