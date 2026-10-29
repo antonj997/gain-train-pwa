@@ -4,7 +4,8 @@ import { today } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
 import { toastWithUndo } from "@/lib/undo-toast";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { Plus, Play, Trash2, MoreHorizontal } from "lucide-react";
 import { useData } from "@/contexts/useData";
@@ -124,6 +125,15 @@ export default function RoutinesPanel() {
     setError(null);
     setOpen(true);
   };
+  // `?edit=<id>` (from the Train preview) opens that routine's editor once.
+  const [params, setParams] = useSearchParams();
+  const editId = params.get("edit");
+  useEffect(() => {
+    if (!editId) return;
+    const target = records.find((r) => r.id === editId);
+    setParams({}, { replace: true });
+    if (target) startEdit(target.id, target.payload);
+  });
   const create = () => {
     if (!edit)
       setEdit({
