@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  fromLegacyRow,
   fromSharedRow,
+  sharedFieldsChanged,
   toSharedInsert,
   visibleShared,
   type SharedRow,
@@ -11,7 +13,7 @@ import { filterExercises, type LibraryExercise } from "../src/lib/library";
 
 const row = (over: Partial<SharedRow> = {}): SharedRow => ({
   id: "11111111-1111-4111-8111-111111111111",
-  owner: "other",
+  mine: false,
   name: "Sled Push",
   category: "Legs",
   equipment: "sled",
@@ -47,9 +49,47 @@ test("a row becomes a custom exercise that points back at it", () => {
 
 test("the shared list leaves out own rows and ones already added", () => {
   const a = row({ id: "a" });
-  const mine = row({ id: "b", owner: "me" });
+  const mine = row({ id: "b", mine: true });
   const added = row({ id: "c" });
-  assert.deepEqual(visibleShared([a, mine, added], "me", new Set(["c"])), [a]);
+  assert.deepEqual(visibleShared([a, mine, added], new Set(["c"])), [a]);
+});
+
+test("an older server's row says whether it is mine instead of whose it is", () => {
+  const { mine: _mine, ...rest } = row();
+  const legacy = { ...rest, owner: "me" };
+  assert.equal(fromLegacyRow(legacy, "me").mine, true);
+  assert.equal(fromLegacyRow(legacy, "you").mine, false);
+  assert.equal("owner" in fromLegacyRow(legacy, "me"), false);
+});
+
+test("a shared row with oversized fields still adds as a valid exercise", () => {
+  const copy = fromSharedRow(
+    row({
+      name: "  " + "N".repeat(120),
+      aliases: ["a".repeat(5000), " ok ", "", ...Array(30).fill("x")],
+      equipment: "e".repeat(80),
+      measure: "m".repeat(40),
+      load: "levitating" as SharedRow["load"],
+    }),
+  );
+  assert.equal(copy.name.length, 100);
+  assert.equal(copy.aliases?.[0], "ok");
+  assert.equal(copy.aliases?.length, 20);
+  assert.equal(copy.equipment?.length, 50);
+  assert.equal(copy.measure?.length, 20);
+  assert.equal(copy.load, undefined);
+  assert.doesNotThrow(() => validate("exercise", copy));
+});
+
+test("only edits to the published fields need the shared copy updated", () => {
+  const base = validate("exercise", {
+    name: "Curl",
+    category: "Arms",
+    note: "",
+  });
+  assert.equal(sharedFieldsChanged(base, { ...base, note: "slow" }), false);
+  assert.equal(sharedFieldsChanged(base, { ...base, name: "Curls" }), true);
+  assert.equal(sharedFieldsChanged(base, { ...base, category: "Back" }), true);
 });
 
 test("search applies to shared rows", () => {

@@ -38,9 +38,15 @@ import {
 } from "@/lib/library";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchShared, publishExercise, unpublishExercise } from "@/data/shared";
+import {
+  fetchShared,
+  publishExercise,
+  unpublishExercise,
+  updateSharedExercise,
+} from "@/data/shared";
 import {
   fromSharedRow,
+  sharedFieldsChanged,
   visibleShared,
   type SharedRow,
 } from "@/lib/shared-exercises";
@@ -84,6 +90,7 @@ export default function ExercisesPanel() {
   const [sharing, setSharing] = useState(false);
   const canShare = !!supabase && !!user && account === user.id;
   const sharedReady = canShare && online;
+  const me = user?.id ?? "";
   const now = today();
   // The Shared list is fetched on demand each time the chip is chosen (a short
   // in-memory cache sits in data/shared.ts), and not at all when signed out or offline.
@@ -91,13 +98,13 @@ export default function ExercisesPanel() {
     if (filter !== "shared" || !sharedReady) return;
     let current = true;
     setShared((s) => ({ ...s, status: "loading" }));
-    fetchShared()
+    fetchShared(me)
       .then((rows) => current && setShared({ rows, status: "ready" }))
       .catch(() => current && setShared((s) => ({ ...s, status: "error" })));
     return () => {
       current = false;
     };
-  }, [filter, sharedReady]);
+  }, [filter, sharedReady, me]);
   const all = useMemo<LibraryExercise[]>(() => {
     const records = Object.values(state.records);
     const favourites = favouriteIds(state.records);
@@ -152,7 +159,7 @@ export default function ExercisesPanel() {
       ),
     );
     return filterExercises(
-      visibleShared(shared.rows, user?.id ?? "", added).map((r) => ({
+      visibleShared(shared.rows, added).map((r) => ({
         id: r.id,
         name: r.name,
         category: r.category,
@@ -168,7 +175,7 @@ export default function ExercisesPanel() {
       "all",
       { category, equipment },
     );
-  }, [filter, shared.rows, state.records, user, search, category, equipment]);
+  }, [filter, shared.rows, state.records, search, category, equipment]);
   const addShared = async (item: LibraryExercise) => {
     const row = shared.rows.find((r) => r.id === item.id);
     if (!row || adding) return;
@@ -344,7 +351,7 @@ export default function ExercisesPanel() {
                 className="text-button"
                 onClick={() => {
                   setShared((s) => ({ ...s, status: "loading" }));
-                  fetchShared(true)
+                  fetchShared(me, true)
                     .then((rows) => setShared({ rows, status: "ready" }))
                     .catch(() => setShared((s) => ({ ...s, status: "error" })));
                 }}
@@ -548,10 +555,23 @@ export default function ExercisesPanel() {
                 setBusy(true);
                 setError("");
                 try {
+                  const before = customPayload(edit.id);
                   await save(edit.id, "exercise", edit.data);
                   setEdit(null);
                   setOpen(false);
                   toast.success("Exercise saved");
+                  // Keep the published copy in step with a rename or a new category.
+                  const sharedId = before?.sharedId;
+                  if (
+                    sharedId &&
+                    before &&
+                    sharedFieldsChanged(before, edit.data)
+                  )
+                    await updateSharedExercise(sharedId, edit.data).catch(() =>
+                      toast.error(
+                        "The shared copy still shows the old details. Stop sharing and share again to update it.",
+                      ),
+                    );
                 } catch (cause) {
                   setError(
                     errorMessage(
@@ -697,8 +717,27 @@ export default function ExercisesPanel() {
         onCancel={() => setDeleting(null)}
         onConfirm={async () => {
           if (!deleting || busy) return;
+          const sharedId = customPayload(deleting.id)?.sharedId;
+          // A shared exercise leaves the shared library first, while its
+          // record still holds the id needed to remove it.
+          if (sharedId && !sharedReady) {
+            toast.error(
+              `Stop sharing ${deleting.name} first. Connect and sign in to remove it from the shared library.`,
+            );
+            setDeleting(null);
+            return;
+          }
           setBusy(true);
           try {
+            if (sharedId)
+              try {
+                await unpublishExercise(sharedId);
+              } catch {
+                toast.error(
+                  `Could not remove ${deleting.name} from the shared library. Nothing was deleted; retry.`,
+                );
+                return;
+              }
             await deleteRecord(deleting.id);
             if (edit?.id === deleting.id) setEdit(null);
             setDeleting(null);
