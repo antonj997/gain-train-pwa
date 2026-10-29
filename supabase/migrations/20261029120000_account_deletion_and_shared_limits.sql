@@ -13,19 +13,28 @@
 -- Nothing here touches gain_records. Step 1 deletes legacy rows whose user no
 -- longer exists: the account they belonged to was already deleted.
 
--- 1. Legacy tables follow their user out.
-delete from public.workout_sessions s
-  where not exists (select 1 from auth.users u where u.id = s.user_id);
-delete from public.workout_templates t
-  where not exists (select 1 from auth.users u where u.id = t.user_id);
-alter table public.workout_sessions
-  drop constraint if exists workout_sessions_user_id_fkey,
-  add constraint workout_sessions_user_id_fkey
-    foreign key (user_id) references auth.users(id) on delete cascade;
-alter table public.workout_templates
-  drop constraint if exists workout_templates_user_id_fkey,
-  add constraint workout_templates_user_id_fkey
-    foreign key (user_id) references auth.users(id) on delete cascade;
+-- 1. Legacy tables follow their user out. Projects that already dropped them
+-- have nothing to do here.
+do $$
+begin
+  if to_regclass('public.workout_sessions') is not null then
+    delete from public.workout_sessions s
+      where not exists (select 1 from auth.users u where u.id = s.user_id);
+    alter table public.workout_sessions
+      drop constraint if exists workout_sessions_user_id_fkey,
+      add constraint workout_sessions_user_id_fkey
+        foreign key (user_id) references auth.users(id) on delete cascade;
+  end if;
+  if to_regclass('public.workout_templates') is not null then
+    delete from public.workout_templates t
+      where not exists (select 1 from auth.users u where u.id = t.user_id);
+    alter table public.workout_templates
+      drop constraint if exists workout_templates_user_id_fkey,
+      add constraint workout_templates_user_id_fkey
+        foreign key (user_id) references auth.users(id) on delete cascade;
+  end if;
+end;
+$$;
 -- template_exercises and workout_sets already cascade from their parents, and
 -- exercises.user_id already references auth.users on delete cascade.
 
