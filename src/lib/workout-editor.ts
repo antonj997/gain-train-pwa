@@ -1,5 +1,5 @@
 import { dropGroup, isDrop } from "../data/drops";
-import { initialSet } from "../data/workouts";
+import { hasLoggedExercise, initialSet } from "../data/workouts";
 import {
   newSet,
   today,
@@ -11,7 +11,7 @@ import {
   type WorkoutSet,
 } from "../data/model";
 import { hasExtraWeight } from "./set-load";
-import { CARDIO_MAX } from "./cardio";
+import { CARDIO_MAX, isCardioSet } from "./cardio";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
 
@@ -180,5 +180,44 @@ export function appendSet(exercise: Exercise, category?: string): Exercise {
       ...exercise.sets,
       prior ? newSet(prior) : initialSet(exercise.exerciseId, category),
     ],
+  };
+}
+
+/** The exercise a card is changed to; `category` is a custom exercise's own. */
+export type ExerciseTarget = { id: string; name: string; category?: string };
+
+/** True when the sets of the card's current exercise don't fit the target (strength vs cardio). */
+export function changeDiscardsSets(
+  exercise: Exercise,
+  target: ExerciseTarget,
+): boolean {
+  const toCardio = isCardioSet(initialSet(target.id, target.category));
+  return exercise.sets.some(isCardioSet) !== toCardio;
+}
+
+/** How many sets have entered values or are checked, and so would be lost. */
+export function loggedSetCount(exercise: Exercise): number {
+  return exercise.sets.filter((set) =>
+    hasLoggedExercise({ ...exercise, sets: [set] }),
+  ).length;
+}
+
+/**
+ * The card with another exercise, keeping its own id. The same kind of
+ * exercise (strength or cardio) keeps every set as it is; another kind gets
+ * the same number of fresh, empty, unchecked sets, and its drops are dropped.
+ */
+export function changeExercise(
+  exercise: Exercise,
+  target: ExerciseTarget,
+): Exercise {
+  const base = { ...exercise, exerciseId: target.id, name: target.name };
+  if (!changeDiscardsSets(exercise, target)) return base;
+  const count = Math.max(1, exercise.sets.filter((set) => !isDrop(set)).length);
+  return {
+    ...base,
+    sets: Array.from({ length: count }, () =>
+      initialSet(target.id, target.category),
+    ),
   };
 }
