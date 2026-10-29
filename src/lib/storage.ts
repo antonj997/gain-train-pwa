@@ -49,6 +49,8 @@ export function writeStored(
 export const storageKeys = {
   account: "gt-account",
   theme: "gain-train-theme",
+  /** "en" or "sv"; absent until this device has chosen. */
+  language: "gt-language",
   restSeconds: "gt-rest-seconds",
   haptics: "gt-haptics",
   weeklyGoal: "gt-weekly-goal",

@@ -16,9 +16,12 @@ import DeleteAccountSheet from "@/components/settings/DeleteAccountSheet";
 import {
   GoalSheet,
   RestSheet,
+  LanguageSheet,
   ThemeSheet,
 } from "@/components/settings/PreferenceSheets";
 import SyncIssues from "@/components/settings/SyncIssues";
+import { LANGUAGE_NAMES } from "@/i18n";
+import { useT } from "@/i18n/useT";
 import { countLabel } from "@/lib/labels";
 import {
   readTrainingPreferences,
@@ -26,14 +29,16 @@ import {
   saveTrainingPreferences,
 } from "@/lib/preferences";
 
-type SheetName = "bodyweight" | "goal" | "rest" | "theme" | "account";
+type SheetName =
+  "bodyweight" | "goal" | "rest" | "theme" | "language" | "account";
 
 export default function Settings() {
   const { user, account, signOut } = useAuth(),
     { state, syncing, error } = useData(),
     { theme } = useTheme(),
     { bodyWeightKg } = useProfile(),
-    navigate = useNavigate();
+    navigate = useNavigate(),
+    { t, language, locale } = useT();
   const [sheet, setSheet] = useState<SheetName | null>(null);
   const [preferences, setPreferences] = useState(readTrainingPreferences);
   const [accountBusy, setAccountBusy] = useState(false);
@@ -60,26 +65,26 @@ export default function Settings() {
   };
   const syncStatus = user
     ? syncing
-      ? "Signed in · syncing…"
+      ? t("settings.signedInSyncing")
       : dirty
-        ? `Signed in · ${dirty} pending`
-        : "Signed in · synced"
+        ? t("settings.signedInPending", { count: dirty })
+        : t("settings.signedInSynced")
     : account === "phone"
-      ? "Saved on this phone · sign in to sync"
-      : "Saved on this phone · sign in again to sync";
+      ? t("settings.phoneSignIn")
+      : t("settings.phoneSignInAgain");
   const goal = preferences.weeklyGoal;
   const closeSheet = () => setSheet(null);
 
   return (
     <div className="page settings-page">
       <PageHeader
-        title="Settings"
+        title={t("settings.title")}
         notices={false}
         leading={
           <button
             type="button"
             className="icon-btn"
-            aria-label="Back"
+            aria-label={t("common.back")}
             onClick={back}
           >
             <ChevronLeft size={22} aria-hidden="true" />
@@ -101,7 +106,7 @@ export default function Settings() {
               {(user?.email?.[0] ?? "?").toUpperCase()}
             </span>
           }
-          title={user?.email ?? "Not signed in"}
+          title={user?.email ?? t("settings.notSignedIn")}
           sub={
             <span className="status-line">
               <span
@@ -117,31 +122,43 @@ export default function Settings() {
       </div>
 
       <section>
-        <h2 className="group-title">Training</h2>
+        <h2 className="group-title">{t("settings.training")}</h2>
         <div className="list">
           <ListRow
-            title="Bodyweight"
-            value={bodyWeightKg === null ? "Not set" : `${bodyWeightKg} kg`}
+            title={t("settings.bodyweight")}
+            value={
+              bodyWeightKg === null
+                ? t("settings.notSet")
+                : t("common.kg", { value: bodyWeightKg.toLocaleString(locale) })
+            }
             chevron
             onClick={() => setSheet("bodyweight")}
           />
           <ListRow
-            title="Weekly goal"
-            value={goal === null ? "Off" : countLabel(goal, "workout")}
+            title={t("settings.weeklyGoal")}
+            value={
+              goal === null ? t("common.off") : countLabel(goal, "workout")
+            }
             chevron
             onClick={() => setSheet("goal")}
           />
           <ListRow
-            title="Rest timer"
+            title={t("settings.restTimer")}
             value={restLabel(preferences.restSeconds)}
             chevron
             onClick={() => setSheet("rest")}
           />
           <ListRow
-            title="Theme"
-            value={theme === "dark" ? "Dark" : "Light"}
+            title={t("settings.theme")}
+            value={theme === "dark" ? t("settings.dark") : t("settings.light")}
             chevron
             onClick={() => setSheet("theme")}
+          />
+          <ListRow
+            title={t("language.title")}
+            value={LANGUAGE_NAMES[language]}
+            chevron
+            onClick={() => setSheet("language")}
           />
         </div>
       </section>
@@ -149,33 +166,35 @@ export default function Settings() {
       <DataSection />
 
       <section>
-        <h2 className="group-title">Account</h2>
+        <h2 className="group-title">{t("settings.account")}</h2>
         {/* Signed out, the account row above is the way in. */}
         {(user || account !== "phone") && (
           <div className="list">
             {user ? (
               <>
                 <ListRow
-                  title="Sign out"
+                  title={t("settings.signOut")}
                   tone="accent"
                   disabled={accountBusy}
-                  onClick={() => void leave("Could not sign out. Try again.")}
+                  onClick={() => void leave(t("settings.signOutFailed"))}
                 />
                 <ListRow
-                  title="Delete account"
+                  title={t("settings.deleteAccount")}
                   tone="danger"
                   onClick={() => setConfirmDelete(true)}
                 />
               </>
             ) : (
               <>
-                <ListRow title="Sign in again" tone="accent" to="/auth" />
                 <ListRow
-                  title="Use this phone's own log instead"
+                  title={t("settings.signInAgain")}
+                  tone="accent"
+                  to="/auth"
+                />
+                <ListRow
+                  title={t("settings.usePhoneLog")}
                   disabled={accountBusy}
-                  onClick={() =>
-                    void leave("Could not switch logs. Try again.")
-                  }
+                  onClick={() => void leave(t("settings.switchFailed"))}
                 />
               </>
             )}
@@ -183,17 +202,17 @@ export default function Settings() {
         )}
         <p className="small-note group-note">
           {user
-            ? "Sync runs when connected while the app is open, and when you return. Your phone keeps a local copy."
+            ? t("settings.noteSignedIn")
             : account !== "phone"
-              ? "Your session ended, so this account's log is not syncing. It stays on this phone; sign in again to sync it."
-              : "An account is optional. Sign in to sync across devices; your phone-only log stays separate until you choose to copy it."}
+              ? t("settings.noteSessionEnded")
+              : t("settings.notePhone")}
         </p>
       </section>
 
       <Sheet
         open={sheet === "bodyweight"}
         onClose={closeSheet}
-        title="Bodyweight"
+        title={t("settings.bodyweight")}
       >
         <ProfileForm />
       </Sheet>
@@ -210,6 +229,7 @@ export default function Settings() {
         onChange={updatePreferences}
       />
       <ThemeSheet open={sheet === "theme"} onClose={closeSheet} />
+      <LanguageSheet open={sheet === "language"} onClose={closeSheet} />
       <AccountSheet
         open={sheet === "account"}
         onClose={closeSheet}

@@ -580,6 +580,11 @@ h3,
 details[open] > .session-summary > svg {
   transform: rotate(180deg);
 }
+.language-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
 .theme-setting {
   display: flex;
   justify-content: space-between;

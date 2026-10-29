@@ -1,11 +1,10 @@
+import { currentLocale } from "../i18n";
+
 // Creating an Intl.DateTimeFormat is far slower than using one, and screens
 // such as the heatmap format hundreds of dates per render.
 const formats = new Map<string, Intl.DateTimeFormat>();
-function dateFormat(
-  locale: string | undefined,
-  options: Intl.DateTimeFormatOptions,
-) {
-  const key = (locale ?? "") + JSON.stringify(options);
+function dateFormat(locale: string, options: Intl.DateTimeFormatOptions) {
+  const key = locale + JSON.stringify(options);
   let format = formats.get(key);
   if (!format) {
     format = new Intl.DateTimeFormat(locale, options);
@@ -14,6 +13,7 @@ function dateFormat(
   return format;
 }
 
+/** A YYYY-MM-DD date in the app's language ("26 Oct 2026", "26 okt. 2026"). */
 export function localizedDate(
   value: string,
   options: Intl.DateTimeFormatOptions = {
@@ -21,11 +21,22 @@ export function localizedDate(
     month: "short",
     year: "numeric",
   },
-  locale?: string,
+  locale: string = currentLocale(),
 ) {
   const date = new Date(value + "T12:00:00");
   return Number.isNaN(date.getTime())
     ? value
+    : dateFormat(locale, options).format(date);
+}
+/** A moment (Date or epoch ms) in the app's language. */
+export function localizedMoment(
+  value: Date | number,
+  options: Intl.DateTimeFormatOptions,
+  locale: string = currentLocale(),
+) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? ""
     : dateFormat(locale, options).format(date);
 }
 /** The local calendar date as YYYY-MM-DD. */
@@ -98,11 +109,16 @@ export function addMonths(date: string, months: number) {
   return `${month}-${String(Math.min(from.getUTCDate(), last)).padStart(2, "0")}`;
 }
 
-/** The weekdays' names in the device's language, Monday first ("long" or "short"). */
-export const weekdayNames = (format: "long" | "short" = "long") =>
+/**
+ * The weekdays' names in the app's language, Monday first: "long" (Monday),
+ * "short" (Mon, mån) or "narrow" (M, M).
+ */
+export const weekdayNames = (
+  format: "long" | "short" | "narrow" = "long",
+  locale: string = currentLocale(),
+) =>
   Array.from({ length: 7 }, (_, i) =>
-    new Date(Date.UTC(2024, 0, i + 1)).toLocaleDateString(undefined, {
-      weekday: format,
-      timeZone: "UTC",
-    }),
+    dateFormat(locale, { weekday: format, timeZone: "UTC" }).format(
+      new Date(Date.UTC(2024, 0, i + 1)),
+    ),
   );

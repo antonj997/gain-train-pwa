@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { local, storageKeys, writeStored } from "./storage";
 export const TRAINING_PREFERENCES_EVENT = "gain-preferences-change";
 export type TrainingPreferences = {
@@ -45,7 +46,7 @@ export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
 export const restLabel = (seconds: number) =>
   seconds
     ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
-    : "Off";
+    : t("common.off");
 /** Whether this browser can vibrate at all; iPhone Safari cannot. */
 export const canVibrate = () =>
   typeof navigator !== "undefined" && typeof navigator.vibrate === "function";

@@ -1,3 +1,5 @@
+import { getLanguage } from "../i18n";
+
 /**
  * Train's title: dry, a little sarcastic, or a random fact. One line per day.
  * Short enough for two lines at 28px; no slogans, no exclamation marks.
@@ -35,6 +37,40 @@ export const HEADLINES = [
   "Your heart beats ~100,000 times a day",
 ];
 
+/** Swedish lines in the same spirit; written for Swedish, not translated. */
+export const HEADLINES_SV = [
+  // Torrt och lite syrligt
+  "Soffan klarar sig utan dig",
+  "Musklerna har lämnat in ett klagomål",
+  "Lyft nu, gnäll sen",
+  "Kondition är bara ett rykte",
+  "Dagens ursäkt är noterad",
+  "Vilodagar är ingen personlighet",
+  "Skivstången saknar dig. Troligen",
+  "Stel i morgon, nöjd i dag",
+  "Bendagen ringde. Igen.",
+  "Gravitationen: fortfarande obesegrad",
+  "Tunga saker lyfter inte sig själva",
+  "Spegeln kan vänta",
+  "Uppvärmning räknas. Tyvärr",
+  "Ingen behöver så många vilodagar",
+  "Mobilen är en utmärkt vilotimer",
+  // Slumpmässiga fakta
+  "Bläckfiskar har tre hjärtan",
+  "Ett dygn på Venus är längre än året",
+  "Hajar är äldre än träd",
+  "Vombatbajs är kubformat",
+  "Sengångare kan hålla andan i 40 min",
+  "Oxford är äldre än Aztekriket",
+  "Eiffeltornet växer på sommaren",
+  "Skottlands nationaldjur är en enhörning",
+  "Muskler kan bara dra, aldrig trycka",
+  "Hjärtat slår ~100 000 gånger om dygnet",
+  "Sverige har över 260 000 öar",
+  "Vasaskeppet sjönk efter 1 300 meter",
+  "Blixten är varmare än solens yta",
+];
+
 /** Days since 1970-01-01 in local time, so the line changes at local midnight. */
 function localDay(date: Date) {
   return Math.floor(
@@ -49,7 +85,7 @@ function localDay(date: Date) {
  */
 export function headlineFor(
   date: Date = new Date(),
-  lines: readonly string[] = HEADLINES,
+  lines: readonly string[] = getLanguage() === "sv" ? HEADLINES_SV : HEADLINES,
 ) {
   const n = lines.length;
   if (n === 0) return "";

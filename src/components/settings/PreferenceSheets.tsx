@@ -1,5 +1,7 @@
 import { Minus, Moon, Plus, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/useTheme";
+import { LANGUAGES, LANGUAGE_NAMES } from "@/i18n";
+import { useT } from "@/i18n/useT";
 import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
 import Switch from "@/components/ui/Switch";
@@ -26,15 +28,16 @@ export function GoalSheet({
   onChange,
 }: SheetProps) {
   const goal = preferences.weeklyGoal;
+  const { t } = useT();
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title="Weekly goal"
-      description="How many workouts you aim for each week, Monday to Sunday."
+      title={t("settings.weeklyGoal")}
+      description={t("settings.goalDescription")}
     >
       <Switch
-        label="Set a weekly goal"
+        label={t("settings.setGoal")}
         checked={goal !== null}
         onChange={(on) => onChange({ weeklyGoal: on ? 3 : null })}
       />
@@ -43,19 +46,19 @@ export function GoalSheet({
           <button
             type="button"
             className="icon-btn filled"
-            aria-label="One fewer workout"
+            aria-label={t("settings.fewerWorkout")}
             disabled={goal <= 1}
             onClick={() => onChange({ weeklyGoal: goal - 1 })}
           >
             <Minus size={20} aria-hidden="true" />
           </button>
           <output aria-live="polite">
-            <strong>{goal}</strong> {goal === 1 ? "workout" : "workouts"} a week
+            <strong>{goal}</strong> {t("settings.perWeekUnit", { count: goal })}
           </output>
           <button
             type="button"
             className="icon-btn filled"
-            aria-label="One more workout"
+            aria-label={t("settings.moreWorkout")}
             disabled={goal >= 14}
             onClick={() => onChange({ weeklyGoal: goal + 1 })}
           >
@@ -64,7 +67,7 @@ export function GoalSheet({
         </div>
       )}
       <button className="btn-primary" onClick={onClose}>
-        Done
+        {t("common.done")}
       </button>
     </Sheet>
   );
@@ -76,15 +79,16 @@ export function RestSheet({
   preferences,
   onChange,
 }: SheetProps) {
+  const { t } = useT();
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title="Rest timer"
-      description="Starts after checking a set as done."
+      title={t("settings.restTimer")}
+      description={t("settings.restDescription")}
     >
       <Segmented
-        label="Rest time"
+        label={t("settings.restTime")}
         value={String(preferences.restSeconds)}
         options={REST_OPTIONS.map((seconds) => ({
           value: String(seconds),
@@ -96,13 +100,11 @@ export function RestSheet({
       {canVibrate() && (
         <>
           <Switch
-            label="Vibrate when a set is done"
+            label={t("settings.vibrate")}
             checked={preferences.haptics}
             onChange={(haptics) => onChange({ haptics })}
           />
-          <p className="small-note">
-            Vibration is off by default and works on supported devices.
-          </p>
+          <p className="small-note">{t("settings.vibrateNote")}</p>
         </>
       )}
     </Sheet>
@@ -114,15 +116,16 @@ export function ThemeSheet({
   onClose,
 }: Pick<SheetProps, "open" | "onClose">) {
   const { theme, toggleTheme } = useTheme();
+  const { t } = useT();
   return (
-    <Sheet open={open} onClose={onClose} title="Theme">
+    <Sheet open={open} onClose={onClose} title={t("settings.theme")}>
       <div className="theme-setting">
-        <p>{theme === "dark" ? "Dark" : "Light"}</p>
+        <p>{theme === "dark" ? t("settings.dark") : t("settings.light")}</p>
         <button
           type="button"
           role="switch"
           aria-checked={theme === "light"}
-          aria-label="Light appearance"
+          aria-label={t("settings.lightAppearance")}
           className={
             "theme-switch " + (theme === "light" ? "is-day" : "is-night")
           }
@@ -138,6 +141,51 @@ export function ThemeSheet({
           <span className="theme-horizon" aria-hidden="true" />
         </button>
       </div>
+    </Sheet>
+  );
+}
+
+/** The language list: English and Svenska, each in its own language. */
+export function LanguageChoices({
+  onChoose,
+}: {
+  onChoose: (language: (typeof LANGUAGES)[number]) => void;
+}) {
+  const { language, chosen } = useT();
+  return (
+    <div className="language-choices">
+      {LANGUAGES.map((option) => {
+        const current = chosen && option === language;
+        return (
+          <button
+            key={option}
+            type="button"
+            lang={option}
+            className={current ? "btn-primary" : "btn-secondary"}
+            aria-pressed={current}
+            onClick={() => onChoose(option)}
+          >
+            {LANGUAGE_NAMES[option]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export function LanguageSheet({
+  open,
+  onClose,
+}: Pick<SheetProps, "open" | "onClose">) {
+  const { t, setLanguage } = useT();
+  return (
+    <Sheet open={open} onClose={onClose} title={t("language.title")}>
+      <LanguageChoices
+        onChoose={(language) => {
+          setLanguage(language);
+          onClose();
+        }}
+      />
     </Sheet>
   );
 }

@@ -3,6 +3,7 @@ import { registerSW } from "virtual:pwa-register";
 import { toast } from "sonner";
 import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { t } from "./i18n";
 import "./index.css";
 import "./styles/usability.css";
 import "./styles/pages.css";
@@ -15,7 +16,7 @@ const update = registerSW({
     showUpdate();
   },
   onOfflineReady() {
-    toast("Ready to log offline");
+    toast(t("app.offlineReady"));
   },
   // An installed app can stay open for days without a navigation, which is when
   // browsers normally look for a new version. Check on return and hourly.
@@ -32,11 +33,11 @@ const update = registerSW({
 });
 function showUpdate() {
   if (!updateReady || location.pathname.includes("/workout/")) return;
-  toast("An app update is ready.", {
+  toast(t("app.updateReady"), {
     id: "app-update",
     duration: Infinity,
     action: {
-      label: "Update",
+      label: t("app.update"),
       onClick: () => {
         if (!location.pathname.includes("/workout/")) void update(true);
       },
