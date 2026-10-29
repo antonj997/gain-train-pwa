@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowDown } from "lucide-react";
+import { topBarRootMargin } from "@/lib/root-margin";
 
 const reducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -19,10 +20,17 @@ export default function NextSetChip({ setId }: { setId?: string }) {
     const covered =
       document.querySelector("[data-top-bar]")?.getBoundingClientRect()
         .bottom ?? 0;
-    const observer = new IntersectionObserver(
-      ([entry]) => setOffscreen(!entry.isIntersecting),
-      { rootMargin: `-${Math.ceil(covered)}px 0px 0px 0px` },
-    );
+    const onChange: IntersectionObserverCallback = ([entry]) =>
+      setOffscreen(!entry.isIntersecting);
+    let observer: IntersectionObserver;
+    try {
+      observer = new IntersectionObserver(onChange, {
+        rootMargin: topBarRootMargin(covered),
+      });
+    } catch {
+      // A browser that still refuses the margin gets the plain viewport.
+      observer = new IntersectionObserver(onChange);
+    }
     observer.observe(row);
     return () => observer.disconnect();
   }, [setId]);
