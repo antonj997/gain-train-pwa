@@ -57,15 +57,46 @@ export function derivedUuid(seed: string) {
 export const libraryRecordId = (account: string) =>
   derivedUuid("library:" + account);
 
+const MAX_HIDDEN = 5000;
+const MAX_GROUPS = 50;
+
+/**
+ * One library made from two: every hidden id of both, and `extra`'s groups
+ * that `base` does not have by id. `base` wins for everything else.
+ */
+export function mergeLibraries(base: Library, extra: Library): Library {
+  const groups = [...(base.groups ?? [])];
+  for (const group of extra.groups ?? [])
+    if (!groups.some((g) => g.id === group.id)) groups.push(group);
+  return {
+    ...extra,
+    ...base,
+    hiddenExerciseIds: [
+      ...new Set([...base.hiddenExerciseIds, ...extra.hiddenExerciseIds]),
+    ].slice(0, MAX_HIDDEN),
+    ...(groups.length || base.groups
+      ? { groups: groups.slice(0, MAX_GROUPS) }
+      : {}),
+  };
+}
+
 /**
  * The account's library settings as saved, or empty ones. Save changes on top
  * of this so one setting (hidden exercises, groups) never drops the other.
+ * Library records other than the account's own (an earlier phone-log copy
+ * brought one) are merged in; `saveLibrary` folds them into the account's.
  */
 export function libraryOf(records: Records, account: string): Library {
-  const record = records[libraryRecordId(account)];
-  return record?.kind === "library" && !record.deleted
-    ? record.payload
-    : { hiddenExerciseIds: [] };
+  const own = libraryRecordId(account);
+  const record = records[own];
+  let library: Library =
+    record?.kind === "library" && !record.deleted
+      ? record.payload
+      : { hiddenExerciseIds: [] };
+  for (const r of Object.values(records))
+    if (r.kind === "library" && !r.deleted && r.id !== own)
+      library = mergeLibraries(library, r.payload);
+  return library;
 }
 
 /** Ids of exercises the user hid from their catalogue, built-in or their own. */

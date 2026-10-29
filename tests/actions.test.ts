@@ -8,12 +8,16 @@ import {
   type Workout,
 } from "../src/data/model";
 import {
+  copyPhoneLogIn,
+  copySummary,
   importRecordsIn,
   importSummary,
   parseImport,
+  saveLibraryIn,
   saveRecordIn,
   startsRunning,
 } from "../src/data/actions";
+import { hiddenIds, libraryOf, libraryRecordId } from "../src/data/exercises";
 import { WorkoutInProgressError } from "../src/data/workout-start";
 import { runningWorkouts } from "../src/data/selectors";
 
@@ -147,4 +151,98 @@ test("a restore counts added, brought back and kept records", () => {
     importSummary({ added: 0, restored: 0, kept: 4 }),
     /Nothing to restore/,
   );
+});
+
+const library = (
+  id: string,
+  hiddenExerciseIds: string[],
+  groups?: { id: string; name: string }[],
+): RecordDoc => ({
+  id,
+  kind: "library",
+  payload: {
+    hiddenExerciseIds,
+    ...(groups
+      ? {
+          groups: groups.map((g) => ({ ...g, routineIds: [], categories: [] })),
+        }
+      : {}),
+  },
+  revision: 1,
+  localVersion: 1,
+  dirty: false,
+  deleted: false,
+});
+
+test("copying the phone log merges its library and runs no second workout", () => {
+  const account = crypto.randomUUID(),
+    s = emptyState(),
+    running = crypto.randomUUID(),
+    phoneRunning = crypto.randomUUID(),
+    deletedHere = crypto.randomUUID(),
+    shared = crypto.randomUUID(),
+    groupA = crypto.randomUUID(),
+    groupB = crypto.randomUUID();
+  s.records[running] = record(running, workout(5_000, "Account"));
+  s.records[deletedHere] = {
+    ...record(deletedHere, workout(null)),
+    deleted: true,
+  };
+  s.records[shared] = record(shared, workout(null, "Account copy"));
+  s.records[libraryRecordId(account)] = library(
+    libraryRecordId(account),
+    ["squat"],
+    [{ id: groupA, name: "Legday" }],
+  );
+  const phone = [
+    record(phoneRunning, workout(1_000, "Phone")),
+    record(deletedHere, workout(null, "Deleted in the account")),
+    record(shared, workout(null, "Phone copy")),
+    library(
+      libraryRecordId("phone"),
+      ["bench", "squat"],
+      [
+        { id: groupA, name: "Phone legday" },
+        { id: groupB, name: "Pushday" },
+      ],
+    ),
+  ];
+  const result = copyPhoneLogIn(s, account, parseImport(phone));
+  assert.deepEqual(result, { added: 1, pastWorkouts: 1 });
+  // The phone's running workout arrives as a past one; the account's runs on.
+  assert.equal((s.records[phoneRunning].payload as Workout).startedAt, null);
+  assert.deepEqual(
+    runningWorkouts(s.records).map((r) => r.id),
+    [running],
+  );
+  // Deleted in the account stays deleted; the account's copy is kept.
+  assert.equal(s.records[deletedHere].deleted, true);
+  assert.equal((s.records[shared].payload as Workout).name, "Account copy");
+  // One library record: hidden ids of both, groups by id with the account's first.
+  assert.equal(s.records[libraryRecordId("phone")], undefined);
+  const merged = libraryOf(s.records, account);
+  assert.deepEqual([...merged.hiddenExerciseIds].sort(), ["bench", "squat"]);
+  assert.deepEqual(
+    merged.groups?.map((g) => g.name),
+    ["Legday", "Pushday"],
+  );
+  assert.match(copySummary(result), /Copied 1 record.*past workout/);
+});
+
+test("an earlier copy's second library record is folded in on the next save", () => {
+  const account = crypto.randomUUID(),
+    s = emptyState(),
+    own = libraryRecordId(account),
+    stray = libraryRecordId("phone");
+  s.records[own] = library(own, ["squat"]);
+  s.records[stray] = library(stray, ["bench"]);
+  assert.deepEqual(hiddenIds(s.records), new Set(["squat", "bench"]));
+  // Unhiding an exercise the phone's record hid now sticks.
+  const next = libraryOf(s.records, account);
+  saveLibraryIn(s, account, {
+    ...next,
+    hiddenExerciseIds: next.hiddenExerciseIds.filter((id) => id !== "bench"),
+  });
+  assert.equal(s.records[stray].deleted, true);
+  assert.deepEqual(hiddenIds(s.records), new Set(["squat"]));
 });

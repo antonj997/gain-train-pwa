@@ -5,7 +5,7 @@ import { useData } from "@/contexts/useData";
 import GroupEditor from "@/components/plan/GroupEditor";
 import PlanEditor from "@/components/plan/PlanEditor";
 import ListRow from "@/components/ui/ListRow";
-import { libraryOf, libraryRecordId } from "@/data/exercises";
+import { libraryOf } from "@/data/exercises";
 import { type RoutineGroup, today as todayDate } from "@/data/model";
 import { type PlanItem, activePlans, dayTypes, groupsOf } from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
@@ -23,7 +23,7 @@ const short = (date: string) =>
 
 /** Library → Plan: plans, groups and what day types suggest. Everything here is optional. */
 export default function PlanPanel() {
-  const { state, save } = useData();
+  const { state, saveLibrary } = useData();
   const { account } = useAuth();
   const today = todayDate();
   const plans = useMemo(() => activePlans(state.records), [state.records]);
@@ -45,10 +45,7 @@ export default function PlanPanel() {
   const current = shown.current;
 
   const saveGroups = (next: RoutineGroup[]) =>
-    save(libraryRecordId(account), "library", {
-      ...libraryOf(state.records, account),
-      groups: next,
-    });
+    saveLibrary({ ...libraryOf(state.records, account), groups: next });
 
   const status = (p: PlanItem) =>
     p.endDate < today

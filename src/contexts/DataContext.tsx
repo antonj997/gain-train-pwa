@@ -22,6 +22,9 @@ import {
   resolveConflictIn,
   retryRejectedIn,
   saveRecordIn,
+  copyPhoneLogIn,
+  saveLibraryIn,
+  type CopyResult,
   type ImportResult,
 } from "@/data/actions";
 import {
@@ -30,6 +33,7 @@ import {
   WorkoutInProgressError,
 } from "@/data/workout-start";
 import { useSyncLoop } from "@/hooks/useSyncLoop";
+import { PHONE_ACCOUNT } from "@/lib/auth-account";
 import { staleDraftKeys } from "@/lib/drafts";
 import { local, storedKeys } from "@/lib/storage";
 import { notifyOtherTabs, onOtherTabChange } from "@/lib/tab-sync";
@@ -183,9 +187,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
       );
       return result;
     };
+    const copyPhoneLog: Data["copyPhoneLog"] = async () => {
+      await syncRef.current();
+      let result: CopyResult = { added: 0, pastWorkouts: 0 };
+      await commit(
+        async () => {
+          const phone = parseImport(
+            Object.values((await readAccount(PHONE_ACCOUNT)).records),
+          );
+          return change((s) => {
+            result = copyPhoneLogIn(s, account, phone);
+          });
+        },
+        {
+          storage:
+            "Could not copy this phone’s log. Free some storage and try again.",
+        },
+      );
+      return result;
+    };
+    const saveLibrary: Data["saveLibrary"] = (library) =>
+      commit(
+        () => {
+          const parsed = validate("library", library);
+          return change((s) => saveLibraryIn(s, account, parsed));
+        },
+        {
+          storage:
+            "Could not save on this phone. Keep this screen open and free some storage.",
+        },
+      );
     return {
       save,
       deleteRecord,
+      copyPhoneLog,
+      saveLibrary,
       restoreWorkout,
       startWorkout,
       resolve,

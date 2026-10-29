@@ -6,12 +6,14 @@ import {
   SCHEMA_VERSION,
   recordKinds,
   type Kind,
+  type Library,
   type LocalState,
   type Payload,
   type RecordDoc,
   type Workout,
 } from "./model";
 import { startedWorkouts, WorkoutInProgressError } from "./workout-start";
+import { libraryRecordId, mergeLibraries } from "./exercises";
 
 // The local writes behind DataContext, as plain functions on the stored state.
 // Each runs inside one IndexedDB transaction (see `transact`): a throw rolls the
@@ -218,5 +220,101 @@ export function importSummary({ added, restored, kept }: ImportResult) {
   return (
     `Backup restored: ${parts.join(", ")}.` +
     (kept ? ` ${kept} already here ${kept === 1 ? "was" : "were"} kept.` : "")
+  );
+}
+
+/**
+ * Saves the account's library record and folds any other library record into
+ * it: an earlier phone-log copy brought the phone's own, and settings saved
+ * only to the account's could not undo what that one held.
+ */
+export function saveLibraryIn(
+  s: LocalState,
+  account: string,
+  library: Library,
+) {
+  const own = libraryRecordId(account);
+  for (const r of Object.values(s.records))
+    if (r.kind === "library" && !r.deleted && r.id !== own)
+      deleteRecordIn(s, r.id);
+  saveRecordIn(s, own, "library", library);
+}
+
+export type CopyResult = {
+  /** Records copied into the account. */
+  added: number;
+  /** Running workouts copied as past workouts, with no timer. */
+  pastWorkouts: number;
+};
+
+/** Phone-log records the account has never had, live or deleted. The library is merged, not copied. */
+export function phoneRecordsToCopy(
+  phone: Record<string, RecordDoc>,
+  account: Record<string, RecordDoc>,
+) {
+  return Object.values(phone).filter(
+    (r) => !r.deleted && r.kind !== "library" && !account[r.id],
+  );
+}
+
+/**
+ * Copies the phone-only log into a signed-in account, in one transaction.
+ * - Records the account already has stay as they are, and records deleted
+ *   in the account are not brought back.
+ * - The phone's library (hidden exercises, groups) is merged into the
+ *   account's one library record instead of being copied next to it.
+ * - A workout still running on the phone arrives as a past workout, so it
+ *   never blocks the copy or the account's own running workout.
+ */
+export function copyPhoneLogIn(
+  s: LocalState,
+  account: string,
+  phone: RecordDoc[],
+): CopyResult {
+  const result: CopyResult = { added: 0, pastWorkouts: 0 };
+  const byId = Object.fromEntries(phone.map((r) => [r.id, r]));
+  for (const r of phoneRecordsToCopy(byId, s.records)) {
+    let payload = r.payload;
+    if (
+      r.kind === "workout" &&
+      r.payload.status === "draft" &&
+      r.payload.startedAt !== null
+    ) {
+      payload = { ...r.payload, startedAt: null };
+      result.pastWorkouts++;
+    }
+    s.records[r.id] = {
+      id: r.id,
+      kind: r.kind,
+      payload,
+      deleted: false,
+      revision: 0,
+      localVersion: 1,
+      dirty: true,
+    } as RecordDoc;
+    result.added++;
+  }
+  const libraries = phone.filter((r) => r.kind === "library" && !r.deleted);
+  if (libraries.length) {
+    const own = s.records[libraryRecordId(account)];
+    let library: Library =
+      own?.kind === "library" && !own.deleted
+        ? own.payload
+        : { hiddenExerciseIds: [] };
+    for (const r of libraries)
+      library = mergeLibraries(library, r.payload as Library);
+    saveLibraryIn(s, account, validate("library", library));
+  }
+  return result;
+}
+
+/** The toast after copying the phone log. */
+export function copySummary({ added, pastWorkouts }: CopyResult) {
+  if (!added) return "Nothing new to copy: this account already has it all.";
+  return (
+    `Copied ${added} ${added === 1 ? "record" : "records"} from this phone.` +
+    (pastWorkouts
+      ? ` The workout running there was copied as a past workout.`
+      : "")
   );
 }

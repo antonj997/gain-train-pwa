@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { readAccount } from "@/data/database";
+import { phoneRecordsToCopy } from "@/data/actions";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { isSyncOutage } from "@/lib/sync-health";
@@ -27,9 +28,7 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
         .then((phone) => {
           if (active)
             setPhoneLogAvailable(
-              Object.values(phone.records).some(
-                (r) => !r.deleted && !records.current[r.id],
-              ),
+              phoneRecordsToCopy(phone.records, records.current).length > 0,
             );
         })
         .catch(() => {});

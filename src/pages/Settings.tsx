@@ -22,10 +22,9 @@ import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
 import Switch from "@/components/ui/Switch";
 import { removeProfileCache } from "@/lib/profile";
-import { readAccount } from "@/data/database";
 import { requestPersistentStorage } from "@/lib/persistence";
 import { recordLabel, type RecordDoc } from "@/data/model";
-import { importSummary } from "@/data/actions";
+import { copySummary, importSummary } from "@/data/actions";
 import { countLabel } from "@/lib/labels";
 import {
   readTrainingPreferences,
@@ -53,6 +52,7 @@ export default function Settings() {
       resolve,
       retryRejected,
       importRecords,
+      copyPhoneLog,
     } = useData(),
     { theme, toggleTheme } = useTheme(),
     { bodyWeightKg } = useProfile(),
@@ -549,9 +549,7 @@ export default function Settings() {
           onClick={async () => {
             setAccountBusy(true);
             try {
-              const phone = await readAccount("phone");
-              await importRecords(Object.values(phone.records));
-              toast.success("Phone workouts copied to this account");
+              toast.success(copySummary(await copyPhoneLog()));
             } catch (error) {
               toast.error(
                 errorMessage(
