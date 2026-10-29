@@ -82,6 +82,21 @@ export default function SetLine({
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
   if (lockedAttempt && !set.done) setLockedAttempt(false);
+  // The notice belongs to this row: it goes away once a tap or focus lands
+  // anywhere outside it.
+  const row = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!lockedAttempt) return;
+    const away = (event: Event) => {
+      if (!row.current?.contains(event.target as Node)) setLockedAttempt(false);
+    };
+    document.addEventListener("pointerdown", away, true);
+    document.addEventListener("focusin", away, true);
+    return () => {
+      document.removeEventListener("pointerdown", away, true);
+      document.removeEventListener("focusin", away, true);
+    };
+  }, [lockedAttempt]);
 
   const drop = isDrop(set);
   // Unique within the exercise: "Bench Press set 2", "Bench Press drop 1 after set 2".
@@ -191,6 +206,7 @@ export default function SetLine({
     .join(" ");
   return (
     <div
+      ref={row}
       data-set-id={set.id}
       data-mode={mode}
       className={classes}
