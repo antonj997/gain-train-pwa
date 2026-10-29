@@ -57,6 +57,15 @@ export const customSchema = z.object({
   category: z.string().max(50),
   note: z.string().max(1000),
   favourite: z.boolean().default(false),
+  /** Id of this exercise's row in shared_exercises while it is shared. */
+  sharedId: z.string().uuid().optional(),
+  /** Id of the shared row this exercise was copied from. It works without that row. */
+  sharedFrom: z.string().uuid().optional(),
+  /** Copied from a shared exercise; used by search. */
+  equipment: z.string().max(50).optional(),
+  aliases: z.array(z.string().max(100)).max(20).optional(),
+  load: z.enum(["weight", "bodyweight", "assisted"]).optional(),
+  measure: z.string().max(20).optional(),
 });
 const isoDay = z
   .string()
