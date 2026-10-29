@@ -156,33 +156,33 @@ test("month day filtering toggles off and browsing another month clears only the
   });
 });
 
-test("changing calendar display and reselecting the active mode preserve the chosen range", () => {
+test("switching to the simple display clears a range, and detailed keeps it", () => {
   const now = "2026-10-26";
-  let state = {
+  const ranged = {
     ...calendar.createHistoryCalendar(now),
+    display: "detailed" as const,
     mode: "range" as const,
     from: "2026-09-29",
     to: "2026-10-10",
   };
-  state = calendar.changeHistoryCalendar(
-    state,
+  const simple = calendar.changeHistoryCalendar(
+    ranged,
     { type: "display", display: "simple" },
     now,
   );
-  state = calendar.changeHistoryCalendar(
-    state,
-    { type: "mode", mode: "range" },
-    now,
-  );
-  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
-    start: "2026-09-29",
-    end: "2026-10-10",
-  });
-  assert.equal(state.display, "simple");
+  assert.equal(simple.mode, "month");
+  assert.equal(simple.from, null);
+  assert.equal(simple.to, null);
   assert.equal(
-    calendar.changeHistoryCalendar(state, { type: "reset" }, now).display,
+    calendar.changeHistoryCalendar(simple, { type: "reset" }, now).display,
     "simple",
   );
+  const detailed = calendar.changeHistoryCalendar(
+    { ...ranged, display: "simple" },
+    { type: "display", display: "detailed" },
+    now,
+  );
+  assert.equal(detailed.from, "2026-09-29");
 });
 
 test("month calendar starts on Monday and includes every leap-day exactly once", () => {

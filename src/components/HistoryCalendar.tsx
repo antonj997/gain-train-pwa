@@ -1,9 +1,11 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import {
+  CalendarDays,
   CalendarRange,
-  RotateCcw,
   ChevronLeft,
   ChevronRight,
+  LayoutGrid,
+  X,
 } from "lucide-react";
 import { type RecordDoc } from "@/data/model";
 import { shiftDate } from "@/data/summary";
@@ -19,7 +21,6 @@ import {
 } from "@/lib/history-calendar";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
-import Segmented from "@/components/ui/Segmented";
 import "@/styles/history-calendar.css";
 
 export default function HistoryCalendar({
@@ -138,6 +139,29 @@ export default function HistoryCalendar({
         </div>
         <button
           type="button"
+          className="icon-btn calendar-view-toggle"
+          aria-label="Detailed calendar"
+          aria-pressed={display === "detailed"}
+          title={
+            display === "detailed"
+              ? "Detailed calendar · switch to simple"
+              : "Simple calendar · switch to detailed"
+          }
+          onClick={() =>
+            change({
+              type: "display",
+              display: display === "detailed" ? "simple" : "detailed",
+            })
+          }
+        >
+          {display === "detailed" ? (
+            <CalendarDays size={22} aria-hidden="true" />
+          ) : (
+            <LayoutGrid size={22} aria-hidden="true" />
+          )}
+        </button>
+        <button
+          type="button"
           className="icon-btn"
           aria-label="Next month"
           disabled={month >= currentMonth}
@@ -146,24 +170,10 @@ export default function HistoryCalendar({
           <ChevronRight size={22} aria-hidden="true" />
         </button>
       </div>
-      <div
-        className="calendar-toolbar"
-        role="group"
-        aria-label="Calendar controls"
-      >
-        <Segmented
-          label="Calendar display"
-          value={display}
-          options={[
-            { value: "simple", label: "Simple" },
-            { value: "detailed", label: "Detailed" },
-          ]}
-          onChange={(next) => change({ type: "display", display: next })}
-        />
+      {display === "detailed" && (
         <button
           type="button"
           className="calendar-range-toggle"
-          aria-label="Date range"
           aria-pressed={mode === "range"}
           title={
             mode === "month"
@@ -174,9 +184,10 @@ export default function HistoryCalendar({
             change({ type: "mode", mode: mode === "month" ? "range" : "month" })
           }
         >
-          <CalendarRange size={22} aria-hidden="true" />
+          <CalendarRange size={20} aria-hidden="true" />
+          Date range
         </button>
-      </div>
+      )}
       {mode === "range" && (
         <div className="calendar-range-fields">
           {(["from", "to"] as const).map((bound) => (
@@ -257,7 +268,7 @@ export default function HistoryCalendar({
                 if (node) buttons.current.set(cell.date, node);
                 else buttons.current.delete(cell.date);
               }}
-              className={`calendar-day${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${mode === "range" && from === cell.date ? " is-range-start" : ""}${mode === "range" && to === cell.date ? " is-range-end" : ""}${edges?.start ? " range-row-start" : ""}${edges?.end ? " range-row-end" : ""}${!cell.inMonth ? " outside-month" : ""}`}
+              className={`calendar-day${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${count > 0 ? " has-workout" : ""}${mode === "range" && from === cell.date ? " is-range-start" : ""}${mode === "range" && to === cell.date ? " is-range-end" : ""}${edges?.start ? " range-row-start" : ""}${edges?.end ? " range-row-end" : ""}${!cell.inMonth ? " outside-month" : ""}`}
               disabled={!cell.inMonth || cell.date > now}
               tabIndex={cell.date === focusable ? 0 : -1}
               aria-current={cell.date === now ? "date" : undefined}
@@ -268,18 +279,14 @@ export default function HistoryCalendar({
               onKeyDown={(event) => onDateKey(event, cell.date)}
               onClick={() => change({ type: "date", date: cell.date })}
             >
-              {display === "simple" ? (
-                <span
-                  className={`calendar-square${count > 0 ? " is-filled" : ""}`}
-                  aria-hidden="true"
-                />
-              ) : (
-                <>
-                  <span>{cell.day}</span>
-                  {cell.inMonth && count > 0 && (
-                    <span className="calendar-workout-dot" aria-hidden="true" />
-                  )}
-                </>
+              <span>{cell.day}</span>
+              {cell.inMonth && count > 0 && display === "detailed" && (
+                <span className="calendar-workout-dot" aria-hidden="true" />
+              )}
+              {cell.inMonth && count > 1 && display === "simple" && (
+                <span className="calendar-count" aria-hidden="true">
+                  {count}
+                </span>
               )}
             </button>
           );
@@ -294,11 +301,11 @@ export default function HistoryCalendar({
           <button
             type="button"
             className="text-button calendar-reset"
-            title={`Show all workouts in ${localizedDate(now, { month: "long", year: "numeric" })}`}
+            title={`Clear the selection and show ${localizedDate(now, { month: "long", year: "numeric" })}`}
             onClick={() => change({ type: "reset" })}
           >
-            <RotateCcw size={14} aria-hidden="true" />
-            Show current month
+            <X size={16} aria-hidden="true" />
+            Clear selection
           </button>
         )}
       </div>
