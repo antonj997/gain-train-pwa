@@ -39,6 +39,7 @@ export default function SetLine({
   bodyWeightKg = null,
   next = false,
   editing = false,
+  unlocked = false,
   canCheck,
   checkHint,
   onOpenSheet,
@@ -58,6 +59,11 @@ export default function SetLine({
   next?: boolean;
   /** Its Set sheet is open. */
   editing?: boolean;
+  /**
+   * A checked set's values stay editable: editing a finished workout, where
+   * every set is checked. A live workout locks them until unchecked.
+   */
+  unlocked?: boolean;
   /** The set, and any drops it has, can be checked. */
   canCheck: boolean;
   /** Why the check can't be pressed yet; shown under the row when tapped. */
@@ -83,7 +89,8 @@ export default function SetLine({
   }, [set.done]);
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
-  if (lockedAttempt && !set.done) setLockedAttempt(false);
+  const locked = set.done && !unlocked;
+  if (lockedAttempt && !locked) setLockedAttempt(false);
   // The notices belong to this row: they go away once a tap or focus lands
   // anywhere outside it.
   const row = useRef<HTMLDivElement>(null);
@@ -127,14 +134,17 @@ export default function SetLine({
   const errorId = `set-errors-${set.id}`;
   const lockId = `set-locked-${set.id}`;
   const hintId = `set-hint-${set.id}`;
-  const showLock = set.done && lockedAttempt;
+  const showLock = locked && lockedAttempt;
   const checkDisabled = !set.done && !canCheck;
   const showHint = checkDisabled && !!checkHint;
   // Once the set can be checked, the reason it couldn't is old news.
   if (hintShown && !showHint) setHintShown(false);
+  // A blank field in an open row is just not filled in yet; in a checked row
+  // that can be edited, it is a mistake to fix before saving.
   const visibleIssues = Object.entries(issues)
     .filter(
       ([field]) =>
+        (set.done && unlocked) ||
         getSetInputText(set, field as InputField) !== undefined ||
         (set[field as InputField] ?? null) !== null,
     )
@@ -153,11 +163,11 @@ export default function SetLine({
     value: number | null,
     unfinishedText?: string,
   ) => {
-    if (set.done) {
+    if (locked) {
       setLockedAttempt(true);
       return;
     }
-    onChange(changeSetNumber(set, field, value, unfinishedText));
+    onChange(changeSetNumber(set, field, value, unfinishedText, unlocked));
   };
 
   const cardioFields = [
@@ -258,7 +268,7 @@ export default function SetLine({
                 inputText={getSetInputText(set, field)}
                 parse={props.parse}
                 format={props.format}
-                readOnly={set.done}
+                readOnly={locked}
                 onLockedAttempt={() => setLockedAttempt(true)}
                 onValueChange={(value, text) =>
                   updateNumber(field, value, text)
@@ -310,7 +320,7 @@ export default function SetLine({
                 placeholder={marker === "kg" ? undefined : "kg"}
                 value={set.weight}
                 inputText={getSetInputText(set, "weight")}
-                readOnly={set.done}
+                readOnly={locked}
                 onLockedAttempt={() => setLockedAttempt(true)}
                 onValueChange={(value, text) =>
                   updateNumber("weight", value, text)
@@ -342,7 +352,7 @@ export default function SetLine({
               placeholder={timed ? "sec" : "reps"}
               value={set.reps}
               inputText={getSetInputText(set, "reps")}
-              readOnly={set.done}
+              readOnly={locked}
               onLockedAttempt={() => setLockedAttempt(true)}
               onValueChange={(value, text) => updateNumber("reps", value, text)}
             />

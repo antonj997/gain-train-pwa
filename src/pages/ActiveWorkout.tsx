@@ -168,10 +168,13 @@ function Editor({
   };
   const save = () => void complete(routine && !fromRoutine);
 
+  // Checked values are editable while editing, so say why Save is off.
   const saveStatus = editing
-    ? dirty
-      ? "Unsaved"
-      : "Saved"
+    ? invalidChecked
+      ? "Fix marked sets"
+      : dirty
+        ? "Unsaved"
+        : "Saved"
     : error
       ? "Needs attention"
       : saved
@@ -187,7 +190,7 @@ function Editor({
         completed={completed}
         total={total}
         saveStatus={saveStatus}
-        saveError={!!error && !editing}
+        saveError={editing ? invalidChecked : !!error}
         finishDisabled={
           busy || invalidChecked || (!editing && !!error) || (editing && !dirty)
         }
@@ -216,6 +219,7 @@ function Editor({
           nextSetId={
             ex.sets.some((s) => s.id === nextSet?.id) ? nextSet?.id : undefined
           }
+          unlockChecked={editing}
           defaults={defaults.get(ex.exerciseId)}
           onChange={update}
           onMove={move}
