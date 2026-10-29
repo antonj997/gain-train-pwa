@@ -1,4 +1,4 @@
-import { type RecordDoc, type Workout } from "../data/model";
+import { type RecordDoc } from "../data/model";
 import {
   addMonths,
   endOfMonth,
