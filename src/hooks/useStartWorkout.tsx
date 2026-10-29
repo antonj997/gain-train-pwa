@@ -10,6 +10,7 @@ import {
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { errorMessage } from "@/lib/errors";
 import { workoutPath } from "@/lib/routes";
+import { toastWithUndo } from "@/lib/undo-toast";
 
 type PendingStart = {
   id: string;
@@ -20,7 +21,7 @@ type PendingStart = {
 };
 
 export function useStartWorkout() {
-  const { startWorkout } = useData();
+  const { startWorkout, deleteRecord, restoreWorkout } = useData();
   const navigate = useNavigate();
   const lock = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -47,6 +48,19 @@ export function useStartWorkout() {
           ? { state: { suggest: request.suggest } }
           : undefined,
       );
+      // "Abandon and start" removed the running workout; offer it back.
+      const replaced = request.replacing?.[0];
+      if (replaced)
+        toastWithUndo(
+          `“${replaced.name}” abandoned`,
+          async () => {
+            navigate("/", { replace: true });
+            await deleteRecord(request.id);
+            await restoreWorkout(replaced.id);
+            navigate(workoutPath(replaced.id));
+          },
+          "Could not bring back the earlier workout. Try importing a backup.",
+        );
     } catch (error) {
       if (error instanceof WorkoutInProgressError)
         setPending({ ...request, replacing: error.workouts });

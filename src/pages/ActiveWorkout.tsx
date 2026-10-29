@@ -310,9 +310,18 @@ function Editor({
   const abandonWorkout = () =>
     runLocked(async () => {
       await autosave.flush();
-      await deleteRecord(id);
+      // Leave first: deleting re-renders this route, which would flash
+      // "Workout not found" before the navigation.
+      navigate("/", { replace: true });
+      try {
+        await deleteRecord(id);
+      } catch (cause) {
+        toast.error(
+          errorMessage(cause, "Could not abandon. The workout is still here."),
+        );
+        return;
+      }
       rest.skip();
-      navigate("/");
       toastWithUndo(
         "Workout abandoned",
         () => restoreWorkout(id),
@@ -524,7 +533,10 @@ function Editor({
         cancelLabel="Keep editing"
         confirmLabel="Discard changes"
         onCancel={() => setDiscardChanges(false)}
-        onConfirm={() => navigate(historyPath(id))}
+        onConfirm={() => {
+          autosave.discard();
+          navigate(historyPath(id));
+        }}
       />
       {editing ? (
         <ConfirmDialog

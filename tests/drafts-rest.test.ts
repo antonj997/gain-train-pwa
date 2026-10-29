@@ -5,6 +5,7 @@ import {
   readDraft,
   writeDraft,
   parseRoutineDraft,
+  parseWorkoutRecovery,
   readRestEnd,
   extendRestEnd,
 } from "../src/lib/drafts.ts";
@@ -99,4 +100,34 @@ test("rest and haptics stay off for absent or malformed preferences", () => {
     haptics: true,
     weeklyGoal: null,
   });
+});
+
+test("workout recovery keeps the stored version it was based on", () => {
+  const workout = {
+    name: "Push",
+    date: "2026-10-12",
+    duration: null,
+    startedAt: 1,
+    status: "draft" as const,
+    exercises: [],
+  };
+  assert.deepEqual(parseWorkoutRecovery({ workout, base: "key" }), {
+    workout,
+    base: "key",
+  });
+  // Drafts saved before the base was kept are the workout itself.
+  assert.deepEqual(parseWorkoutRecovery(workout), { workout, base: null });
+  // A finished workout's edit is read only as such.
+  assert.equal(
+    parseWorkoutRecovery({ workout, base: null }, "completed"),
+    null,
+  );
+  assert.deepEqual(
+    parseWorkoutRecovery(
+      { workout: { ...workout, status: "completed" }, base: "k" },
+      "completed",
+    )?.base,
+    "k",
+  );
+  assert.equal(parseWorkoutRecovery({ workout: { name: 1 } }), null);
 });

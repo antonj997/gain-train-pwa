@@ -22,15 +22,21 @@ export function staleDraftKeys(
   account: string,
   records: Record<string, RecordDoc>,
 ) {
-  const prefixes = [draftKey(account, "workout"), draftKey(account, "rest")];
+  // Which workouts each kind of key belongs to: running ones, or (for an
+  // unsaved edit of a finished workout) finished ones.
+  const prefixes = [
+    [draftKey(account, "workout"), "draft"],
+    [draftKey(account, "rest"), "draft"],
+    [draftKey(account, "edit"), "completed"],
+  ] as const;
   return keys.filter((key) => {
-    const prefix = prefixes.find((p) => key.startsWith(p));
-    const record = prefix && records[key.slice(prefix.length)];
+    const match = prefixes.find(([p]) => key.startsWith(p));
+    const record = match && records[key.slice(match[0].length)];
     return (
       !!record &&
       (record.deleted ||
         record.kind !== "workout" ||
-        record.payload.status !== "draft")
+        record.payload.status !== match[1])
     );
   });
 }
@@ -96,6 +102,32 @@ export function parseWorkoutDraft(value: unknown) {
   return result.success && result.data.status === "draft"
     ? keepUnknownFields(value, result.data)
     : null;
+}
+
+/**
+ * Unsaved workout entries kept on the phone, with `base`: the stored
+ * workout's content key when the entries were made. A recovered draft whose
+ * workout has changed since (sync, another tab) is then flagged as changed
+ * elsewhere instead of silently replacing the newer version.
+ */
+export type WorkoutRecovery = { workout: Workout; base: string | null };
+
+/** Reads a recovery draft of a running (`draft`) or finished (`completed`) workout. */
+export function parseWorkoutRecovery(
+  value: unknown,
+  status: Workout["status"] = "draft",
+): WorkoutRecovery | null {
+  // Drafts written before `base` existed are the workout itself.
+  const wrapped =
+    !!value && typeof value === "object" && "workout" in value
+      ? (value as { workout: unknown; base?: unknown })
+      : { workout: value, base: null };
+  const result = workoutDraft.safeParse(wrapped.workout);
+  if (!result.success || result.data.status !== status) return null;
+  return {
+    workout: keepUnknownFields(wrapped.workout, result.data),
+    base: typeof wrapped.base === "string" ? wrapped.base : null,
+  };
 }
 export function readRestEnd(
   storage: DraftStorage,

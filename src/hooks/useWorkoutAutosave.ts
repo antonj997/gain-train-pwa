@@ -5,7 +5,7 @@ import {
   draftKey,
   readDraft,
   writeDraft,
-  parseWorkoutDraft,
+  parseWorkoutRecovery,
 } from "@/lib/drafts";
 import { errorMessage } from "@/lib/errors";
 import { local } from "@/lib/storage";
@@ -13,15 +13,19 @@ import { assertNotFuture, workoutContentKey } from "@/lib/workout-editor";
 
 // Save once typing pauses instead of on every keystroke. The recovery draft is
 // still written on every change, so nothing typed is lost in between.
-export const AUTOSAVE_DELAY_MS = 600;
+const AUTOSAVE_DELAY_MS = 600;
 const SAVE_FAILED = "Could not save. Retry to keep your changes.";
+const FINISHED_ELSEWHERE =
+  "This workout was finished on another device, so changes here are not saved. Your entries are kept on this phone; open the workout in History to edit it.";
 
 type PendingSave = { value: Workout; version: number; retained: boolean };
 
 /**
  * Editor state for one workout. Drafts save automatically; completed workouts
- * being edited only change on an explicit save. Also reports when the stored
- * workout was changed in another tab or on another device.
+ * being edited only change on an explicit save. Both keep a recovery draft on
+ * the phone until saved, since iOS ends a backgrounded app quickly. Also
+ * reports when the stored workout was changed in another tab or on another
+ * device.
  */
 export function useWorkoutAutosave(
   id: string,
@@ -29,12 +33,19 @@ export function useWorkoutAutosave(
   initial: Workout,
 ) {
   const { state, save } = useData();
-  const editing = initial.status === "completed";
-  const recoveryKey = draftKey(account, "workout", id);
+  // Fixed for the editor's lifetime: a draft finished on another device while
+  // open here must not turn this screen into "edit a finished workout".
+  const [editing] = useState(initial.status === "completed");
+  const status: Workout["status"] = editing ? "completed" : "draft";
+  const recoveryKey = draftKey(account, editing ? "edit" : "workout", id);
   const [recovered] = useState(() =>
-    editing ? null : readDraft(local, recoveryKey, parseWorkoutDraft),
+    readDraft(local, recoveryKey, (value) =>
+      parseWorkoutRecovery(value, status),
+    ),
   );
-  const [workout, setWorkoutState] = useState<Workout>(recovered ?? initial);
+  const [workout, setWorkoutState] = useState<Workout>(
+    recovered?.workout ?? initial,
+  );
   // The entries as last changed, for edits that build on the previous one
   // before React re-renders (see `changeWith`).
   const latest = useRef(workout);
@@ -45,7 +56,9 @@ export function useWorkoutAutosave(
   const [saved, setSaved] = useState(!recovered);
   const [error, setError] = useState<string | null>(
     recovered
-      ? "Recovered unsaved entries. Correct any errors, then retry saving."
+      ? editing
+        ? "Recovered changes you had not saved. Save to keep them, or leave to discard them."
+        : "Recovered unsaved entries. Correct any errors, then retry saving."
       : null,
   );
   const queue = useRef(Promise.resolve());
@@ -53,9 +66,30 @@ export function useWorkoutAutosave(
   const locked = useRef(false);
   const pending = useRef<PendingSave | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>();
-  // What this editor last loaded or saved; anything else stored came from elsewhere.
-  const known = useRef(workoutContentKey(initial));
+  // What this editor last loaded or saved; anything else stored came from
+  // elsewhere. A recovered draft starts from the version it was made on.
+  const known = useRef(recovered?.base ?? workoutContentKey(initial));
   const inFlight = useRef<string | null>(null);
+
+  const stored = state.records[id];
+  const storedWorkout =
+    stored?.kind === "workout" && !stored.deleted ? stored.payload : null;
+  // Canonicalising is not free; do it once per stored version, not per keystroke.
+  const storedKey = useMemo(
+    () => (storedWorkout ? workoutContentKey(storedWorkout) : null),
+    [storedWorkout],
+  );
+  const finishedElsewhere = !editing && storedWorkout?.status === "completed";
+  const finishedRef = useRef(finishedElsewhere);
+  finishedRef.current = finishedElsewhere;
+
+  /** Keeps unsaved entries on the phone, with the stored version they build on. */
+  const retain = (value: Workout | null) =>
+    writeDraft(
+      local,
+      recoveryKey,
+      value && { workout: value, base: known.current },
+    );
 
   /** Starts any waiting save now. Resolves when every queued save has settled. */
   const flush = () => {
@@ -66,6 +100,7 @@ export function useWorkoutAutosave(
       queue.current = queue.current
         .catch(() => {})
         .then(async () => {
+          if (finishedRef.current) throw new Error(FINISHED_ELSEWHERE);
           // Saving normalizes the entry (e.g. trims the name); compare that form.
           const key = workoutContentKey(validate("workout", job.value));
           inFlight.current = key;
@@ -78,16 +113,18 @@ export function useWorkoutAutosave(
           if (job.version === version.current) {
             setSaved(true);
             setError(null);
-            writeDraft(local, recoveryKey, null);
+            retain(null);
           }
         })
         .catch((cause) => {
           if (job.version === version.current)
             setError(
-              errorMessage(cause, SAVE_FAILED) +
-                (job.retained
-                  ? " Unsaved entries are kept on this phone. Retry saving."
-                  : " Keep this screen open and retry saving."),
+              cause instanceof Error && cause.message === FINISHED_ELSEWHERE
+                ? FINISHED_ELSEWHERE
+                : errorMessage(cause, SAVE_FAILED) +
+                    (job.retained
+                      ? " Unsaved entries are kept on this phone. Retry saving."
+                      : " Keep this screen open and retry saving."),
             );
         });
     return queue.current;
@@ -95,6 +132,7 @@ export function useWorkoutAutosave(
   /** Saves `value` (e.g. the finished workout) after anything still waiting. */
   const saveNow = async (value: Workout) => {
     await flush();
+    if (finishedRef.current) throw new Error(FINISHED_ELSEWHERE);
     const key = workoutContentKey(validate("workout", value));
     inFlight.current = key;
     try {
@@ -103,7 +141,7 @@ export function useWorkoutAutosave(
     } finally {
       inFlight.current = null;
     }
-    writeDraft(local, recoveryKey, null);
+    retain(null);
   };
   const flushRef = useRef(flush);
   flushRef.current = flush;
@@ -124,13 +162,22 @@ export function useWorkoutAutosave(
 
   function change(next: Workout) {
     if (locked.current) return;
-    const value = { ...next, status: initial.status };
+    const value = { ...next, status };
     setWorkout(value);
     setSaved(false);
     setError(null);
     const current = ++version.current;
-    if (editing) return;
-    const retained = writeDraft(local, recoveryKey, value);
+    // A finished workout being edited changes only on an explicit save; an
+    // edit that is back to the saved version needs no recovery draft.
+    if (editing) {
+      retain(workoutContentKey(value) === known.current ? null : value);
+      return;
+    }
+    const retained = retain(value);
+    if (finishedRef.current) {
+      setError(FINISHED_ELSEWHERE);
+      return;
+    }
     try {
       validate("workout", value);
       assertNotFuture(value);
@@ -152,22 +199,6 @@ export function useWorkoutAutosave(
       AUTOSAVE_DELAY_MS,
     );
   }
-
-  const stored = state.records[id];
-  // Canonicalising is not free; do it once per stored version, not per keystroke.
-  const storedKey = useMemo(
-    () =>
-      stored?.kind === "workout" && !stored.deleted
-        ? workoutContentKey(stored.payload)
-        : null,
-    [stored],
-  );
-  const changedElsewhere =
-    !!storedKey &&
-    !pending.current &&
-    storedKey !== known.current &&
-    storedKey !== inFlight.current;
-
   const changeRef = useRef(change);
   changeRef.current = change;
   /** Applies `update` to the latest entries; one identity for the editor's lifetime. */
@@ -176,6 +207,13 @@ export function useWorkoutAutosave(
       changeRef.current(update(latest.current)),
     [],
   );
+
+  const changedElsewhere =
+    !!storedKey &&
+    !finishedElsewhere &&
+    !pending.current &&
+    storedKey !== known.current &&
+    storedKey !== inFlight.current;
 
   return {
     workout,
@@ -187,6 +225,12 @@ export function useWorkoutAutosave(
     setError,
     flush,
     saveNow,
+    /** Forgets this screen's unsaved entries, e.g. after "Discard changes". */
+    discard: () => {
+      clearTimeout(timer.current);
+      pending.current = null;
+      retain(null);
+    },
     /** Ignores edits while finishing or abandoning. */
     lock: () => {
       locked.current = true;
@@ -197,20 +241,20 @@ export function useWorkoutAutosave(
     changedElsewhere,
     /** Replaces this screen's entries with the stored version. */
     loadLatest: () => {
-      if (stored?.kind !== "workout") return;
+      if (!storedWorkout) return;
       clearTimeout(timer.current);
       pending.current = null;
       version.current++;
       known.current = storedKey!;
-      setWorkout(stored.payload);
+      setWorkout(storedWorkout);
       setSaved(true);
       setError(null);
-      writeDraft(local, recoveryKey, null);
+      retain(null);
     },
     /** Keeps this screen's entries; a draft saves them over the stored version. */
     keepMine: () => {
       known.current = storedKey!;
-      if (!editing) change(workout);
+      if (!editing) change(latest.current);
     },
   };
 }
