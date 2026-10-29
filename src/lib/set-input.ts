@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { WorkoutSet } from "../data/model";
+import { capturePointer, releasePointer } from "./pointer-capture";
 
 // Raw unfinished input belongs to local editor recovery, never saved records.
 export const setInputTextSchema = z.object({
@@ -136,8 +137,7 @@ export function createSetInputSelection(
   const release = () => {
     const active = gesture;
     gesture = null;
-    if (active?.input.hasPointerCapture(active.pointerId))
-      active.input.releasePointerCapture(active.pointerId);
+    if (active) releasePointer(active.input, active.pointerId);
   };
   return {
     onPointerDown(event: PointerInputEvent) {
@@ -157,7 +157,7 @@ export function createSetInputSelection(
         x: event.clientX,
         anchor: pointAt(input, event.clientX),
       };
-      input.setPointerCapture(event.pointerId);
+      capturePointer(input, event.pointerId);
     },
     onPointerMove(event: PointerInputEvent) {
       if (!gesture || gesture.pointerId !== event.pointerId) return;

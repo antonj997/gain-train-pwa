@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { capturePointer } from "@/lib/pointer-capture";
 
 // Base classes live in styles/primitives.css; callers add their own.
 const classes = (base: string, extra?: string) =>
@@ -59,7 +60,7 @@ function useDragToClose(content: React.RefObject<HTMLDivElement>) {
   return {
     onPointerDown(event: React.PointerEvent<HTMLButtonElement>) {
       if (event.button !== 0) return;
-      event.currentTarget.setPointerCapture(event.pointerId);
+      capturePointer(event.currentTarget, event.pointerId);
       drag.current = {
         id: event.pointerId,
         startY: event.clientY,

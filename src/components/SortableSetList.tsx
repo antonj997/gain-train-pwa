@@ -9,6 +9,7 @@ import {
 } from "react";
 import { GripVertical } from "lucide-react";
 import { type WorkoutSet } from "@/data/model";
+import { capturePointer, releasePointer } from "@/lib/pointer-capture";
 import {
   createSetReorderController,
   edgeScrollDelta,
@@ -86,11 +87,8 @@ export default function SortableSetList({
       window.cancelAnimationFrame(animationFrame.current);
       animationFrame.current = null;
     }
-    if (
-      drag?.pointerId !== undefined &&
-      drag.capture?.hasPointerCapture(drag.pointerId)
-    )
-      drag.capture.releasePointerCapture(drag.pointerId);
+    if (drag?.pointerId !== undefined)
+      releasePointer(drag.capture, drag.pointerId);
     return drag;
   }, []);
 
@@ -282,7 +280,7 @@ export default function SortableSetList({
                 const scrollContainer = nearestScrollContainer(capture);
                 event.currentTarget.focus();
                 // Capture on the stable list: the handle itself moves in the DOM.
-                capture.setPointerCapture(event.pointerId);
+                capturePointer(capture, event.pointerId);
                 dragRef.current = {
                   pointerId: event.pointerId,
                   offsetY: event.clientY - (bounds.top + bounds.height / 2),
