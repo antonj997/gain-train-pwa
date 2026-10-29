@@ -15,6 +15,44 @@ export const favouriteMarker = (records: Records, builtinId: string) =>
     (r) => r.payload.note === favouriteNote(builtinId),
   );
 
+/** The save that stars or unstars an exercise. */
+export type FavouriteChange = {
+  id: string;
+  payload: CustomExercise;
+  deleted: boolean;
+};
+
+/**
+ * Starring or unstarring: a custom exercise flips its own flag. A built-in
+ * one keeps one marker record per exercise, with an id every device derives
+ * the same way, and unstarring deletes it; starring again brings the same
+ * record back instead of leaving a new tombstone each time.
+ */
+export function favouriteChange(
+  records: Records,
+  exercise: { id: string; name: string; category: string },
+): FavouriteChange {
+  const own = records[exercise.id];
+  if (own?.kind === "exercise" && !own.deleted)
+    return {
+      id: exercise.id,
+      payload: { ...own.payload, favourite: !own.payload.favourite },
+      deleted: false,
+    };
+  const marker = favouriteMarker(records, exercise.id);
+  return {
+    // An older marker has a random id; delete that one.
+    id: marker?.id ?? derivedUuid("favourite:" + exercise.id),
+    payload: {
+      name: exercise.name,
+      category: exercise.category,
+      note: favouriteNote(exercise.id),
+      favourite: true,
+    },
+    deleted: !!marker,
+  };
+}
+
 /** Exercises the user created, without favourite markers. */
 export const ownExercises = (records: Records) =>
   customExercises(records)

@@ -1,7 +1,7 @@
 import { newWorkout } from "@/data/start";
 import {
   completedWorkouts,
-  customCategories,
+  customDefaults,
   routines,
   setCount,
 } from "@/data/selectors";
@@ -53,7 +53,7 @@ export default function RoutinesPanel() {
   const [removing, setRemoving] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
   const categories = useMemo(
-    () => customCategories(state.records),
+    () => customDefaults(state.records),
     [state.records],
   );
   const removeExercise = (exercise: Exercise) => {
@@ -295,7 +295,7 @@ export default function RoutinesPanel() {
                   exercise={ex}
                   isFirst={index === 0}
                   isLast={index === edit.data.exercises.length - 1}
-                  category={categories.get(ex.exerciseId)}
+                  defaults={categories.get(ex.exerciseId)}
                   onChange={update}
                   onMove={(exercise, step) => moveExercise(exercise.id, step)}
                   onRemove={(exercise) =>
@@ -379,7 +379,7 @@ export default function RoutinesPanel() {
                     id: crypto.randomUUID(),
                     exerciseId: item.id,
                     name: item.name,
-                    sets: [initialSet(item.id, item.category)],
+                    sets: [initialSet(item.id, item)],
                   })),
                 ],
               },

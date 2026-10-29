@@ -6,7 +6,11 @@ import {
   labelSet,
   validSet,
 } from "@/data/model";
-import { type LastSession, previousResult } from "@/data/workouts";
+import {
+  type ExerciseDefaults,
+  type LastSession,
+  previousResult,
+} from "@/data/workouts";
 import {
   addDrop,
   changeSection,
@@ -54,8 +58,8 @@ export type ExerciseCardProps = {
   lastSession?: LastSession;
   bodyWeightKg?: number | null;
   nextSetId?: string;
-  /** A custom exercise's saved category, for a set added from scratch. */
-  category?: string;
+  /** A custom exercise's saved defaults, for a set added from scratch. */
+  defaults?: ExerciseDefaults;
   // Callbacks take the card's exercise, so a parent can pass one stable
   // function to every card and memoised cards skip unchanged renders.
   onChange: (exercise: Exercise) => void;
@@ -109,7 +113,7 @@ function ExerciseCard({
   lastSession,
   bodyWeightKg = null,
   nextSetId,
-  category,
+  defaults,
   onChange,
   onMove,
   onRemove,
@@ -251,7 +255,7 @@ function ExerciseCard({
       <button
         type="button"
         className="btn-quiet ex-add-set"
-        onClick={() => onChange(appendSet(ex, category))}
+        onClick={() => onChange(appendSet(ex, defaults))}
       >
         <Plus size={18} aria-hidden="true" />
         Add set

@@ -8,9 +8,13 @@ import {
   validate,
   type Goal,
   type Plan,
+  type RecordDoc,
   type RemoteDoc,
 } from "../src/data/model";
+import { initialSet } from "../src/data/workouts";
 import {
+  favouriteChange,
+  favouriteIds,
   hiddenIds,
   libraryRecordId,
   visibleExercises,
@@ -223,4 +227,43 @@ test("new record kinds sync, and a kind this version does not know is parked", a
   assert.deepEqual([...hiddenIds(state.records)], ["builtin:squat"]);
   assert.equal(state.quarantine?.[future]?.revision, 1);
   assert.equal(state.cursor, 2);
+});
+
+test("starring a built-in exercise again reuses its marker instead of adding tombstones", () => {
+  const records: Record<string, RecordDoc> = {};
+  const bench = {
+    id: "builtin:bench-press",
+    name: "Bench Press",
+    category: "Chest",
+  };
+  const apply = (change: ReturnType<typeof favouriteChange>) => {
+    records[change.id] = {
+      id: change.id,
+      kind: "exercise",
+      payload: change.payload,
+      revision: 1,
+      localVersion: 1,
+      dirty: true,
+      deleted: change.deleted,
+    };
+  };
+  const star = favouriteChange(records, bench);
+  assert.equal(star.deleted, false);
+  apply(star);
+  assert.equal(favouriteIds(records).has(bench.id), true);
+  const unstar = favouriteChange(records, bench);
+  assert.deepEqual([unstar.id, unstar.deleted], [star.id, true]);
+  apply(unstar);
+  assert.equal(favouriteIds(records).has(bench.id), false);
+  // Starring again brings the same record back.
+  assert.equal(favouriteChange(records, bench).id, star.id);
+  assert.equal(Object.keys(records).length, 1);
+});
+
+test("a custom exercise's saved load and measure start its first set", () => {
+  assert.equal(initialSet("custom", { load: "bodyweight" }).load, "bodyweight");
+  const timed = initialSet("custom", { measure: "seconds", load: "weight" });
+  assert.deepEqual([timed.measure, timed.load], ["seconds", "bodyweight"]);
+  assert.equal(initialSet("custom", { measure: "cardio" }).measure, "cardio");
+  assert.equal(initialSet("custom", { measure: "furlongs" }).load, "weight");
 });

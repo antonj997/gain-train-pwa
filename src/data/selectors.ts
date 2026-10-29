@@ -67,9 +67,18 @@ export const customExercises = (records: Records) =>
       record.kind === "exercise" && !record.deleted,
   );
 
-/** Each custom exercise's saved category, by id, for sets added from scratch. */
-export const customCategories = (records: Records) =>
-  new Map(customExercises(records).map((r) => [r.id, r.payload.category]));
+/** Each custom exercise's saved defaults, by id, for sets added from scratch. */
+export const customDefaults = (records: Records) =>
+  new Map(
+    customExercises(records).map(({ id, payload }) => [
+      id,
+      {
+        category: payload.category,
+        load: payload.load,
+        measure: payload.measure,
+      },
+    ]),
+  );
 
 type HasSets = Pick<Workout, "exercises">;
 /** Checked sets that would be saved: done and valid. A set and its drops count as one. */

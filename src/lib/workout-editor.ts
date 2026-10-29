@@ -1,5 +1,9 @@
 import { dropGroup, isDrop } from "../data/drops";
-import { hasLoggedExercise, initialSet } from "../data/workouts";
+import {
+  hasLoggedExercise,
+  initialSet,
+  type ExerciseDefaults,
+} from "../data/workouts";
 import {
   newSet,
   today,
@@ -169,16 +173,19 @@ export function toggleGroupCompletion(
 
 /**
  * A new unchecked set like the last one that is not a drop. With no set left
- * it starts from the exercise's own defaults; `category` is a custom
- * exercise's saved category (the catalogue knows its own).
+ * it starts from the exercise's own defaults; `custom` holds a custom
+ * exercise's saved ones (the catalogue knows its own).
  */
-export function appendSet(exercise: Exercise, category?: string): Exercise {
+export function appendSet(
+  exercise: Exercise,
+  custom?: ExerciseDefaults,
+): Exercise {
   const prior = exercise.sets.filter((set) => !isDrop(set)).at(-1);
   return {
     ...exercise,
     sets: [
       ...exercise.sets,
-      prior ? newSet(prior) : initialSet(exercise.exerciseId, category),
+      prior ? newSet(prior) : initialSet(exercise.exerciseId, custom),
     ],
   };
 }
@@ -194,15 +201,15 @@ export function withoutChecks(exercise: Exercise): Exercise {
   };
 }
 
-/** The exercise a card is changed to; `category` is a custom exercise's own. */
-export type ExerciseTarget = { id: string; name: string; category?: string };
+/** The exercise a card is changed to, with a custom exercise's own defaults. */
+export type ExerciseTarget = { id: string; name: string } & ExerciseDefaults;
 
 /** True when the sets of the card's current exercise don't fit the target (strength vs cardio). */
 export function changeDiscardsSets(
   exercise: Exercise,
   target: ExerciseTarget,
 ): boolean {
-  const toCardio = isCardioSet(initialSet(target.id, target.category));
+  const toCardio = isCardioSet(initialSet(target.id, target));
   return exercise.sets.some(isCardioSet) !== toCardio;
 }
 
@@ -227,8 +234,6 @@ export function changeExercise(
   const count = Math.max(1, exercise.sets.filter((set) => !isDrop(set)).length);
   return {
     ...base,
-    sets: Array.from({ length: count }, () =>
-      initialSet(target.id, target.category),
-    ),
+    sets: Array.from({ length: count }, () => initialSet(target.id, target)),
   };
 }

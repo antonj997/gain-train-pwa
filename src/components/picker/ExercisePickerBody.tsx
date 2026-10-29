@@ -11,6 +11,7 @@ import FacetChips from "@/components/FacetChips";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
 import { matchesFacets, searchExercises } from "@/lib/exercise-search";
 import { type CustomExercise } from "@/data/model";
+import type { ExerciseDefaults } from "@/data/workouts";
 import { workouts } from "@/data/selectors";
 import { favouriteIds, ownExercises, visibleExercises } from "@/data/exercises";
 import { errorMessage } from "@/lib/errors";
@@ -18,7 +19,8 @@ import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 
-export type PickedExercise = { id: string; name: string; category?: string };
+/** A chosen exercise; a custom one carries the defaults it was saved with. */
+export type PickedExercise = { id: string; name: string } & ExerciseDefaults;
 
 export type PickerOptions = {
   onClose: () => void;

@@ -20,12 +20,13 @@ import {
   validSet,
   isFromNewerApp,
 } from "@/data/model";
-import { customCategories, doneSetCount, setCount } from "@/data/selectors";
+import { customDefaults, doneSetCount, setCount } from "@/data/selectors";
 import {
   priorWorkouts,
   initialSet,
   hasLoggedExercise,
   lastSessions,
+  type ExerciseDefaults,
 } from "@/data/workouts";
 import { finishWorkout } from "@/lib/workout-editor";
 import { trainingHaptic } from "@/lib/preferences";
@@ -183,9 +184,18 @@ function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [historyKey, id, initial, w.date],
   );
-  const categories = useMemo(
-    () => customCategories(state.records),
+  // Cards are memoised, so hand them the same defaults objects until a custom
+  // exercise actually changes, not new ones after every autosave.
+  const defaultsKey = useMemo(
+    () => JSON.stringify([...customDefaults(state.records)]),
     [state.records],
+  );
+  const categories = useMemo(
+    () =>
+      new Map<string, ExerciseDefaults>(
+        JSON.parse(defaultsKey) as [string, ExerciseDefaults][],
+      ),
+    [defaultsKey],
   );
 
   const add = (items: { id: string; name: string; category?: string }[]) =>
@@ -203,7 +213,7 @@ function Editor({
             name: item.name,
             sets: prior?.length
               ? prior.map((s) => newSet(s))
-              : [initialSet(item.id, item.category)],
+              : [initialSet(item.id, item)],
           };
         }),
       ],
@@ -467,7 +477,7 @@ function Editor({
           nextSetId={
             ex.sets.some((s) => s.id === nextSet?.id) ? nextSet?.id : undefined
           }
-          category={categories.get(ex.exerciseId)}
+          defaults={categories.get(ex.exerciseId)}
           onChange={update}
           onMove={move}
           onRemove={requestRemove}

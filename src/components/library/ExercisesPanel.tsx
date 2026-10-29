@@ -21,12 +21,7 @@ import FacetChips from "@/components/FacetChips";
 import { progressFor, exerciseStats } from "@/data/analytics";
 import { labelSet, today } from "@/data/model";
 import { completedWorkouts } from "@/data/selectors";
-import {
-  favouriteIds,
-  favouriteMarker,
-  favouriteNote,
-  ownExercises,
-} from "@/data/exercises";
+import { favouriteChange, favouriteIds, ownExercises } from "@/data/exercises";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Sheet from "@/components/ui/Sheet";
 import {
@@ -249,27 +244,8 @@ export default function ExercisesPanel() {
   };
   const toggleFavourite = async (e: (typeof all)[number]) => {
     try {
-      if (!e.custom) {
-        const fav = favouriteMarker(state.records, e.id);
-        await save(
-          fav?.id || crypto.randomUUID(),
-          "exercise",
-          {
-            name: e.name,
-            category: e.category,
-            note: favouriteNote(e.id),
-            favourite: true,
-          },
-          !!fav,
-        );
-      } else
-        await save(e.id, "exercise", {
-          ...customPayload(e.id),
-          name: e.name,
-          category: e.category,
-          note: e.note,
-          favourite: !e.favourite,
-        });
+      const change = favouriteChange(state.records, e);
+      await save(change.id, "exercise", change.payload, change.deleted);
     } catch {
       toast.error("Could not update favourite. Retry.");
     }

@@ -11,18 +11,31 @@ import { dropGroup, isDrop } from "./drops";
 import { completedWorkouts, sortWorkoutsNewest } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 
+/** What a custom exercise was saved with: its category, and a load or measure copied from a shared one. */
+export type ExerciseDefaults = {
+  category?: string;
+  load?: WorkoutSet["load"];
+  measure?: string;
+};
+
 /**
- * A new exercise's first set. A catalogue exercise knows its own category; a
- * custom exercise passes the category it was saved with.
+ * A new exercise's first set. A catalogue exercise knows its own defaults; a
+ * custom exercise passes those it was saved with.
  */
-export function initialSet(exerciseId: string, category?: string): WorkoutSet {
-  const defaults = catalogueById.get(exerciseId);
-  if (defaults?.measure === "cardio" || category === "Cardio")
+export function initialSet(
+  exerciseId: string,
+  custom: ExerciseDefaults = {},
+): WorkoutSet {
+  const builtin = catalogueById.get(exerciseId);
+  const measure = builtin?.measure ?? custom.measure;
+  if (measure === "cardio" || custom.category === "Cardio")
     return { ...newSet(), measure: "cardio" };
+  const timed = measure === "seconds";
   return {
     ...newSet(),
-    load: defaults?.load ?? "weight",
-    ...(defaults?.measure === "seconds" ? { measure: "seconds" as const } : {}),
+    // A timed set is a bodyweight set (see validSet).
+    load: builtin?.load ?? (timed ? "bodyweight" : (custom.load ?? "weight")),
+    ...(timed ? { measure: "seconds" as const } : {}),
   };
 }
 
