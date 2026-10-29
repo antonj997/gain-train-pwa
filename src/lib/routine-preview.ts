@@ -6,7 +6,7 @@ import { cardioLabel, isCardioSet } from "./cardio";
 import { countLabel } from "./labels";
 
 /** Minutes rounded to the nearest 5, never below 5. */
-export const roundToFive = (minutes: number) =>
+const roundToFive = (minutes: number) =>
   Math.max(5, Math.round(minutes / 5) * 5);
 
 /**

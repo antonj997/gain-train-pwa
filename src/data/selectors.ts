@@ -14,7 +14,7 @@ const list = (records: Records) =>
     ? (records as readonly RecordDoc[])
     : Object.values(records as Record<string, RecordDoc>);
 
-export const isWorkout = (record: RecordDoc): record is WorkoutRecord =>
+const isWorkout = (record: RecordDoc): record is WorkoutRecord =>
   record.kind === "workout";
 
 const sessionTime = (workout: Workout) =>

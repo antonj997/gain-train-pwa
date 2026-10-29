@@ -7,32 +7,15 @@
    .dark class switches them with no per-theme copy. */
 :root {
   --background: var(--gt-ground);
-  --foreground: var(--gt-ink);
-  --card: var(--gt-surface);
-  --card-foreground: var(--gt-ink);
-  --popover: var(--gt-surface);
-  --popover-foreground: var(--gt-ink);
   --primary: var(--gt-accent);
-  --primary-foreground: var(--gt-on-accent);
-  --secondary: var(--gt-surface-2);
-  --secondary-foreground: var(--gt-ink);
-  --muted: var(--gt-surface-2);
-  --muted-foreground: var(--gt-ink-2);
-  --accent: var(--gt-accent);
-  --accent-foreground: var(--gt-on-accent);
   --border: var(--gt-line);
-  --input: var(--gt-line-strong);
   --ring: var(--gt-accent);
-  --radius: 1rem;
   --destructive: var(--gt-danger-fg);
-  --destructive-foreground: var(--gt-on-accent);
   --surface: var(--gt-surface);
   --soft: var(--gt-ink-2);
   --line: var(--gt-line);
   --blue: var(--gt-accent);
   --ink: var(--gt-ink);
-  --completed: var(--gt-done);
-  --completed-ink: var(--gt-on-accent);
   /* A data URI cannot read a custom property, so the chevron is stroked in ink-2 per theme. */
   --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%235B6270' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
@@ -161,16 +144,6 @@ summary {
   flex-direction: column;
   gap: 24px;
 }
-.page-title {
-  padding: 5px 0 4px;
-}
-.eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.07em;
-  font-weight: 700;
-  color: var(--soft);
-  margin-bottom: 9px;
-}
 .primary,
 .secondary,
 .icon-button,
@@ -203,10 +176,6 @@ summary {
   padding: 4px;
   min-height: 36px;
 }
-.large {
-  min-height: 54px;
-  font-size: 17px;
-}
 .icon-button {
   padding: 8px;
   width: 44px;
@@ -227,17 +196,6 @@ summary {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-}
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-.section-heading a {
-  font-size: 14px;
-  font-weight: 600;
 }
 .resume-card {
   display: flex;
@@ -351,8 +309,7 @@ summary {
   align-items: flex-start;
   gap: 14px;
 }
-.empty-card p,
-.muted {
+.empty-card p {
   color: var(--soft);
   font-size: 14px;
 }
@@ -412,27 +369,6 @@ summary {
 .search-field input {
   border: 0;
 }
-.chips {
-  display: flex;
-  gap: 7px;
-  overflow-x: auto;
-  flex-shrink: 0;
-  padding-bottom: 4px;
-}
-.chip {
-  border: 1px solid var(--line);
-  border-radius: 50px;
-  padding: 7px 12px;
-  font-size: 13px;
-  background: transparent;
-  white-space: nowrap;
-  color: var(--soft);
-}
-.chip.selected {
-  background: var(--blue);
-  color: var(--background);
-  border-color: var(--blue);
-}
 .exercise-choice {
   width: 100%;
   padding: 12px 8px;
@@ -483,18 +419,6 @@ summary {
 .history-set.history-drop strong {
   color: var(--gt-ink-2);
   font-weight: 600;
-}
-.file-label {
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 12px;
-  gap: 12px;
-}
-.file-label input {
-  font-size: 13px;
-  padding: 0;
-  border: 0;
-  min-height: 30px;
 }
 .chart {
   height: 180px;
@@ -588,11 +512,6 @@ h3,
 [data-keyboard-open] .bottom-nav {
   display: none;
 }
-@media (max-width: 639px) {
-  .file-label input {
-    font-size: 16px;
-  }
-}
 
 /* Compact layouts retain full-size touch targets. */
 :root {
@@ -629,9 +548,6 @@ h3,
 .progress-page {
   gap: 14px;
 }
-.home-page .page-title {
-  margin-bottom: 0;
-}
 .home-page h1 {
   font-size: clamp(23px, 5vw, 30px);
 }
@@ -640,13 +556,6 @@ h3,
 }
 .home-page .resume-card strong {
   font-size: 18px;
-}
-.home-page .large {
-  min-height: 48px;
-  padding: 10px 16px;
-}
-.home-page .section-heading {
-  margin-bottom: 8px;
 }
 .home-page .empty-card {
   padding: 16px;
@@ -768,16 +677,6 @@ details[open] > .session-summary > svg {
   opacity: 1;
   transform: translateY(0);
 }
-select {
-  appearance: none;
-  padding-right: 36px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%235B6270' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-position: right 12px center;
-  background-repeat: no-repeat;
-}
-.dark select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23A3ACBA' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-}
 @media (prefers-reduced-motion: reduce) {
   .theme-switch,
   .theme-switch * {
@@ -809,39 +708,6 @@ select {
   }
 }
 
-.date-picker-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
-}
-.date-picker-trigger {
-  width: 100%;
-  justify-content: space-between;
-  text-align: left;
-  font-weight: 400;
-}
-.date-presets,
-.date-months {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-}
-.date-presets button {
-  font-size: 13px;
-  padding: 10px 6px;
-  line-height: 1.4;
-}
-.date-months button {
-  min-height: 46px;
-  padding: 8px;
-}
-.date-year {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 h1,
 h2,
 h3 {

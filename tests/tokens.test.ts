@@ -243,10 +243,7 @@ test("the existing colour variables are defined from the tokens", () => {
     "--line": "--gt-line",
     "--surface": "--gt-surface",
     "--background": "--gt-ground",
-    "--card": "--gt-surface",
     "--border": "--gt-line",
-    "--muted-foreground": "--gt-ink-2",
-    "--completed": "--gt-done",
   };
   for (const [name, token] of Object.entries(map)) {
     assert.match(

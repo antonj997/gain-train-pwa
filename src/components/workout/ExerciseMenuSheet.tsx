@@ -23,7 +23,7 @@ type BodyProps = {
 };
 
 /** The exercise menu's actions, below the exercise's name. */
-export function ExerciseMenuSheetBody({
+function ExerciseMenuSheetBody({
   hint,
   canMoveUp,
   canMoveDown,

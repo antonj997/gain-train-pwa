@@ -8,7 +8,7 @@ type BodyProps = {
 };
 
 /** The details sheet's fields: name, date and an optional duration. */
-export function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
+function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
   return (
     <>
       <label className="sheet-field">

@@ -87,7 +87,7 @@ export function parseSetNumber(text: string): number | null {
 }
 
 /** Find a horizontal caret boundary without starting native selection scrolling. */
-export function inputCaretAtPoint(input: HTMLInputElement, clientX: number) {
+function inputCaretAtPoint(input: HTMLInputElement, clientX: number) {
   const style = input.ownerDocument.defaultView!.getComputedStyle(input);
   const context = input.ownerDocument.createElement("canvas").getContext("2d");
   const rect = input.getBoundingClientRect();

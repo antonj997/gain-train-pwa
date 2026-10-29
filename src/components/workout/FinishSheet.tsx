@@ -18,7 +18,7 @@ type BodyProps = {
 };
 
 /** The Finish sheet's content below its title. Only drafts use it. */
-export function FinishSheetBody({
+function FinishSheetBody({
   completed,
   unchecked,
   showRoutineSwitch,
