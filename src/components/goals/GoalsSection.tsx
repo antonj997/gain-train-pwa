@@ -42,16 +42,24 @@ export default function GoalsSection() {
   }, [goals, records, bodyWeightKg, today]);
 
   // A bodyweight goal has no history to read the day it was reached from, so
-  // the day is saved on the goal the first time it shows as reached.
+  // the day is saved on the goal the first time it shows as reached. Once per
+  // goal: re-renders while that save is in flight must not send it again.
+  const written = useRef(new Set<string>());
   useEffect(() => {
     for (const { goal, progress } of cards)
-      if (goal.kind === "bodyweight" && progress.met && !goal.reachedOn) {
+      if (
+        goal.kind === "bodyweight" &&
+        progress.met &&
+        !goal.reachedOn &&
+        !written.current.has(goal.id)
+      ) {
+        written.current.add(goal.id);
         const { id, ...payload } = goal;
-        void save(id, "goal", { ...payload, reachedOn: today }).catch(
-          () => undefined,
+        void save(id, "goal", { ...payload, reachedOn: today }).catch(() =>
+          written.current.delete(id),
         );
       }
-  });
+  }, [cards, save, today]);
 
   const current = shown.current;
   return (

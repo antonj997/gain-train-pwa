@@ -66,7 +66,11 @@ export default function PlanEditor({
   const names = { routines, groups };
 
   const [draft, setDraft] = useState<Plan>(() => {
-    if (plan) return { ...plan };
+    if (plan) {
+      // The id names the record; it is not part of the saved plan.
+      const { id: _id, ...saved } = plan;
+      return saved;
+    }
     // A new plan starts after the last plan ends, or today.
     const lastEnd = plans.reduce(
       (end, p) => (p.endDate > end ? p.endDate : end),
