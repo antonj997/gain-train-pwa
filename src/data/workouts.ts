@@ -6,31 +6,17 @@ import {
   type WorkoutRecord,
   type WorkoutSet,
 } from "./model";
+import { catalogueById } from "./catalogue";
 import { dropGroup, isDrop } from "./drops";
 import { completedWorkouts, sortWorkoutsNewest } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 
-const bodyweightExercises = new Set([
-  "builtin:pull-up",
-  "builtin:chin-up",
-  "builtin:push-up",
-  "builtin:dip",
-  "builtin:tricep-dip",
-  "builtin:hyperextension",
-  "builtin:glute-bridge",
-  "builtin:plank",
-  "builtin:side-plank",
-  "builtin:ab-wheel",
-  "builtin:hanging-leg-raise",
-]);
-
 export function initialSet(exerciseId: string): WorkoutSet {
+  const defaults = catalogueById.get(exerciseId);
   return {
     ...newSet(),
-    load: bodyweightExercises.has(exerciseId) ? "bodyweight" : "weight",
-    ...(exerciseId === "builtin:plank" || exerciseId === "builtin:side-plank"
-      ? { measure: "seconds" as const }
-      : {}),
+    load: defaults?.load ?? "weight",
+    ...(defaults?.measure === "seconds" ? { measure: "seconds" as const } : {}),
   };
 }
 
