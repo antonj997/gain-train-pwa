@@ -23,11 +23,18 @@ export default function ExercisePicker({
   open,
   onClose,
   onAdd,
+  suggested,
+  single = false,
 }: {
   open: boolean;
   onClose: () => void;
   onAdd: (items: { id: string; name: string; category?: string }[]) => void;
+  /** Categories to suggest from; the picker opens on a "Suggested" filter. */
+  suggested?: string[];
+  /** Choosing an exercise adds it at once and closes the picker. */
+  single?: boolean;
 }) {
+  const initialFilter = suggested?.length ? "Suggested" : "All";
   const { state, save } = useData();
   const { hidden } = useHiddenExercises();
   const { account } = useAuth();
@@ -55,7 +62,7 @@ export default function ExercisePicker({
   const [searchFocused, setSearchFocused] = useState(false);
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
-    [filter, setFilter] = useState("All"),
+    [filter, setFilter] = useState(initialFilter),
     [equipment, setEquipment] = useState(""),
     [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -80,11 +87,13 @@ export default function ExercisePicker({
             category: categories.includes(filter) ? filter : "",
             equipment,
           }) &&
-          (filter === "Recent"
-            ? recent.has(e.id)
-            : filter === "Favourites"
-              ? favourites.has(e.id)
-              : true),
+          (filter === "Suggested"
+            ? !!suggested?.includes(e.category)
+            : filter === "Recent"
+              ? recent.has(e.id)
+              : filter === "Favourites"
+                ? favourites.has(e.id)
+                : true),
       )
       .sort(
         (a, b) =>
@@ -97,7 +106,7 @@ export default function ExercisePicker({
     if (busy) return;
     setSelected([]);
     setSearch("");
-    setFilter("All");
+    setFilter(initialFilter);
     setEquipment("");
     setSearchFocused(false);
     setCreating(false);
@@ -159,12 +168,18 @@ export default function ExercisePicker({
       >
         <DialogHeader>
           <DialogTitle ref={titleRef} tabIndex={-1} className="picker-title">
-            {creating ? "Create exercise" : "Add exercises"}
+            {creating
+              ? "Create exercise"
+              : single
+                ? "Choose an exercise"
+                : "Add exercises"}
           </DialogTitle>
           <DialogDescription className="picker-description">
             {creating
               ? "Create it once and use it in any workout. Unfinished details are kept on this phone."
-              : "Choose one or more exercises."}
+              : single
+                ? "Tap an exercise to choose it."
+                : "Choose one or more exercises."}
           </DialogDescription>
         </DialogHeader>
         {creating ? (
@@ -253,7 +268,13 @@ export default function ExercisePicker({
               )}
             </div>
             <div className="facet-chips" role="group" aria-label="Show">
-              {["All", "Recent", "Favourites", ...categories].map((c) => (
+              {[
+                ...(suggested?.length ? ["Suggested"] : []),
+                "All",
+                "Recent",
+                "Favourites",
+                ...categories,
+              ].map((c) => (
                 <button
                   key={c}
                   type="button"
@@ -284,13 +305,17 @@ export default function ExercisePicker({
                     "exercise-choice " +
                     (selected.includes(e.id) ? "chosen" : "")
                   }
-                  onClick={() =>
-                    setSelected((s) =>
-                      s.includes(e.id)
-                        ? s.filter((id) => id !== e.id)
-                        : [...s, e.id],
-                    )
-                  }
+                  onClick={() => {
+                    if (single) {
+                      onAdd([e]);
+                      close();
+                    } else
+                      setSelected((s) =>
+                        s.includes(e.id)
+                          ? s.filter((id) => id !== e.id)
+                          : [...s, e.id],
+                      );
+                  }}
                 >
                   <span>
                     <strong>{e.name}</strong>
@@ -300,7 +325,7 @@ export default function ExercisePicker({
                       {recent.has(e.id) ? " · Recent" : ""}
                     </small>
                   </span>
-                  {selected.includes(e.id) ? (
+                  {single ? null : selected.includes(e.id) ? (
                     <Check size={21} />
                   ) : (
                     <Plus size={20} />
@@ -323,17 +348,19 @@ export default function ExercisePicker({
               >
                 {pending ? "Resume draft" : "New exercise"}
               </button>
-              <button
-                className="primary"
-                disabled={!selected.length}
-                onClick={() => {
-                  onAdd(all.filter((e) => selected.includes(e.id)));
-                  close();
-                }}
-              >
-                Add {selected.length || ""}{" "}
-                {selected.length === 1 ? "exercise" : "exercises"}
-              </button>
+              {!single && (
+                <button
+                  className="primary"
+                  disabled={!selected.length}
+                  onClick={() => {
+                    onAdd(all.filter((e) => selected.includes(e.id)));
+                    close();
+                  }}
+                >
+                  Add {selected.length || ""}{" "}
+                  {selected.length === 1 ? "exercise" : "exercises"}
+                </button>
+              )}
             </div>
           </>
         )}

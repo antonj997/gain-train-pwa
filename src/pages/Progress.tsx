@@ -13,6 +13,7 @@ import { labelSet, today } from "@/data/model";
 import { historyPeriod } from "@/data/summary";
 import CardioProgressDetail from "@/components/CardioProgressDetail";
 import ExerciseProgressDetail from "@/components/ExerciseProgressDetail";
+import GoalsSection from "@/components/goals/GoalsSection";
 import PageHeader from "@/components/PageHeader";
 import ProgressSummary from "@/components/ProgressSummary";
 import ListRow from "@/components/ui/ListRow";
@@ -112,6 +113,7 @@ export default function Progress() {
         eyebrow={hasData ? `Compared with ${before}` : undefined}
         title="Progress"
       />
+      <GoalsSection />
       {hasData && (
         <>
           <Segmented<Period>
