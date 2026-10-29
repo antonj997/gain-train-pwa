@@ -1,5 +1,11 @@
 # Changelog
 
+## 29 October 2026 — sharing custom exercises
+
+- A custom exercise's ⋯ menu has "Share to library" (publishes it to the `shared_exercises` table) and "Stop sharing" (deletes that row). Signed-out users see "Sign in to share". A failed request shows a toast and changes nothing.
+- Library → Exercises has a Shared chip. It fetches other people's shared exercises when chosen (short in-memory cache, no realtime), leaves out your own and ones you already added, and takes the same search and filters. "Add" copies the row into your exercises. Signed out or offline it shows a short note instead.
+- New optional fields on a custom exercise: `sharedId` (your row), `sharedFrom` (the row you copied) and the copied `equipment`, `aliases`, `load` and `measure`. Copies keep working if the original is unshared. No schema bump and no migration beyond the shared table.
+
 ## 29 October 2026 — plans, groups and goals
 
 - Library has a third tab, Plan (`?tab=plan`; `/library/plan` redirects). Plans are now synced: a name, an exact period, a cycle of 1–6 weeks, a weeks × Monday–Sunday template where each day is a routine, a group, a day type, Rest or empty, and dated changes from an Upcoming month view. Overlapping periods are refused with a message. The old device-only plan is imported once into a synced plan and then removed.
