@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { type RecordDoc } from "@/data/model";
 import { shiftDate } from "@/data/summary";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
+import { heatmapWindow, spanInfo } from "@/lib/heatmap";
 import {
   calendarCells,
   calendarRangeEdges,
@@ -35,13 +37,16 @@ export default function HistoryCalendar({
   onChange: (value: HistoryCalendarState) => void;
 }) {
   const { month, mode, display, selectedDate, from, to, activeBound } = value;
-  const cells = calendarCells(month, display);
+  const cells = calendarCells(month);
   const counts = workoutDates(records);
   const bounds = historyCalendarBounds(value, now);
   const currentMonth = now.slice(0, 7);
   const year = Number(month.slice(0, 4));
   const currentYear = Number(now.slice(0, 4));
-  const canReset = mode === "range" || month !== currentMonth || !!selectedDate;
+  const heat = display === "simple";
+  const canReset = heat
+    ? value.heatEnd !== now || !!selectedDate
+    : mode === "range" || month !== currentMonth || !!selectedDate;
   const instructionsId = useId();
   const headingId = useId();
   const [focused, setFocused] = useState(selectedDate ?? now);
@@ -82,6 +87,78 @@ export default function HistoryCalendar({
     setFocused(target);
     if (!target.startsWith(month)) browse(target.slice(0, 7));
   };
+
+  const viewToggle = (
+    <button
+      type="button"
+      className="icon-btn calendar-view-toggle"
+      aria-label="Detailed calendar"
+      aria-pressed={display === "detailed"}
+      title={
+        display === "detailed"
+          ? "Detailed calendar · switch to simple"
+          : "Activity heatmap · switch to detailed"
+      }
+      onClick={() =>
+        change({
+          type: "display",
+          display: display === "detailed" ? "simple" : "detailed",
+        })
+      }
+    >
+      {display === "detailed" ? (
+        <CalendarDays size={22} aria-hidden="true" />
+      ) : (
+        <LayoutGrid size={22} aria-hidden="true" />
+      )}
+    </button>
+  );
+
+  if (heat) {
+    const window = heatmapWindow(value.heatEnd, value.span);
+    const spanName = spanInfo(value.span).phrase;
+    return (
+      <section
+        className="history-calendar calendar-heatmap"
+        aria-label="Workout calendar"
+      >
+        <div className="calendar-header">
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={`Previous ${spanName}`}
+            disabled={window.start <= "1901-01-01"}
+            onClick={() => change({ type: "shift", direction: -1 })}
+          >
+            <ChevronLeft size={22} aria-hidden="true" />
+          </button>
+          <h2 className="heatmap-title" id={headingId} aria-live="polite">
+            {localizedDate(window.start, { month: "short", year: "numeric" })} –{" "}
+            {localizedDate(window.end, { month: "short", year: "numeric" })}
+          </h2>
+          {viewToggle}
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={`Next ${spanName}`}
+            disabled={value.heatEnd >= now}
+            onClick={() => change({ type: "shift", direction: 1 })}
+          >
+            <ChevronRight size={22} aria-hidden="true" />
+          </button>
+        </div>
+        <ActivityHeatmap
+          value={value}
+          now={now}
+          counts={counts}
+          canReset={canReset}
+          instructionsId={instructionsId}
+          headingId={headingId}
+          change={change}
+        />
+      </section>
+    );
+  }
 
   return (
     <section
@@ -137,29 +214,7 @@ export default function HistoryCalendar({
             ))}
           </select>
         </div>
-        <button
-          type="button"
-          className="icon-btn calendar-view-toggle"
-          aria-label="Detailed calendar"
-          aria-pressed={display === "detailed"}
-          title={
-            display === "detailed"
-              ? "Detailed calendar · switch to simple"
-              : "Simple calendar · switch to detailed"
-          }
-          onClick={() =>
-            change({
-              type: "display",
-              display: display === "detailed" ? "simple" : "detailed",
-            })
-          }
-        >
-          {display === "detailed" ? (
-            <CalendarDays size={22} aria-hidden="true" />
-          ) : (
-            <LayoutGrid size={22} aria-hidden="true" />
-          )}
-        </button>
+        {viewToggle}
         <button
           type="button"
           className="icon-btn"
@@ -280,13 +335,8 @@ export default function HistoryCalendar({
               onClick={() => change({ type: "date", date: cell.date })}
             >
               <span>{cell.day}</span>
-              {cell.inMonth && count > 0 && display === "detailed" && (
+              {cell.inMonth && count > 0 && (
                 <span className="calendar-workout-dot" aria-hidden="true" />
-              )}
-              {cell.inMonth && count > 1 && display === "simple" && (
-                <span className="calendar-count" aria-hidden="true">
-                  {count}
-                </span>
               )}
             </button>
           );

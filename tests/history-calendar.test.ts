@@ -8,17 +8,39 @@ import {
 import { type RecordDoc, type Workout } from "../src/data/model";
 import * as calendar from "../src/lib/history-calendar";
 
-test("history defaults to this month and simple mode has one cell per actual day", () => {
-  const state = calendar.createHistoryCalendar("2026-10-26");
-  assert.deepEqual(calendar.historyCalendarBounds(state, "2026-10-26"), {
-    start: "2026-10-01",
+test("history defaults to the heatmap, filtering to its span until a day is chosen", () => {
+  const now = "2026-10-26";
+  let state = calendar.createHistoryCalendar(now);
+  assert.equal(state.display, "simple");
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-07-27",
     end: "2026-10-26",
   });
-  const cells = calendarCells("2024-02", "simple");
-  assert.equal(cells.length, 29);
-  assert.equal(cells[0].date, "2024-02-01");
-  assert.equal(cells.at(-1)?.date, "2024-02-29");
-  assert.ok(cells.every((cell) => cell.inMonth));
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "span", span: "year" },
+    now,
+  );
+  assert.equal(calendar.historyCalendarBounds(state, now)?.start, "2025-10-27");
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "shift", direction: -1 },
+    now,
+  );
+  assert.equal(state.heatEnd, "2025-10-26");
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "shift", direction: 1 },
+    now,
+  );
+  state = calendar.changeHistoryCalendar(
+    state,
+    { type: "shift", direction: 1 },
+    now,
+  );
+  assert.equal(state.heatEnd, now);
+  state = calendar.changeHistoryCalendar(state, { type: "reset" }, now);
+  assert.equal(state.span, "year");
 });
 
 test("cross-month and reverse range selection includes both dates and survives browsing", () => {
@@ -91,7 +113,10 @@ test("range boundaries cross years and preserve leap day, with explicit clearing
 
 test("future dates cannot be chosen and future navigation is clamped to the current month", () => {
   const now = "2026-10-26";
-  const state = calendar.createHistoryCalendar(now);
+  const state = {
+    ...calendar.createHistoryCalendar(now),
+    display: "detailed" as const,
+  };
   assert.deepEqual(
     calendar.changeHistoryCalendar(
       state,
@@ -122,7 +147,7 @@ test("future dates cannot be chosen and future navigation is clamped to the curr
 test("month day filtering toggles off and browsing another month clears only the day", () => {
   const now = "2026-10-26";
   let state = calendar.changeHistoryCalendar(
-    calendar.createHistoryCalendar(now),
+    { ...calendar.createHistoryCalendar(now), display: "detailed" },
     { type: "date", date: "2026-10-12" },
     now,
   );

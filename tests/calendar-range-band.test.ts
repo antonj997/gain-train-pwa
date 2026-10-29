@@ -20,23 +20,6 @@ test("detailed ranges join adjacent days and cap only visible week segments", ()
   assert.equal(edges.filter((cell) => cell.edges).length, 12);
 });
 
-test("compact ranges join actual-month cells without phantom outside-month days", () => {
-  const cells = calendarCells("2026-10", "simple");
-  const bounds = { start: "2026-10-02", end: "2026-10-13" };
-  const edges = cells.map((cell, index) => ({
-    date: cell.date,
-    edges: calendarRangeEdges(cells, index, bounds),
-  }));
-  assert.deepEqual(
-    edges.filter((cell) => cell.edges?.start).map((cell) => cell.date),
-    ["2026-10-02", "2026-10-08"],
-  );
-  assert.deepEqual(
-    edges.filter((cell) => cell.edges?.end).map((cell) => cell.date),
-    ["2026-10-07", "2026-10-13"],
-  );
-});
-
 test("cross-month and one-day ranges receive complete visible ends", () => {
   const cells = calendarCells("2026-10");
   const index = (date: string) => cells.findIndex((cell) => cell.date === date);

@@ -4,6 +4,7 @@ import {
   createHistoryCalendar,
   historyCalendarBounds,
 } from "@/lib/history-calendar";
+import { readStoredSpan, storeSpan } from "@/lib/heatmap";
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { errorMessage } from "@/lib/errors";
@@ -39,7 +40,14 @@ export default function History() {
   const workoutStart = useStartWorkout();
   const [params, setParams] = useSearchParams();
   const now = today();
-  const [calendar, setCalendar] = useState(() => createHistoryCalendar(now));
+  const [calendar, setCalendar] = useState(() => ({
+    ...createHistoryCalendar(now),
+    span: readStoredSpan(),
+  }));
+  const changeCalendar = (next: typeof calendar) => {
+    if (next.span !== calendar.span) storeSpan(next.span);
+    setCalendar(next);
+  };
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const records = useMemo(
@@ -96,14 +104,18 @@ export default function History() {
     <div className="page history-page">
       {workoutStart.confirmation}
       <PageHeader
-        eyebrow={`${countLabel(inMonth, "workout")} in ${monthName}`}
+        eyebrow={
+          calendar.display === "simple"
+            ? `${countLabel(filtered.length, "workout")} ${calendar.selectedDate ? "on this day" : "in view"}`
+            : `${countLabel(inMonth, "workout")} in ${monthName}`
+        }
         title="History"
       />
       <HistoryCalendar
         value={calendar}
         now={now}
         records={records}
-        onChange={setCalendar}
+        onChange={changeCalendar}
       />
       {groups.map(({ week, items, sets }) => (
         <section key={week} aria-label={weekTitle(week, now)}>
