@@ -119,6 +119,9 @@ body::before {
 .text-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  /* A one-word link such as "Plan" still gets a 44px target. */
+  min-width: 44px;
   min-height: 44px;
   font-size: var(--gt-fs-3);
   font-weight: 600;
@@ -591,7 +594,9 @@ details[open] > .session-summary > svg {
 .search-field input {
   flex: 1;
   min-width: 0;
-  min-height: 42px;
+  /* 44px tall inside the 44px field: it reaches over the field's border. */
+  min-height: 44px;
+  margin-block: -1px;
   padding: 0;
   border: 0;
   background: transparent;
