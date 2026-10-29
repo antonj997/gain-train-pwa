@@ -2,15 +2,21 @@ import { type RecordDoc, type Workout } from "../data/model";
 import { shiftDate } from "../data/summary";
 import { heatmapWindow } from "./heatmap";
 
+// These run during render (the calendars and the History reducer), where a
+// throw would take down the whole app. Bad input is ignored instead: an
+// invalid month or date reads as null, and actions with one change nothing.
+
+/** The first of `month` (YYYY-MM, 1900 or later), or null. */
 function parseMonth(month: string) {
   if (
     !/^\d{4}-(0[1-9]|1[0-2])$/.test(month) ||
     Number(month.slice(0, 4)) < 1900
   )
-    throw new RangeError("Choose a valid calendar month.");
+    return null;
   return new Date(month + "-01T12:00:00Z");
 }
 
+/** `date` when it is a real calendar day from 1900 on, else null. */
 function validDate(date: string) {
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
@@ -18,7 +24,7 @@ function validDate(date: string) {
     Number.isNaN(new Date(date + "T12:00:00Z").getTime()) ||
     new Date(date + "T12:00:00Z").toISOString().slice(0, 10) !== date
   )
-    throw new RangeError("Choose a valid calendar date.");
+    return null;
   return date;
 }
 
@@ -49,7 +55,7 @@ export type HistoryCalendarAction =
 
 export function createHistoryCalendar(now: string): HistoryCalendarState {
   return {
-    month: validDate(now).slice(0, 7),
+    month: (validDate(now) ?? "1970-01-01").slice(0, 7),
     mode: "month",
     display: "simple",
     selectedDate: null,
@@ -98,7 +104,7 @@ export function changeHistoryCalendar(
     case "bound":
       return { ...state, activeBound: action.bound };
     case "browse": {
-      parseMonth(action.month);
+      if (!parseMonth(action.month)) return state;
       const month =
         action.month > now.slice(0, 7) ? now.slice(0, 7) : action.month;
       return {
@@ -109,7 +115,7 @@ export function changeHistoryCalendar(
     }
     case "day": {
       const date = validDate(action.date);
-      if (date > now) return state;
+      if (!date || date > now) return state;
       return {
         ...state,
         ...NO_SELECTION,
@@ -124,7 +130,7 @@ export function changeHistoryCalendar(
     case "range": {
       const a = validDate(action.from);
       const b = validDate(action.to);
-      if (a > now || b > now) return state;
+      if (!a || !b || a > now || b > now) return state;
       return {
         ...state,
         ...NO_SELECTION,
@@ -134,7 +140,9 @@ export function changeHistoryCalendar(
       };
     }
     case "dates": {
-      const dates = action.dates.map(validDate).filter((d) => d <= now);
+      const dates = action.dates
+        .map(validDate)
+        .filter((d): d is string => !!d && d <= now);
       if (!dates.length) return state;
       return {
         ...state,
@@ -145,7 +153,7 @@ export function changeHistoryCalendar(
     }
     case "date": {
       const date = validDate(action.date);
-      if (date > now) return state;
+      if (!date || date > now) return state;
       if (state.mode === "month")
         return {
           ...state,
@@ -180,6 +188,7 @@ export function historyCalendarBounds(
     return { start: state.selectedDate, end: state.selectedDate };
   if (state.display === "simple") return heatmapWindow(now);
   const first = parseMonth(state.month);
+  if (!first) return null;
   const last = new Date(
     Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0),
   )
@@ -188,16 +197,20 @@ export function historyCalendarBounds(
   return { start: state.month + "-01", end: last < now ? last : now };
 }
 
+/** The month `offset` months on; the same month when that is out of range. */
 export function moveCalendarMonth(month: string, offset: number) {
   const date = parseMonth(month);
+  if (!date) return month;
   date.setUTCMonth(date.getUTCMonth() + offset);
   if (date.getUTCFullYear() < 1900 || date.getUTCFullYear() > 9999)
-    throw new RangeError("Choose a supported calendar month.");
+    return month;
   return date.toISOString().slice(0, 7);
 }
 
+/** The day cells of a month grid, Monday first; none for an invalid month. */
 export function calendarCells(month: string) {
   const first = parseMonth(month);
+  if (!first) return [];
   const offset = (first.getUTCDay() + 6) % 7;
   const last = new Date(
     Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0),

@@ -18,6 +18,10 @@ export default function MonthPicker({
   const root = useRef<HTMLDivElement>(null);
   const maxYear = Number(max.slice(0, 4));
 
+  // The parent passes a new onClose on every render (sync, reloads); reading
+  // it from a ref keeps the effect, and the focus it sets, to the first render.
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
     root.current
       ?.querySelector<HTMLButtonElement>("[aria-pressed=true]")
@@ -28,11 +32,11 @@ export default function MonthPicker({
         !root.current?.contains(target) &&
         !(target as Element).closest?.(".month-title-button")
       )
-        onClose();
+        close.current();
     };
     document.addEventListener("pointerdown", away);
     return () => document.removeEventListener("pointerdown", away);
-  }, [onClose]);
+  }, []);
 
   return (
     <div

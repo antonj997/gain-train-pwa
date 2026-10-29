@@ -74,7 +74,11 @@ type State = { report: ErrorReport | null; copied: boolean };
  * screen. Workouts are saved as they change, so reloading loses nothing.
  */
 export default class ErrorBoundary extends Component<
-  { children: ReactNode },
+  {
+    children: ReactNode;
+    /** "page" replaces only the page under the tab bar, which stays usable. */
+    scope?: "app" | "page";
+  },
   State
 > {
   state: State = { report: null, copied: false };
@@ -106,8 +110,9 @@ export default class ErrorBoundary extends Component<
   render() {
     const { report, copied } = this.state;
     if (!report) return this.props.children;
+    const Root = this.props.scope === "page" ? "div" : "main";
     return (
-      <main className="crash-screen" role="alert">
+      <Root className="crash-screen" role="alert">
         <h1>Something went wrong</h1>
         <p>
           Your workout is saved. Reload to continue, and send the details below
@@ -130,7 +135,7 @@ export default class ErrorBoundary extends Component<
           {"\n"}
           {report.stack.split("\n").slice(0, 12).join("\n")}
         </pre>
-      </main>
+      </Root>
     );
   }
 }

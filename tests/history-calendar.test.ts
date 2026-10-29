@@ -120,14 +120,14 @@ test("future dates cannot be chosen and future navigation is clamped to the curr
     ).month,
     "2026-10",
   );
-  assert.throws(
-    () =>
-      calendar.changeHistoryCalendar(
-        state,
-        { type: "date", date: "2026-02-29" },
-        now,
-      ),
-    /date/i,
+  // An impossible date is ignored instead of throwing during render.
+  assert.equal(
+    calendar.changeHistoryCalendar(
+      state,
+      { type: "date", date: "2026-02-29" },
+      now,
+    ),
+    state,
   );
 });
 
@@ -286,7 +286,10 @@ test("six-week months and year navigation keep their calendar dates", () => {
   assert.equal(cells.at(-1)?.date, "2026-04-05");
   assert.equal(moveCalendarMonth("2026-01", -1), "2025-12");
   assert.equal(moveCalendarMonth("2026-12", 1), "2027-01");
-  assert.throws(() => calendarCells("2026-13"), /month/i);
+  assert.deepEqual(calendarCells("2026-13"), []);
+  assert.equal(moveCalendarMonth("2026-13", 1), "2026-13");
+  assert.equal(moveCalendarMonth("9999-12", 1), "9999-12");
+  assert.equal(moveCalendarMonth("1900-01", -1), "1900-01");
 });
 
 test("calendar dates remain stable across UTC offsets", () => {
