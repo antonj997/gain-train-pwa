@@ -183,6 +183,17 @@ export function appendSet(exercise: Exercise, category?: string): Exercise {
   };
 }
 
+/** A routine's exercise as planned: a planned set is never checked, even one saved that way earlier. */
+export function withoutChecks(exercise: Exercise): Exercise {
+  if (!exercise.sets.some((s) => s.done)) return exercise;
+  return {
+    ...exercise,
+    sets: exercise.sets.map((s) =>
+      s.done ? { ...s, done: false, bodyWeightKg: undefined } : s,
+    ),
+  };
+}
+
 /** The exercise a card is changed to; `category` is a custom exercise's own. */
 export type ExerciseTarget = { id: string; name: string; category?: string };
 

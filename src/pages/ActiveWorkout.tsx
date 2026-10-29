@@ -1,4 +1,11 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -8,11 +15,12 @@ import { useProfile } from "@/contexts/useProfile";
 import {
   type Workout,
   type Exercise,
+  type RecordDoc,
   newSet,
   validSet,
   isFromNewerApp,
 } from "@/data/model";
-import { doneSetCount, setCount } from "@/data/selectors";
+import { customCategories, doneSetCount, setCount } from "@/data/selectors";
 import {
   priorWorkouts,
   initialSet,
@@ -31,6 +39,8 @@ import { useRestTimer } from "@/hooks/useRestTimer";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
 import ExercisePicker from "@/components/ExercisePicker";
 import ExerciseCard from "@/components/ExerciseCard";
+import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
+import { useStableCallback } from "@/hooks/useStableCallback";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import FinishSheet from "@/components/workout/FinishSheet";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
@@ -71,6 +81,15 @@ export default function ActiveWorkout() {
   );
 }
 
+/** A summary of the other finished workouts: changes whenever one of them does. */
+function finishedKey(records: Record<string, RecordDoc>, id: string) {
+  let key = "";
+  for (const r of Object.values(records))
+    if (r.id !== id && r.kind === "workout")
+      key += `${r.id}:${r.localVersion}:${r.revision}:${r.deleted ? 1 : 0}:${r.payload.status};`;
+  return key;
+}
+
 function Editor({
   id,
   account,
@@ -84,7 +103,15 @@ function Editor({
   const { bodyWeightKg } = useProfile();
   const navigate = useNavigate();
   const autosave = useWorkoutAutosave(id, account, initial);
-  const { workout: w, change, editing, saved, error, setError } = autosave;
+  const {
+    workout: w,
+    change,
+    changeWith,
+    editing,
+    saved,
+    error,
+    setError,
+  } = autosave;
   // Starting from a planned day type opens the picker on its categories.
   const location = useLocation();
   const [suggested] = useState(
@@ -103,8 +130,13 @@ function Editor({
   const [details, setDetails] = useState(false);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
+  const [changing, setChanging] = useState<Exercise | null>(null);
   const rest = useRestTimer(account, id);
-  const dirty = JSON.stringify(w) !== JSON.stringify(initial);
+  // Only an edit of a finished workout has unsaved changes to compare.
+  const dirty = useMemo(
+    () => editing && JSON.stringify(w) !== JSON.stringify(initial),
+    [editing, w, initial],
+  );
   const completed = doneSetCount(w);
   const total = setCount(w);
   const invalidChecked = w.exercises.some((ex) =>
@@ -129,17 +161,31 @@ function Editor({
       document.removeEventListener("visibilitychange", tick);
     };
   }, [timed]);
-  // Previous results per exercise, rebuilt only when the log or date changes.
+  // Previous results per exercise, rebuilt only when other finished workouts
+  // or the date change: not after each autosave of this one, which reloads
+  // the log and would otherwise hand every card new props.
+  const records = useRef(state.records);
+  records.current = state.records;
+  const historyKey = useMemo(
+    () => finishedKey(state.records, id),
+    [state.records, id],
+  );
   const previous = useMemo(
     () =>
       lastSessions(
         priorWorkouts(
-          Object.values(state.records),
-          { ...state.records[id], kind: "workout", payload: initial },
+          Object.values(records.current),
+          { ...records.current[id], kind: "workout", payload: initial },
           w.date,
         ),
       ),
-    [state.records, id, initial, w.date],
+    // historyKey stands in for the records it summarises.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [historyKey, id, initial, w.date],
+  );
+  const categories = useMemo(
+    () => customCategories(state.records),
+    [state.records],
   );
 
   const add = (items: { id: string; name: string; category?: string }[]) =>
@@ -162,25 +208,47 @@ function Editor({
         }),
       ],
     });
-  const update = (ex: Exercise) =>
-    change({
-      ...w,
-      exercises: w.exercises.map((e) => (e.id === ex.id ? ex : e)),
-    });
+  // One identity each for the editor's lifetime, so memoised cards only
+  // re-render when their own exercise changes.
+  const update = useCallback(
+    (ex: Exercise) =>
+      changeWith((current) => ({
+        ...current,
+        exercises: current.exercises.map((e) => (e.id === ex.id ? ex : e)),
+      })),
+    [changeWith],
+  );
   const remove = (ex: Exercise) => {
-    change({ ...w, exercises: w.exercises.filter((e) => e.id !== ex.id) });
+    changeWith((current) => ({
+      ...current,
+      exercises: current.exercises.filter((e) => e.id !== ex.id),
+    }));
     setRemoveExercise(null);
   };
-  const move = (index: number, step: number) => {
-    const target = index + step;
-    if (target < 0 || target >= w.exercises.length) return;
-    const exercises = [...w.exercises];
-    [exercises[index], exercises[target]] = [
-      exercises[target],
-      exercises[index],
-    ];
-    change({ ...w, exercises });
-  };
+  const move = useCallback(
+    (ex: Exercise, step: number) =>
+      changeWith((current) => {
+        const index = current.exercises.findIndex((e) => e.id === ex.id);
+        const target = index + step;
+        if (index < 0 || target < 0 || target >= current.exercises.length)
+          return current;
+        const exercises = [...current.exercises];
+        [exercises[index], exercises[target]] = [
+          exercises[target],
+          exercises[index],
+        ];
+        return { ...current, exercises };
+      }),
+    [changeWith],
+  );
+  const requestRemove = useStableCallback((ex: Exercise) =>
+    hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex),
+  );
+  const setDone = useStableCallback(() => {
+    if (editing) return;
+    rest.start();
+    trainingHaptic(rest.preferences.haptics);
+  });
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
     else navigate(editing ? historyPath(id) : "/");
@@ -386,19 +454,23 @@ function Editor({
           isLast={ei === w.exercises.length - 1}
           lastSession={previous.get(ex.exerciseId)}
           bodyWeightKg={bodyWeightKg}
-          nextSetId={nextSet?.id}
-          onChange={update}
-          onMove={(step) => move(ei, step)}
-          onRemove={() =>
-            hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex)
+          // Only the card holding the next set needs to know which it is.
+          nextSetId={
+            ex.sets.some((s) => s.id === nextSet?.id) ? nextSet?.id : undefined
           }
-          onSetDone={() => {
-            if (editing) return;
-            rest.start();
-            trainingHaptic(rest.preferences.haptics);
-          }}
+          category={categories.get(ex.exerciseId)}
+          onChange={update}
+          onMove={move}
+          onRemove={requestRemove}
+          onChangeExercise={setChanging}
+          onSetDone={setDone}
         />
       ))}
+      <ChangeExercisePicker
+        exercise={changing}
+        onClose={() => setChanging(null)}
+        onChange={update}
+      />
       {w.exercises.length ? (
         <button
           type="button"

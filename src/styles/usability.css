@@ -106,7 +106,7 @@ select,
   min-height: 44px;
 }
 @media (max-width: 639px) {
-  .picker-dialog.is-searching .picker-description {
+  .picker-dialog .picker-description.is-searching {
     display: none;
   }
   .picker-dialog .facet-chips {

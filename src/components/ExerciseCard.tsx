@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { memo, useCallback, useId, useRef, useState } from "react";
 import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 import {
   type Exercise,
@@ -16,13 +16,10 @@ import {
   setBadge,
 } from "@/data/drops";
 import {
-  type ExerciseTarget,
   appendSet,
-  changeDiscardsSets,
-  changeExercise,
   groupComplete,
-  loggedSetCount,
   toggleGroupCompletion,
+  withoutChecks,
 } from "@/lib/workout-editor";
 import {
   applyExerciseCount,
@@ -36,19 +33,15 @@ import {
 } from "@/lib/load-keys";
 import { localizedDate } from "@/lib/dates";
 import { cardioTotals, isCardioSet, totalsLabel } from "@/lib/cardio";
-import { useData } from "@/contexts/useData";
-import { customExercises } from "@/data/selectors";
-import { toastWithUndo } from "@/lib/undo-toast";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
+import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
 import SetSheet from "@/components/workout/SetSheet";
 import LoadCountSheet from "@/components/workout/LoadCountSheet";
-import ExercisePicker from "@/components/ExercisePicker";
-import ConfirmDialog from "@/components/ConfirmDialog";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 
-type Props = {
+export type ExerciseCardProps = {
   exercise: Exercise;
   isFirst: boolean;
   isLast: boolean;
@@ -61,9 +54,15 @@ type Props = {
   lastSession?: LastSession;
   bodyWeightKg?: number | null;
   nextSetId?: string;
+  /** A custom exercise's saved category, for a set added from scratch. */
+  category?: string;
+  // Callbacks take the card's exercise, so a parent can pass one stable
+  // function to every card and memoised cards skip unchanged renders.
   onChange: (exercise: Exercise) => void;
-  onMove: (step: -1 | 1) => void;
-  onRemove: () => void;
+  onMove: (exercise: Exercise, step: -1 | 1) => void;
+  onRemove: (exercise: Exercise) => void;
+  /** Opens the shared "Change exercise" picker for this card. */
+  onChangeExercise: (exercise: Exercise) => void;
   /** Called when a set is newly checked as done. */
   onSetDone?: () => void;
 };
@@ -74,7 +73,6 @@ type OpenSheet =
   | { kind: "loadCount" }
   | { kind: "menu" }
   | { kind: "reorder" }
-  | { kind: "change" }
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
@@ -89,7 +87,21 @@ const keepTogether = (label: string) =>
     .replace(/(\d) kg/, "$1\u00a0kg")
     .replace(/× (\d)/, "×\u00a0$1");
 
-export default function ExerciseCard({
+/** SetLine skips a render when nothing it shows changed; its callbacks are stable. */
+const SetLineMemo = memo(SetLine, (a, b) => {
+  for (const key of Object.keys(b) as (keyof typeof b)[])
+    if (key !== "badge" && a[key] !== b[key]) return false;
+  return (
+    Object.keys(a).length === Object.keys(b).length &&
+    a.badge.text === b.badge.text &&
+    a.badge.tone === b.badge.tone &&
+    a.badge.label === b.badge.label &&
+    a.badge.title === b.badge.title &&
+    a.badge.name === b.badge.name
+  );
+});
+
+function ExerciseCard({
   exercise: planned,
   isFirst,
   isLast,
@@ -97,24 +109,16 @@ export default function ExerciseCard({
   lastSession,
   bodyWeightKg = null,
   nextSetId,
+  category,
   onChange,
   onMove,
   onRemove,
+  onChangeExercise,
   onSetDone,
-}: Props) {
-  // A planned set is never checked, even in a routine saved that way earlier.
-  const ex =
-    mode === "plan" && planned.sets.some((s) => s.done)
-      ? {
-          ...planned,
-          sets: planned.sets.map((s) =>
-            s.done ? { ...s, done: false, bodyWeightKg: undefined } : s,
-          ),
-        }
-      : planned;
+}: ExerciseCardProps) {
+  const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
   const headingId = useId();
-  const { state } = useData();
   const [sheet, setSheet] = useState<OpenSheet>(null);
   const setSheetRef = useRef<HTMLDivElement>(null);
   const openSetId = sheet?.kind === "set" ? sheet.setId : null;
@@ -127,40 +131,24 @@ export default function ExerciseCard({
 
   const cardio = sets.some(isCardioSet);
   const defaultKey = defaultLoadKey(sets);
-  const close = () => setSheet(null);
-  // The Undo toast outlives this render; it must change the latest workout.
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const [pendingTarget, setPendingTarget] = useState<ExerciseTarget | null>(
-    null,
-  );
-  const applyChange = (target: ExerciseTarget) => {
-    const before = planned;
-    onChange(changeExercise(ex, target));
-    toastWithUndo(
-      `Changed to ${target.name}`,
-      async () => onChangeRef.current(before),
-      "Could not undo the change.",
-    );
-  };
-  const chooseExercise = (items: ExerciseTarget[]) => {
-    const target = items[0];
-    if (!target) return;
-    if (changeDiscardsSets(ex, target) && loggedSetCount(ex) > 0)
-      setPendingTarget(target);
-    else applyChange(target);
-  };
+  const close = useCallback(() => setSheet(null), []);
   const changeSets = (next: WorkoutSet[]) => onChange({ ...ex, sets: next });
-  const updateSet = (next: WorkoutSet) =>
-    changeSets(sets.map((s) => (s.id === next.id ? next : s)));
-  const toggleDone = (setId: string) => {
+  // Stable for SetLine: they always act on this render's sets.
+  const updateSet = useStableCallback((next: WorkoutSet) =>
+    changeSets(sets.map((s) => (s.id === next.id ? next : s))),
+  );
+  const toggleDone = useStableCallback((setId: string) => {
     const next = toggleGroupCompletion(sets, setId, bodyWeightKg);
     if (next === sets) return;
     changeSets(next);
     const was = sets.find((s) => s.id === setId);
     const now = next.find((s) => s.id === setId);
     if (was && !was.done && now?.done) onSetDone?.();
-  };
+  });
+  const openSet = useCallback(
+    (setId: string) => setSheet({ kind: "set", setId }),
+    [],
+  );
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
     return result ? keepTogether(labelSet(result)) : undefined;
@@ -238,7 +226,7 @@ export default function ExerciseCard({
         </div>
       )}
       {sets.map((s, i) => (
-        <SetLine
+        <SetLineMemo
           key={s.id}
           set={s}
           mode={mode}
@@ -255,23 +243,15 @@ export default function ExerciseCard({
               ? "Fill in or delete its drops to check this set."
               : undefined
           }
-          onOpenSheet={() => setSheet({ kind: "set", setId: s.id })}
+          onOpenSheet={openSet}
           onChange={updateSet}
-          onToggleDone={() => toggleDone(s.id)}
+          onToggleDone={toggleDone}
         />
       ))}
       <button
         type="button"
         className="btn-quiet ex-add-set"
-        onClick={() =>
-          onChange(
-            appendSet(
-              ex,
-              customExercises(state.records).find((r) => r.id === ex.exerciseId)
-                ?.payload.category,
-            ),
-          )
-        }
+        onClick={() => onChange(appendSet(ex, category))}
       >
         <Plus size={18} aria-hidden="true" />
         Add set
@@ -328,34 +308,16 @@ export default function ExerciseCard({
         onLoadAndCount={
           cardio ? undefined : () => setSheet({ kind: "loadCount" })
         }
-        onChangeExercise={() => setSheet({ kind: "change" })}
+        onChangeExercise={() => {
+          close();
+          onChangeExercise(planned);
+        }}
         onReorder={() => setSheet({ kind: "reorder" })}
-        onMoveUp={() => onMove(-1)}
-        onMoveDown={() => onMove(1)}
+        onMoveUp={() => onMove(planned, -1)}
+        onMoveDown={() => onMove(planned, 1)}
         onRemove={() => {
           close();
-          onRemove();
-        }}
-      />
-      <ExercisePicker
-        single
-        title="Change exercise"
-        excludeId={ex.exerciseId}
-        open={sheet?.kind === "change"}
-        onClose={close}
-        onAdd={chooseExercise}
-      />
-      <ConfirmDialog
-        open={!!pendingTarget}
-        title={<>Change to {pendingTarget?.name}?</>}
-        description={`Your ${loggedSetCount(ex)} logged ${loggedSetCount(ex) === 1 ? "set doesn't" : "sets don't"} fit a ${cardio ? "strength" : "cardio"} exercise and will be cleared.`}
-        cancelLabel="Keep exercise"
-        confirmLabel="Change exercise"
-        onCancel={() => setPendingTarget(null)}
-        onConfirm={() => {
-          const target = pendingTarget;
-          setPendingTarget(null);
-          if (target) applyChange(target);
+          onRemove(planned);
         }}
       />
       <ReorderSetsSheet
@@ -367,3 +329,5 @@ export default function ExerciseCard({
     </section>
   );
 }
+
+export default memo(ExerciseCard);

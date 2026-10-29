@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useData } from "@/contexts/useData";
 import { validate, type Workout } from "@/data/model";
 import {
@@ -34,7 +34,14 @@ export function useWorkoutAutosave(
   const [recovered] = useState(() =>
     editing ? null : readDraft(local, recoveryKey, parseWorkoutDraft),
   );
-  const [workout, setWorkout] = useState<Workout>(recovered ?? initial);
+  const [workout, setWorkoutState] = useState<Workout>(recovered ?? initial);
+  // The entries as last changed, for edits that build on the previous one
+  // before React re-renders (see `changeWith`).
+  const latest = useRef(workout);
+  const setWorkout = (value: Workout) => {
+    latest.current = value;
+    setWorkoutState(value);
+  };
   const [saved, setSaved] = useState(!recovered);
   const [error, setError] = useState<string | null>(
     recovered
@@ -147,19 +154,33 @@ export function useWorkoutAutosave(
   }
 
   const stored = state.records[id];
-  const storedKey =
-    stored?.kind === "workout" && !stored.deleted
-      ? workoutContentKey(stored.payload)
-      : null;
+  // Canonicalising is not free; do it once per stored version, not per keystroke.
+  const storedKey = useMemo(
+    () =>
+      stored?.kind === "workout" && !stored.deleted
+        ? workoutContentKey(stored.payload)
+        : null,
+    [stored],
+  );
   const changedElsewhere =
     !!storedKey &&
     !pending.current &&
     storedKey !== known.current &&
     storedKey !== inFlight.current;
 
+  const changeRef = useRef(change);
+  changeRef.current = change;
+  /** Applies `update` to the latest entries; one identity for the editor's lifetime. */
+  const changeWith = useCallback(
+    (update: (workout: Workout) => Workout) =>
+      changeRef.current(update(latest.current)),
+    [],
+  );
+
   return {
     workout,
     change,
+    changeWith,
     editing,
     saved,
     error,
