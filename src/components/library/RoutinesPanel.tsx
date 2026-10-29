@@ -18,7 +18,6 @@ import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
 import { countLabel } from "@/lib/labels";
 import { lastUsedLabel } from "@/lib/library";
-import { readPlan } from "@/lib/plan";
 import RoutinePlan from "@/components/RoutinePlan";
 import { toast } from "sonner";
 import {
@@ -71,7 +70,6 @@ export default function RoutinesPanel() {
     }
     return dates;
   }, [state.records]);
-  const hasPlan = readPlan(account) !== null;
   const menuRoutine = records.find((r) => r.id === menu);
   const update = (exercise: Exercise) => {
     if (edit)
@@ -217,15 +215,6 @@ export default function RoutinesPanel() {
         <Plus size={20} aria-hidden="true" />
         {edit ? "Resume routine draft" : "New routine"}
       </button>
-      <div className="list">
-        <ListRow
-          to="/library/plan"
-          className="row-quiet"
-          title="Plan your weeks · optional"
-          value={hasPlan ? "On" : undefined}
-          chevron
-        />
-      </div>
       <Sheet
         open={!!menuRoutine}
         onClose={() => setMenu(null)}

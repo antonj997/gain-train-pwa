@@ -5,29 +5,31 @@ import { localizedDate } from "@/lib/dates";
 import "@/styles/history-calendar.css";
 
 export type PlanDay = {
-  kind: "routine" | "rest" | null;
+  kind: "planned" | "rest" | null;
   /** What the day's label reads aloud, such as the routine name. */
   label: string;
-  /** A dated choice replaces the weekly plan on this day. */
+  /** A dated choice replaces the template on this day. */
   override: boolean;
 };
 
 /**
- * A month grid for the plan's Upcoming view, from today to `last`. It borrows
- * the History calendar's day cells; days before today are read-only.
+ * A month grid for a plan's Upcoming view, from `first` to `last`. It borrows
+ * the History calendar's day cells; days outside that span are read-only.
  */
 export default function PlanCalendar({
   today,
+  first,
   last,
   describe,
   onPick,
 }: {
   today: string;
+  first: string;
   last: string;
   describe: (date: string) => PlanDay;
   onPick: (date: string) => void;
 }) {
-  const [month, setMonth] = useState(today.slice(0, 7));
+  const [month, setMonth] = useState(first.slice(0, 7));
   const title = localizedDate(month + "-01", {
     month: "long",
     year: "numeric",
@@ -39,7 +41,7 @@ export default function PlanCalendar({
           type="button"
           className="icon-btn"
           aria-label="Previous month"
-          disabled={month <= today.slice(0, 7)}
+          disabled={month <= first.slice(0, 7)}
           onClick={() => setMonth(moveCalendarMonth(month, -1))}
         >
           <ChevronLeft size={22} aria-hidden="true" />
@@ -80,7 +82,7 @@ export default function PlanCalendar({
                 (day.override ? " is-override" : "") +
                 (!cell.inMonth ? " outside-month" : "")
               }
-              disabled={!cell.inMonth || cell.date < today || cell.date > last}
+              disabled={!cell.inMonth || cell.date < first || cell.date > last}
               aria-current={cell.date === today ? "date" : undefined}
               aria-label={`${localizedDate(cell.date, { weekday: "long", day: "numeric", month: "long" })}, ${day.label}${day.override ? ", changed for this date" : ""}`}
               onClick={() => onPick(cell.date)}
@@ -96,7 +98,7 @@ export default function PlanCalendar({
       </div>
       <div className="calendar-footer plan-legend">
         <span>
-          <span className="plan-mark routine" aria-hidden="true" /> Routine
+          <span className="plan-mark planned" aria-hidden="true" /> Planned
         </span>
         <span>
           <span className="plan-mark rest" aria-hidden="true" /> Rest

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Play, Repeat, Settings } from "lucide-react";
 import { useData } from "@/contexts/useData";
-import { useAuth } from "@/contexts/useAuth";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import PageHeader from "@/components/PageHeader";
 import ListRow from "@/components/ui/ListRow";
@@ -18,12 +17,12 @@ import {
 import { isDrop } from "@/data/drops";
 import { newWorkout } from "@/data/start";
 import { today } from "@/data/model";
+import { activePlans, groupsOf, plannedFor, resolveCell } from "@/data/plans";
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel, timeTrainedLabel } from "@/lib/labels";
 import { historyPath, workoutPath } from "@/lib/routes";
 import { headlineFor } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
-import { REST, plannedFor, readPlan } from "@/lib/plan";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
 
 /** The first unchecked set of a workout, such as "Bench Press set 3". */
@@ -53,7 +52,6 @@ function useNow(active: boolean) {
 
 export default function Home() {
   const { state } = useData();
-  const { account } = useAuth();
   const {
     start: requestStart,
     repeat,
@@ -71,7 +69,6 @@ export default function Home() {
   const handledShortcut = useRef(false);
   const [headline] = useState(() => headlineFor());
   const [goal] = useState(() => readTrainingPreferences().weeklyGoal);
-  const [plan] = useState(() => readPlan(account));
   const now = useNow(drafts.some((r) => r.payload.startedAt !== null));
   const start = (past = false, routine?: RoutineRecord) =>
     requestStart(newWorkout(Object.values(state.records), { routine, past }));
@@ -117,15 +114,34 @@ export default function Home() {
       .map(({ routine }) => routine);
   }, [state.records]);
 
-  // A planned routine that was deleted since is ignored, as if nothing were planned.
-  const plannedRoutine = (date: string) => {
-    const entry = plannedFor(plan, date);
-    return entry && entry !== REST
-      ? routineRecords(state.records).find((r) => r.id === entry)
-      : undefined;
-  };
-  const todayPlan = plannedRoutine(day);
-  const restDay = plannedFor(plan, day) === REST;
+  // What the plans hold for a date. A deleted routine or group is ignored, as if
+  // nothing were planned.
+  const plans = useMemo(() => activePlans(state.records), [state.records]);
+  const planned = (date: string) =>
+    plans.length
+      ? resolveCell(plannedFor(plans, date)?.cell, {
+          routines: routineRecords(state.records),
+          groups: groupsOf(state.records),
+        })
+      : null;
+  const todayPlan = planned(day);
+  const planRoutines = todayPlan
+    ? todayPlan.routineIds.flatMap((id) => {
+        const routine = routineRecords(state.records).find((r) => r.id === id);
+        return routine ? [routine] : [];
+      })
+    : [];
+  // A day type or group with categories starts an empty workout and opens the
+  // picker on those categories.
+  const startWithSuggestions = () =>
+    todayPlan &&
+    void requestStart(
+      {
+        ...newWorkout(Object.values(state.records)),
+        name: todayPlan.title,
+      },
+      todayPlan.categories,
+    );
 
   const { totals } = week;
   const goalMet = goal !== null && totals.workouts >= goal;
@@ -216,15 +232,21 @@ export default function Home() {
       <section className="card col-12" aria-labelledby="week-heading">
         <div className="card-head">
           <h2 id="week-heading">This week</h2>
-          <span className={"stat-chip" + (goalMet ? " done" : "")}>
-            {goal !== null
-              ? `${totals.workouts} of ${goal} workouts`
-              : countLabel(totals.workouts, "workout")}
+          <span className="card-head-end">
+            <span className={"stat-chip" + (goalMet ? " done" : "")}>
+              {goal !== null
+                ? `${totals.workouts} of ${goal} workouts`
+                : countLabel(totals.workouts, "workout")}
+            </span>
+            <Link className="text-link" to="/library?tab=plan">
+              Plan
+            </Link>
           </span>
         </div>
         <ol className="week">
           {week.days.map((d) => {
-            const planned = plannedRoutine(d.date);
+            const entry = planned(d.date);
+            const outlined = entry !== null && entry.kind !== "rest";
             return (
               <li
                 key={d.date}
@@ -233,7 +255,7 @@ export default function Home() {
                   localizedDate(d.date, { weekday: "long", day: "numeric" }) +
                   (d.done ? ", workout done" : "") +
                   (d.today ? ", today" : "") +
-                  (planned ? `, planned: ${planned.payload.name}` : "")
+                  (entry ? `, planned: ${entry.title}` : "")
                 }
               >
                 <span aria-hidden="true">{d.label}</span>
@@ -242,7 +264,7 @@ export default function Home() {
                     "dot" +
                     (d.done ? " done" : "") +
                     (d.today ? " today" : "") +
-                    (planned ? " planned" : "")
+                    (outlined ? " planned" : "")
                   }
                   aria-hidden="true"
                 >
@@ -277,20 +299,60 @@ export default function Home() {
           <div className="card plan-today">
             <span className="plan-today-text">
               <span className="row-sub">From your plan</span>
-              <strong className="card-title">
-                Today: {todayPlan.payload.name}
-              </strong>
+              <strong className="card-title">Today: {todayPlan.title}</strong>
             </span>
-            <button
-              className="btn-primary btn-sm"
-              disabled={starting}
-              onClick={() => void start(false, todayPlan)}
-            >
-              Start
-            </button>
+            {todayPlan.kind === "routine" && planRoutines[0] && (
+              <button
+                className="btn-primary btn-sm"
+                disabled={starting}
+                onClick={() => void start(false, planRoutines[0])}
+              >
+                Start
+              </button>
+            )}
+            {todayPlan.kind === "type" && (
+              <button
+                className="btn-primary btn-sm"
+                disabled={starting}
+                onClick={startWithSuggestions}
+              >
+                Start with suggestions
+              </button>
+            )}
           </div>
         )}
-        {restDay && <p className="row-sub plan-rest">Today: Rest day</p>}
+        {todayPlan?.kind === "group" && (
+          <div className="plan-today-group">
+            {planRoutines.length > 0 && (
+              <div className="list">
+                {planRoutines.map((r) => (
+                  <ListRow
+                    key={r.id}
+                    disabled={starting}
+                    onClick={() => void start(false, r)}
+                    title={r.payload.name}
+                    sub={countLabel(r.payload.exercises.length, "exercise")}
+                    trailing={
+                      <span className="play-round">
+                        <Play size={18} fill="currentColor" stroke="none" />
+                        <span className="sr-only">Start</span>
+                      </span>
+                    }
+                  />
+                ))}
+              </div>
+            )}
+            {todayPlan.categories.length > 0 && (
+              <button
+                className="btn-secondary btn-block"
+                disabled={starting}
+                onClick={startWithSuggestions}
+              >
+                Start with suggestions
+              </button>
+            )}
+          </div>
+        )}
         {recentRoutines.length ? (
           <div className="list">
             {recentRoutines.map((r) => (

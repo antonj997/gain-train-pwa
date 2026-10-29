@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
@@ -85,7 +85,18 @@ function Editor({
   const navigate = useNavigate();
   const autosave = useWorkoutAutosave(id, account, initial);
   const { workout: w, change, editing, saved, error, setError } = autosave;
-  const [picker, setPicker] = useState(false);
+  // Starting from a planned day type opens the picker on its categories.
+  const location = useLocation();
+  const [suggested] = useState(
+    () => (location.state as { suggest?: string[] } | null)?.suggest,
+  );
+  const [picker, setPicker] = useState(() => !!suggested?.length);
+  useEffect(() => {
+    if (suggested?.length)
+      navigate(location.pathname, { replace: true, state: null });
+    // Only the first render reads the state; it is cleared so a reload starts plain.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [finish, setFinish] = useState(false);
   const [routine, setRoutine] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -417,6 +428,7 @@ function Editor({
         open={picker}
         onClose={() => setPicker(false)}
         onAdd={add}
+        suggested={suggested}
       />
       <WorkoutDetailsSheet
         open={details}

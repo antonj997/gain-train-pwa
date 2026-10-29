@@ -1,4 +1,4 @@
-import type { CustomExercise, RecordDoc } from "./model";
+import type { CustomExercise, Library, RecordDoc } from "./model";
 import { customExercises } from "./selectors";
 
 type Records = Record<string, RecordDoc>;
@@ -32,13 +32,12 @@ export function favouriteIds(records: Records) {
 }
 
 /**
- * The id of an account's one `library` record. It is derived from the account,
- * so every device of the account finds the same record instead of making its own.
- * The format is a version 4 UUID (needed by the server) built from a hash.
+ * A version 4 UUID (needed by the server) built from a hash of `seed`, so every
+ * device derives the same id for the same thing instead of making its own.
  */
-export function libraryRecordId(account: string) {
+export function derivedUuid(seed: string) {
   let h = [0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344];
-  for (const ch of "library:" + account) {
+  for (const ch of seed) {
     const c = ch.codePointAt(0)!;
     h = h.map((x, i) => Math.imul(x ^ (c + i), 0x9e3779b1) ^ (x >>> 15));
   }
@@ -52,6 +51,21 @@ export function libraryRecordId(account: string) {
     "89ab"[parseInt(hex[16], 16) % 4] + hex.slice(17, 20),
     hex.slice(20, 32),
   ].join("-");
+}
+
+/** The id of an account's one `library` record. */
+export const libraryRecordId = (account: string) =>
+  derivedUuid("library:" + account);
+
+/**
+ * The account's library settings as saved, or empty ones. Save changes on top
+ * of this so one setting (hidden exercises, groups) never drops the other.
+ */
+export function libraryOf(records: Records, account: string): Library {
+  const record = records[libraryRecordId(account)];
+  return record?.kind === "library" && !record.deleted
+    ? record.payload
+    : { hiddenExerciseIds: [] };
 }
 
 /** Ids of exercises the user hid from their catalogue, built-in or their own. */

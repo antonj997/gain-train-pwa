@@ -558,9 +558,6 @@ details[open] > .session-summary > svg {
   flex: 1 1 0;
   min-width: 0;
 }
-.row-quiet .row-title {
-  color: var(--gt-ink-2);
-}
 .search-field {
   display: flex;
   flex-direction: row;
@@ -684,7 +681,7 @@ details[open] > .session-summary > svg {
   height: 6px;
   border-radius: 50%;
 }
-.plan-mark.routine {
+.plan-mark.planned {
   background-color: var(--gt-accent);
 }
 .plan-mark.rest {
@@ -722,8 +719,124 @@ details[open] > .session-summary > svg {
   gap: 2px;
   min-width: 0;
 }
-.plan-rest {
+.plan-today-group {
+  display: grid;
+  gap: var(--gt-space-2);
   margin-bottom: var(--gt-space-2);
+}
+.card-head-end {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+.plan-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-4);
+}
+.plan-panel section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+/* Two fields side by side, such as From and To. */
+.field-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gt-space-3);
+}
+.plan-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+/* The template: a row of seven day buttons for each week of the cycle. */
+.plan-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.plan-grid-days,
+.plan-grid-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--gt-space-1);
+}
+.plan-grid-days {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  text-align: center;
+}
+.plan-grid-week {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+}
+.plan-cell {
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 0;
+  border: 1px solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+}
+.plan-cell > span {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.plan-cell.is-set {
+  border-color: transparent;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.plan-cell.is-rest {
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
+/* Goals on Progress. */
+.goal-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.goal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--gt-space-2);
+  width: 100%;
+  min-height: 44px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.goal-bar {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: var(--gt-surface-2);
+}
+.goal-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background-color: var(--gt-accent);
+}
+.goal-bar.is-done > span {
+  background-color: var(--gt-done);
 }
 .dot.planned:not(.today):not(.done) {
   box-shadow: inset 0 0 0 1.5px var(--gt-ink-3);

@@ -55,7 +55,8 @@ export const storageKeys = {
   persistRequested: "gt-persist-requested",
   deleted: (account: string) => "gt-deleted-" + account,
   syncHealth: (account: string) => "gt-sync-health:" + account,
-  plan: (account: string) => "gt-plan:" + account,
+  /** The device-only plan of the earlier version; imported once, then removed. */
+  legacyPlan: (account: string) => "gt-plan:" + account,
   legacyRemembered: ["rememberedPassword", "rememberedEmail"],
 };
 
