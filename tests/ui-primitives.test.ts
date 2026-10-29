@@ -232,7 +232,11 @@ test("Sheet passes backdrop, class, ref and Escape handler to the dialog and clo
   );
   assert.match(html, /data-backdrop="light"/);
   assert.match(html, /class="[^"]*\bset-sheet\b/);
-  assert.equal(seen.contentRef, contentRef);
+  // The dialog merges the caller's ref with its own (for dragging), so check
+  // that the caller's ref is filled rather than passed through as-is.
+  const node = {} as HTMLDivElement;
+  (seen.contentRef as (node: HTMLDivElement | null) => void)(node);
+  assert.equal(contentRef.current, node);
   assert.equal(seen.content?.onEscapeKeyDown, onEscapeKeyDown);
 
   // Radix reports a tap outside, Escape or the handle as onOpenChange(false).

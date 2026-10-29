@@ -104,7 +104,9 @@
   padding: 0;
   border: 0;
   background-color: var(--gt-surface);
-  cursor: pointer;
+  cursor: grab;
+  /* The handle drags the sheet, so the browser must not scroll or zoom on it. */
+  touch-action: none;
 }
 .dialog-handle-bar {
   width: 40px;
