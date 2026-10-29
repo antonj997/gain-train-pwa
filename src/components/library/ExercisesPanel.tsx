@@ -308,6 +308,7 @@ export default function ExercisesPanel() {
         busy={busy}
         error={error}
         onChange={setEdit}
+        exercises={all}
         onSave={() => void saveEdit()}
         onDelete={() =>
           edit && setDeleting({ id: edit.id, name: edit.data.name })

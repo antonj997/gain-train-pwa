@@ -9,7 +9,11 @@ import { useData } from "@/contexts/useData";
 import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
 import FacetChips from "@/components/FacetChips";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
-import { matchesFacets, searchExercises } from "@/lib/exercise-search";
+import {
+  matchesFacets,
+  sameNamedExercise,
+  searchExercises,
+} from "@/lib/exercise-search";
 import { type CustomExercise } from "@/data/model";
 import type { ExerciseDefaults } from "@/data/workouts";
 import { workouts } from "@/data/selectors";
@@ -85,18 +89,20 @@ export default function ExercisePickerBody({
     setBusyState(value);
   };
   const [error, setError] = useState("");
-  const { all, recent, favourites } = useMemo(
-    () => ({
-      all: [...catalogue, ...ownExercises(state.records)],
+  const { all, own, recent, favourites } = useMemo(() => {
+    const own = ownExercises(state.records);
+    return {
+      all: [...catalogue, ...own],
+      own: new Set(own.map((e) => e.id)),
       recent: new Set(
         workouts(state.records)
           .slice(0, 5)
           .flatMap((r) => r.payload.exercises.map((e) => e.exerciseId)),
       ),
       favourites: favouriteIds(state.records),
-    }),
-    [state.records],
-  );
+    };
+  }, [state.records]);
+  const twin = creating ? sameNamedExercise(name, all) : undefined;
   const items = useMemo(
     () =>
       searchExercises(
@@ -209,8 +215,14 @@ export default function ExercisePickerBody({
               value={name}
               onChange={(e) => updateDraft({ name: e.target.value })}
               maxLength={100}
+              aria-describedby={twin ? "picker-name-twin" : undefined}
             />
           </label>
+          {twin && (
+            <p id="picker-name-twin" className="field-warning" role="status">
+              You already have an exercise called {twin.name}.
+            </p>
+          )}
           <label>
             Category
             <select
@@ -335,7 +347,10 @@ export default function ExercisePickerBody({
                 }}
               >
                 <span>
-                  <strong>{e.name}</strong>
+                  <strong className="exercise-name">
+                    {e.name}
+                    {own.has(e.id) && <span className="stat-chip">Yours</span>}
+                  </strong>
                   <small>
                     {e.category}
                     {"equipment" in e ? ` · ${e.equipment}` : ""}

@@ -16,6 +16,20 @@ export function normalize(text: string) {
     .trim();
 }
 
+/**
+ * Another exercise with the same name, ignoring case, accents and punctuation
+ * ("Bench press" and "Bench-Press"); `selfId` is the one being edited.
+ */
+export function sameNamedExercise<T extends { id: string; name: string }>(
+  name: string,
+  exercises: readonly T[],
+  selfId?: string,
+): T | undefined {
+  const key = normalize(name);
+  if (!key) return undefined;
+  return exercises.find((e) => e.id !== selfId && normalize(e.name) === key);
+}
+
 const words = (text: string) => normalize(text).split(" ").filter(Boolean);
 
 // Lower is better. Name matches come first, then aliases, then the rest.

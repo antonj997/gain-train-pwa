@@ -13,6 +13,13 @@ select[aria-invalid="true"] {
 .field-error {
   color: var(--destructive);
 }
+/* A heads-up that doesn't block, such as a name already in use. */
+.field-warning {
+  margin: 0;
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
 input[type="number"] {
   appearance: textfield;
   font-variant-numeric: tabular-nums;
