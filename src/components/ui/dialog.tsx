@@ -26,27 +26,123 @@ type DialogContentProps = React.ComponentPropsWithoutRef<
   backdrop?: "dim" | "light";
 };
 
+/** How far (px) a sheet must be pulled, or how fast (px/ms) flicked, to close. */
+const CLOSE_DISTANCE = 96;
+const CLOSE_SPEED = 0.6;
+
+/**
+ * Lets the grab handle drag its sheet down. Past the distance or speed above,
+ * releasing clicks the handle, so Radix closes the dialog and the close
+ * animation continues from where the finger let go. A shorter drag springs
+ * back. After any drag the browser's own trailing click is swallowed; a plain
+ * tap still closes.
+ */
+function useDragToClose(content: React.RefObject<HTMLDivElement>) {
+  const drag = React.useRef<{
+    id: number;
+    startY: number;
+    lastY: number;
+    lastT: number;
+    speed: number;
+    moved: boolean;
+    close: boolean;
+  } | null>(null);
+  const suppressClick = React.useRef(false);
+  const setOffset = (y: number, animate: boolean) => {
+    const el = content.current;
+    if (!el) return;
+    el.style.transition = animate ? "translate var(--gt-motion)" : "none";
+    el.style.translate = y ? `0 ${y}px` : "";
+  };
+  return {
+    onPointerDown(event: React.PointerEvent<HTMLButtonElement>) {
+      if (event.button !== 0) return;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      drag.current = {
+        id: event.pointerId,
+        startY: event.clientY,
+        lastY: event.clientY,
+        lastT: event.timeStamp,
+        speed: 0,
+        moved: false,
+        close: false,
+      };
+      suppressClick.current = false;
+    },
+    onPointerMove(event: React.PointerEvent<HTMLButtonElement>) {
+      const d = drag.current;
+      if (!d || d.id !== event.pointerId) return;
+      const dy = Math.max(0, event.clientY - d.startY);
+      const dt = Math.max(1, event.timeStamp - d.lastT);
+      d.speed = (event.clientY - d.lastY) / dt;
+      d.lastY = event.clientY;
+      d.lastT = event.timeStamp;
+      if (dy > 4) d.moved = true;
+      if (d.moved) setOffset(dy, false);
+    },
+    onPointerUp(event: React.PointerEvent<HTMLButtonElement>) {
+      const d = drag.current;
+      if (!d || d.id !== event.pointerId) return;
+      drag.current = null;
+      if (!d.moved) return;
+      const dy = Math.max(0, event.clientY - d.startY);
+      if (dy > CLOSE_DISTANCE || d.speed > CLOSE_SPEED)
+        event.currentTarget.click();
+      else setOffset(0, true);
+      suppressClick.current = true;
+      window.setTimeout(() => (suppressClick.current = false), 400);
+    },
+    onPointerCancel() {
+      drag.current = null;
+      setOffset(0, true);
+    },
+    onClick(event: React.MouseEvent<HTMLButtonElement>) {
+      if (suppressClick.current) {
+        suppressClick.current = false;
+        event.preventDefault();
+      }
+    },
+  };
+}
+
 // Every dialog is a bottom sheet on phones and a centred panel from 640px up.
-// The Close control is the sheet's grab handle. It comes last in the markup so
-// the first field or button still receives focus, and is drawn first.
+// The Close control is the sheet's grab handle: tap it or drag it down. It
+// comes last in the markup so the first field or button still receives focus,
+// and is drawn first.
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, children, backdrop = "dim", ...props }, ref) => (
-  <DialogPrimitive.Portal>
-    <DialogOverlay data-backdrop={backdrop} />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={classes("app-dialog dialog-content", className)}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="dialog-handle" aria-label="Close">
-        <span className="dialog-handle-bar" aria-hidden="true" />
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPrimitive.Portal>
-));
+>(({ className, children, backdrop = "dim", ...props }, ref) => {
+  const content = React.useRef<HTMLDivElement>(null);
+  const setRefs = React.useCallback(
+    (node: HTMLDivElement | null) => {
+      (content as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
+  const handle = useDragToClose(content);
+  return (
+    <DialogPrimitive.Portal>
+      <DialogOverlay data-backdrop={backdrop} />
+      <DialogPrimitive.Content
+        ref={setRefs}
+        className={classes("app-dialog dialog-content", className)}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close
+          className="dialog-handle"
+          aria-label="Close"
+          {...handle}
+        >
+          <span className="dialog-handle-bar" aria-hidden="true" />
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Portal>
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 const DialogHeader = ({
