@@ -237,3 +237,34 @@ export function changeExercise(
     sets: Array.from({ length: count }, () => initialSet(target.id, target)),
   };
 }
+
+/**
+ * Appends picked exercises to a workout. Each starts from the valid sets checked
+ * last time it was done, or one fresh set shaped by its defaults.
+ */
+export function addExercises(
+  workout: Workout,
+  items: ExerciseTarget[],
+  previous: ReadonlyMap<string, { sets: WorkoutSet[] }>,
+  newId: () => string = () => crypto.randomUUID(),
+): Workout {
+  return {
+    ...workout,
+    exercises: [
+      ...workout.exercises,
+      ...items.map((item) => {
+        const prior = previous
+          .get(item.id)
+          ?.sets.filter((s) => s.done && validSet(s));
+        return {
+          id: newId(),
+          exerciseId: item.id,
+          name: item.name,
+          sets: prior?.length
+            ? prior.map((s) => newSet(s))
+            : [initialSet(item.id, item)],
+        };
+      }),
+    ],
+  };
+}

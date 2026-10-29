@@ -1,52 +1,36 @@
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { useProfile } from "@/contexts/useProfile";
 import {
   type Workout,
   type Exercise,
-  type RecordDoc,
-  newSet,
   validSet,
   isFromNewerApp,
 } from "@/data/model";
-import { customDefaults, doneSetCount, setCount } from "@/data/selectors";
-import {
-  priorWorkouts,
-  initialSet,
-  hasLoggedExercise,
-  lastSessions,
-  type ExerciseDefaults,
-} from "@/data/workouts";
-import { finishWorkout } from "@/lib/workout-editor";
+import { doneSetCount, setCount } from "@/data/selectors";
+import { hasLoggedExercise } from "@/data/workouts";
+import { addExercises, type ExerciseTarget } from "@/lib/workout-editor";
 import { trainingHaptic } from "@/lib/preferences";
-import { requestPersistenceOnce } from "@/lib/persistence";
-import { errorMessage } from "@/lib/errors";
-import { countLabel, durationLabel } from "@/lib/labels";
-import { localizedDate } from "@/lib/dates";
 import { historyPath } from "@/lib/routes";
-import { toastWithUndo } from "@/lib/undo-toast";
+import { usePreviousResults } from "@/hooks/usePreviousResults";
 import { useRestTimer } from "@/hooks/useRestTimer";
+import { useStableCallback } from "@/hooks/useStableCallback";
+import { useWorkoutActions } from "@/hooks/useWorkoutActions";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
 import ExercisePicker from "@/components/ExercisePicker";
 import ExerciseCard from "@/components/ExerciseCard";
-import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
-import { useStableCallback } from "@/hooks/useStableCallback";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
+import EditSaveDialog from "@/components/workout/EditSaveDialog";
 import FinishSheet from "@/components/workout/FinishSheet";
-import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
-import RestBar from "@/components/workout/RestBar";
 import NextSetChip from "@/components/workout/NextSetChip";
+import RestBar from "@/components/workout/RestBar";
+import WorkoutBanners from "@/components/workout/WorkoutBanners";
+import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
+import WorkoutTopBar from "@/components/workout/WorkoutTopBar";
 import "@/styles/workout.css";
 
 export default function ActiveWorkout() {
@@ -82,15 +66,6 @@ export default function ActiveWorkout() {
   );
 }
 
-/** A summary of the other finished workouts: changes whenever one of them does. */
-function finishedKey(records: Record<string, RecordDoc>, id: string) {
-  let key = "";
-  for (const r of Object.values(records))
-    if (r.id !== id && r.kind === "workout")
-      key += `${r.id}:${r.localVersion}:${r.revision}:${r.deleted ? 1 : 0}:${r.payload.status};`;
-  return key;
-}
-
 function Editor({
   id,
   account,
@@ -100,19 +75,11 @@ function Editor({
   account: string;
   initial: Workout;
 }) {
-  const { state, save, deleteRecord, restoreWorkout } = useData();
+  const { state } = useData();
   const { bodyWeightKg } = useProfile();
   const navigate = useNavigate();
   const autosave = useWorkoutAutosave(id, account, initial);
-  const {
-    workout: w,
-    change,
-    changeWith,
-    editing,
-    saved,
-    error,
-    setError,
-  } = autosave;
+  const { workout: w, change, changeWith, editing, saved, error } = autosave;
   // Starting from a planned day type opens the picker on its categories.
   const location = useLocation();
   const [suggested] = useState(
@@ -127,12 +94,12 @@ function Editor({
   }, []);
   const [finish, setFinish] = useState(false);
   const [routine, setRoutine] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [details, setDetails] = useState(false);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
   const rest = useRestTimer(account, id);
+  const { busy, complete, abandon } = useWorkoutActions(id, autosave, rest);
   // Only an edit of a finished workout has unsaved changes to compare.
   const dirty = useMemo(
     () => editing && JSON.stringify(w) !== JSON.stringify(initial),
@@ -143,81 +110,17 @@ function Editor({
   const invalidChecked = w.exercises.some((ex) =>
     ex.sets.some((s) => s.done && !validSet(s)),
   );
-  const unfinished = w.exercises
-    .flatMap((ex) => ex.sets)
-    .filter((s) => !s.done);
-  const nextSet = unfinished[0];
+  const nextSet = w.exercises.flatMap((ex) => ex.sets).find((s) => !s.done);
   const fromRoutine = !!w.routineId;
-  // A live timer for a running workout, refreshed every 30 s and on return.
-  const [now, setNow] = useState(Date.now);
-  const timed = !editing && !!w.startedAt;
-  useEffect(() => {
-    if (!timed) return;
-    const tick = () => setNow(Date.now());
-    tick();
-    const interval = window.setInterval(tick, 30_000);
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", tick);
-    };
-  }, [timed]);
-  // Previous results per exercise, rebuilt only when other finished workouts
-  // or the date change: not after each autosave of this one, which reloads
-  // the log and would otherwise hand every card new props.
-  const records = useRef(state.records);
-  records.current = state.records;
-  const historyKey = useMemo(
-    () => finishedKey(state.records, id),
-    [state.records, id],
-  );
-  const previous = useMemo(
-    () =>
-      lastSessions(
-        priorWorkouts(
-          Object.values(records.current),
-          { ...records.current[id], kind: "workout", payload: initial },
-          w.date,
-        ),
-      ),
-    // historyKey stands in for the records it summarises.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [historyKey, id, initial, w.date],
-  );
-  // Cards are memoised, so hand them the same defaults objects until a custom
-  // exercise actually changes, not new ones after every autosave.
-  const defaultsKey = useMemo(
-    () => JSON.stringify([...customDefaults(state.records)]),
-    [state.records],
-  );
-  const categories = useMemo(
-    () =>
-      new Map<string, ExerciseDefaults>(
-        JSON.parse(defaultsKey) as [string, ExerciseDefaults][],
-      ),
-    [defaultsKey],
+  const { previous, defaults } = usePreviousResults(
+    state.records,
+    id,
+    initial,
+    w.date,
   );
 
-  const add = (items: { id: string; name: string; category?: string }[]) =>
-    change({
-      ...w,
-      exercises: [
-        ...w.exercises,
-        ...items.map((item) => {
-          const prior = previous
-            .get(item.id)
-            ?.sets.filter((s) => s.done && validSet(s));
-          return {
-            id: crypto.randomUUID(),
-            exerciseId: item.id,
-            name: item.name,
-            sets: prior?.length
-              ? prior.map((s) => newSet(s))
-              : [initialSet(item.id, item)],
-          };
-        }),
-      ],
-    });
+  const add = (items: ExerciseTarget[]) =>
+    change(addExercises(w, items, previous));
   // One identity each for the editor's lifetime, so memoised cards only
   // re-render when their own exercise changes.
   const update = useCallback(
@@ -263,81 +166,7 @@ function Editor({
     if (editing && dirty) setDiscardChanges(true);
     else navigate(editing ? historyPath(id) : "/");
   };
-  // Finishing and abandoning lock the editor so no keystroke saves underneath.
-  const actionLocked = useRef(false);
-  const runLocked = async (action: () => Promise<void>, failure: string) => {
-    // A ref, not `busy`: a double tap arrives before the re-render disables buttons.
-    if (actionLocked.current) return;
-    actionLocked.current = true;
-    autosave.lock();
-    setBusy(true);
-    try {
-      await action();
-    } catch (cause) {
-      setError(
-        errorMessage(cause, "Could not save. Retry to keep your changes."),
-      );
-      toast.error(failure);
-    } finally {
-      actionLocked.current = false;
-      autosave.unlock();
-      setBusy(false);
-    }
-  };
-  const complete = () =>
-    runLocked(
-      async () => {
-        const next = finishWorkout(w);
-        await autosave.saveNow(next);
-        rest.skip();
-        if (!editing) requestPersistenceOnce();
-        if (routine && !fromRoutine) {
-          try {
-            await save(crypto.randomUUID(), "routine", {
-              name: next.name,
-              exercises: next.exercises.map((ex) => ({
-                ...ex,
-                sets: ex.sets.map((s) => ({ ...s, done: false })),
-              })),
-            });
-          } catch {
-            toast.error(
-              "Workout saved. The routine could not be saved; create it from History.",
-            );
-          }
-        }
-        toast.success(
-          editing
-            ? "Changes saved on this phone"
-            : "Workout saved on this phone",
-        );
-        navigate(historyPath(id));
-      },
-      editing
-        ? "Changes could not be saved. Your original workout is unchanged."
-        : "Could not finish. Your draft is still here.",
-    );
-  const abandonWorkout = () =>
-    runLocked(async () => {
-      await autosave.flush();
-      // Leave first: deleting re-renders this route, which would flash
-      // "Workout not found" before the navigation.
-      navigate("/", { replace: true });
-      try {
-        await deleteRecord(id);
-      } catch (cause) {
-        toast.error(
-          errorMessage(cause, "Could not abandon. The workout is still here."),
-        );
-        return;
-      }
-      rest.skip();
-      toastWithUndo(
-        "Workout abandoned",
-        () => restoreWorkout(id),
-        "Could not restore the workout. Try importing a backup.",
-      );
-    }, "Could not abandon. The workout is still here; retry.");
+  const save = () => void complete(routine && !fromRoutine);
 
   const saveStatus = editing
     ? dirty
@@ -348,123 +177,33 @@ function Editor({
       : saved
         ? "Saved"
         : "Saving…";
-  const status = [
-    timed ? (
-      <span key="time">
-        {durationLabel(
-          Math.max(0, Math.floor((now - (w.startedAt ?? now)) / 60000)),
-        )}
-      </span>
-    ) : (
-      <button
-        key="date"
-        type="button"
-        className="date-chip"
-        aria-haspopup="dialog"
-        aria-label={`Date ${localizedDate(w.date)}. Edit workout details`}
-        disabled={busy}
-        onClick={() => setDetails(true)}
-      >
-        {localizedDate(w.date, { day: "numeric", month: "short" })}
-      </button>
-    ),
-    <span key="sets">
-      {completed} of {total} sets
-    </span>,
-    <span
-      key="save"
-      role="status"
-      className={error && !editing ? "is-error" : undefined}
-    >
-      {saveStatus}
-    </span>,
-  ];
 
   return (
     <div className="workout-editor" aria-busy={busy}>
-      <div className="top-bar" data-top-bar>
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={editing ? "Back to history" : "Leave workout"}
-          onClick={leave}
-          disabled={busy}
-        >
-          <ArrowLeft size={23} aria-hidden="true" />
-        </button>
-        <div className="top-bar-text">
-          <h1 className="top-bar-title">
-            <button
-              type="button"
-              aria-haspopup="dialog"
-              disabled={busy}
-              onClick={() => setDetails(true)}
-            >
-              {editing ? "Edit " : ""}
-              {w.name || "Workout"}
-            </button>
-          </h1>
-          <p className="top-bar-status">
-            {status.map((part, index) => (
-              <Fragment key={part.key}>
-                {index > 0 && <span aria-hidden="true"> · </span>}
-                {part}
-              </Fragment>
-            ))}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="btn-primary"
-          disabled={
-            busy ||
-            invalidChecked ||
-            (!editing && !!error) ||
-            (editing && !dirty)
-          }
-          onClick={() => setFinish(true)}
-        >
-          {editing ? "Save" : "Finish"}
-        </button>
-      </div>
-      {autosave.changedElsewhere && !busy && (
-        <div className="banner workout-banner" role="alert">
-          <p>This workout was changed in another tab or on another device.</p>
-          <div className="banner-actions">
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={autosave.loadLatest}
-            >
-              Load the latest version
-            </button>
-            <button
-              type="button"
-              className="btn-quiet"
-              onClick={autosave.keepMine}
-            >
-              Keep my entries
-            </button>
-          </div>
-        </div>
-      )}
-      {error && (
-        <div className="banner banner-danger workout-banner" role="alert">
-          <p>{error}</p>
-          {!editing && (
-            <div className="banner-actions">
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={busy}
-                onClick={() => change(w)}
-              >
-                Retry saving
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      <WorkoutTopBar
+        workout={w}
+        editing={editing}
+        busy={busy}
+        completed={completed}
+        total={total}
+        saveStatus={saveStatus}
+        saveError={!!error && !editing}
+        finishDisabled={
+          busy || invalidChecked || (!editing && !!error) || (editing && !dirty)
+        }
+        onLeave={leave}
+        onDetails={() => setDetails(true)}
+        onFinish={() => setFinish(true)}
+      />
+      <WorkoutBanners
+        changedElsewhere={autosave.changedElsewhere}
+        error={error}
+        editing={editing}
+        busy={busy}
+        onLoadLatest={autosave.loadLatest}
+        onKeepMine={autosave.keepMine}
+        onRetry={() => change(w)}
+      />
       {w.exercises.map((ex, ei) => (
         <ExerciseCard
           key={ex.id}
@@ -477,7 +216,7 @@ function Editor({
           nextSetId={
             ex.sets.some((s) => s.id === nextSet?.id) ? nextSet?.id : undefined
           }
-          defaults={categories.get(ex.exerciseId)}
+          defaults={defaults.get(ex.exerciseId)}
           onChange={update}
           onMove={move}
           onRemove={requestRemove}
@@ -549,34 +288,16 @@ function Editor({
         }}
       />
       {editing ? (
-        <ConfirmDialog
+        <EditSaveDialog
           open={finish}
-          tone="primary"
-          title={<>Save changes to {w.name}?</>}
-          description={
-            <>
-              {countLabel(completed, "completed set")} will be saved.
-              {total > completed ? " Unchecked sets will be left out." : ""}
-            </>
-          }
-          cancelLabel="Keep editing"
-          confirmLabel={busy ? "Saving…" : "Save changes"}
+          name={w.name}
+          completed={completed}
+          total={total}
+          invalidChecked={invalidChecked}
           busy={busy}
-          confirmDisabled={!completed || invalidChecked}
           onCancel={() => setFinish(false)}
-          onConfirm={() => void complete()}
-        >
-          {completed < total && (
-            <p className="completion-warning" role="alert">
-              {countLabel(total - completed, "unchecked set")} will be left out.
-            </p>
-          )}
-          {!completed && (
-            <p className="completion-warning">
-              Complete at least one set before saving.
-            </p>
-          )}
-        </ConfirmDialog>
+          onConfirm={save}
+        />
       ) : (
         <FinishSheet
           open={finish}
@@ -587,9 +308,9 @@ function Editor({
           saveRoutine={routine}
           busy={busy}
           onSaveRoutine={setRoutine}
-          onSave={() => void complete()}
+          onSave={save}
           onKeepLogging={() => setFinish(false)}
-          onAbandon={() => void abandonWorkout()}
+          onAbandon={() => void abandon()}
         />
       )}
     </div>

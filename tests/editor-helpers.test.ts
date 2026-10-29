@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { lastSessions } from "../src/data/workouts";
 import {
+  addExercises,
   assertNotFuture,
   finishWorkout,
   workoutContentKey,
@@ -75,4 +76,32 @@ test("future dates are refused, including when finishing", () => {
   assert.throws(() => assertNotFuture(future), /today or an earlier date/);
   assert.throws(() => finishWorkout(future), /today or an earlier date/);
   assert.doesNotThrow(() => assertNotFuture(workout("2020-01-01", [])));
+});
+
+test("added exercises start from last time's checked valid sets, or one fresh set", () => {
+  const last = new Map([
+    [
+      "builtin:squat",
+      { date: "2026-01-01", sets: [set(true, 5), set(false, 8), set(true, 0)] },
+    ],
+  ]);
+  const next = addExercises(
+    workout("2026-01-02", []),
+    [
+      { id: "builtin:squat", name: "Squat" },
+      { id: "custom:run", name: "Run", category: "Cardio" },
+    ],
+    last,
+    () => "new-id",
+  );
+  const [, squat, run] = next.exercises;
+  assert.equal(next.exercises.length, 3);
+  assert.equal(squat.id, "new-id");
+  assert.deepEqual(
+    squat.sets.map((s) => [s.reps, s.done]),
+    [[5, false]],
+  );
+  assert.equal(run.name, "Run");
+  assert.equal(run.sets.length, 1);
+  assert.equal(run.sets[0].done, false);
 });
