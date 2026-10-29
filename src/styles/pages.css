@@ -11,6 +11,21 @@
     padding-top: calc(var(--gt-space-5) + env(safe-area-inset-top));
   }
 }
+/* The installed app's status bar is black-translucent: iOS draws white text
+   over the page. A dark band under it keeps the clock readable in the light
+   theme too; it has no height where there is no status bar inset. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: env(safe-area-inset-top, 0px);
+  background-color: var(--gt-ink);
+  pointer-events: none;
+}
+.dark body::before {
+  background-color: var(--gt-ground);
+}
 
 .page {
   display: flex;
