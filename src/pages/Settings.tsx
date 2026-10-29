@@ -379,14 +379,34 @@ export default function Settings() {
                 }}
               />
             </>
+          ) : account !== "phone" ? (
+            <>
+              <ListRow title="Sign in again" tone="accent" to="/auth" />
+              <ListRow
+                title="Use this phone's own log instead"
+                disabled={accountBusy}
+                onClick={async () => {
+                  setAccountBusy(true);
+                  try {
+                    await signOut();
+                  } catch {
+                    toast.error("Could not switch logs. Try again.");
+                  } finally {
+                    setAccountBusy(false);
+                  }
+                }}
+              />
+            </>
           ) : (
             <ListRow title="Sign in to sync" tone="accent" to="/auth" />
           )}
         </div>
         <p className="small-note group-note">
-          {user || account !== "phone"
+          {user
             ? "Sync runs when connected while the app is open, and when you return. Your phone keeps a local copy."
-            : "An account is optional. Sign in to sync across devices; your phone-only log stays separate until you choose to copy it."}
+            : account !== "phone"
+              ? "Your session ended, so this account's log is not syncing. It stays on this phone; sign in again to sync it."
+              : "An account is optional. Sign in to sync across devices; your phone-only log stays separate until you choose to copy it."}
         </p>
       </section>
 

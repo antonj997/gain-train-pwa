@@ -4,6 +4,7 @@ import { readAccount } from "@/data/database";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { isSyncOutage } from "@/lib/sync-health";
+import { needsSignInAgain } from "@/lib/auth-account";
 
 /**
  * The sync, sign-in and conflict notices, as banners under a page's title.
@@ -45,7 +46,19 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
   const needsUpdate = Object.keys(state.quarantine ?? {}).length > 0;
   const outage = !!user && online && isSyncOutage(syncHealth);
 
+  const signedOut = needsSignInAgain(account, user);
+
   const banners: React.ReactNode[] = [];
+  if (signedOut)
+    banners.push(
+      <div className="banner" key="signed-out">
+        <span>
+          You were signed out. Your log is still here and syncs once you sign in
+          again.
+        </span>
+        <Link to="/auth">Sign in again</Link>
+      </div>,
+    );
   if (conflicts > 0)
     banners.push(
       <div className="banner" key="conflicts">
@@ -101,14 +114,10 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
       </div>,
     );
   if (status && !syncing) {
-    if (!user)
+    if (!user && !signedOut)
       banners.push(
         <div className="banner" key="status">
-          <span>
-            {account === "phone"
-              ? "Saved on this phone."
-              : "Saved on this phone. Sign in again to sync."}
-          </span>
+          <span>Saved on this phone.</span>
           <Link to="/auth">Sign in to sync</Link>
         </div>,
       );

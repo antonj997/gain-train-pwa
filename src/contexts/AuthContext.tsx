@@ -4,6 +4,7 @@ import { AuthContext } from "./useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { eraseAccount } from "@/data/database";
 import { local, session, storageKeys, writeStored } from "@/lib/storage";
+import { PHONE_ACCOUNT, accountAfterAuthChange } from "@/lib/auth-account";
 import {
   RECOVERY_STORAGE_KEY,
   RECOVERY_USER_KEY,
@@ -13,7 +14,7 @@ import {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null),
     [account, setAccount] = useState(
-      () => local.getItem(storageKeys.account) || "phone",
+      () => local.getItem(storageKeys.account) || PHONE_ACCOUNT,
     ),
     [ready, setReady] = useState(false),
     [passwordRecovery, setPasswordRecovery] = useState(
@@ -40,10 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const update = (u: User | null) => {
       if (!active) return;
       setUser(u);
-      if (u) {
-        writeStored(storageKeys.account, u.id);
-        setAccount(u.id);
-      }
+      if (u) writeStored(storageKeys.account, u.id);
+      setAccount((current) => accountAfterAuthChange(current, u));
       setReady(true);
     };
     const timeout = setTimeout(() => setReady(true), 4000);
@@ -57,11 +56,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         writeStored(RECOVERY_STORAGE_KEY, "true", session);
         setPasswordRecovery(true);
       }
-      if (event === "SIGNED_OUT" && navigator.onLine) {
-        local.removeItem(storageKeys.account);
-        setAccount("phone");
-        finishPasswordRecovery();
-      }
+      // The account and its log stay; Settings and the notices offer "Sign in
+      // again". `signOut` below is the only way back to the phone log.
+      if (event === "SIGNED_OUT" && navigator.onLine) finishPasswordRecovery();
       update(s?.user ?? null);
     });
     supabase.auth
@@ -78,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase?.auth.signOut({ scope: "local" });
     local.removeItem(storageKeys.account);
     setUser(null);
-    setAccount("phone");
+    setAccount(PHONE_ACCOUNT);
     finishPasswordRecovery();
   };
   const deleteAccount = async () => {
