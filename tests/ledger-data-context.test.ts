@@ -7,6 +7,7 @@ import { createRequire } from "node:module";
 import ts from "typescript";
 import { readAccount, transact } from "../src/data/database";
 import * as model from "../src/data/model";
+import * as actions from "../src/data/actions";
 import * as workoutStart from "../src/data/workout-start";
 import * as drafts from "../src/lib/drafts";
 import * as storage from "../src/lib/storage";
@@ -64,19 +65,22 @@ async function provider(account: string) {
       if (id === "./useData") return { DataContext: { Provider: "provider" } };
       if (id === "@/lib/drafts") return drafts;
       if (id === "@/lib/storage") return storage;
-      if (id === "@/lib/sync-health") return syncHealth;
+      if (id === "@/data/actions") return actions;
+      if (id === "@/hooks/useSyncLoop")
+        return {
+          useSyncLoop: () => ({
+            sync: async () => {},
+            scheduleSync: () => {},
+            syncing: false,
+            online: true,
+            syncHealth: syncHealth.readSyncHealth(account),
+          }),
+        };
       if (id === "@/lib/tab-sync")
         return { notifyOtherTabs: () => {}, onOtherTabChange: () => () => {} };
       if (id === "@/data/database") return { readAccount, transact };
       if (id === "@/data/model") return model;
       if (id === "@/data/workout-start") return workoutStart;
-      if (id === "@/data/sync")
-        return {
-          syncAccount: () => {
-            throw Error("Cloud sync is outside this test");
-          },
-        };
-      if (id === "@/integrations/supabase/client") return { supabase: null };
       return require(id);
     },
     navigator: { onLine: true },

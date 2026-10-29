@@ -1,11 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {
-  historyPeriod,
-  weekStart,
-  summarize,
-  metricChange,
-} from "../src/data/summary";
+import { historyPeriod, summarize, metricChange } from "../src/data/summary";
+import { weekStart } from "../src/lib/dates";
 import { type Workout, newSet, validate } from "../src/data/model";
 
 test("rolling history uses two non-overlapping 30-day windows across year boundaries", () => {

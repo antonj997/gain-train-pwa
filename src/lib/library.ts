@@ -1,4 +1,9 @@
 import { localizedDate } from "./dates";
+import { catalogue } from "../data/catalogue";
+import { exerciseStats, progressFor } from "../data/analytics";
+import { favouriteIds, ownExercises } from "../data/exercises";
+import { labelSet, type RecordDoc } from "../data/model";
+import { completedWorkouts } from "../data/selectors";
 import {
   matchesFacets,
   searchExercises,
@@ -30,12 +35,54 @@ export type LibraryExercise = {
 
 export type ExerciseFilter = "all" | "yours" | "recent" | "hidden";
 
-export type ExerciseGroup = {
+/**
+ * Every exercise the Library lists: the catalogue and the user's own, with
+ * whether each is hidden or a favourite, when it was last trained and its
+ * best set.
+ */
+export function libraryExercises(
+  records: Record<string, RecordDoc>,
+  hidden: ReadonlySet<string>,
+): LibraryExercise[] {
+  const favourites = favouriteIds(records);
+  const lastDates = new Map<string, string>();
+  for (const r of completedWorkouts(records))
+    for (const ex of r.payload.exercises)
+      if (!lastDates.has(ex.exerciseId))
+        lastDates.set(ex.exerciseId, r.payload.date);
+  const bests = new Map(
+    progressFor(Object.values(records)).map((item) => [
+      item.id,
+      labelSet(exerciseStats(item).best.set),
+    ]),
+  );
+  const extra = (id: string) => ({
+    hidden: hidden.has(id),
+    lastDate: lastDates.get(id) ?? null,
+    best: bests.get(id) ?? null,
+  });
+  return [
+    ...catalogue.map((e) => ({
+      ...e,
+      note: "",
+      custom: false,
+      favourite: favourites.has(e.id),
+      ...extra(e.id),
+    })),
+    ...ownExercises(records).map((e) => ({
+      ...e,
+      custom: true,
+      ...extra(e.id),
+    })),
+  ];
+}
+
+type ExerciseGroup = {
   title: string;
   items: LibraryExercise[];
 };
 
-export const RECENT_LIMIT = 5;
+const RECENT_LIMIT = 5;
 
 const byName = (a: LibraryExercise, b: LibraryExercise) =>
   a.name.localeCompare(b.name, undefined, { sensitivity: "base" });

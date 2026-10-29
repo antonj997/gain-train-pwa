@@ -1,9 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
-const LAST_ERROR_KEY = "gt-last-error";
 const CHUNK_RELOAD_KEY = "gt-chunk-reload";
+/** A stale-code error this soon after the last reload means reloading did not help. */
+const RELOAD_RETRY_MS = 60_000;
 
-export type ErrorReport = {
+type ErrorReport = {
   message: string;
   stack: string;
   path: string;
@@ -20,24 +21,6 @@ export function errorReport(error: unknown, extra = ""): ErrorReport {
   };
 }
 
-/** Keeps the last crash so it survives the reload and can be copied later. */
-export function rememberError(report: ErrorReport) {
-  try {
-    localStorage.setItem(LAST_ERROR_KEY, JSON.stringify(report));
-  } catch {
-    /* Storage can be unavailable; the screen still shows the details. */
-  }
-}
-
-export function readLastError(): ErrorReport | null {
-  try {
-    const raw = localStorage.getItem(LAST_ERROR_KEY);
-    return raw ? (JSON.parse(raw) as ErrorReport) : null;
-  } catch {
-    return null;
-  }
-}
-
 /** A deploy replaced the code this page still refers to: a reload fixes it. */
 export function isStaleCodeError(message: string) {
   return /dynamically imported module|importing a module script failed|failed to fetch dynamically|loading chunk/i.test(
@@ -45,26 +28,33 @@ export function isStaleCodeError(message: string) {
   );
 }
 
-function reloadOnceForStaleCode(message: string) {
-  if (!isStaleCodeError(message)) return false;
+/**
+ * Reloads for an error from code a deploy replaced, unless the last such
+ * reload was under a minute ago (then reloading did not help). An installed
+ * app keeps its session for days, so a lasting "reloaded once" flag would let
+ * only the first deploy recover.
+ */
+export function shouldReloadForStaleCode(
+  message: string,
+  lastReload: number | null,
+  now = Date.now(),
+) {
+  return (
+    isStaleCodeError(message) &&
+    (lastReload === null || now - lastReload >= RELOAD_RETRY_MS)
+  );
+}
+
+function reloadForStaleCode(message: string) {
   try {
-    if (sessionStorage.getItem(CHUNK_RELOAD_KEY)) return false;
-    sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+    const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY)) || null;
+    if (!shouldReloadForStaleCode(message, last)) return false;
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
   } catch {
     return false;
   }
   location.reload();
   return true;
-}
-
-/** Records errors outside React's render (event handlers, promises) as well. */
-export function watchGlobalErrors() {
-  window.addEventListener("error", (event) =>
-    rememberError(errorReport(event.error ?? event.message)),
-  );
-  window.addEventListener("unhandledrejection", (event) =>
-    rememberError(errorReport(event.reason)),
-  );
 }
 
 type State = { report: ErrorReport | null; copied: boolean };
@@ -74,7 +64,11 @@ type State = { report: ErrorReport | null; copied: boolean };
  * screen. Workouts are saved as they change, so reloading loses nothing.
  */
 export default class ErrorBoundary extends Component<
-  { children: ReactNode },
+  {
+    children: ReactNode;
+    /** "page" replaces only the page under the tab bar, which stays usable. */
+    scope?: "app" | "page";
+  },
   State
 > {
   state: State = { report: null, copied: false };
@@ -85,8 +79,7 @@ export default class ErrorBoundary extends Component<
 
   componentDidCatch(error: unknown, info: ErrorInfo) {
     const report = errorReport(error, info.componentStack ?? "");
-    rememberError(report);
-    if (reloadOnceForStaleCode(report.message)) return;
+    if (reloadForStaleCode(report.message)) return;
     this.setState({ report });
   }
 
@@ -106,8 +99,9 @@ export default class ErrorBoundary extends Component<
   render() {
     const { report, copied } = this.state;
     if (!report) return this.props.children;
+    const Root = this.props.scope === "page" ? "div" : "main";
     return (
-      <main className="crash-screen" role="alert">
+      <Root className="crash-screen" role="alert">
         <h1>Something went wrong</h1>
         <p>
           Your workout is saved. Reload to continue, and send the details below
@@ -130,7 +124,7 @@ export default class ErrorBoundary extends Component<
           {"\n"}
           {report.stack.split("\n").slice(0, 12).join("\n")}
         </pre>
-      </main>
+      </Root>
     );
   }
 }

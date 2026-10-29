@@ -1,5 +1,10 @@
 import { newWorkout } from "@/data/start";
-import { completedWorkouts, routines, setCount } from "@/data/selectors";
+import {
+  completedWorkouts,
+  customDefaults,
+  routines,
+  setCount,
+} from "@/data/selectors";
 import { today } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
 import { toastWithUndo } from "@/lib/undo-toast";
@@ -15,6 +20,7 @@ import { initialSet, hasLoggedExercise } from "@/data/workouts";
 import { draftKey, parseRoutineDraft } from "@/lib/drafts";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import ExercisePicker from "@/components/ExercisePicker";
+import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
 import { countLabel } from "@/lib/labels";
@@ -45,6 +51,11 @@ export default function RoutinesPanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<Exercise | null>(null);
+  const [changing, setChanging] = useState<Exercise | null>(null);
+  const categories = useMemo(
+    () => customDefaults(state.records),
+    [state.records],
+  );
   const removeExercise = (exercise: Exercise) => {
     if (edit)
       setEdit({
@@ -284,11 +295,15 @@ export default function RoutinesPanel() {
                   exercise={ex}
                   isFirst={index === 0}
                   isLast={index === edit.data.exercises.length - 1}
+                  defaults={categories.get(ex.exerciseId)}
                   onChange={update}
-                  onMove={(step) => moveExercise(ex.id, step)}
-                  onRemove={() =>
-                    hasLoggedExercise(ex) ? setRemoving(ex) : removeExercise(ex)
+                  onMove={(exercise, step) => moveExercise(exercise.id, step)}
+                  onRemove={(exercise) =>
+                    hasLoggedExercise(exercise)
+                      ? setRemoving(exercise)
+                      : removeExercise(exercise)
                   }
+                  onChangeExercise={setChanging}
                 />
               ))}
               <button
@@ -364,12 +379,18 @@ export default function RoutinesPanel() {
                     id: crypto.randomUUID(),
                     exerciseId: item.id,
                     name: item.name,
-                    sets: [initialSet(item.id, item.category)],
+                    sets: [initialSet(item.id, item)],
                   })),
                 ],
               },
             });
         }}
+      />
+      <ChangeExercisePicker
+        mode="plan"
+        exercise={changing}
+        onClose={() => setChanging(null)}
+        onChange={update}
       />
       <ConfirmDialog
         open={!!removing}

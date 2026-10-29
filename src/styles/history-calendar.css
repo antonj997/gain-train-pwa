@@ -239,9 +239,6 @@
   color: var(--gt-ink);
   font-weight: 400;
 }
-.calendar-range .calendar-day.is-selected .calendar-workout-dot {
-  background-color: var(--gt-done);
-}
 .calendar-range .calendar-day.range-row-start {
   border-start-start-radius: var(--gt-radius-md);
   border-end-start-radius: var(--gt-radius-md);
@@ -255,10 +252,6 @@
   background-color: var(--gt-accent);
   color: var(--gt-on-accent);
   font-weight: 600;
-}
-.calendar-range .calendar-day.is-range-start .calendar-workout-dot,
-.calendar-range .calendar-day.is-range-end .calendar-workout-dot {
-  background-color: var(--gt-on-accent);
 }
 /* Footer: the legend and the way back to the current month. */
 .calendar-footer {
@@ -530,4 +523,11 @@
 .heatmap.is-dragging,
 .month-grid.is-dragging {
   cursor: grabbing;
+}
+/* The plan calendars' header: chevrons either side of the month. */
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
 }

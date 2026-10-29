@@ -159,6 +159,19 @@
   font-size: var(--gt-fs-2);
   line-height: 1.4;
 }
+/* A banner with buttons: the message, then its actions, wrapping on phones. */
+.workout-banner {
+  flex-wrap: wrap;
+}
+.workout-banner p {
+  flex: 1 1 200px;
+  margin: 0;
+}
+.banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-2);
+}
 .banner-danger {
   border-color: color-mix(in srgb, var(--gt-danger-fg) 30%, transparent);
   background-color: var(--gt-danger-bg);

@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
 import type { RoutineGroup } from "@/data/model";
-import { REST, dayTypes, groupCell, resolveCell, typeCell } from "@/data/plans";
+import { REST, dayTypes, groupCell, typeCell } from "@/data/plans";
 
 type Routines = readonly { id: string; payload: { name: string } }[];
 

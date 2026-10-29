@@ -14,7 +14,7 @@ const list = (records: Records) =>
     ? (records as readonly RecordDoc[])
     : Object.values(records as Record<string, RecordDoc>);
 
-export const isWorkout = (record: RecordDoc): record is WorkoutRecord =>
+const isWorkout = (record: RecordDoc): record is WorkoutRecord =>
   record.kind === "workout";
 
 const sessionTime = (workout: Workout) =>
@@ -39,6 +39,18 @@ export function workouts(records: Records, status?: Workout["status"]) {
     )
     .sort(sortWorkoutsNewest);
 }
+/**
+ * Started drafts, the most recently started first. Only one can be started on
+ * this phone, but sync can bring another from a second device; the first one is
+ * the running workout and the others are offered to resume or abandon.
+ */
+export const runningWorkouts = (records: Records) =>
+  workouts(records, "draft")
+    .filter((record) => record.payload.startedAt !== null)
+    .sort(
+      (a, b) =>
+        b.payload.startedAt! - a.payload.startedAt! || b.id.localeCompare(a.id),
+    );
 export const completedWorkouts = (records: Records) =>
   workouts(records, "completed");
 export const draftWorkouts = (records: Records) => workouts(records, "draft");
@@ -55,6 +67,19 @@ export const customExercises = (records: Records) =>
       record.kind === "exercise" && !record.deleted,
   );
 
+/** Each custom exercise's saved defaults, by id, for sets added from scratch. */
+export const customDefaults = (records: Records) =>
+  new Map(
+    customExercises(records).map(({ id, payload }) => [
+      id,
+      {
+        category: payload.category,
+        load: payload.load,
+        measure: payload.measure,
+      },
+    ]),
+  );
+
 type HasSets = Pick<Workout, "exercises">;
 /** Checked sets that would be saved: done and valid. A set and its drops count as one. */
 export const doneSetCount = ({ exercises }: HasSets) =>
@@ -66,3 +91,16 @@ export const doneSetCount = ({ exercises }: HasSets) =>
 /** Planned or logged sets. A set and its drops count as one. */
 export const setCount = ({ exercises }: HasSets) =>
   exercises.reduce((n, ex) => n + ex.sets.filter((s) => !isDrop(s)).length, 0);
+
+/** The first unchecked set of a workout, such as "Bench Press set 3". */
+export function nextSetLabel({ exercises }: HasSets) {
+  for (const exercise of exercises) {
+    let number = 0;
+    for (const set of exercise.sets) {
+      if (isDrop(set)) continue;
+      number++;
+      if (!set.done) return `${exercise.name} set ${number}`;
+    }
+  }
+  return null;
+}

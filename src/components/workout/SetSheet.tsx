@@ -44,7 +44,7 @@ function deleteLabel(set: WorkoutSet, dropCount: number) {
 }
 
 /** The Set sheet's content below its title; changes apply as they are made. */
-export function SetSheetBody({
+function SetSheetBody({
   badge,
   set,
   dropCount,

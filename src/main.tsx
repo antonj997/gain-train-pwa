@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { toast } from "sonner";
 import App from "./App";
-import ErrorBoundary, { watchGlobalErrors } from "./components/ErrorBoundary";
+import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 import "./styles/usability.css";
 import "./styles/pages.css";
@@ -44,7 +44,6 @@ function showUpdate() {
   });
 }
 window.addEventListener("gain-route-change", showUpdate);
-watchGlobalErrors();
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>
     <App />

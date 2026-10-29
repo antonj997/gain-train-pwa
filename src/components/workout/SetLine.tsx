@@ -62,9 +62,10 @@ export default function SetLine({
   canCheck: boolean;
   /** Why the check is disabled, for screen readers. */
   checkHint?: string;
-  onOpenSheet: () => void;
+  /** Called with this set's id, so one function can serve every row. */
+  onOpenSheet: (setId: string) => void;
   onChange: (set: WorkoutSet) => void;
-  onToggleDone?: () => void;
+  onToggleDone?: (setId: string) => void;
   onFocus?: () => void;
 }) {
   const [checkedNow, setCheckedNow] = useState(false);
@@ -213,7 +214,11 @@ export default function SetLine({
       onFocusCapture={onFocus}
     >
       {next && <span className="sr-only">Next set</span>}
-      <SetBadge badge={badge} editing={editing} onClick={onOpenSheet} />
+      <SetBadge
+        badge={badge}
+        editing={editing}
+        onClick={() => onOpenSheet(set.id)}
+      />
       {mode === "log" && !cardio && (
         <span className="set-previous">
           {previous ? (
@@ -357,7 +362,7 @@ export default function SetLine({
             disabled={checkDisabled}
             onClick={() => {
               setLockedAttempt(false);
-              onToggleDone?.();
+              onToggleDone?.(set.id);
             }}
           >
             <Check size={21} />

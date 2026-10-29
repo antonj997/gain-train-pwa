@@ -1,4 +1,4 @@
-import { shiftDate, weekStart } from "@/data/summary";
+import { shiftDate, weekStart } from "@/lib/dates";
 import { doneSetCount } from "@/data/selectors";
 import type { Workout } from "@/data/model";
 

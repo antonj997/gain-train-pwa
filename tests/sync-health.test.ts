@@ -43,11 +43,15 @@ test("recovery drafts and rest timers of finished or removed workouts are stale"
     draftKey("me", "workout", "unknown"),
     draftKey("someone-else", "workout", "finished"),
     draftKey("me", "routine", "finished"),
+    // An unsaved edit of a finished workout is kept; one of a draft is not.
+    draftKey("me", "edit", "finished"),
+    draftKey("me", "edit", "running"),
     "gain-train-theme",
   ];
   assert.deepEqual(staleDraftKeys(keys, "me", records), [
     draftKey("me", "workout", "finished"),
     draftKey("me", "rest", "removed"),
+    draftKey("me", "edit", "running"),
   ]);
 });
 

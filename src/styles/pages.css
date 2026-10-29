@@ -11,16 +11,26 @@
     padding-top: calc(var(--gt-space-5) + env(safe-area-inset-top));
   }
 }
+/* The installed app's status bar is black-translucent: iOS draws white text
+   over the page. A dark band under it keeps the clock readable in the light
+   theme too; it has no height where there is no status bar inset. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 60;
+  height: env(safe-area-inset-top, 0px);
+  background-color: var(--gt-ink);
+  pointer-events: none;
+}
+.dark body::before {
+  background-color: var(--gt-ground);
+}
 
 .page {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-.col-8 {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gt-space-2);
 }
 .col-12 {
   display: flex;
@@ -109,6 +119,9 @@
 .text-link {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  /* A one-word link such as "Plan" still gets a 44px target. */
+  min-width: 44px;
   min-height: 44px;
   font-size: var(--gt-fs-3);
   font-weight: 600;
@@ -581,7 +594,9 @@ details[open] > .session-summary > svg {
 .search-field input {
   flex: 1;
   min-width: 0;
-  min-height: 42px;
+  /* 44px tall inside the 44px field: it reaches over the field's border. */
+  min-height: 44px;
+  margin-block: -1px;
   padding: 0;
   border: 0;
   background: transparent;

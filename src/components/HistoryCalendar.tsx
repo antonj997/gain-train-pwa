@@ -7,7 +7,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { type RecordDoc } from "@/data/model";
-import { shiftDate } from "@/data/summary";
 import { useDragSelect } from "@/hooks/useDragSelect";
 import { monthDragRange } from "@/lib/drag-selection";
 import ActivityGridIcon from "@/components/ActivityGridIcon";
@@ -23,7 +22,7 @@ import {
   type HistoryCalendarAction,
   type HistoryCalendarState,
 } from "@/lib/history-calendar";
-import { localizedDate } from "@/lib/dates";
+import { localizedDate, shiftDate, weekdayIndex } from "@/lib/dates";
 import { heatClass } from "@/lib/heatmap";
 import { historyCaption } from "@/lib/history-caption";
 import { countLabel } from "@/lib/labels";
@@ -104,7 +103,7 @@ export default function HistoryCalendar({
   });
 
   const onDateKey = (event: KeyboardEvent<HTMLButtonElement>, date: string) => {
-    const weekday = (new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7;
+    const weekday = weekdayIndex(date);
     const offsets: Record<string, number> = {
       ArrowLeft: -1,
       ArrowRight: 1,

@@ -13,15 +13,6 @@
   border-width: 0;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
 /* Dialogs. Every dialog is a bottom sheet on phones and a centred panel from
    640px up. The overlay's data-backdrop picks how far the page is dimmed: "light"
    keeps it readable behind a sheet that edits it. The scrim and shadow are

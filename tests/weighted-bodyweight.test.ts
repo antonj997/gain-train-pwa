@@ -260,13 +260,13 @@ test("progress selects extra-bodyweight performance at the latest added kg witho
   );
   assert.equal(
     improvementRate(
-      [
+      progressFor([
         record([set({ done: true, reps: 30 })], "2026-10-01"),
         record(
           [set({ done: true, extraWeight: true, weight: 10, reps: 8 })],
           "2026-10-20",
         ),
-      ],
+      ]),
       "2026-10-15",
       "2026-10-25",
     ),

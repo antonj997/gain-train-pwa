@@ -4,6 +4,15 @@ import { centreScrollDelta } from "@/lib/keep-above-sheet";
 // Radix mounts the sheet a render after it opens, so give it a few frames.
 const FRAMES_TO_WAIT = 10;
 
+/** How far the sheet still has to slide up; 0 when its transform cannot be read. */
+function slideOffset(element: HTMLElement) {
+  try {
+    return new DOMMatrixReadOnly(getComputedStyle(element).transform).m42;
+  } catch {
+    return 0;
+  }
+}
+
 /** The nearest ancestor that scrolls by itself, such as a routine's form; null for the page. */
 function scrollParent(element: HTMLElement) {
   for (
@@ -43,8 +52,7 @@ export function useKeepAboveSheet(
       if (!row) return;
       const rect = element.getBoundingClientRect();
       // The sheet slides up as it opens; measure where it will rest.
-      const sliding = new DOMMatrixReadOnly(getComputedStyle(element).transform)
-        .m42;
+      const sliding = slideOffset(element);
       const rowRect = row.getBoundingClientRect();
       const scroller = scrollParent(row);
       const delta = centreScrollDelta({

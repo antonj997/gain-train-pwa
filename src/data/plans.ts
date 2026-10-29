@@ -4,8 +4,13 @@ import {
   type RecordDoc,
   type RoutineGroup,
 } from "./model";
-import { weekStart } from "./summary";
-import { daysBetween } from "../lib/dates";
+import {
+  addMonths,
+  daysBetween,
+  shiftDate,
+  weekStart,
+  weekdayIndex,
+} from "../lib/dates";
 
 /**
  * Plan cells are plain strings: a routine's id, "rest", "type:<day type id>",
@@ -56,11 +61,6 @@ export function activePlans(
 
 type Period = Pick<Plan, "startDate" | "endDate">;
 type PlanLike = Period & Pick<Plan, "cycleWeeks" | "template" | "overrides">;
-
-/** Monday is 0. */
-function weekdayIndex(date: string) {
-  return (new Date(date + "T12:00:00Z").getUTCDay() + 6) % 7;
-}
 
 /** The template's cell for a date, looping the cycle from the plan's first week. */
 function templateCell(plan: PlanLike, date: string) {
@@ -192,18 +192,7 @@ export function cellText(cell: string | null | undefined, names: Names) {
 }
 
 /** The last day of the default period for an imported plan: three months after `today`. */
-export function threeMonthsAfter(today: string) {
-  const year = Number(today.slice(0, 4));
-  const month = Number(today.slice(5, 7)) - 1 + 3;
-  const target = new Date(
-    Date.UTC(year + Math.floor(month / 12), month % 12, 1),
-  );
-  const lastDay = new Date(
-    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-  const day = Math.min(Number(today.slice(8, 10)), lastDay);
-  return target.toISOString().slice(0, 8) + String(day).padStart(2, "0");
-}
+export const threeMonthsAfter = (today: string) => addMonths(today, 3);
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -252,3 +241,69 @@ export function legacyPlanToPlan(
     goalIds: [],
   };
 }
+
+const emptyWeek = (): (string | null)[] => Array(7).fill(null);
+
+/** A new plan: eight empty weeks from the day after the last plan ends, or today. */
+export function defaultNewPlan(
+  plans: readonly { endDate: string }[],
+  today: string,
+): Plan {
+  const lastEnd = plans.reduce(
+    (end, p) => (p.endDate > end ? p.endDate : end),
+    "",
+  );
+  const startDate = lastEnd >= today ? shiftDate(lastEnd, 1) : today;
+  return {
+    name: "",
+    startDate,
+    endDate: shiftDate(startDate, 8 * 7 - 1),
+    cycleWeeks: 1,
+    template: [emptyWeek()],
+    overrides: {},
+    goalIds: [],
+  };
+}
+
+/** The plan repeating every `weeks` weeks; weeks it keeps stay as they were. */
+export const withCycle = (plan: Plan, weeks: number): Plan => ({
+  ...plan,
+  cycleWeeks: weeks,
+  template: Array.from(
+    { length: weeks },
+    (_, i) => plan.template[i] ?? emptyWeek(),
+  ),
+});
+
+/** The plan with one template day set; null empties it. */
+export const withTemplateCell = (
+  plan: Plan,
+  week: number,
+  day: number,
+  cell: string | null,
+): Plan => ({
+  ...plan,
+  template: plan.template.map((row, w) =>
+    w === week ? row.map((c, d) => (d === day ? cell : c)) : row,
+  ),
+});
+
+/** The plan with a dated change; undefined goes back to the template. */
+export function withOverride(
+  plan: Plan,
+  date: string,
+  cell: string | null | undefined,
+): Plan {
+  const overrides = { ...plan.overrides };
+  if (cell === undefined) delete overrides[date];
+  else overrides[date] = cell;
+  return { ...plan, overrides };
+}
+
+/** Dated changes inside the plan's period; ones left outside by a new period are dropped. */
+export const trimOverrides = (plan: Plan): Plan["overrides"] =>
+  Object.fromEntries(
+    Object.entries(plan.overrides).filter(
+      ([date]) => date >= plan.startDate && date <= plan.endDate,
+    ),
+  );

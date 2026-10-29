@@ -41,11 +41,18 @@ export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
   );
   window.dispatchEvent(new Event(TRAINING_PREFERENCES_EVENT));
 }
+/** Rest time as shown on the row: "Off", "0:30", "2:00". */
+export const restLabel = (seconds: number) =>
+  seconds
+    ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
+    : "Off";
+/** Whether this browser can vibrate at all; iPhone Safari cannot. */
+export const canVibrate = () =>
+  typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
 export function trainingHaptic(enabled: boolean) {
   if (
     !enabled ||
-    typeof navigator === "undefined" ||
-    !navigator.vibrate ||
+    !canVibrate() ||
     window.matchMedia("(prefers-reduced-motion: reduce)").matches
   )
     return;

@@ -1,16 +1,24 @@
-import { type Workout, type RecordDoc, validSet } from "./model";
-import { comparableSets, progressFor } from "./analytics";
+import { type Workout, validSet } from "./model";
+import { comparableSets, type ExerciseProgress } from "./analytics";
 import { isDrop } from "./drops";
 import { cardioTotals, isCardioSet } from "../lib/cardio";
+import {
+  addMonths,
+  daysBetween,
+  endOfMonth,
+  shiftDate,
+  weekStart,
+} from "../lib/dates";
 
+/** The share of exercises whose latest result beats their baseline; takes `progressFor`'s result. */
 export function improvementRate(
-  records: RecordDoc[],
+  progress: readonly ExerciseProgress[],
   start: string,
   end: string,
 ) {
   let compared = 0,
     improved = 0;
-  for (const exercise of progressFor(records)) {
+  for (const exercise of progress) {
     const points = exercise.points.filter((point) => point.date <= end);
     const latest = points.at(-1);
     if (!latest || latest.date < start) continue;
@@ -31,81 +39,45 @@ export function improvementRate(
   return compared ? (improved / compared) * 100 : null;
 }
 
-const dayMs = 86400000;
-const dateAt = (date: string) => new Date(date + "T00:00:00Z");
-const dateKey = (date: Date) => date.toISOString().slice(0, 10);
-export function shiftDate(date: string, days: number) {
-  return dateKey(new Date(dateAt(date).getTime() + days * dayMs));
-}
+/**
+ * A History or Progress period ending `now` and the period before it:
+ * "4w" (28 days), "3m", "6m" or "12m" (calendar months back), a month
+ * (YYYY-MM, to `now` for the current one) or "" (the last 30 days).
+ */
 export function historyPeriod(month: string, now: string) {
-  if (month === "4w") {
-    const start = shiftDate(now, -27);
-    return {
-      start,
-      end: now,
-      days: 28,
-      previousStart: shiftDate(start, -28),
-      previousEnd: shiftDate(start, -1),
-      previousDays: 28,
-    };
-  }
+  const span = (start: string, end: string) => daysBetween(start, end) + 1;
+  const back = (start: string, days: number) => ({
+    start,
+    end: now,
+    days,
+    previousStart: shiftDate(start, -days),
+    previousEnd: shiftDate(start, -1),
+    previousDays: days,
+  });
+  if (month === "4w") return back(shiftDate(now, -27), 28);
   if (month === "3m" || month === "6m" || month === "12m") {
-    const date = dateAt(now);
-    const count = Number.parseInt(month);
-    const target = new Date(
-      Date.UTC(date.getUTCFullYear(), date.getUTCMonth() - count, 1),
-    );
-    const lastDay = new Date(
-      Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-    ).getUTCDate();
-    target.setUTCDate(Math.min(date.getUTCDate(), lastDay));
-    const start = shiftDate(dateKey(target), 1);
-    const days =
-      Math.round((date.getTime() - dateAt(start).getTime()) / dayMs) + 1;
-    return {
-      start,
-      end: now,
-      days,
-      previousStart: shiftDate(start, -days),
-      previousEnd: shiftDate(start, -1),
-      previousDays: days,
-    };
+    const start = shiftDate(addMonths(now, -Number.parseInt(month)), 1);
+    return back(start, span(start, now));
   }
-  if (!month) {
-    const start = shiftDate(now, -29);
-    return {
-      start,
-      end: now,
-      days: 30,
-      previousStart: shiftDate(start, -30),
-      previousEnd: shiftDate(start, -1),
-      previousDays: 30,
-    };
-  }
+  if (!month) return back(shiftDate(now, -29), 30);
   const start = month + "-01";
-  const first = dateAt(start);
-  const endOfMonth = dateKey(
-    new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)),
-  );
-  const end = month === now.slice(0, 7) ? now : endOfMonth;
-  const days =
-    Math.round((dateAt(end).getTime() - first.getTime()) / dayMs) + 1;
-  const previousStart = dateKey(
-    new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() - 1, 1)),
-  );
+  const current = month === now.slice(0, 7);
+  const end = current ? now : endOfMonth(month);
+  const days = span(start, end);
+  const previousStart = addMonths(start, -1);
   const previousMonthEnd = shiftDate(start, -1);
-  const previousEnd =
-    month === now.slice(0, 7)
-      ? [shiftDate(previousStart, days - 1), previousMonthEnd].sort()[0]
-      : previousMonthEnd;
-  const previousDays =
-    Math.round(
-      (dateAt(previousEnd).getTime() - dateAt(previousStart).getTime()) / dayMs,
-    ) + 1;
-  return { start, end, days, previousStart, previousEnd, previousDays };
-}
-export function weekStart(date: string) {
-  return shiftDate(date, -((dateAt(date).getUTCDay() + 6) % 7));
+  // The current month so far compares with as many days of the month before.
+  const previousEnd = current
+    ? [shiftDate(previousStart, days - 1), previousMonthEnd].sort()[0]
+    : previousMonthEnd;
+  return {
+    start,
+    end,
+    days,
+    previousStart,
+    previousEnd,
+    previousDays: span(previousStart, previousEnd),
+  };
 }
 /**
  * Workouts per active week, over finished weeks only: the Monday-Sunday week

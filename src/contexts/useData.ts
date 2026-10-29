@@ -1,12 +1,14 @@
 import { createContext, useContext } from "react";
 import type {
   Kind,
+  Library,
   LocalState,
   Payload,
   RecordDoc,
   Workout,
 } from "@/data/model";
 import type { StartedWorkout } from "@/data/workout-start";
+import type { CopyResult, ImportResult } from "@/data/actions";
 import type { SyncHealth } from "@/lib/sync-health";
 
 export type Data = {
@@ -33,7 +35,12 @@ export type Data = {
   resolve: (id: string, mine: boolean) => Promise<void>;
   /** Sends changes the server refused once more, e.g. after an app update. */
   retryRejected: () => Promise<void>;
-  importRecords: (records: RecordDoc[]) => Promise<void>;
+  /** Adds backup records this log lacks; first downloads what the server has. */
+  importRecords: (records: RecordDoc[]) => Promise<ImportResult>;
+  /** Copies the phone-only log into the signed-in account. */
+  copyPhoneLog: () => Promise<CopyResult>;
+  /** Saves the account's library settings (hidden exercises, groups). */
+  saveLibrary: (library: Library) => Promise<void>;
 };
 export const DataContext = createContext<Data | null>(null);
 

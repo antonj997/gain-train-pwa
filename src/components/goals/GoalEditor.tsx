@@ -9,7 +9,7 @@ import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
 import type { GoalItem } from "@/data/goals";
 import { type Goal, today as todayDate } from "@/data/model";
-import { shiftDate } from "@/data/summary";
+import { shiftDate } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
 import { parseSetNumber } from "@/lib/set-input";
 

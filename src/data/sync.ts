@@ -22,9 +22,17 @@ const isMissingOnServer = (error: ServerError) =>
  * (P0001), bad data (class 22) and constraint violations (class 23). Anything
  * else (network, timeouts, auth, rate limits) is retried on the next sync.
  */
-export function isRejectedByServer(error: unknown) {
+function isRejectedByServer(error: unknown) {
   const code = String((error as ServerError)?.code ?? "");
   return code === "P0001" || code.startsWith("22") || code.startsWith("23");
+}
+
+/** The server's reason, in words that say what to do about it. */
+function rejectionMessage(error: ServerError) {
+  const message = String(error?.message ?? "");
+  if (message === "Invalid record name or size")
+    return "The name is missing or longer than 100 characters, or the record is too large to sync.";
+  return message || "The server rejected this change.";
 }
 
 const readable = (row: RemoteDoc) => {
@@ -36,8 +44,56 @@ const readable = (row: RemoteDoc) => {
   }
 };
 
+/** JSON with sorted keys: the server's jsonb does not keep key order. */
+function canonical(value: unknown): string {
+  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
+  if (value && typeof value === "object")
+    return (
+      "{" +
+      Object.keys(value)
+        .sort()
+        .filter((key) => (value as Record<string, unknown>)[key] !== undefined)
+        .map(
+          (key) =>
+            JSON.stringify(key) +
+            ":" +
+            canonical((value as Record<string, unknown>)[key]),
+        )
+        .join(",") +
+      "}"
+    );
+  return JSON.stringify(value) ?? "null";
+}
+
+/**
+ * True when the server's row holds exactly this content. A "conflict" with an
+ * identical row, such as a restored backup the server already has, is no
+ * conflict: the local record takes the server's revision instead.
+ */
+export function sameContent(
+  remote: Pick<RemoteDoc, "payload" | "deleted">,
+  local: Pick<RemoteDoc, "payload" | "deleted">,
+) {
+  return (
+    remote.deleted === local.deleted &&
+    canonical(remote.payload) === canonical(local.payload)
+  );
+}
+
 function applyRemote(s: LocalState, row: RemoteDoc) {
   const current = s.records[row.id];
+  if (
+    current?.dirty &&
+    row.revision > current.revision &&
+    !current.conflict &&
+    !s.outbox.some((o) => o.id === row.id) &&
+    sameContent(row, current)
+  ) {
+    current.revision = row.revision;
+    current.dirty = false;
+    delete current.syncError;
+    return;
+  }
   if (!current || (!current.dirty && row.revision > current.revision)) {
     s.records[row.id] = {
       ...row,
@@ -53,11 +109,30 @@ function applyRemote(s: LocalState, row: RemoteDoc) {
   }
 }
 
+/**
+ * Sends this account's queued changes, then downloads newer rows. `changed`
+ * runs once at the end when anything was stored (also after a failure part
+ * way), not once per operation: each call reloads the whole log.
+ */
 export async function syncAccount(
   account: string,
   transport: Transport,
   changed: () => void,
   active: () => boolean = () => true,
+) {
+  let touched = false;
+  try {
+    await run(account, transport, () => (touched = true), active);
+  } finally {
+    if (touched && active()) changed();
+  }
+}
+
+async function run(
+  account: string,
+  transport: Transport,
+  changed: () => void,
+  active: () => boolean,
 ) {
   for (let i = 0; i < 100 && active(); i++) {
     let op: Operation | undefined;
@@ -102,10 +177,7 @@ export async function syncAccount(
       await transact(account, (s) => {
         s.outbox = s.outbox.filter((x) => x.opId !== sent.opId);
         const current = s.records[sent.id];
-        if (current)
-          current.syncError =
-            String((error as ServerError).message ?? "") ||
-            "The server rejected this change.";
+        if (current) current.syncError = rejectionMessage(error as ServerError);
       });
       changed();
       continue;
@@ -115,7 +187,7 @@ export async function syncAccount(
       const current = s.records[sent.id];
       s.outbox = s.outbox.filter((x) => x.opId !== sent.opId);
       if (!current) return;
-      if (result.conflict) {
+      if (result.conflict && !sameContent(result.record, sent)) {
         current.conflict = result.record;
         return;
       }
@@ -146,7 +218,7 @@ export async function syncAccount(
         s.cursor = Math.max(s.cursor, row.change_seq);
       }
     });
-    changed();
+    if (rows.length) changed();
     if (rows.length < 200) break;
   }
 }

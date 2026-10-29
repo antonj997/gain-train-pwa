@@ -19,7 +19,7 @@ const loadOf = (key: LoadKey): Load =>
   key === "weight" ? "weight" : key === "assisted" ? "assisted" : "bodyweight";
 
 /** The Load and count sheet's content below its title. */
-export function LoadCountSheetBody({
+function LoadCountSheetBody({
   loadKey,
   measure,
   onLoadKey,

@@ -1,4 +1,6 @@
+import { memo, useMemo } from "react";
 import { ChevronDown } from "lucide-react";
+import type { ExerciseProgress } from "@/data/analytics";
 import { type RecordDoc } from "@/data/model";
 import { completedWorkouts } from "@/data/selectors";
 import {
@@ -15,17 +17,17 @@ import { formatKm } from "@/lib/cardio";
 const withUnit = (change: string, unit: string) =>
   /^[↑↓]/.test(change) ? `${change} ${unit}` : change;
 
-/** Four tiles for a period, each against the period before it, and a note on how they are worked out. */
-export default function ProgressSummary({
-  records,
-  now,
-  range,
-}: {
+type Props = {
   records: readonly RecordDoc[];
+  /** `progressFor(records)`, computed once by the page. */
+  progress: readonly ExerciseProgress[];
   now: string;
   /** A `historyPeriod` key: "4w", "3m" or "12m". */
   range: string;
-}) {
+};
+
+/** The tiles' figures for a period and the one before it. */
+function summaryFor({ records, progress, now, range }: Props) {
   const period = historyPeriod(range, now);
   const completed = completedWorkouts(records);
   const workoutsIn = (start: string, end: string) =>
@@ -84,7 +86,21 @@ export default function ProgressSummary({
       ),
     },
   ];
-  const improving = improvementRate(completed, period.start, period.end);
+  const improving = improvementRate(progress, period.start, period.end);
+  return { period, current, previous, tiles, improving };
+}
+
+/**
+ * Four tiles for a period, each against the period before it, and a note on
+ * how they are worked out. Memoised: typing in the page's search box does not
+ * recompute them.
+ */
+function ProgressSummary(props: Props) {
+  const { records, progress, now, range } = props;
+  const { period, current, previous, tiles, improving } = useMemo(
+    () => summaryFor({ records, progress, now, range }),
+    [records, progress, now, range],
+  );
   return (
     <section className="progress-summary" aria-label="Summary">
       <div className="tiles">
@@ -163,3 +179,5 @@ export default function ProgressSummary({
     </section>
   );
 }
+
+export default memo(ProgressSummary);

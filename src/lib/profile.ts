@@ -289,9 +289,16 @@ export class ProfileStore {
       );
     }
   }
+  /**
+   * Stops work for an unmounted provider. Reversible: React's StrictMode and
+   * Fast Refresh unmount and remount with the same store, so the provider's
+   * effect calls `activate` again. Subscribers remove themselves.
+   */
   dispose() {
     this.active = false;
     this.abort?.abort();
-    this.listeners.clear();
+  }
+  activate() {
+    this.active = true;
   }
 }

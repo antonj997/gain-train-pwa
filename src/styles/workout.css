@@ -132,7 +132,8 @@
 /* A cardio row: badge, time, distance, level, kcal and done. No Previous
    column. Every field is at least 44px wide from 360px up, so the gap between
    columns is 2px on phones (the usual gap again from 400px); the time field
-   takes the most room. The type is one step smaller than a strength field.
+   takes the most room. The type is one step smaller than a strength field,
+   but never under 16px: iOS Safari zooms into a smaller field on focus.
    Below 360px the fields shrink rather than scroll sideways. */
 .set-line.is-cardio,
 .set-columns[data-kind="cardio"] {
@@ -160,7 +161,7 @@
   grid-template-columns: 44px repeat(4, minmax(0, 1fr));
 }
 .set-line.is-cardio .set-field input {
-  font-size: var(--gt-fs-3);
+  font-size: 16px;
 }
 
 /* Load and count fields. A marker sits inside the load field. */
@@ -413,20 +414,6 @@
 }
 .top-bar > .btn-primary {
   flex: none;
-}
-
-/* Banners under the top bar: the message, then its actions. */
-.workout-banner {
-  flex-wrap: wrap;
-}
-.workout-banner p {
-  flex: 1 1 200px;
-  margin: 0;
-}
-.banner-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gt-space-2);
 }
 
 /* Add exercise: a dashed button after the cards; alone it is a large one. */

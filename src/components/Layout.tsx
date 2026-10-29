@@ -5,6 +5,7 @@ import { Dumbbell, History, TrendingUp, Library } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { useLegacyPlanImport } from "@/hooks/useLegacyPlanImport";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const tabs = [
   { to: "/", title: "Train", Icon: Dumbbell },
@@ -33,15 +34,19 @@ export default function Layout() {
     <div className="app-shell">
       <main>
         {ready ? (
-          <Suspense
-            fallback={
-              <p className="empty" role="status">
-                Opening…
-              </p>
-            }
-          >
-            <Outlet />
-          </Suspense>
+          // A page that fails to render shows the crash screen in its place;
+          // the tab bar stays, and another tab starts afresh.
+          <ErrorBoundary key={path} scope="page">
+            <Suspense
+              fallback={
+                <p className="empty" role="status">
+                  Opening…
+                </p>
+              }
+            >
+              <Outlet />
+            </Suspense>
+          </ErrorBoundary>
         ) : (
           <p className="empty">Opening your workout log…</p>
         )}

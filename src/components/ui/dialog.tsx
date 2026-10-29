@@ -1,5 +1,7 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { capturePointer } from "@/lib/pointer-capture";
+import { coarsePointer, opensKeyboard } from "@/lib/touch";
 
 // Base classes live in styles/primitives.css; callers add their own.
 const classes = (base: string, extra?: string) =>
@@ -59,7 +61,7 @@ function useDragToClose(content: React.RefObject<HTMLDivElement>) {
   return {
     onPointerDown(event: React.PointerEvent<HTMLButtonElement>) {
       if (event.button !== 0) return;
-      event.currentTarget.setPointerCapture(event.pointerId);
+      capturePointer(event.currentTarget, event.pointerId);
       drag.current = {
         id: event.pointerId,
         startY: event.clientY,
@@ -116,7 +118,14 @@ const DialogContent = React.forwardRef<
   DialogContentProps
 >(
   (
-    { className, children, backdrop = "dim", size = "sheet", ...props },
+    {
+      className,
+      children,
+      backdrop = "dim",
+      size = "sheet",
+      onOpenAutoFocus,
+      ...props
+    },
     ref,
   ) => {
     const content = React.useRef<HTMLDivElement>(null);
@@ -140,6 +149,18 @@ const DialogContent = React.forwardRef<
             className,
           )}
           {...props}
+          onOpenAutoFocus={(event) => {
+            onOpenAutoFocus?.(event);
+            if (event.defaultPrevented || !coarsePointer()) return;
+            // On a touch screen a focused field opens the keyboard over the
+            // sheet the moment it appears; focus the sheet itself instead.
+            const first = content.current?.querySelector(
+              "input, textarea, select, button, [href], [tabindex]:not([tabindex='-1'])",
+            );
+            if (!opensKeyboard(first ?? null)) return;
+            event.preventDefault();
+            content.current?.focus({ preventScroll: true });
+          }}
         >
           {children}
           <DialogPrimitive.Close

@@ -4,6 +4,11 @@ import { planSchema, type Plan, type RecordDoc } from "../src/data/model";
 import {
   REST,
   activePlans,
+  defaultNewPlan,
+  trimOverrides,
+  withCycle,
+  withOverride,
+  withTemplateCell,
   findOverlap,
   groupCell,
   groupsOf,
@@ -248,4 +253,31 @@ test("the old local plan becomes a one-week synced plan for three months", () =>
   assert.equal(plannedFor([imported], "2026-11-02")?.cell, "push");
   assert.equal(plannedFor([imported], "2026-10-30")?.cell, "legs");
   assert.equal(plannedFor([imported], "2026-10-29")?.cell, REST);
+});
+
+test("plan editing helpers: new period, cycle, cells, overrides", () => {
+  const fresh = defaultNewPlan([{ endDate: "2026-11-10" }], "2026-10-29");
+  assert.equal(fresh.startDate, "2026-11-11");
+  assert.equal(fresh.endDate, "2027-01-05");
+  assert.equal(defaultNewPlan([], "2026-10-29").startDate, "2026-10-29");
+
+  const two = withTemplateCell(withCycle(fresh, 2), 1, 6, REST);
+  assert.equal(two.template.length, 2);
+  assert.equal(two.template[1][6], REST);
+  assert.equal(withCycle(two, 1).template.length, 1);
+  assert.equal(withCycle(withCycle(two, 1), 2).template[1][6], null);
+
+  const changed = withOverride(two, "2026-11-12", null);
+  assert.deepEqual(changed.overrides, { "2026-11-12": null });
+  assert.deepEqual(
+    withOverride(changed, "2026-11-12", undefined).overrides,
+    {},
+  );
+  assert.deepEqual(
+    trimOverrides({
+      ...changed,
+      overrides: { "2026-11-12": REST, "2028-01-01": REST },
+    }),
+    { "2026-11-12": REST },
+  );
 });

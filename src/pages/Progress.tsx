@@ -98,8 +98,8 @@ export default function Progress() {
       .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name));
   }, [items, cardioItems, period.start, period.end]);
   const bests = useMemo(
-    () => recentBests(records, period.start, period.end),
-    [records, period.start, period.end],
+    () => recentBests(items, period.start, period.end),
+    [items, period.start, period.end],
   );
   const query = search.trim().toLowerCase();
   const shown = rows.filter((row) => row.name.toLowerCase().includes(query));
@@ -122,7 +122,12 @@ export default function Progress() {
             options={periodOptions}
             onChange={setRange}
           />
-          <ProgressSummary records={records} now={now} range={range} />
+          <ProgressSummary
+            records={records}
+            progress={items}
+            now={now}
+            range={range}
+          />
           {bests.length > 0 && (
             <section aria-labelledby="bests-heading">
               <div className="section-head">

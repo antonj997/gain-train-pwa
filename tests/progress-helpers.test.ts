@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type { RecordDoc, WorkoutSet } from "../src/data/model";
 import {
   newBestWorkoutIds,
+  progressFor,
   recentBests,
   sparklinePoints,
 } from "../src/data/analytics";
@@ -46,12 +47,15 @@ test("a workout is a new best only when it beats every earlier session", () => {
     workout("c", "2026-10-15", [set({ weight: 100 })]),
     workout("d", "2026-10-22", [set({ weight: 110 })]),
   ];
-  assert.deepEqual([...newBestWorkoutIds(records)].sort(), ["b", "d"]);
+  assert.deepEqual([...newBestWorkoutIds(progressFor(records))].sort(), [
+    "b",
+    "d",
+  ]);
 });
 
 test("the first session of an exercise is a starting point, not a best", () => {
   assert.equal(
-    newBestWorkoutIds([workout("a", "2026-10-01", [set()])]).size,
+    newBestWorkoutIds(progressFor([workout("a", "2026-10-01", [set()])])).size,
     0,
   );
 });
@@ -65,7 +69,7 @@ test("a heavier drop never makes a new best", () => {
       set({ weight: 90, reps: 10, drop: true }),
     ]),
   ];
-  assert.equal(newBestWorkoutIds(records).size, 0);
+  assert.equal(newBestWorkoutIds(progressFor(records)).size, 0);
 });
 
 test("unchecked, warm-up and deleted work does not count", () => {
@@ -77,7 +81,7 @@ test("unchecked, warm-up and deleted work does not count", () => {
     workout("c", "2026-10-15", [set({ weight: 150, section: "warmup" })]),
     deleted,
   ];
-  assert.equal(newBestWorkoutIds(records).size, 0);
+  assert.equal(newBestWorkoutIds(progressFor(records)).size, 0);
 });
 
 test("recent bests keep the latest per exercise inside the period, newest first", () => {
@@ -89,7 +93,7 @@ test("recent bests keep the latest per exercise inside the period, newest first"
     workout("s1", "2026-10-02", [set({ weight: 120 })], squat),
     workout("s2", "2026-10-09", [set({ weight: 130 })], squat),
   ];
-  const bests = recentBests(records, "2026-10-05", "2026-10-31");
+  const bests = recentBests(progressFor(records), "2026-10-05", "2026-10-31");
   assert.deepEqual(
     bests.map((b) => [b.exerciseId, b.workoutId]),
     [
@@ -97,7 +101,10 @@ test("recent bests keep the latest per exercise inside the period, newest first"
       [squat, "s2"],
     ],
   );
-  assert.equal(recentBests(records, "2026-10-05", "2026-10-31", 1).length, 1);
+  assert.equal(
+    recentBests(progressFor(records), "2026-10-05", "2026-10-31", 1).length,
+    1,
+  );
 });
 
 test("sparkline points scale to the box with the highest value at the top", () => {

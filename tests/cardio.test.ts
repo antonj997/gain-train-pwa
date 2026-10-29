@@ -166,8 +166,14 @@ test("catalogue cardio machines and Cardio-category customs start with cardio se
   ])
     assert.equal(catalogueById.get(id)?.measure, "cardio", id);
   assert.equal(initialSet("builtin:treadmill").measure, "cardio");
-  assert.equal(initialSet("custom-id", "Cardio").measure, "cardio");
-  assert.equal(initialSet("custom-id", "Legs").measure, undefined);
+  assert.equal(
+    initialSet("custom-id", { category: "Cardio" }).measure,
+    "cardio",
+  );
+  assert.equal(
+    initialSet("custom-id", { category: "Legs" }).measure,
+    undefined,
+  );
   assert.equal(initialSet("builtin:bench-press").measure, undefined);
 });
 
@@ -225,7 +231,7 @@ test("cardio is not a strength best, new best or volume", () => {
     ["builtin:bench-press"],
   );
   assert.deepEqual(
-    bestEvents(records).filter(
+    bestEvents(progressFor(records)).filter(
       (event) => event.exerciseId === "builtin:treadmill",
     ),
     [],

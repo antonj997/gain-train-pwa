@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { readAccount } from "@/data/database";
+import { phoneRecordsToCopy } from "@/data/actions";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { isSyncOutage } from "@/lib/sync-health";
+import { needsSignInAgain } from "@/lib/auth-account";
 
 /**
  * The sync, sign-in and conflict notices, as banners under a page's title.
@@ -26,9 +28,7 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
         .then((phone) => {
           if (active)
             setPhoneLogAvailable(
-              Object.values(phone.records).some(
-                (r) => !r.deleted && !records.current[r.id],
-              ),
+              phoneRecordsToCopy(phone.records, records.current).length > 0,
             );
         })
         .catch(() => {});
@@ -45,7 +45,19 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
   const needsUpdate = Object.keys(state.quarantine ?? {}).length > 0;
   const outage = !!user && online && isSyncOutage(syncHealth);
 
+  const signedOut = needsSignInAgain(account, user);
+
   const banners: React.ReactNode[] = [];
+  if (signedOut)
+    banners.push(
+      <div className="banner" key="signed-out">
+        <span>
+          You were signed out. Your log is still here and syncs once you sign in
+          again.
+        </span>
+        <Link to="/auth">Sign in again</Link>
+      </div>,
+    );
   if (conflicts > 0)
     banners.push(
       <div className="banner" key="conflicts">
@@ -101,14 +113,10 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
       </div>,
     );
   if (status && !syncing) {
-    if (!user)
+    if (!user && !signedOut)
       banners.push(
         <div className="banner" key="status">
-          <span>
-            {account === "phone"
-              ? "Saved on this phone."
-              : "Saved on this phone. Sign in again to sync."}
-          </span>
+          <span>Saved on this phone.</span>
           <Link to="/auth">Sign in to sync</Link>
         </div>,
       );
@@ -122,9 +130,7 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
       );
   }
   if (!banners.length) return null;
-  return (
-    <div className="banners" role="status">
-      {banners}
-    </div>
-  );
+  // No live region around the stack: the alerts inside announce themselves,
+  // and a wrapping status region would read the whole stack again on any change.
+  return <div className="banners">{banners}</div>;
 }
