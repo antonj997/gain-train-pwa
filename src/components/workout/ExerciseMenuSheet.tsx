@@ -2,6 +2,7 @@ import {
   ArrowDown,
   ArrowUp,
   ListOrdered,
+  Replace,
   SlidersHorizontal,
   Trash2,
 } from "lucide-react";
@@ -14,6 +15,7 @@ type BodyProps = {
   canMoveDown: boolean;
   /** Left out for cardio, which has no load or count to change. */
   onLoadAndCount?: () => void;
+  onChangeExercise: () => void;
   onReorder: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
@@ -26,6 +28,7 @@ export function ExerciseMenuSheetBody({
   canMoveUp,
   canMoveDown,
   onLoadAndCount,
+  onChangeExercise,
   onReorder,
   onMoveUp,
   onMoveDown,
@@ -33,6 +36,14 @@ export function ExerciseMenuSheetBody({
 }: BodyProps) {
   return (
     <div className="sheet-menu">
+      <button
+        type="button"
+        className="sheet-menu-item"
+        onClick={onChangeExercise}
+      >
+        <Replace size={18} aria-hidden="true" />
+        <span>Change exercise</span>
+      </button>
       {onLoadAndCount && (
         <button
           type="button"

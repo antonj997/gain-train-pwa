@@ -25,6 +25,8 @@ export default function ExercisePicker({
   onAdd,
   suggested,
   single = false,
+  title,
+  excludeId,
 }: {
   open: boolean;
   onClose: () => void;
@@ -33,6 +35,10 @@ export default function ExercisePicker({
   suggested?: string[];
   /** Choosing an exercise adds it at once and closes the picker. */
   single?: boolean;
+  /** Replaces the default heading, for example "Change exercise". */
+  title?: string;
+  /** An exercise to leave out of the list, such as the one being replaced. */
+  excludeId?: string;
 }) {
   const initialFilter = suggested?.length ? "Suggested" : "All";
   const { state, save } = useData();
@@ -83,6 +89,7 @@ export default function ExercisePicker({
     visibleExercises(all, hidden)
       .filter(
         (e) =>
+          e.id !== excludeId &&
           matchesFacets(e, {
             category: categories.includes(filter) ? filter : "",
             equipment,
@@ -170,9 +177,11 @@ export default function ExercisePicker({
           <DialogTitle ref={titleRef} tabIndex={-1} className="picker-title">
             {creating
               ? "Create exercise"
-              : single
-                ? "Choose an exercise"
-                : "Add exercises"}
+              : title
+                ? title
+                : single
+                  ? "Choose an exercise"
+                  : "Add exercises"}
           </DialogTitle>
           <DialogDescription className="picker-description">
             {creating

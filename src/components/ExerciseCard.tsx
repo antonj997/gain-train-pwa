@@ -16,8 +16,12 @@ import {
   setBadge,
 } from "@/data/drops";
 import {
+  type ExerciseTarget,
   appendSet,
+  changeDiscardsSets,
+  changeExercise,
   groupComplete,
+  loggedSetCount,
   toggleGroupCompletion,
 } from "@/lib/workout-editor";
 import {
@@ -34,10 +38,13 @@ import { localizedDate } from "@/lib/dates";
 import { cardioTotals, isCardioSet, totalsLabel } from "@/lib/cardio";
 import { useData } from "@/contexts/useData";
 import { customExercises } from "@/data/selectors";
+import { toastWithUndo } from "@/lib/undo-toast";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import SetLine from "@/components/workout/SetLine";
 import SetSheet from "@/components/workout/SetSheet";
 import LoadCountSheet from "@/components/workout/LoadCountSheet";
+import ExercisePicker from "@/components/ExercisePicker";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 
@@ -67,6 +74,7 @@ type OpenSheet =
   | { kind: "loadCount" }
   | { kind: "menu" }
   | { kind: "reorder" }
+  | { kind: "change" }
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
@@ -120,6 +128,28 @@ export default function ExerciseCard({
   const cardio = sets.some(isCardioSet);
   const defaultKey = defaultLoadKey(sets);
   const close = () => setSheet(null);
+  // The Undo toast outlives this render; it must change the latest workout.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const [pendingTarget, setPendingTarget] = useState<ExerciseTarget | null>(
+    null,
+  );
+  const applyChange = (target: ExerciseTarget) => {
+    const before = planned;
+    onChange(changeExercise(ex, target));
+    toastWithUndo(
+      `Changed to ${target.name}`,
+      async () => onChangeRef.current(before),
+      "Could not undo the change.",
+    );
+  };
+  const chooseExercise = (items: ExerciseTarget[]) => {
+    const target = items[0];
+    if (!target) return;
+    if (changeDiscardsSets(ex, target) && loggedSetCount(ex) > 0)
+      setPendingTarget(target);
+    else applyChange(target);
+  };
   const changeSets = (next: WorkoutSet[]) => onChange({ ...ex, sets: next });
   const updateSet = (next: WorkoutSet) =>
     changeSets(sets.map((s) => (s.id === next.id ? next : s)));
@@ -298,12 +328,34 @@ export default function ExerciseCard({
         onLoadAndCount={
           cardio ? undefined : () => setSheet({ kind: "loadCount" })
         }
+        onChangeExercise={() => setSheet({ kind: "change" })}
         onReorder={() => setSheet({ kind: "reorder" })}
         onMoveUp={() => onMove(-1)}
         onMoveDown={() => onMove(1)}
         onRemove={() => {
           close();
           onRemove();
+        }}
+      />
+      <ExercisePicker
+        single
+        title="Change exercise"
+        excludeId={ex.exerciseId}
+        open={sheet?.kind === "change"}
+        onClose={close}
+        onAdd={chooseExercise}
+      />
+      <ConfirmDialog
+        open={!!pendingTarget}
+        title={<>Change to {pendingTarget?.name}?</>}
+        description={`Your ${loggedSetCount(ex)} logged ${loggedSetCount(ex) === 1 ? "set doesn't" : "sets don't"} fit a ${cardio ? "strength" : "cardio"} exercise and will be cleared.`}
+        cancelLabel="Keep exercise"
+        confirmLabel="Change exercise"
+        onCancel={() => setPendingTarget(null)}
+        onConfirm={() => {
+          const target = pendingTarget;
+          setPendingTarget(null);
+          if (target) applyChange(target);
         }}
       />
       <ReorderSetsSheet
