@@ -91,3 +91,16 @@ export const doneSetCount = ({ exercises }: HasSets) =>
 /** Planned or logged sets. A set and its drops count as one. */
 export const setCount = ({ exercises }: HasSets) =>
   exercises.reduce((n, ex) => n + ex.sets.filter((s) => !isDrop(s)).length, 0);
+
+/** The first unchecked set of a workout, such as "Bench Press set 3". */
+export function nextSetLabel({ exercises }: HasSets) {
+  for (const exercise of exercises) {
+    let number = 0;
+    for (const set of exercise.sets) {
+      if (isDrop(set)) continue;
+      number++;
+      if (!set.done) return `${exercise.name} set ${number}`;
+    }
+  }
+  return null;
+}
