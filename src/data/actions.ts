@@ -22,6 +22,9 @@ import { libraryRecordId, mergeLibraries } from "./exercises";
 export const NEWER_APP_MESSAGE =
   "This was saved by a newer version of Gain Train. Close and reopen the app to update it, then try again.";
 
+/** Below the server's 512 KB jsonb limit, with room for its encoding. */
+export const MAX_PAYLOAD_CHARS = 450_000;
+
 /** A new local version supersedes any earlier server rejection. */
 const nextVersion = (record: RecordDoc): Partial<RecordDoc> => ({
   localVersion: record.localVersion + 1,
@@ -54,6 +57,11 @@ export function saveRecordIn(
       "This workout was removed. Return to your log to resume your current workout.",
     );
   let saved: Payload = { ...parsed, schemaVersion: SCHEMA_VERSION };
+  // The server refuses payloads over 512 KB; say so before anything is queued.
+  if (JSON.stringify(saved).length > MAX_PAYLOAD_CHARS)
+    throw new RecordValidationError(
+      "This is too large to save and sync. Remove some exercises or sets, or split it into two.",
+    );
   if (kind === "workout") {
     const workout = saved as Workout;
     // One running workout at a time is checked when a workout starts running

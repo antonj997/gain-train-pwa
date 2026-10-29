@@ -69,5 +69,9 @@ export async function eraseAccount(account: string) {
     tx.objectStore("accounts").delete(account);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
+    // A transaction can also end by aborting (for example over quota) without
+    // an error event; without this the caller would wait forever.
+    tx.onabort = () =>
+      reject(tx.error ?? Error("Could not erase this account's log."));
   });
 }

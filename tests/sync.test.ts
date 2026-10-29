@@ -427,3 +427,28 @@ test("a different restored record still asks which version to keep", async () =>
   assert.equal(local.conflict?.payload.name, "Test");
   assert.equal(local.dirty, true);
 });
+test("a sync reloads the log once, however many operations it sends", async () => {
+  const { account } = await setup(),
+    cloud = server();
+  await transact(account, (s) => {
+    for (let i = 0; i < 5; i++) {
+      const id = crypto.randomUUID();
+      s.records[id] = {
+        id,
+        kind: "workout",
+        payload: workout(),
+        revision: 0,
+        localVersion: 1,
+        deleted: false,
+        dirty: true,
+      };
+    }
+  });
+  let reloads = 0;
+  await syncAccount(account, cloud.transport, () => reloads++);
+  assert.equal(reloads, 1);
+  assert.equal(cloud.records.size, 6);
+  // Nothing new: no reload at all.
+  await syncAccount(account, cloud.transport, () => reloads++);
+  assert.equal(reloads, 1);
+});

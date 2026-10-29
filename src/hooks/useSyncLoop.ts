@@ -42,12 +42,15 @@ export function useSyncLoop({
     [online, setOnline] = useState(navigator.onLine),
     [syncHealth, setSyncHealth] = useState(() => readSyncHealth(account));
   useEffect(() => setSyncHealth(readSyncHealth(account)), [account]);
+  // The user's id, not the object: every token refresh brings a new object,
+  // which would restart the timers and sync at once.
+  const userId = user?.id;
   const running = useRef(false),
     rerun = useRef(false),
     syncTimer = useRef<ReturnType<typeof setTimeout>>();
   const sync = useCallback(async () => {
     clearTimeout(syncTimer.current);
-    if (!supabase || !user || account !== user.id || !navigator.onLine) return;
+    if (!supabase || !userId || account !== userId || !navigator.onLine) return;
     // A change made during a sync is sent by one more run right after it.
     if (running.current) {
       rerun.current = true;
@@ -98,7 +101,7 @@ export function useSyncLoop({
     if (navigator.locks)
       await navigator.locks.request("gain-sync-" + account, work);
     else await work();
-  }, [account, user, reload, activeAccount, setError]);
+  }, [account, userId, reload, activeAccount, setError]);
   const syncRef = useRef(sync);
   syncRef.current = sync;
   const scheduleSync = useCallback(() => {
@@ -111,9 +114,11 @@ export function useSyncLoop({
       setOnline(navigator.onLine);
       if (navigator.onLine) void sync();
     };
+    // Coming back to the app: another tab or device may have changed the log.
     const onFocus = () => {
+      if (document.visibilityState !== "visible") return;
       void reload();
-      if (document.visibilityState === "visible") void sync();
+      void sync();
     };
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOnline);

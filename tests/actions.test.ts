@@ -246,3 +246,17 @@ test("an earlier copy's second library record is folded in on the next save", ()
   assert.equal(s.records[stray].deleted, true);
   assert.deepEqual(hiddenIds(s.records), new Set(["squat"]));
 });
+
+test("a record too large for the server is refused before it is queued", () => {
+  const s = emptyState(),
+    id = crypto.randomUUID();
+  const huge = { ...workout(null), name: "Big" };
+  huge.exercises = Array.from({ length: 100 }, () => ({
+    id: crypto.randomUUID(),
+    exerciseId: "x".repeat(200),
+    name: "N".repeat(100),
+    sets: Array.from({ length: 100 }, () => newSet()),
+  }));
+  assert.throws(() => saveRecordIn(s, id, "workout", huge), /too large/);
+  assert.equal(s.records[id], undefined);
+});
