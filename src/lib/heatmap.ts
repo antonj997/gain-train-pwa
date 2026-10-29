@@ -73,3 +73,8 @@ export function lastWorkoutDate(
     if (count > 0 && date <= now && (!last || date > last)) last = date;
   return last;
 }
+
+/** The class names that shade a day cell by its workout count, shared by the heatmap and the month grid. */
+export function heatClass(count: number) {
+  return `heat level-${intensityLevel(count)}`;
+}

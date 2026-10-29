@@ -2,13 +2,17 @@
    radii come from tokens.css. Controls are 44px or larger, except the heatmap
    squares, which are compact by design.
 
-   Two displays. "simple" (the default) is the activity heatmap, styled below.
-   "detailed" lines the days up
-   under their weekday with the date number in each cell. A workout day has a
-   done-coloured dot, today a ring, the chosen day is accent-filled, and a date
-   range (detailed only) is an accent-soft band with accent-filled ends. */
+   Two views share one header (title left, controls right), one day-cell look
+   and one caption line. A day is shaded by its workout count (.heat level-0 to
+   level-3), today has an accent ring and the chosen day a dark outline. The
+   activity heatmap ("simple") packs a year of small squares; the month
+   calendar ("detailed") shows the same cells at 44px with the date number and
+   a From-To range. .calendar-day and friends below belong to PlanCalendar. */
 
 .history-calendar {
+  --cell-radius: 3px;
+  --cell-gap: 3px;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--gt-space-2);
@@ -17,46 +21,6 @@
   border-radius: var(--gt-radius-lg);
   background-color: var(--gt-surface);
   color: var(--gt-ink);
-}
-
-/* Month header: previous, the month and year as the title, next. */
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--gt-space-1);
-}
-.calendar-month-selects {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gt-space-1);
-  min-width: 0;
-}
-/* The selects are the title: plain bold text with a small chevron. */
-.history-calendar .calendar-month-selects select {
-  width: auto;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 var(--gt-space-4) 0 var(--gt-space-1);
-  border: 0;
-  border-radius: var(--gt-radius-md);
-  background-color: transparent;
-  background-position: right 0 center;
-  color: var(--gt-ink);
-  font-size: var(--gt-fs-4);
-  font-weight: 600;
-  text-overflow: ellipsis;
-}
-.history-calendar .calendar-month-selects option:disabled {
-  color: var(--gt-ink-3);
-}
-
-/* The view switch sits in the month header and shows its state. */
-.calendar-view-toggle[aria-pressed="true"] {
-  background-color: var(--gt-accent-soft);
-  color: var(--gt-accent);
 }
 
 /* Detailed display only: turns on choosing a From and To date. */
@@ -121,13 +85,6 @@
   background-color: var(--gt-accent-soft);
 }
 
-.calendar-instructions {
-  margin: 0;
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-2);
-  line-height: 1.4;
-}
-
 .calendar-weekdays,
 .calendar-days {
   display: grid;
@@ -181,19 +138,6 @@
   font-weight: 600;
 }
 
-/* The workout marker. */
-.calendar-workout-dot {
-  display: inline-block;
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--gt-done);
-}
-.calendar-day.is-selected .calendar-workout-dot {
-  background-color: var(--gt-on-accent);
-}
-
 /* Activity heatmap (the "simple" display): a GitHub-style grid of small
    squares for the last year, one column per Monday-first week and one row per
    weekday. The shade is the day's workout count: surface-2 for none, then a
@@ -203,20 +147,11 @@
    44px by design; they sit in one tab stop with arrow-key movement. */
 .calendar-heatmap {
   --hm-size: 16px;
-  --hm-gap: 3px;
+  --hm-gap: var(--cell-gap);
   --hm-label: 16px;
 }
 .calendar-heatmap > * {
   min-width: 0;
-}
-.heatmap-title {
-  flex: 1;
-  margin: 0;
-  min-width: 0;
-  padding-left: var(--gt-space-1);
-  color: var(--gt-ink);
-  font-size: var(--gt-fs-4);
-  font-weight: 600;
 }
 .heatmap {
   display: flex;
@@ -284,25 +219,9 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 3px;
-  background-color: var(--gt-surface-2);
-  box-shadow: inset 0 0 0 1px var(--gt-line);
-  color: var(--gt-on-accent);
 }
 .heatmap-day.level-0.tone-1 {
   background-color: color-mix(in srgb, var(--gt-ink) 5%, var(--gt-surface-2));
-}
-.heatmap-day.level-1 {
-  background-color: color-mix(in srgb, var(--gt-done) 40%, var(--gt-surface-2));
-  box-shadow: none;
-}
-.heatmap-day.level-2 {
-  background-color: color-mix(in srgb, var(--gt-done) 88%, var(--gt-surface-2));
-  box-shadow: none;
-}
-.heatmap-day.level-3 {
-  background-color: var(--gt-done);
-  box-shadow: none;
 }
 .heatmap-count {
   font-size: 10px;
@@ -311,29 +230,6 @@
   line-height: 1;
   pointer-events: none;
 }
-.heatmap-grid .heatmap-day.is-today {
-  box-shadow: inset 0 0 0 2px var(--gt-accent);
-}
-.heatmap-grid .heatmap-day.is-selected {
-  z-index: 1;
-  outline: 2px solid var(--gt-ink);
-  outline-offset: 1px;
-}
-.heatmap-footer {
-  border-top: 0;
-  margin-top: 0;
-  padding-top: 0;
-}
-.heatmap-caption {
-  flex: 1;
-  margin: 0;
-  min-width: 0;
-  overflow: hidden;
-  font-variant-numeric: tabular-nums;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Range: an accent-soft band, accent-filled start and end, rounded where a
    row of the band begins or ends. */
 .calendar-range .calendar-day.is-selected {
@@ -380,28 +276,16 @@
   align-items: center;
   gap: var(--gt-space-2);
 }
-.history-calendar .calendar-reset {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--gt-space-2);
-  min-height: 44px;
-  margin-left: auto;
-  padding: 0 var(--gt-space-2);
-  border-radius: var(--gt-radius-md);
-  color: var(--gt-accent);
-  font-size: var(--gt-fs-3);
-  font-weight: 600;
-}
-
 @media (hover: hover) {
-  .calendar-detailed .calendar-day:not(:disabled):not(.is-selected):hover,
   .plan-calendar .calendar-day:not(:disabled):not(.is-selected):hover {
     background-color: var(--gt-surface-2);
   }
+  .month-day:not(:disabled):not(.is-selected):hover,
   .heatmap-grid .heatmap-day:hover {
     outline: 1.5px solid var(--gt-ink-3);
     outline-offset: 0;
   }
+  .month-day.is-selected:hover,
   .heatmap-grid .heatmap-day.is-selected:hover {
     outline-color: var(--gt-ink);
     outline-offset: 1px;
@@ -409,17 +293,202 @@
   .calendar-range-toggle:not([aria-pressed="true"]):hover {
     background-color: var(--gt-line);
   }
-  .calendar-view-toggle[aria-pressed="true"]:hover:not(:disabled) {
-    background-color: var(--gt-accent-soft);
-    color: var(--gt-accent);
-  }
   .calendar-bound:hover {
     border-color: var(--gt-accent);
   }
   .history-calendar .calendar-reset:hover {
     background-color: var(--gt-accent-soft);
   }
-  .history-calendar .calendar-month-selects select:hover {
+}
+
+/* Header: the title on the left, the controls together on the right. */
+.history-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 44px;
+}
+.history-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding-left: var(--gt-space-1);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+}
+.history-controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+.month-title-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-space-1);
+  min-height: 44px;
+  margin: 0 0 0 calc(-1 * var(--gt-space-1));
+  padding: 0 var(--gt-space-1);
+  border: 0;
+  border-radius: var(--gt-radius-md);
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  cursor: pointer;
+}
+.month-title-button[aria-expanded="true"] {
+  background-color: var(--gt-surface-2);
+}
+.month-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  width: min(280px, 100%);
+  padding: var(--gt-space-2);
+  border: 1px solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-lg);
+  background-color: var(--gt-surface);
+}
+.month-picker-year {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--gt-fs-4);
+}
+.month-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gt-space-1);
+}
+.month-picker-month {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--gt-radius-md);
+  background: transparent;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  cursor: pointer;
+}
+.month-picker-month[aria-pressed="true"] {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-weight: 600;
+}
+.month-picker-month:disabled {
+  color: var(--gt-ink-3);
+  cursor: not-allowed;
+}
+
+/* Day shades, shared by the heatmap squares and the month cells. Level 0 is
+   an empty surface; one workout is a light wash of the done colour, two a
+   strong mix and three or more the full colour. Text flips to on-accent once
+   the fill is dark enough to need it. */
+.heat {
+  border-radius: var(--cell-radius);
+  background-color: var(--gt-surface-2);
+  box-shadow: inset 0 0 0 1px var(--gt-line);
+  color: var(--gt-ink);
+}
+.heat.level-1 {
+  background-color: color-mix(in srgb, var(--gt-done) 40%, var(--gt-surface-2));
+  box-shadow: none;
+}
+.heat.level-2 {
+  background-color: color-mix(in srgb, var(--gt-done) 88%, var(--gt-surface-2));
+  box-shadow: none;
+  color: var(--gt-on-accent);
+}
+.heat.level-3 {
+  background-color: var(--gt-done);
+  box-shadow: none;
+  color: var(--gt-on-accent);
+}
+.history-calendar .heat.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+.history-calendar .heat.is-selected {
+  z-index: 1;
+  outline: 2px solid var(--gt-ink);
+  outline-offset: 1px;
+}
+
+/* Month calendar: the weekday heads and the cells share the heatmap's gap. */
+.month-weekdays,
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--cell-gap);
+}
+.month-weekdays {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  text-align: center;
+}
+.month-day {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: var(--gt-fs-3);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.month-day:disabled {
+  cursor: default;
+}
+.month-day.outside-month {
+  opacity: 0.3;
+}
+.month-day:disabled:not(.outside-month) {
+  opacity: 0.5;
+}
+/* A range: every day inside gets a soft outline, the two ends the dark one. */
+.history-calendar .month-day.in-range:not(.is-range-end) {
+  z-index: 0;
+  outline-color: color-mix(in srgb, var(--gt-ink) 40%, transparent);
+  outline-offset: -2px;
+}
+
+/* The caption line and the quiet Clear button. */
+.history-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 44px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.history-caption {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.history-calendar .calendar-reset {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--gt-space-1);
+  min-height: 44px;
+  padding: 0 var(--gt-space-2);
+  border-radius: var(--gt-radius-md);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+@media (hover: hover) {
+  .month-picker-month:not(:disabled):hover,
+  .month-title-button:hover {
     background-color: var(--gt-surface-2);
   }
 }
