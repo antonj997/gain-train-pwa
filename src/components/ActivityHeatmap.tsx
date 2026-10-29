@@ -11,6 +11,7 @@ import { useDragSelect } from "@/hooks/useDragSelect";
 import {
   heatmapDragSelection,
   selectionDates,
+  selectionEdges,
   type DragSelection,
 } from "@/lib/drag-selection";
 import { localizedDate } from "@/lib/dates";
@@ -76,12 +77,27 @@ export default function ActivityHeatmap({
     onCommit: ({ start: a, current: b }) =>
       apply(heatmapDragSelection(a, b, start)),
   });
-  const preview = drag
-    ? new Set(
-        selectionDates(heatmapDragSelection(drag.start, drag.current, start)),
-      )
+  const previewSelection = drag
+    ? heatmapDragSelection(drag.start, drag.current, start)
+    : null;
+  const preview = previewSelection
+    ? new Set(selectionDates(previewSelection))
     : null;
   const chosen = dates ? new Set(dates.dates) : null;
+  // The first and last day of what is shown, for the stronger ring.
+  const edges: string[] = previewSelection
+    ? selectionEdges(previewSelection)
+    : chosen
+      ? [dates!.dates[0], dates!.dates[dates!.dates.length - 1]]
+      : mode === "range"
+        ? from && to
+          ? [from, to]
+          : []
+        : selectedDate
+          ? [selectedDate]
+          : [];
+  const hasSelection =
+    !!preview || edges.some((date) => date >= start && date <= now);
 
   // Start on the most recent week.
   useLayoutEffect(() => {
@@ -135,7 +151,7 @@ export default function ActivityHeatmap({
         select a week, a weekday across weeks, or a period.
       </p>
       <div
-        className={`heatmap${drag ? " is-dragging" : ""}`}
+        className={`heatmap${drag ? " is-dragging" : ""}${hasSelection ? " has-selection" : ""}`}
         ref={container}
         {...handlers}
       >
@@ -181,7 +197,7 @@ export default function ActivityHeatmap({
                         if (node) buttons.current.set(date, node);
                         else buttons.current.delete(date);
                       }}
-                      className={`heatmap-day ${heatClass(count)} tone-${monthTone(date)}${date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${inPreview ? " is-preview" : ""}${drag?.start === date ? " is-armed" : ""}`}
+                      className={`heatmap-day ${heatClass(count)} tone-${monthTone(date)}${date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${inPreview ? " is-preview" : ""}${(selected || inPreview) && edges.includes(date) ? " is-edge" : ""}`}
                       data-date={date}
                       style={{ gridColumn: column + 1, gridRow: row + 1 }}
                       tabIndex={date === focusable ? 0 : -1}

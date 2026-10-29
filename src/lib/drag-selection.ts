@@ -83,3 +83,11 @@ export function monthDragRange(startDate: string, endDate: string) {
     ? { from: startDate, to: endDate }
     : { from: endDate, to: startDate };
 }
+
+/** The first and last date of a selection, which get the stronger ring. */
+export function selectionEdges(selection: DragSelection): [string, string] {
+  if (selection.kind === "day") return [selection.date, selection.date];
+  if (selection.kind === "range") return [selection.from, selection.to];
+  const { dates } = selection;
+  return [dates[0], dates[dates.length - 1]];
+}

@@ -4,7 +4,8 @@
 
    Two views share one header (title left, controls right), one day-cell look
    and one caption line. A day is shaded by its workout count (.heat level-0 to
-   level-3), today has an accent ring and the chosen day a dark outline. The
+   level-3), today has an ink ring and a selection is drawn as accent rings while
+   the other days fade. The
    activity heatmap ("simple") packs a year of small squares; the month
    calendar ("detailed") shows the same cells at 44px with the date number and
    a From-To range. .calendar-day and friends below belong to PlanCalendar. */
@@ -281,14 +282,9 @@
     background-color: var(--gt-surface-2);
   }
   .month-day:not(:disabled):not(.is-selected):hover,
-  .heatmap-grid .heatmap-day:hover {
+  .heatmap-grid .heatmap-day:not(.is-selected):not(.is-preview):hover {
     outline: 1.5px solid var(--gt-ink-3);
     outline-offset: 0;
-  }
-  .month-day.is-selected:hover,
-  .heatmap-grid .heatmap-day.is-selected:hover {
-    outline-color: var(--gt-ink);
-    outline-offset: 1px;
   }
   .calendar-range-toggle:not([aria-pressed="true"]):hover {
     background-color: var(--gt-line);
@@ -405,13 +401,50 @@
   box-shadow: none;
   color: var(--gt-on-accent);
 }
-.history-calendar .heat.is-today {
+/* Selection, shared by both views and by the live drag preview: while
+   anything is selected the rest of the grid fades back, selected days keep
+   their shade with a thin accent ring, and the first and last day (or the one
+   chosen day) get a solid ring. Today is an ink-2 ring until it is selected,
+   then a small dot. Rings are inset shadows, so nothing shifts. */
+.history-calendar .heat {
+  transition:
+    opacity var(--gt-motion),
+    box-shadow var(--gt-motion);
+}
+.history-calendar
+  .has-selection
+  .heat:not(:disabled):not(.is-selected):not(.is-preview) {
+  opacity: 0.35;
+}
+.history-calendar .heat.is-today:not(.is-selected):not(.is-preview) {
+  box-shadow: inset 0 0 0 1.5px var(--gt-ink-2);
+}
+.history-calendar .heat.is-selected,
+.history-calendar .heat.is-preview {
+  box-shadow: inset 0 0 0 1.5px
+    color-mix(in srgb, var(--gt-accent) 60%, transparent);
+}
+.history-calendar .heat.is-edge {
   box-shadow: inset 0 0 0 2px var(--gt-accent);
 }
-.history-calendar .heat.is-selected {
-  z-index: 1;
-  outline: 2px solid var(--gt-ink);
-  outline-offset: 1px;
+.history-calendar .heat.is-today.is-selected::after,
+.history-calendar .heat.is-today.is-preview::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  background-color: var(--gt-ink);
+  pointer-events: none;
+}
+.month-day.is-today.is-selected::after {
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
 }
 
 /* Month calendar: the weekday heads and the cells share the heatmap's gap. */
@@ -449,13 +482,6 @@
 .month-day:disabled:not(.outside-month) {
   opacity: 0.5;
 }
-/* A range: every day inside gets a soft outline, the two ends the dark one. */
-.history-calendar .month-day.in-range:not(.is-range-end) {
-  z-index: 0;
-  outline-color: color-mix(in srgb, var(--gt-ink) 40%, transparent);
-  outline-offset: -2px;
-}
-
 /* The caption line and the quiet Clear button. */
 .history-footer {
   display: flex;
@@ -493,10 +519,8 @@
   }
 }
 
-/* Press-and-hold drag selection. The pointer never selects text or opens a
-   callout while holding, and each state differs by outline, not only colour:
-   committed cells have a solid 2px ink outline, the live preview a dashed
-   one, and the armed start cell a thick accent outline that is also larger. */
+/* Press-and-hold drag selection. Nothing selects text or opens a callout
+   while holding; the live preview uses the selection look above. */
 .heatmap,
 .month-grid {
   -webkit-touch-callout: none;
@@ -506,16 +530,4 @@
 .heatmap.is-dragging,
 .month-grid.is-dragging {
   cursor: grabbing;
-}
-.history-calendar .heat.is-preview {
-  z-index: 1;
-  outline: 2px dashed var(--gt-ink);
-  outline-offset: 1px;
-}
-.history-calendar.calendar-heatmap .heatmap-day.heat.is-armed,
-.history-calendar.calendar-month .month-day.heat.is-armed {
-  z-index: 2;
-  outline: 3px solid var(--gt-accent);
-  outline-offset: 1px;
-  transform: scale(1.12);
 }

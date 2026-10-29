@@ -73,6 +73,27 @@ export default function HistoryCalendar({
     },
   });
   const preview = drag ? monthDragRange(drag.start, drag.current) : null;
+  const cellStates = cells.map((cell) => {
+    const count = cell.inMonth ? (counts.get(cell.date) ?? 0) : 0;
+    const band = preview ? { start: preview.from, end: preview.to } : bounds;
+    const inRange =
+      (mode === "range" || !!preview) &&
+      cell.inMonth &&
+      !!band &&
+      cell.date >= band.start &&
+      cell.date <= band.end;
+    const selected =
+      mode === "range" || preview ? inRange : selectedDate === cell.date;
+    const isEnd =
+      selected &&
+      (preview
+        ? preview.from === cell.date || preview.to === cell.date
+        : mode === "range"
+          ? from === cell.date || to === cell.date
+          : selectedDate === cell.date);
+    return { cell, count, selected, isEnd };
+  });
+  const hasSelection = cellStates.some((state) => state.selected);
   const browse = (month: string) => change({ type: "browse", month });
 
   useEffect(() => {
@@ -280,28 +301,13 @@ export default function HistoryCalendar({
         ))}
       </div>
       <div
-        className={`month-grid${drag ? " is-dragging" : ""}`}
+        className={`month-grid${drag ? " is-dragging" : ""}${hasSelection ? " has-selection" : ""}`}
         role="group"
         aria-labelledby={headingId}
         ref={grid}
         {...handlers}
       >
-        {cells.map((cell) => {
-          const count = cell.inMonth ? (counts.get(cell.date) ?? 0) : 0;
-          const band = preview
-            ? { start: preview.from, end: preview.to }
-            : bounds;
-          const inRange =
-            (mode === "range" || !!preview) &&
-            cell.inMonth &&
-            !!band &&
-            cell.date >= band.start &&
-            cell.date <= band.end;
-          const selected =
-            mode === "range" || preview ? inRange : selectedDate === cell.date;
-          const isEnd = preview
-            ? preview.from === cell.date || preview.to === cell.date
-            : mode === "range" && (from === cell.date || to === cell.date);
+        {cellStates.map(({ cell, count, selected, isEnd }) => {
           return (
             <button
               type="button"
@@ -310,7 +316,7 @@ export default function HistoryCalendar({
                 if (node) buttons.current.set(cell.date, node);
                 else buttons.current.delete(cell.date);
               }}
-              className={`month-day ${heatClass(count)}${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${inRange ? " in-range" : ""}${isEnd ? " is-range-end" : ""}${drag?.start === cell.date ? " is-armed" : ""}${!cell.inMonth ? " outside-month" : ""}`}
+              className={`month-day ${heatClass(count)}${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${isEnd ? " is-edge" : ""}${!cell.inMonth ? " outside-month" : ""}`}
               data-date={
                 cell.inMonth && cell.date <= now ? cell.date : undefined
               }
