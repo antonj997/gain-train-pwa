@@ -130,9 +130,7 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
       );
   }
   if (!banners.length) return null;
-  return (
-    <div className="banners" role="status">
-      {banners}
-    </div>
-  );
+  // No live region around the stack: the alerts inside announce themselves,
+  // and a wrapping status region would read the whole stack again on any change.
+  return <div className="banners">{banners}</div>;
 }
