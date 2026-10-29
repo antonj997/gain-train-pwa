@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Play, Repeat, Settings } from "lucide-react";
+import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import PageHeader from "@/components/PageHeader";
@@ -11,6 +12,7 @@ import {
   doneSetCount,
   draftWorkouts,
   routines as routineRecords,
+  runningWorkouts,
   setCount,
   workouts as allWorkouts,
 } from "@/data/selectors";
@@ -20,7 +22,9 @@ import { today } from "@/data/model";
 import { activePlans, groupsOf, plannedFor, resolveCell } from "@/data/plans";
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel, timeTrainedLabel } from "@/lib/labels";
+import { errorMessage } from "@/lib/errors";
 import { historyPath, routineEditPath, workoutPath } from "@/lib/routes";
+import { toastWithUndo } from "@/lib/undo-toast";
 import { routineAverageMinutes } from "@/lib/routine-preview";
 import { headlineFor } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
@@ -52,14 +56,36 @@ function useNow(active: boolean) {
 }
 
 export default function Home() {
-  const { state } = useData();
+  const { state, deleteRecord, restoreWorkout } = useData();
   const {
     start: requestStart,
     repeat,
     busy: starting,
     confirmation,
   } = useStartWorkout();
-  const drafts = draftWorkouts(state.records);
+  // The most recently started workout is the running one. Another started
+  // workout can arrive from a second device; it is offered separately below.
+  const [running, ...otherRunning] = runningWorkouts(state.records);
+  const drafts = draftWorkouts(state.records).filter(
+    (r) => !otherRunning.includes(r),
+  );
+  const [abandoning, setAbandoning] = useState("");
+  const abandon = async (id: string) => {
+    if (abandoning) return;
+    setAbandoning(id);
+    try {
+      await deleteRecord(id);
+      toastWithUndo(
+        "Workout abandoned",
+        () => restoreWorkout(id),
+        "Could not restore the workout. Try importing a backup.",
+      );
+    } catch (error) {
+      toast.error(errorMessage(error, "Could not abandon. Try again."));
+    } finally {
+      setAbandoning("");
+    }
+  };
   const completed = useMemo(
     () => completedWorkouts(state.records),
     [state.records],
@@ -70,7 +96,7 @@ export default function Home() {
   const handledShortcut = useRef(false);
   const [headline] = useState(() => headlineFor());
   const [goal] = useState(() => readTrainingPreferences().weeklyGoal);
-  const now = useNow(drafts.some((r) => r.payload.startedAt !== null));
+  const now = useNow(!!running);
   const start = (past = false, routine?: RoutineRecord) =>
     requestStart(newWorkout(Object.values(state.records), { routine, past }));
   // The home-screen shortcut resumes a running workout instead of replacing it.
@@ -78,7 +104,6 @@ export default function Home() {
     if (params.get("start") !== "workout" || handledShortcut.current) return;
     handledShortcut.current = true;
     setParams({}, { replace: true });
-    const running = drafts.find((r) => r.payload.startedAt !== null);
     if (running) navigate(workoutPath(running.id), { replace: true });
     else void start();
   });
@@ -187,8 +212,33 @@ export default function Home() {
           </Link>
         }
       />
+      {otherRunning.map((r) => (
+        <div className="banner workout-banner" role="status" key={r.id}>
+          <p>
+            Another workout is in progress on another device: “{r.payload.name}
+            ”, {doneSetCount(r.payload)} of {setCount(r.payload)} sets.
+          </p>
+          <div className="banner-actions">
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              onClick={() => navigate(workoutPath(r.id))}
+            >
+              Resume
+            </button>
+            <button
+              type="button"
+              className="btn-quiet btn-sm"
+              disabled={!!abandoning}
+              onClick={() => void abandon(r.id)}
+            >
+              {abandoning === r.id ? "Abandoning…" : "Abandon"}
+            </button>
+          </div>
+        </div>
+      ))}
       {drafts.map((r, i) => {
-        const running = r.payload.startedAt !== null;
+        const live = r.payload.startedAt !== null;
         const next = nextSet(r.payload);
         return (
           <Link
@@ -198,13 +248,13 @@ export default function Home() {
               "resume-card" +
               (i === 0 ? " resume-primary" : "") +
               // A past workout has no start time and is not "live".
-              (running ? " is-running" : "")
+              (live ? " is-running" : "")
             }
           >
             <span>
               <small>
-                {running && <span className="resume-live" aria-hidden="true" />}
-                {running
+                {live && <span className="resume-live" aria-hidden="true" />}
+                {live
                   ? `In progress · ${timeTrainedLabel(
                       Math.max(
                         0,

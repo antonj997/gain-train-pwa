@@ -27,6 +27,15 @@ const nextVersion = (record: RecordDoc): Partial<RecordDoc> => ({
   syncError: undefined,
 });
 
+const isRunning = (workout: Workout) =>
+  workout.status === "draft" && workout.startedAt !== null;
+
+/** True when saving `next` would make a workout run that is not running yet. */
+export function startsRunning(old: RecordDoc | undefined, next: Workout) {
+  if (!isRunning(next)) return false;
+  return !(old?.kind === "workout" && !old.deleted && isRunning(old.payload));
+}
+
 /** Saves an already validated payload as the next local version of `id`. */
 export function saveRecordIn(
   s: LocalState,
@@ -45,7 +54,10 @@ export function saveRecordIn(
   let saved: Payload = { ...parsed, schemaVersion: SCHEMA_VERSION };
   if (kind === "workout") {
     const workout = saved as Workout;
-    if (workout.status === "draft" && workout.startedAt !== null) {
+    // One running workout at a time is checked when a workout starts running
+    // here. A second one can still arrive from another device by sync; saving
+    // a workout that is already running must keep working then.
+    if (startsRunning(old, workout)) {
       const others = startedWorkouts(s).filter((record) => record.id !== id);
       if (others.length) throw new WorkoutInProgressError(others);
     }

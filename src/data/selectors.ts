@@ -39,6 +39,18 @@ export function workouts(records: Records, status?: Workout["status"]) {
     )
     .sort(sortWorkoutsNewest);
 }
+/**
+ * Started drafts, the most recently started first. Only one can be started on
+ * this phone, but sync can bring another from a second device; the first one is
+ * the running workout and the others are offered to resume or abandon.
+ */
+export const runningWorkouts = (records: Records) =>
+  workouts(records, "draft")
+    .filter((record) => record.payload.startedAt !== null)
+    .sort(
+      (a, b) =>
+        b.payload.startedAt! - a.payload.startedAt! || b.id.localeCompare(a.id),
+    );
 export const completedWorkouts = (records: Records) =>
   workouts(records, "completed");
 export const draftWorkouts = (records: Records) => workouts(records, "draft");

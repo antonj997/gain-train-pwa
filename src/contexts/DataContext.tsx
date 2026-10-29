@@ -34,7 +34,7 @@ import { local, storedKeys } from "@/lib/storage";
 import { notifyOtherTabs, onOtherTabChange } from "@/lib/tab-sync";
 
 const IN_PROGRESS_MESSAGE =
-  "Another workout is already in progress. Return to Workout to resume it before restoring this one.";
+  "Another workout is already in progress. Finish or abandon it on Train, then try again.";
 
 type Failure = {
   /** Shown when the device write fails for a reason other than validation. */

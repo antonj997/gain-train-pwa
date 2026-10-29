@@ -415,20 +415,6 @@
   flex: none;
 }
 
-/* Banners under the top bar: the message, then its actions. */
-.workout-banner {
-  flex-wrap: wrap;
-}
-.workout-banner p {
-  flex: 1 1 200px;
-  margin: 0;
-}
-.banner-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--gt-space-2);
-}
-
 /* Add exercise: a dashed button after the cards; alone it is a large one. */
 .add-exercise {
   display: flex;
