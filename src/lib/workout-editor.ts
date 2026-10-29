@@ -167,14 +167,18 @@ export function toggleGroupCompletion(
   );
 }
 
-/** A new unchecked set like the last one that is not a drop. */
-export function appendSet(exercise: Exercise): Exercise {
+/**
+ * A new unchecked set like the last one that is not a drop. With no set left
+ * it starts from the exercise's own defaults; `category` is a custom
+ * exercise's saved category (the catalogue knows its own).
+ */
+export function appendSet(exercise: Exercise, category?: string): Exercise {
   const prior = exercise.sets.filter((set) => !isDrop(set)).at(-1);
   return {
     ...exercise,
     sets: [
       ...exercise.sets,
-      prior ? newSet(prior) : initialSet(exercise.exerciseId),
+      prior ? newSet(prior) : initialSet(exercise.exerciseId, category),
     ],
   };
 }

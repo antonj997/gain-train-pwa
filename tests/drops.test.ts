@@ -490,6 +490,10 @@ test("appendSet copies the last non-drop set and uses initialSet when empty", ()
   assert.equal(empty[0].measure, "seconds");
   assert.equal(empty[0].reps, null);
   assert.equal(empty[0].done, false);
+
+  // A custom Cardio exercise with every set deleted still gets a cardio set.
+  const custom = appendSet(exercise([], "custom-rower"), "Cardio").sets;
+  assert.equal(custom[0].measure, "cardio");
 });
 
 test("repeatExercises keeps planned drops", () => {

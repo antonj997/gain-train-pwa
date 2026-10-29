@@ -32,6 +32,8 @@ import {
 } from "@/lib/load-keys";
 import { localizedDate } from "@/lib/dates";
 import { cardioTotals, isCardioSet, totalsLabel } from "@/lib/cardio";
+import { useData } from "@/contexts/useData";
+import { customExercises } from "@/data/selectors";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import SetLine from "@/components/workout/SetLine";
 import SetSheet from "@/components/workout/SetSheet";
@@ -104,6 +106,7 @@ export default function ExerciseCard({
       : planned;
   const { sets } = ex;
   const headingId = useId();
+  const { state } = useData();
   const [sheet, setSheet] = useState<OpenSheet>(null);
   const setSheetRef = useRef<HTMLDivElement>(null);
   const openSetId = sheet?.kind === "set" ? sheet.setId : null;
@@ -230,7 +233,15 @@ export default function ExerciseCard({
       <button
         type="button"
         className="btn-quiet ex-add-set"
-        onClick={() => onChange(appendSet(ex))}
+        onClick={() =>
+          onChange(
+            appendSet(
+              ex,
+              customExercises(state.records).find((r) => r.id === ex.exerciseId)
+                ?.payload.category,
+            ),
+          )
+        }
       >
         <Plus size={18} aria-hidden="true" />
         Add set
