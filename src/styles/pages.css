@@ -899,3 +899,43 @@ details[open] > .session-summary > svg {
   flex-direction: column;
   gap: var(--gt-space-2);
 }
+
+/* Shown instead of a blank screen when the app hits an unexpected error. */
+.crash-screen {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: calc(var(--gt-space-6) + env(safe-area-inset-top)) var(--gt-space-4)
+    var(--gt-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-4);
+  color: var(--gt-ink);
+}
+.crash-screen h1 {
+  margin: 0;
+  font-size: var(--gt-fs-6);
+}
+.crash-screen p {
+  margin: 0;
+  color: var(--gt-ink-2);
+}
+.crash-actions {
+  display: flex;
+  gap: var(--gt-space-2);
+}
+.crash-actions > * {
+  flex: 1;
+}
+.crash-details {
+  margin: 0;
+  padding: var(--gt-space-3);
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 50vh;
+  overflow: auto;
+}
