@@ -56,7 +56,7 @@ Planning and goals are optional and nothing requires them. **Plans** (Library �
 
 ## Constraints
 
-Preserve existing records and sync compatibility. No destructive migration or real-account testing. Keep top mobile-wide toasts. Abandon lives in the Finish sheet; the owner approved moving it there from the top bar on 28 October 2026. It keeps the undo toast. The user explicitly requires immediate set deletion; confirm exercise deletion only when its sets contain values or completed data. No set/exercise Undo feature.
+Preserve existing records and sync compatibility. No destructive migration or real-account testing. Keep top mobile-wide toasts; they start just below the page header or the workout's top bar (useToastClearance), and at most two show at once, the newest in front. Abandon lives in the Finish sheet; the owner approved moving it there from the top bar on 28 October 2026. It keeps the undo toast. The user explicitly requires immediate set deletion; confirm exercise deletion only when its sets contain values or completed data. No set/exercise Undo feature.
 
 Allow one running workout: a nondeleted draft with a non-null startedAt. Blank starts, routine starts from Train or Library, and History Repeat share the same confirmation when another workout is running. “Keep current workout” cancels without changing it; “Abandon and start” replaces and creates atomically, checking localVersion and revision so newly changed work requires confirmation again. Historical draft entries with startedAt:null remain allowed alongside a running workout.
 

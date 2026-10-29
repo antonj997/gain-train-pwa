@@ -82,6 +82,11 @@ select,
 [data-sonner-toast] {
   font-family: inherit !important;
 }
+/* Toasts start under the page header or the workout's top bar, which set
+   --toast-top as they lay out (useToastClearance); this is the fallback. */
+:root {
+  --toast-top: calc(env(safe-area-inset-top) + 96px);
+}
 /* Keep search and actions fixed while the result list uses the available room. */
 .picker-dialog .picker-list {
   flex: 1 1 0;

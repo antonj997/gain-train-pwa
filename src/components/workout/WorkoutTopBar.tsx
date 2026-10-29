@@ -1,7 +1,8 @@
-import { Fragment } from "react";
+import { Fragment, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Workout } from "@/data/model";
 import { useNow } from "@/hooks/useNow";
+import { useToastClearance } from "@/hooks/useToastClearance";
 import { localizedDate } from "@/lib/dates";
 import { durationLabel } from "@/lib/labels";
 import { DEFAULT_WORKOUT_NAME, autoWorkoutName } from "@/lib/workout-name";
@@ -38,6 +39,8 @@ export default function WorkoutTopBar({
   // A live timer for a running workout; a past or edited one shows its date.
   const timed = !editing && !!w.startedAt;
   const now = useNow(timed);
+  const bar = useRef<HTMLDivElement>(null);
+  useToastClearance(bar, true);
   const status = [
     timed ? (
       <span key="time">
@@ -70,7 +73,7 @@ export default function WorkoutTopBar({
     </span>,
   ];
   return (
-    <div className="top-bar" data-top-bar>
+    <div ref={bar} className="top-bar" data-top-bar>
       <button
         type="button"
         className="icon-btn"
