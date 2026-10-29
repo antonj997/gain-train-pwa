@@ -4,6 +4,7 @@ import { isDrop } from "../data/drops";
 import { hasExtraWeight } from "./set-load";
 import { cardioLabel, isCardioSet } from "./cardio";
 import { countLabel, durationLabel } from "./labels";
+import { t } from "../i18n";
 
 /** Minutes rounded to the nearest 5, never below 5. */
 const roundToFive = (minutes: number) =>
@@ -42,7 +43,7 @@ export function plannedSummary(exercise: Exercise) {
   const real = exercise.sets.filter((s) => !isDrop(s));
   const sets = real.filter((s) => s.section === "working");
   const main = sets.length ? sets : real;
-  if (!main.length) return "No sets";
+  if (!main.length) return t("routine.noSets");
   const first = main[0];
   if (main.length === 1 && isCardioSet(first)) return cardioLabel(first);
   const same = main.every(
@@ -72,8 +73,8 @@ export function exerciseExtras(exercise: Exercise) {
   const winddown = count((s) => !isDrop(s) && s.section === "winddown");
   const drops = count(isDrop);
   return [
-    warmup && `${warmup} warm-up`,
-    winddown && `${winddown} cool-down`,
+    warmup && t("routine.warmups", { count: warmup }),
+    winddown && t("routine.cooldowns", { count: winddown }),
     drops && countLabel(drops, "drop"),
   ]
     .filter(Boolean)

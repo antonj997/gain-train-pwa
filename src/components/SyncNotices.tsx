@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/useAuth";
 import { isSyncOutage } from "@/lib/sync-health";
 import { needsSignInAgain } from "@/lib/auth-account";
 import { local, storageKeys, writeStored } from "@/lib/storage";
+import { useT } from "@/i18n/useT";
 
 /**
  * The sync, sign-in and conflict notices, as banners under a page's title.
@@ -17,6 +18,7 @@ import { local, storageKeys, writeStored } from "@/lib/storage";
 export default function SyncNotices({ status = false }: { status?: boolean }) {
   const { state, error, syncing, online, syncHealth } = useData();
   const { user, account } = useAuth();
+  const { t, locale } = useT();
   const [phoneLogAvailable, setPhoneLogAvailable] = useState(false);
   // The sign-in invitation is closed once per device; Settings keeps the way in.
   const [inviteClosed, setInviteClosed] = useState(
@@ -57,65 +59,56 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
   if (signedOut)
     banners.push(
       <div className="banner" key="signed-out">
-        <span>
-          You were signed out. Your log is still here and syncs once you sign in
-          again.
-        </span>
-        <Link to="/auth">Sign in again</Link>
+        <span>{t("sync.signedOut")}</span>
+        <Link to="/auth">{t("sync.signInAgain")}</Link>
       </div>,
     );
   if (conflicts > 0)
     banners.push(
       <div className="banner" key="conflicts">
-        <span>{conflicts} changes need your choice before syncing</span>
-        <Link to="/settings">Open Settings</Link>
+        <span>{t("sync.conflicts", { count: conflicts })}</span>
+        <Link to="/settings">{t("sync.openSettings")}</Link>
       </div>,
     );
   if (phoneLogAvailable)
     banners.push(
       <div className="banner" key="phone">
-        <span>Your phone log is ready to copy to this account.</span>
-        <Link to="/settings">Open Settings</Link>
+        <span>{t("sync.phoneLogReady")}</span>
+        <Link to="/settings">{t("sync.openSettings")}</Link>
       </div>,
     );
   if (rejected > 0)
     banners.push(
       <div className="banner" key="rejected">
-        <span>
-          {rejected === 1
-            ? "1 change couldn't sync."
-            : `${rejected} changes couldn't sync.`}
-        </span>
-        <Link to="/settings">Retry in Settings</Link>
+        <span>{t("sync.rejected", { count: rejected })}</span>
+        <Link to="/settings">{t("sync.retryInSettings")}</Link>
       </div>,
     );
   if (needsUpdate)
     banners.push(
       <div className="banner" key="update">
-        Some synced records need a newer version of Gain Train. Close and reopen
-        the app to update.
+        {t("sync.needsUpdate")}
       </div>,
     );
   if (outage)
     banners.push(
       <div className="banner banner-danger" role="alert" key="outage">
         <span>
-          The sync server hasn't responded since{" "}
-          {new Date(syncHealth.failingSince!).toLocaleDateString(undefined, {
-            day: "numeric",
-            month: "short",
+          {t("sync.outage", {
+            date: new Date(syncHealth.failingSince!).toLocaleDateString(
+              locale,
+              { day: "numeric", month: "short" },
+            ),
           })}
-          . Your workouts are safe on this phone and upload automatically when
-          it's back.
         </span>
-        <Link to="/settings">Open Settings</Link>
+        <Link to="/settings">{t("sync.openSettings")}</Link>
       </div>,
     );
   else if (error)
     banners.push(
       <div className="banner banner-danger" role="alert" key="error">
         <span>{error}</span>
-        <Link to="/settings">Open Settings</Link>
+        <Link to="/settings">{t("sync.openSettings")}</Link>
       </div>,
     );
   if (status && !syncing) {
@@ -123,12 +116,12 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
       if (!inviteClosed)
         banners.push(
           <div className="banner banner-closable" key="status">
-            <span>Saved on this phone.</span>
-            <Link to="/auth">Sign in to sync</Link>
+            <span>{t("sync.savedOnPhone")}</span>
+            <Link to="/auth">{t("sync.signInToSync")}</Link>
             <button
               type="button"
               className="icon-btn"
-              aria-label="Dismiss sign-in suggestion"
+              aria-label={t("sync.dismissSignIn")}
               onClick={() => {
                 // Closed for this visit even if storage refuses to remember it.
                 writeStored(storageKeys.signInBannerDismissed, "1");
@@ -142,9 +135,7 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
     } else if (dirty)
       banners.push(
         <div className="banner" key="status">
-          {online
-            ? `Saved on this phone · ${dirty} pending`
-            : "Offline · saved on this phone"}
+          {online ? t("sync.pending", { count: dirty }) : t("sync.offline")}
         </div>,
       );
   }

@@ -22,6 +22,7 @@ import { workoutPath } from "@/lib/routes";
 import { headlineFor } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
 import { autoWorkoutName } from "@/lib/workout-name";
+import { useT } from "@/i18n/useT";
 
 export default function Home() {
   const { state } = useData();
@@ -43,6 +44,7 @@ export default function Home() {
   );
   const last = completed[0];
   const navigate = useNavigate();
+  const { t, locale } = useT();
   const [params, setParams] = useSearchParams();
   const handledShortcut = useRef(false);
   const [headline] = useState(() => headlineFor());
@@ -90,7 +92,7 @@ export default function Home() {
     <div className="page home-page">
       {confirmation}
       <PageHeader
-        eyebrow={new Date().toLocaleDateString(undefined, {
+        eyebrow={new Date().toLocaleDateString(locale, {
           weekday: "long",
           month: "long",
           day: "numeric",
@@ -101,7 +103,7 @@ export default function Home() {
           <Link
             to="/settings"
             className="icon-btn filled"
-            aria-label="Settings"
+            aria-label={t("home.settings")}
           >
             <Settings size={22} aria-hidden="true" />
           </Link>
@@ -124,17 +126,17 @@ export default function Home() {
         >
           <Plus size={20} aria-hidden="true" />
           {starting
-            ? "Starting…"
+            ? t("home.starting")
             : drafts.length
-              ? "Start a new workout"
-              : "Start workout"}
+              ? t("home.startNew")
+              : t("home.start")}
         </button>
         <button
           className="btn-quiet"
           disabled={starting}
           onClick={() => void start(true)}
         >
-          Log a past workout
+          {t("home.logPast")}
         </button>
       </div>
       <WeekCard completed={completed} goal={goal} day={day} planned={planned} />

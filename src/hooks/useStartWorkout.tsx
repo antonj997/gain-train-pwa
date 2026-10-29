@@ -11,6 +11,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { errorMessage } from "@/lib/errors";
 import { workoutPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
+import { useT } from "@/i18n/useT";
+import { workoutTitle } from "@/lib/workout-name";
 
 type PendingStart = {
   id: string;
@@ -23,6 +25,7 @@ type PendingStart = {
 export function useStartWorkout() {
   const { startWorkout, deleteRecord, restoreWorkout } = useData();
   const navigate = useNavigate();
+  const { t } = useT();
   const lock = useRef(false);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<PendingStart | null>(null);
@@ -59,22 +62,19 @@ export function useStartWorkout() {
       const replaced = request.replacing?.[0];
       if (replaced)
         toastWithUndo(
-          `“${replaced.name}” abandoned`,
+          t("start.abandonedNamed", { name: workoutTitle(replaced.name) }),
           async () => {
             navigate("/", { replace: true });
             await deleteRecord(request.id);
             await restoreWorkout(replaced.id);
             navigate(workoutPath(replaced.id));
           },
-          "Could not bring back the earlier workout. Try importing a backup.",
+          t("start.restoreFailed"),
         );
     } catch (error) {
       if (error instanceof WorkoutInProgressError)
         setPending({ ...request, replacing: error.workouts });
-      else
-        toast.error(
-          errorMessage(error, "Could not start this workout. Try again."),
-        );
+      else toast.error(errorMessage(error, t("start.failed")));
     } finally {
       lock.current = false;
       setBusy(false);
@@ -100,14 +100,20 @@ export function useStartWorkout() {
   const confirmation = (
     <ConfirmDialog
       open={!!pending}
-      title="Workout already in progress"
+      title={t("start.inProgressTitle")}
       description={
         replacing.length === 1
-          ? `“${replacing[0].name}” is already in progress. Starting “${pending?.workout.name}” will remove it and its logged sets.`
-          : `You have ${replacing.length} workouts in progress. Starting “${pending?.workout.name}” will remove them and their logged sets.`
+          ? t("start.replaceOne", {
+              name: workoutTitle(replacing[0].name),
+              next: workoutTitle(pending?.workout.name ?? ""),
+            })
+          : t("start.replaceMany", {
+              count: replacing.length,
+              next: workoutTitle(pending?.workout.name ?? ""),
+            })
       }
-      cancelLabel="Keep current workout"
-      confirmLabel={busy ? "Starting…" : "Abandon and start"}
+      cancelLabel={t("start.keep")}
+      confirmLabel={busy ? t("home.starting") : t("start.abandonAndStart")}
       busy={busy}
       onCancel={() => setPending(null)}
       onConfirm={() => pending && void attempt(pending)}

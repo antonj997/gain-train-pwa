@@ -11,6 +11,8 @@ import { errorMessage } from "@/lib/errors";
 import { durationLabel } from "@/lib/labels";
 import { workoutPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
+import { useT } from "@/i18n/useT";
+import { workoutTitle } from "@/lib/workout-name";
 
 type Props = {
   /** The most recently started workout, if any. */
@@ -25,6 +27,7 @@ type Props = {
 export default function ResumeCards({ running, otherRunning, drafts }: Props) {
   const { deleteRecord, restoreWorkout } = useData();
   const navigate = useNavigate();
+  const { t } = useT();
   const now = useNow(!!running);
   const [abandoning, setAbandoning] = useState("");
   const abandon = async (id: string) => {
@@ -33,12 +36,12 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
     try {
       await deleteRecord(id);
       toastWithUndo(
-        "Workout abandoned",
+        t("home.abandoned"),
         () => restoreWorkout(id),
-        "Could not restore the workout. Try importing a backup.",
+        t("home.restoreFailed"),
       );
     } catch (error) {
-      toast.error(errorMessage(error, "Could not abandon. Try again."));
+      toast.error(errorMessage(error, t("home.abandonFailed")));
     } finally {
       setAbandoning("");
     }
@@ -48,8 +51,11 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
       {otherRunning.map((r) => (
         <div className="banner workout-banner" role="status" key={r.id}>
           <p>
-            Another workout is in progress on another device: “{r.payload.name}
-            ”, {doneSetCount(r.payload)} of {setCount(r.payload)} sets.
+            {t("home.otherDevice", {
+              name: workoutTitle(r.payload.name),
+              done: doneSetCount(r.payload),
+              total: setCount(r.payload),
+            })}
           </p>
           <div className="banner-actions">
             <button
@@ -57,7 +63,7 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
               className="btn-secondary btn-sm"
               onClick={() => navigate(workoutPath(r.id))}
             >
-              Resume
+              {t("home.resume")}
             </button>
             <button
               type="button"
@@ -65,7 +71,7 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
               disabled={!!abandoning}
               onClick={() => void abandon(r.id)}
             >
-              {abandoning === r.id ? "Abandoning…" : "Abandon"}
+              {abandoning === r.id ? t("home.abandoning") : t("home.abandon")}
             </button>
           </div>
         </div>
@@ -88,19 +94,24 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
               <small>
                 {live && <span className="resume-live" aria-hidden="true" />}
                 {live
-                  ? `In progress · ${durationLabel(
-                      Math.max(
-                        0,
-                        Math.floor((now - r.payload.startedAt!) / 60000),
+                  ? t("home.inProgress", {
+                      duration: durationLabel(
+                        Math.max(
+                          0,
+                          Math.floor((now - r.payload.startedAt!) / 60000),
+                        ),
                       ),
-                    )}`
-                  : "Resume workout"}
+                    })
+                  : t("home.resumeWorkout")}
               </small>
-              <strong>{r.payload.name}</strong>
+              <strong>{workoutTitle(r.payload.name)}</strong>
               <span className="resume-meta">
                 {!running && `${localizedDate(r.payload.date)} · `}
-                {doneSetCount(r.payload)} of {setCount(r.payload)} sets
-                {next && ` · next: ${next}`}
+                {t("home.setsOf", {
+                  done: doneSetCount(r.payload),
+                  total: setCount(r.payload),
+                })}
+                {next && ` · ${t("home.next", { set: next })}`}
               </span>
             </span>
             <Play className="resume-play" fill="currentColor" stroke="none" />
