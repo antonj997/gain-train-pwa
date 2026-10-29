@@ -20,6 +20,8 @@ export type LibraryExercise = {
   favourite: boolean;
   /** The note on a custom exercise; empty for built-in ones. */
   note: string;
+  /** Set while the user's custom exercise is published to the shared library. */
+  sharedId?: string;
   /** Date of the newest finished workout that includes it. */
   lastDate: string | null;
   /** Label of the best set, such as "100 kg × 5". */

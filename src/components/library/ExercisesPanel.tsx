@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { errorMessage } from "@/lib/errors";
 import {
   Eye,
@@ -6,6 +7,7 @@ import {
   MoreHorizontal,
   Plus,
   Search,
+  Share2,
   Star,
   Trash2,
 } from "lucide-react";
@@ -35,17 +37,27 @@ import {
   type LibraryExercise,
 } from "@/lib/library";
 import { toast } from "sonner";
-const filters: { value: ExerciseFilter; label: string }[] = [
+import { supabase } from "@/integrations/supabase/client";
+import { fetchShared, publishExercise, unpublishExercise } from "@/data/shared";
+import {
+  fromSharedRow,
+  visibleShared,
+  type SharedRow,
+} from "@/lib/shared-exercises";
+type Filter = ExerciseFilter | "shared";
+const filters: { value: Filter; label: string }[] = [
   { value: "all", label: "All" },
   { value: "yours", label: "Yours" },
   { value: "recent", label: "Recently used" },
   { value: "hidden", label: "Hidden" },
+  { value: "shared", label: "Shared" },
 ];
 
 /** Library → Exercises: search, filters, groups and the custom exercise editor. */
 export default function ExercisesPanel() {
   const { state, save, deleteRecord } = useData();
-  const { account } = useAuth();
+  const { account, user } = useAuth();
+  const { online } = useData();
   const draft = useRetainedDraft(
     draftKey(account, "exercise"),
     parseCustomDraft,
@@ -53,7 +65,7 @@ export default function ExercisesPanel() {
   const edit = draft.value;
   const setEdit = draft.replace;
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<ExerciseFilter>("all");
+  const [filter, setFilter] = useState<Filter>("all");
   const [category, setCategory] = useState("");
   const [equipment, setEquipment] = useState("");
   const { hidden, setHidden } = useHiddenExercises();
@@ -64,7 +76,28 @@ export default function ExercisesPanel() {
   const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(
     null,
   );
+  const [shared, setShared] = useState<{
+    rows: SharedRow[];
+    status: "loading" | "error" | "ready";
+  }>({ rows: [], status: "loading" });
+  const [adding, setAdding] = useState("");
+  const [sharing, setSharing] = useState(false);
+  const canShare = !!supabase && !!user && account === user.id;
+  const sharedReady = canShare && online;
   const now = today();
+  // The Shared list is fetched on demand each time the chip is chosen (a short
+  // in-memory cache sits in data/shared.ts), and not at all when signed out or offline.
+  useEffect(() => {
+    if (filter !== "shared" || !sharedReady) return;
+    let current = true;
+    setShared((s) => ({ ...s, status: "loading" }));
+    fetchShared()
+      .then((rows) => current && setShared({ rows, status: "ready" }))
+      .catch(() => current && setShared((s) => ({ ...s, status: "error" })));
+    return () => {
+      current = false;
+    };
+  }, [filter, sharedReady]);
   const all = useMemo<LibraryExercise[]>(() => {
     const records = Object.values(state.records);
     const favourites = favouriteIds(state.records);
@@ -102,13 +135,111 @@ export default function ExercisesPanel() {
   }, [state.records, hidden]);
   const groups = useMemo(
     () =>
-      groupExercises(
-        filterExercises(all, search, filter, { category, equipment }),
-        filter,
-        !!search.trim(),
-      ),
+      filter === "shared"
+        ? []
+        : groupExercises(
+            filterExercises(all, search, filter, { category, equipment }),
+            filter,
+            !!search.trim(),
+          ),
     [all, search, filter, category, equipment],
   );
+  const sharedItems = useMemo(() => {
+    if (filter !== "shared") return [];
+    const added = new Set(
+      ownExercises(state.records).flatMap((e) =>
+        e.sharedFrom ? [e.sharedFrom] : [],
+      ),
+    );
+    return filterExercises(
+      visibleShared(shared.rows, user?.id ?? "", added).map((r) => ({
+        id: r.id,
+        name: r.name,
+        category: r.category,
+        equipment: r.equipment ?? undefined,
+        aliases: r.aliases,
+        custom: false,
+        favourite: false,
+        note: "",
+        lastDate: null,
+        best: null,
+      })),
+      search,
+      "all",
+      { category, equipment },
+    );
+  }, [filter, shared.rows, state.records, user, search, category, equipment]);
+  const addShared = async (item: LibraryExercise) => {
+    const row = shared.rows.find((r) => r.id === item.id);
+    if (!row || adding) return;
+    setAdding(row.id);
+    try {
+      await save(crypto.randomUUID(), "exercise", fromSharedRow(row));
+      toast(`${row.name} added to your exercises`);
+    } catch {
+      toast.error(`Could not add ${row.name}. Retry.`);
+    } finally {
+      setAdding("");
+    }
+  };
+  const customPayload = (id: string) => {
+    const record = state.records[id];
+    return record?.kind === "exercise" ? record.payload : null;
+  };
+  const setSharedId = async (e: LibraryExercise, sharedId: string | null) => {
+    const payload = customPayload(e.id);
+    if (!payload) return;
+    const next = structuredClone(payload);
+    if (sharedId) next.sharedId = sharedId;
+    else delete next.sharedId;
+    await save(e.id, "exercise", next);
+    if (edit?.id === e.id) {
+      const data = structuredClone(edit.data);
+      if (sharedId) data.sharedId = sharedId;
+      else delete data.sharedId;
+      setEdit({ ...edit, data });
+    }
+  };
+  const shareExercise = async (e: LibraryExercise) => {
+    const payload = customPayload(e.id);
+    if (!payload || sharing) return;
+    setSharing(true);
+    let id = "";
+    try {
+      id = await publishExercise(payload);
+      await setSharedId(e, id);
+      setMenu(null);
+      toast(`${e.name} shared to the library`);
+    } catch {
+      // Remove the row again if only the local save failed, so nothing is half done.
+      if (id) await unpublishExercise(id).catch(() => {});
+      toast.error(`Could not share ${e.name}. Nothing changed; retry.`);
+    } finally {
+      setSharing(false);
+    }
+  };
+  const stopSharing = async (e: LibraryExercise) => {
+    if (!e.sharedId || sharing) return;
+    setSharing(true);
+    try {
+      await unpublishExercise(e.sharedId);
+    } catch {
+      toast.error(`Could not stop sharing ${e.name}. Nothing changed; retry.`);
+      setSharing(false);
+      return;
+    }
+    try {
+      await setSharedId(e, null);
+      setMenu(null);
+      toast(`${e.name} is no longer shared`);
+    } catch {
+      toast.error(
+        "Removed from the library. Could not update this phone; retry.",
+      );
+    } finally {
+      setSharing(false);
+    }
+  };
   const toggleFavourite = async (e: (typeof all)[number]) => {
     try {
       if (!e.custom) {
@@ -126,6 +257,7 @@ export default function ExercisesPanel() {
         );
       } else
         await save(e.id, "exercise", {
+          ...customPayload(e.id),
           name: e.name,
           category: e.category,
           note: e.note,
@@ -192,6 +324,65 @@ export default function ExercisesPanel() {
         value={equipment}
         onChange={setEquipment}
       />
+      {filter === "shared" && (
+        <>
+          {!sharedReady ? (
+            <p className="empty" role="status">
+              {canShare
+                ? "You are offline. Shared exercises need a connection."
+                : "Sign in to browse exercises other people have shared."}
+            </p>
+          ) : shared.status === "loading" && !shared.rows.length ? (
+            <p className="empty" role="status">
+              Loading shared exercises…
+            </p>
+          ) : shared.status === "error" && !shared.rows.length ? (
+            <p className="empty" role="status">
+              Could not load shared exercises.{" "}
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => {
+                  setShared((s) => ({ ...s, status: "loading" }));
+                  fetchShared(true)
+                    .then((rows) => setShared({ rows, status: "ready" }))
+                    .catch(() => setShared((s) => ({ ...s, status: "error" })));
+                }}
+              >
+                Retry
+              </button>
+            </p>
+          ) : sharedItems.length ? (
+            <div className="list">
+              {sharedItems.map((e) => (
+                <div className="row exercise-row" key={e.id}>
+                  <span className="row-main">
+                    <span className="row-title exercise-name">{e.name}</span>
+                    <span className="row-sub">
+                      {[e.category, e.equipment].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    className="unhide"
+                    aria-label={"Add " + e.name}
+                    disabled={!!adding}
+                    onClick={() => void addShared(e)}
+                  >
+                    {adding === e.id ? "Adding…" : "Add"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="empty" role="status">
+              {search.trim() || category || equipment
+                ? "No shared exercises match."
+                : "Nothing new has been shared yet."}
+            </p>
+          )}
+        </>
+      )}
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title}>
           <h2 className="group-title">{group.title}</h2>
@@ -202,6 +393,7 @@ export default function ExercisesPanel() {
                   <span className="row-title exercise-name">
                     {e.name}
                     {e.custom && <span className="stat-chip">Yours</span>}
+                    {e.sharedId && <span className="stat-chip">Shared</span>}
                   </span>
                   <span className="row-sub">{exerciseSub(e, now)}</span>
                 </>
@@ -262,7 +454,7 @@ export default function ExercisesPanel() {
           </div>
         </section>
       ))}
-      {!groups.length && (
+      {filter !== "shared" && !groups.length && (
         <p className="empty" role="status">
           {filter === "recent" && !search.trim()
             ? "Exercises you have trained show up here."
@@ -451,6 +643,31 @@ export default function ExercisesPanel() {
                 Edit exercise
               </button>
             )}
+            {menu.custom &&
+              (canShare ? (
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={sharing}
+                  onClick={() =>
+                    void (menu.sharedId
+                      ? stopSharing(menu)
+                      : shareExercise(menu))
+                  }
+                >
+                  <Share2 size={18} aria-hidden="true" />
+                  {sharing
+                    ? "Working…"
+                    : menu.sharedId
+                      ? "Stop sharing"
+                      : "Share to library"}
+                </button>
+              ) : (
+                <Link to="/auth" className="btn-secondary">
+                  <Share2 size={18} aria-hidden="true" />
+                  Sign in to share
+                </Link>
+              ))}
             <button
               type="button"
               className="btn-secondary"
