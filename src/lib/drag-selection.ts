@@ -1,4 +1,5 @@
 import { daysBetween, localizedDate, shiftDate, weekdayIndex } from "./dates";
+import { t } from "../i18n";
 
 /** Hold this long, without moving, before a drag selects dates. */
 export const LONG_PRESS_MS = 550;
@@ -36,8 +37,14 @@ const short = (date: string) =>
 
 /** "Mondays, 7 Sep – 26 Oct" */
 export function weekdayLabel(first: string, last: string) {
-  const weekday = localizedDate(first, { weekday: "long" });
-  return `${weekday}s, ${short(first)} – ${short(last)}`;
+  const name = localizedDate(first, { weekday: "long" });
+  // Swedish writes weekdays in lower case; this one starts the caption.
+  const weekday = name.charAt(0).toLocaleUpperCase() + name.slice(1);
+  return t("history.weekdays", {
+    weekday,
+    from: short(first),
+    to: short(last),
+  });
 }
 
 /**

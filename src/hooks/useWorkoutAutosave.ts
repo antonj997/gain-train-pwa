@@ -119,7 +119,8 @@ export function useWorkoutAutosave(
         .catch((cause) => {
           if (job.version === version.current)
             setError(
-              cause instanceof Error && cause.message === finishedElsewhereMessage()
+              cause instanceof Error &&
+                cause.message === finishedElsewhereMessage()
                 ? finishedElsewhereMessage()
                 : errorMessage(cause, saveFailed()) +
                     (job.retained

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { localizedDate } from "@/lib/dates";
+import { t } from "@/i18n";
 
 /** A small popover under the calendar title: pick a year, then a month. */
 export default function MonthPicker({
@@ -42,7 +43,7 @@ export default function MonthPicker({
     <div
       className="month-picker"
       role="dialog"
-      aria-label="Choose month and year"
+      aria-label={t("history.chooseMonthYear")}
       ref={root}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
@@ -55,7 +56,7 @@ export default function MonthPicker({
         <button
           type="button"
           className="icon-btn"
-          aria-label="Previous year"
+          aria-label={t("history.previousYear")}
           disabled={year <= 1900}
           onClick={() => setYear(year - 1)}
         >
@@ -65,7 +66,7 @@ export default function MonthPicker({
         <button
           type="button"
           className="icon-btn"
-          aria-label="Next year"
+          aria-label={t("history.nextYear")}
           disabled={year >= maxYear}
           onClick={() => setYear(year + 1)}
         >

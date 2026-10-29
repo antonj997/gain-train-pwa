@@ -14,7 +14,12 @@ import {
   selectionEdges,
   type DragSelection,
 } from "@/lib/drag-selection";
-import { localizedDate, shiftDate, weekdayIndex } from "@/lib/dates";
+import {
+  localizedDate,
+  shiftDate,
+  weekdayIndex,
+  weekdayNames,
+} from "@/lib/dates";
 import {
   heatmapMonthLabels,
   heatmapWeeks,
@@ -26,8 +31,7 @@ import {
   type HistoryCalendarState,
 } from "@/lib/history-calendar";
 import { countLabel } from "@/lib/labels";
-
-const WEEKDAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+import { t } from "@/i18n";
 
 /**
  * A GitHub-style activity grid for the last year: columns are Monday-first
@@ -164,10 +168,7 @@ export default function ActivityHeatmap({
   return (
     <>
       <p className="sr-only" id={instructionsId}>
-        Select a day to filter workouts. Use arrow keys to move between days,
-        Home and End to move within a week, and Shift with an arrow key to
-        select a period. With a pointer, press and hold a day, then drag to
-        select a week, a weekday across weeks, or a period.
+        {t("history.heatmapInstructions")}
       </p>
       <div
         className={`heatmap${drag ? " is-dragging" : ""}${hasSelection ? " has-selection" : ""}`}
@@ -175,7 +176,7 @@ export default function ActivityHeatmap({
         {...handlers}
       >
         <div className="heatmap-weekdays" aria-hidden="true">
-          {WEEKDAY_LETTERS.map((letter, row) => (
+          {weekdayNames("narrow").map((letter, row) => (
             <span key={row}>{letter}</span>
           ))}
         </div>

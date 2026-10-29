@@ -1,5 +1,6 @@
 import { isDrop } from "@/data/drops";
 import { labelSet, type WorkoutSet } from "@/data/model";
+import { t } from "@/i18n";
 
 /**
  * A finished exercise's checked sets, numbered like the workout screen: only
@@ -19,15 +20,15 @@ export default function HistorySetList({ sets }: { sets: WorkoutSet[] }) {
           <div className="history-set" key={s.id}>
             <span>
               {s.section === "warmup"
-                ? "Warm-up"
+                ? t("history.warmup")
                 : s.section === "winddown"
-                  ? "Cool-down"
-                  : `Set ${
-                      done
+                  ? t("history.cooldown")
+                  : t("history.setN", {
+                      n: done
                         .slice(0, i + 1)
                         .filter((x) => !isDrop(x) && x.section === "working")
-                        .length
-                    }`}
+                        .length,
+                    })}
             </span>
             <strong>{labelSet(s)}</strong>
           </div>
