@@ -6,6 +6,7 @@ import {
   heatmapDragSelection,
   monthDragRange,
   selectionDates,
+  selectionEdges,
 } from "../src/lib/drag-selection";
 import { historyCaption } from "../src/lib/history-caption";
 import { createHistoryCalendar } from "../src/lib/history-calendar";
@@ -89,5 +90,24 @@ test("the caption describes a set of dates with its workout count", () => {
   assert.equal(
     historyCaption(state, counts, "2026-10-28"),
     "Mondays, 5 – 12 Oct · 3 workouts",
+  );
+});
+
+test("a selection's edges are its first and last day", () => {
+  assert.deepEqual(selectionEdges({ kind: "day", date: "2025-10-02" }), [
+    "2025-10-02",
+    "2025-10-02",
+  ]);
+  assert.deepEqual(
+    selectionEdges({ kind: "range", from: "2025-10-01", to: "2025-10-05" }),
+    ["2025-10-01", "2025-10-05"],
+  );
+  assert.deepEqual(
+    selectionEdges({
+      kind: "dates",
+      dates: ["2025-09-01", "2025-09-08", "2025-09-15"],
+      label: "Mondays",
+    }),
+    ["2025-09-01", "2025-09-15"],
   );
 });
