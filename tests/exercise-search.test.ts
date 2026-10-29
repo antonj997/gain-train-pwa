@@ -4,6 +4,7 @@ import {
   matchRank,
   matchesFacets,
   normalize,
+  sameNamedExercise,
   searchExercises,
 } from "../src/lib/exercise-search";
 import { catalogue, categories, equipmentTypes } from "../src/data/catalogue";
@@ -119,4 +120,16 @@ test("new sets start from the catalogue defaults", () => {
   assert.equal(initialSet("builtin:plank").measure, "seconds");
   assert.equal(initialSet("builtin:russian-twist").load, "weight");
   assert.equal(initialSet("custom-id").load, "weight");
+});
+
+test("sameNamedExercise matches names ignoring case, accents and punctuation", () => {
+  const list = [
+    { id: "builtin:bench", name: "Bench Press" },
+    { id: "mine", name: "Bänch-press" },
+  ];
+  assert.equal(sameNamedExercise("bench press", list)?.id, "builtin:bench");
+  assert.equal(sameNamedExercise("Banch Press", list, "x")?.id, "mine");
+  assert.equal(sameNamedExercise("Banch Press", list, "mine"), undefined);
+  assert.equal(sameNamedExercise("  ", list), undefined);
+  assert.equal(sameNamedExercise("Bench", list), undefined);
 });

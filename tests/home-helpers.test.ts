@@ -6,7 +6,7 @@ import {
   normalizeTrainingPreferences,
   parseWeeklyGoal,
 } from "../src/lib/preferences.ts";
-import { timeTrainedLabel } from "../src/lib/labels.ts";
+import { durationLabel } from "../src/lib/labels.ts";
 
 test("headlines fit the rules and change once a day without repeats", () => {
   assert.ok(HEADLINES.length >= 24);
@@ -108,8 +108,8 @@ test("weekly goal parsing accepts 1-14 and treats everything else as off", () =>
 });
 
 test("time trained reads in minutes and hours", () => {
-  assert.equal(timeTrainedLabel(0), "0 min");
-  assert.equal(timeTrainedLabel(45), "45 min");
-  assert.equal(timeTrainedLabel(113), "1 h 53 min");
-  assert.equal(timeTrainedLabel(120), "2 h");
+  assert.equal(durationLabel(0), "<1 min");
+  assert.equal(durationLabel(45), "45 min");
+  assert.equal(durationLabel(113), "1 h 53 min");
+  assert.equal(durationLabel(120), "2 h");
 });

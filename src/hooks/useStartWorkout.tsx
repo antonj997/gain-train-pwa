@@ -42,10 +42,17 @@ export function useStartWorkout() {
         request.replacing,
       );
       setPending(null);
+      // A past workout opens on its details sheet, to pick the date first.
+      const past = request.workout.startedAt === null;
       navigate(
         workoutPath(request.id),
-        request.suggest?.length
-          ? { state: { suggest: request.suggest } }
+        request.suggest?.length || past
+          ? {
+              state: {
+                suggest: request.suggest,
+                details: past || undefined,
+              },
+            }
           : undefined,
       );
       // "Abandon and start" removed the running workout; offer it back.

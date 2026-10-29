@@ -248,7 +248,7 @@ test("a set waiting on its drops explains the disabled check", async () => {
   const [check] = tags(waiting, "button").filter((tag) =>
     tag.includes("aria-pressed"),
   );
-  assert.match(check, /disabled=""/);
+  assert.match(check, /aria-disabled="true"/);
   const id = check.match(/aria-describedby="([^"]+)"/)?.[1];
   assert.ok(id, "the check points at its hint");
   const target = waiting.match(new RegExp(`<span[^>]*id="${id}"[^>]*>([^<]*)`));
@@ -256,7 +256,7 @@ test("a set waiting on its drops explains the disabled check", async () => {
   assert.match(target![0], /class="sr-only"/);
 
   const ready = await setLine({ set, canCheck: true, checkHint: hint });
-  assert.doesNotMatch(ready, /disabled=""/);
+  assert.doesNotMatch(ready, /aria-disabled/);
   assert.doesNotMatch(ready, /Fill in or delete/);
 
   // A checked set can always be unchecked, whatever canCheck says.
@@ -265,12 +265,12 @@ test("a set waiting on its drops explains the disabled check", async () => {
     canCheck: false,
     checkHint: hint,
   });
-  assert.doesNotMatch(checked, /disabled=""/);
+  assert.doesNotMatch(checked, /aria-disabled/);
   assert.doesNotMatch(checked, /Fill in or delete/);
 
   // Without a hint a disabled check has nothing to point at.
   const bare = await setLine({ set, canCheck: false });
-  assert.match(tags(bare, "button").join(""), /disabled=""/);
+  assert.match(tags(bare, "button").join(""), /aria-disabled="true"/);
 });
 
 test("the edited set is marked", async () => {

@@ -283,6 +283,10 @@
   background-color: var(--gt-done);
   color: var(--gt-on-accent);
 }
+/* Not ready to check: still tappable, to show why under the row. */
+.set-check[aria-disabled="true"] {
+  color: var(--gt-ink-3);
+}
 /* A checked row refused an edit: point at the way to unlock it. */
 .set-check.unlock-highlight {
   border: 2px solid var(--gt-danger-fg);
@@ -316,6 +320,9 @@
   font-size: var(--gt-fs-2);
   line-height: 1.4;
 }
+.set-line .set-hint {
+  color: var(--gt-ink-2);
+}
 
 /* The workout screen: a sticky top bar, the cards and two floating controls.
    The page leaves room below for the rest bar, and for an open set's sheet
@@ -329,11 +336,15 @@
 .workout-editor > * {
   min-width: 0;
 }
-/* A routine's form leaves the same room under its last row. */
+/* A routine's form leaves the same room under its last row. Its Save footer
+   then sticks that much lower, out of sight under the set's sheet. */
 .dialog-content.routine-dialog {
   padding-bottom: calc(
     var(--gt-space-4) + var(--sheet-space, 0px) + env(safe-area-inset-bottom)
   );
+}
+.dialog-content.routine-dialog .sheet-footer {
+  bottom: calc(var(--sheet-space, 0px) * -1);
 }
 
 /* Top bar: back, the name over one status line, and Finish or Save. */

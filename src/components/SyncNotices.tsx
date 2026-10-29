@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { X } from "lucide-react";
 import { readAccount } from "@/data/database";
 import { phoneRecordsToCopy } from "@/data/actions";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { isSyncOutage } from "@/lib/sync-health";
 import { needsSignInAgain } from "@/lib/auth-account";
+import { local, storageKeys, writeStored } from "@/lib/storage";
 
 /**
  * The sync, sign-in and conflict notices, as banners under a page's title.
@@ -16,6 +18,10 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
   const { state, error, syncing, online, syncHealth } = useData();
   const { user, account } = useAuth();
   const [phoneLogAvailable, setPhoneLogAvailable] = useState(false);
+  // The sign-in invitation is closed once per device; Settings keeps the way in.
+  const [inviteClosed, setInviteClosed] = useState(
+    () => local.getItem(storageKeys.signInBannerDismissed) === "1",
+  );
   // Only additions can change whether phone records are missing here, so don't
   // re-read the phone log on every edit.
   const recordCount = Object.keys(state.records).length;
@@ -113,14 +119,27 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
       </div>,
     );
   if (status && !syncing) {
-    if (!user && !signedOut)
-      banners.push(
-        <div className="banner" key="status">
-          <span>Saved on this phone.</span>
-          <Link to="/auth">Sign in to sync</Link>
-        </div>,
-      );
-    else if (dirty)
+    if (!user && !signedOut) {
+      if (!inviteClosed)
+        banners.push(
+          <div className="banner banner-closable" key="status">
+            <span>Saved on this phone.</span>
+            <Link to="/auth">Sign in to sync</Link>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Dismiss sign-in suggestion"
+              onClick={() => {
+                // Closed for this visit even if storage refuses to remember it.
+                writeStored(storageKeys.signInBannerDismissed, "1");
+                setInviteClosed(true);
+              }}
+            >
+              <X size={18} aria-hidden="true" />
+            </button>
+          </div>,
+        );
+    } else if (dirty)
       banners.push(
         <div className="banner" key="status">
           {online

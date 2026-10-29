@@ -21,6 +21,7 @@ import { activePlans, groupsOf, plannedFor, resolveCell } from "@/data/plans";
 import { workoutPath } from "@/lib/routes";
 import { headlineFor } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
+import { autoWorkoutName } from "@/lib/workout-name";
 
 export default function Home() {
   const { state } = useData();
@@ -77,7 +78,10 @@ export default function Home() {
     void requestStart(
       {
         ...newWorkout(Object.values(state.records)),
-        name: todayPlan.title,
+        name: autoWorkoutName(
+          { name: "", exercises: [] },
+          { plan: todayPlan.title },
+        ),
       },
       todayPlan.categories,
     );

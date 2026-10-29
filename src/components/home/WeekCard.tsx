@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import type { WorkoutRecord } from "@/data/model";
 import type { PlannedDay } from "@/data/plans";
 import { localizedDate } from "@/lib/dates";
-import { countLabel, timeTrainedLabel } from "@/lib/labels";
+import { countLabel, durationLabel } from "@/lib/labels";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
 
 type Props = {
@@ -80,7 +80,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
         {totals.workouts
           ? [
               countLabel(totals.sets, "set"),
-              timeTrainedLabel(totals.minutes),
+              totals.minutes > 0 && durationLabel(totals.minutes),
               week.streak >= 2 && `${week.streak} weeks in a row on goal`,
             ]
               .filter(Boolean)

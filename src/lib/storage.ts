@@ -53,6 +53,8 @@ export const storageKeys = {
   haptics: "gt-haptics",
   weeklyGoal: "gt-weekly-goal",
   persistRequested: "gt-persist-requested",
+  /** This device closed Train's "Sign in to sync" banner. */
+  signInBannerDismissed: "gt-sign-in-banner-dismissed",
   deleted: (account: string) => "gt-deleted-" + account,
   syncHealth: (account: string) => "gt-sync-health:" + account,
   /** The device-only plan of the earlier version; imported once, then removed. */

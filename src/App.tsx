@@ -21,17 +21,13 @@ function AppToaster() {
   return (
     <Toaster
       theme={theme}
+      // At the top and phone-wide, but below the page's header or the
+      // workout's top bar (--toast-top in usability.css), so Back, Save and
+      // the title stay in reach; two at most, the newest in front.
       position="top-center"
-      offset={{
-        top: "calc(16px + env(safe-area-inset-top))",
-        left: 16,
-        right: 16,
-      }}
-      mobileOffset={{
-        top: "calc(16px + env(safe-area-inset-top))",
-        left: 16,
-        right: 16,
-      }}
+      offset={{ top: "var(--toast-top)", left: 16, right: 16 }}
+      mobileOffset={{ top: "var(--toast-top)", left: 16, right: 16 }}
+      visibleToasts={2}
       closeButton
       toastOptions={{
         style: {

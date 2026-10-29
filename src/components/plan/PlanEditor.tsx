@@ -199,19 +199,6 @@ export default function PlanEditor({
             onChange={(goalIds) => set({ goalIds })}
           />
         )}
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
-        <button
-          type="button"
-          className="btn-primary btn-block"
-          disabled={busy || !!problem}
-          onClick={() => void submit()}
-        >
-          {busy ? "Saving…" : "Save plan"}
-        </button>
         {plan && (
           <button
             type="button"
@@ -222,6 +209,22 @@ export default function PlanEditor({
             Delete plan
           </button>
         )}
+        {/* Last, so it can stick to the bottom edge of the long form. */}
+        <div className="sheet-footer">
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+          <button
+            type="button"
+            className="btn-primary btn-block"
+            disabled={busy || !!problem}
+            onClick={() => void submit()}
+          >
+            {busy ? "Saving…" : "Save plan"}
+          </button>
+        </div>
       </Sheet>
       <CellSheet
         open={target !== null}

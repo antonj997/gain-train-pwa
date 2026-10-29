@@ -8,7 +8,7 @@ import { doneSetCount, nextSetLabel, setCount } from "@/data/selectors";
 import { useNow } from "@/hooks/useNow";
 import { localizedDate } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
-import { timeTrainedLabel } from "@/lib/labels";
+import { durationLabel } from "@/lib/labels";
 import { workoutPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
 
@@ -88,7 +88,7 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
               <small>
                 {live && <span className="resume-live" aria-hidden="true" />}
                 {live
-                  ? `In progress · ${timeTrainedLabel(
+                  ? `In progress · ${durationLabel(
                       Math.max(
                         0,
                         Math.floor((now - r.payload.startedAt!) / 60000),

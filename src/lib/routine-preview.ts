@@ -3,7 +3,7 @@ import { completedWorkouts } from "../data/selectors";
 import { isDrop } from "../data/drops";
 import { hasExtraWeight } from "./set-load";
 import { cardioLabel, isCardioSet } from "./cardio";
-import { countLabel } from "./labels";
+import { countLabel, durationLabel } from "./labels";
 
 /** Minutes rounded to the nearest 5, never below 5. */
 const roundToFive = (minutes: number) =>
@@ -29,7 +29,8 @@ export function routineAverageMinutes(
 /** "5 exercises" or "5 exercises · ~45 min". */
 export function routineMeta(exercises: number, minutes: number | null) {
   return (
-    countLabel(exercises, "exercise") + (minutes ? ` · ~${minutes} min` : "")
+    countLabel(exercises, "exercise") +
+    (minutes ? ` · ~${durationLabel(minutes)}` : "")
   );
 }
 

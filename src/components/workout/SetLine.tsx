@@ -39,6 +39,7 @@ export default function SetLine({
   bodyWeightKg = null,
   next = false,
   editing = false,
+  unlocked = false,
   canCheck,
   checkHint,
   onOpenSheet,
@@ -58,9 +59,14 @@ export default function SetLine({
   next?: boolean;
   /** Its Set sheet is open. */
   editing?: boolean;
+  /**
+   * A checked set's values stay editable: editing a finished workout, where
+   * every set is checked. A live workout locks them until unchecked.
+   */
+  unlocked?: boolean;
   /** The set, and any drops it has, can be checked. */
   canCheck: boolean;
-  /** Why the check is disabled, for screen readers. */
+  /** Why the check can't be pressed yet; shown under the row when tapped. */
   checkHint?: string;
   /** Called with this set's id, so one function can serve every row. */
   onOpenSheet: (setId: string) => void;
@@ -70,6 +76,7 @@ export default function SetLine({
 }) {
   const [checkedNow, setCheckedNow] = useState(false);
   const [lockedAttempt, setLockedAttempt] = useState(false);
+  const [hintShown, setHintShown] = useState(false);
   const wasDone = useRef(set.done);
   useEffect(() => {
     if (set.done && !wasDone.current) {
@@ -82,14 +89,18 @@ export default function SetLine({
   }, [set.done]);
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
-  if (lockedAttempt && !set.done) setLockedAttempt(false);
-  // The notice belongs to this row: it goes away once a tap or focus lands
+  const locked = set.done && !unlocked;
+  if (lockedAttempt && !locked) setLockedAttempt(false);
+  // The notices belong to this row: they go away once a tap or focus lands
   // anywhere outside it.
   const row = useRef<HTMLDivElement>(null);
+  const noticeShown = lockedAttempt || hintShown;
   useEffect(() => {
-    if (!lockedAttempt) return;
+    if (!noticeShown) return;
     const away = (event: Event) => {
-      if (!row.current?.contains(event.target as Node)) setLockedAttempt(false);
+      if (row.current?.contains(event.target as Node)) return;
+      setLockedAttempt(false);
+      setHintShown(false);
     };
     document.addEventListener("pointerdown", away, true);
     document.addEventListener("focusin", away, true);
@@ -97,7 +108,7 @@ export default function SetLine({
       document.removeEventListener("pointerdown", away, true);
       document.removeEventListener("focusin", away, true);
     };
-  }, [lockedAttempt]);
+  }, [noticeShown]);
 
   const drop = isDrop(set);
   // Unique within the exercise: "Bench Press set 2", "Bench Press drop 1 after set 2".
@@ -123,12 +134,17 @@ export default function SetLine({
   const errorId = `set-errors-${set.id}`;
   const lockId = `set-locked-${set.id}`;
   const hintId = `set-hint-${set.id}`;
-  const showLock = set.done && lockedAttempt;
+  const showLock = locked && lockedAttempt;
   const checkDisabled = !set.done && !canCheck;
   const showHint = checkDisabled && !!checkHint;
+  // Once the set can be checked, the reason it couldn't is old news.
+  if (hintShown && !showHint) setHintShown(false);
+  // A blank field in an open row is just not filled in yet; in a checked row
+  // that can be edited, it is a mistake to fix before saving.
   const visibleIssues = Object.entries(issues)
     .filter(
       ([field]) =>
+        (set.done && unlocked) ||
         getSetInputText(set, field as InputField) !== undefined ||
         (set[field as InputField] ?? null) !== null,
     )
@@ -147,11 +163,11 @@ export default function SetLine({
     value: number | null,
     unfinishedText?: string,
   ) => {
-    if (set.done) {
+    if (locked) {
       setLockedAttempt(true);
       return;
     }
-    onChange(changeSetNumber(set, field, value, unfinishedText));
+    onChange(changeSetNumber(set, field, value, unfinishedText, unlocked));
   };
 
   const cardioFields = [
@@ -252,7 +268,7 @@ export default function SetLine({
                 inputText={getSetInputText(set, field)}
                 parse={props.parse}
                 format={props.format}
-                readOnly={set.done}
+                readOnly={locked}
                 onLockedAttempt={() => setLockedAttempt(true)}
                 onValueChange={(value, text) =>
                   updateNumber(field, value, text)
@@ -304,7 +320,7 @@ export default function SetLine({
                 placeholder={marker === "kg" ? undefined : "kg"}
                 value={set.weight}
                 inputText={getSetInputText(set, "weight")}
-                readOnly={set.done}
+                readOnly={locked}
                 onLockedAttempt={() => setLockedAttempt(true)}
                 onValueChange={(value, text) =>
                   updateNumber("weight", value, text)
@@ -336,7 +352,7 @@ export default function SetLine({
               placeholder={timed ? "sec" : "reps"}
               value={set.reps}
               inputText={getSetInputText(set, "reps")}
-              readOnly={set.done}
+              readOnly={locked}
               onLockedAttempt={() => setLockedAttempt(true)}
               onValueChange={(value, text) => updateNumber("reps", value, text)}
             />
@@ -359,15 +375,17 @@ export default function SetLine({
                     ? errorId
                     : undefined
             }
-            disabled={checkDisabled}
+            // Not `disabled`, so a tap still lands and can say why.
+            aria-disabled={checkDisabled || undefined}
             onClick={() => {
               setLockedAttempt(false);
-              onToggleDone?.(set.id);
+              if (checkDisabled) setHintShown(!!checkHint);
+              else onToggleDone?.(set.id);
             }}
           >
             <Check size={21} />
           </button>
-          {showHint && (
+          {showHint && !hintShown && (
             <span id={hintId} className="sr-only">
               {checkHint}
             </span>
@@ -379,6 +397,11 @@ export default function SetLine({
       {!!visibleIssues.length && (
         <p id={errorId} className="set-errors field-error">
           {visibleIssues.join(" ")}
+        </p>
+      )}
+      {showHint && hintShown && (
+        <p id={hintId} className="set-errors set-hint" role="status">
+          {checkHint}
         </p>
       )}
       {showLock && (

@@ -38,13 +38,15 @@ export function clearSetInputText(
   return result;
 }
 
+/** A checked set is left as it is, unless `unlocked` (editing a finished workout). */
 export function changeSetNumber(
   set: WorkoutSet,
   field: InputField,
   value: number | null,
   unfinishedText?: string,
+  unlocked = false,
 ): WorkoutSet {
-  if (set.done) return set;
+  if (set.done && !unlocked) return set;
   const next: EditableSet = clearSetInputText(
     { ...set, [field]: value },
     field,

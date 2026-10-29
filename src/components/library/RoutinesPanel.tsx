@@ -314,33 +314,12 @@ export default function RoutinesPanel() {
                 <Plus size={18} />
                 Add exercises
               </button>
-              {error && (
-                <p className="field-error" role="alert">
-                  {error}
-                </p>
-              )}
               {!draft.retained && (
                 <p className="field-error" role="alert">
                   Storage is unavailable. Keep this form open and save before
                   leaving.
                 </p>
               )}
-              <button
-                className="primary"
-                disabled={
-                  busy || !edit.data.name.trim() || !edit.data.exercises.length
-                }
-                onClick={() =>
-                  void run(async () => {
-                    await save(edit.id, "routine", edit.data);
-                    setEdit(null);
-                    setOpen(false);
-                    toast.success("Routine saved");
-                  })
-                }
-              >
-                {busy ? "Saving…" : "Save routine"}
-              </button>
               <div className="button-row">
                 <button
                   className="secondary"
@@ -358,6 +337,32 @@ export default function RoutinesPanel() {
                   }}
                 >
                   Discard draft
+                </button>
+              </div>
+              {/* Last, so it can stick to the bottom edge of the long form. */}
+              <div className="sheet-footer">
+                {error && (
+                  <p className="field-error" role="alert">
+                    {error}
+                  </p>
+                )}
+                <button
+                  className="primary"
+                  disabled={
+                    busy ||
+                    !edit.data.name.trim() ||
+                    !edit.data.exercises.length
+                  }
+                  onClick={() =>
+                    void run(async () => {
+                      await save(edit.id, "routine", edit.data);
+                      setEdit(null);
+                      setOpen(false);
+                      toast.success("Routine saved");
+                    })
+                  }
+                >
+                  {busy ? "Saving…" : "Save routine"}
                 </button>
               </div>
             </>

@@ -80,21 +80,22 @@ function Editor({
   const navigate = useNavigate();
   const autosave = useWorkoutAutosave(id, account, initial);
   const { workout: w, change, changeWith, editing, saved, error } = autosave;
-  // Starting from a planned day type opens the picker on its categories.
+  // Starting from a planned day type opens the picker on its categories, and
+  // logging a past workout opens its details sheet to pick the date.
   const location = useLocation();
-  const [suggested] = useState(
-    () => (location.state as { suggest?: string[] } | null)?.suggest,
+  const [startState] = useState(
+    () => location.state as { suggest?: string[]; details?: boolean } | null,
   );
+  const suggested = startState?.suggest;
   const [picker, setPicker] = useState(() => !!suggested?.length);
   useEffect(() => {
-    if (suggested?.length)
-      navigate(location.pathname, { replace: true, state: null });
+    if (startState) navigate(location.pathname, { replace: true, state: null });
     // Only the first render reads the state; it is cleared so a reload starts plain.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [finish, setFinish] = useState(false);
   const [routine, setRoutine] = useState(false);
-  const [details, setDetails] = useState(false);
+  const [details, setDetails] = useState(() => !!startState?.details);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
@@ -168,10 +169,13 @@ function Editor({
   };
   const save = () => void complete(routine && !fromRoutine);
 
+  // Checked values are editable while editing, so say why Save is off.
   const saveStatus = editing
-    ? dirty
-      ? "Unsaved"
-      : "Saved"
+    ? invalidChecked
+      ? "Fix marked sets"
+      : dirty
+        ? "Unsaved"
+        : "Saved"
     : error
       ? "Needs attention"
       : saved
@@ -187,7 +191,7 @@ function Editor({
         completed={completed}
         total={total}
         saveStatus={saveStatus}
-        saveError={!!error && !editing}
+        saveError={editing ? invalidChecked : !!error}
         finishDisabled={
           busy || invalidChecked || (!editing && !!error) || (editing && !dirty)
         }
@@ -216,6 +220,7 @@ function Editor({
           nextSetId={
             ex.sets.some((s) => s.id === nextSet?.id) ? nextSet?.id : undefined
           }
+          unlockChecked={editing}
           defaults={defaults.get(ex.exerciseId)}
           onChange={update}
           onMove={move}

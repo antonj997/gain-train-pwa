@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import SyncNotices from "@/components/SyncNotices";
+import { useToastClearance } from "@/hooks/useToastClearance";
 
 type Props = {
   /** A muted line over the title, such as today's date. */
@@ -24,9 +25,14 @@ export default function PageHeader({
   status,
   notices = true,
 }: Props) {
+  const bar = useRef<HTMLDivElement>(null);
+  useToastClearance(bar);
   return (
     <header className="page-header">
-      <div className={"page-header-bar" + (leading ? " has-leading" : "")}>
+      <div
+        ref={bar}
+        className={"page-header-bar" + (leading ? " has-leading" : "")}
+      >
         {leading}
         <div className="page-header-text">
           {eyebrow && <p className="page-eyebrow">{eyebrow}</p>}

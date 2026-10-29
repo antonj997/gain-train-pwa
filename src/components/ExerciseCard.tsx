@@ -21,6 +21,7 @@ import {
 } from "@/data/drops";
 import {
   appendSet,
+  checkHintFor,
   groupComplete,
   toggleGroupCompletion,
   withoutChecks,
@@ -58,6 +59,8 @@ export type ExerciseCardProps = {
   lastSession?: LastSession;
   bodyWeightKg?: number | null;
   nextSetId?: string;
+  /** Checked sets' values can be edited in place: editing a finished workout. */
+  unlockChecked?: boolean;
   /** A custom exercise's saved defaults, for a set added from scratch. */
   defaults?: ExerciseDefaults;
   // Callbacks take the card's exercise, so a parent can pass one stable
@@ -113,6 +116,7 @@ function ExerciseCard({
   lastSession,
   bodyWeightKg = null,
   nextSetId,
+  unlockChecked = false,
   defaults,
   onChange,
   onMove,
@@ -241,12 +245,9 @@ function ExerciseCard({
           bodyWeightKg={mode === "log" ? bodyWeightKg : null}
           next={nextSetId === s.id}
           editing={openSetId === s.id}
+          unlocked={unlockChecked}
           canCheck={groupComplete(sets, i)}
-          checkHint={
-            validSet(s) && !groupComplete(sets, i)
-              ? "Fill in or delete its drops to check this set."
-              : undefined
-          }
+          checkHint={checkHintFor(sets, i)}
           onOpenSheet={openSet}
           onChange={updateSet}
           onToggleDone={toggleDone}

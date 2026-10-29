@@ -4,6 +4,7 @@ import { lastSessions } from "../src/data/workouts";
 import {
   addExercises,
   assertNotFuture,
+  checkHintFor,
   finishWorkout,
   workoutContentKey,
 } from "../src/lib/workout-editor";
@@ -104,4 +105,30 @@ test("added exercises start from last time's checked valid sets, or one fresh se
   assert.equal(run.name, "Run");
   assert.equal(run.sets.length, 1);
   assert.equal(run.sets[0].done, false);
+});
+
+test("checkHintFor names what a set needs before it can be checked", () => {
+  const blank: WorkoutSet = { ...set(false), reps: null, weight: null };
+  const hint = (s: WorkoutSet, rest: WorkoutSet[] = []) =>
+    checkHintFor([s, ...rest], 0);
+  assert.equal(hint(blank), "Add kg and reps to check this set.");
+  assert.equal(hint({ ...blank, weight: 60 }), "Add reps to check this set.");
+  assert.equal(
+    hint({ ...blank, load: "bodyweight", measure: "seconds" }),
+    "Add seconds to check this set.",
+  );
+  assert.equal(
+    hint({ ...blank, measure: "cardio", reps: null }),
+    "Add a time to check this set.",
+  );
+  assert.equal(
+    hint({ ...blank, weight: 60, reps: 2.5 }),
+    "Fix this set's values to check it.",
+  );
+  assert.equal(
+    hint(set(false), [{ ...blank, drop: true }]),
+    "Fill in or delete its drops to check this set.",
+  );
+  assert.equal(hint(set(false)), undefined);
+  assert.equal(hint({ ...blank, done: true }), undefined);
 });

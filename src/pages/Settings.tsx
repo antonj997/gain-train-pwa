@@ -150,34 +150,37 @@ export default function Settings() {
 
       <section>
         <h2 className="group-title">Account</h2>
-        <div className="list">
-          {user ? (
-            <>
-              <ListRow
-                title="Sign out"
-                tone="accent"
-                disabled={accountBusy}
-                onClick={() => void leave("Could not sign out. Try again.")}
-              />
-              <ListRow
-                title="Delete account"
-                tone="danger"
-                onClick={() => setConfirmDelete(true)}
-              />
-            </>
-          ) : account !== "phone" ? (
-            <>
-              <ListRow title="Sign in again" tone="accent" to="/auth" />
-              <ListRow
-                title="Use this phone's own log instead"
-                disabled={accountBusy}
-                onClick={() => void leave("Could not switch logs. Try again.")}
-              />
-            </>
-          ) : (
-            <ListRow title="Sign in to sync" tone="accent" to="/auth" />
-          )}
-        </div>
+        {/* Signed out, the account row above is the way in. */}
+        {(user || account !== "phone") && (
+          <div className="list">
+            {user ? (
+              <>
+                <ListRow
+                  title="Sign out"
+                  tone="accent"
+                  disabled={accountBusy}
+                  onClick={() => void leave("Could not sign out. Try again.")}
+                />
+                <ListRow
+                  title="Delete account"
+                  tone="danger"
+                  onClick={() => setConfirmDelete(true)}
+                />
+              </>
+            ) : (
+              <>
+                <ListRow title="Sign in again" tone="accent" to="/auth" />
+                <ListRow
+                  title="Use this phone's own log instead"
+                  disabled={accountBusy}
+                  onClick={() =>
+                    void leave("Could not switch logs. Try again.")
+                  }
+                />
+              </>
+            )}
+          </div>
+        )}
         <p className="small-note group-note">
           {user
             ? "Sync runs when connected while the app is open, and when you return. Your phone keeps a local copy."

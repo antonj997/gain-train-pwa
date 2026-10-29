@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
 import { categories } from "@/data/catalogue";
 import type { CustomExercise } from "@/data/model";
+import { sameNamedExercise } from "@/lib/exercise-search";
 
 export type ExerciseDraft = { id: string; data: CustomExercise };
 
@@ -18,6 +19,7 @@ export default function ExerciseEditorSheet({
   onDelete,
   onClose,
   onDiscard,
+  exercises = [],
 }: {
   open: boolean;
   draft: ExerciseDraft | null;
@@ -32,9 +34,13 @@ export default function ExerciseEditorSheet({
   onDelete: () => void;
   onClose: () => void;
   onDiscard: () => void;
+  /** Every exercise, built-in and custom, to warn about a name in use. */
+  exercises?: readonly { id: string; name: string }[];
 }) {
   const set = (change: Partial<CustomExercise>) =>
     draft && onChange({ ...draft, data: { ...draft.data, ...change } });
+  // Two exercises can share a name; say so, since lists can't tell them apart.
+  const twin = draft && sameNamedExercise(draft.data.name, exercises, draft.id);
   return (
     <Sheet
       size="full"
@@ -52,9 +58,15 @@ export default function ExerciseEditorSheet({
             <input
               value={draft.data.name}
               maxLength={100}
+              aria-describedby={twin ? "exercise-name-twin" : undefined}
               onChange={(e) => set({ name: e.target.value })}
             />
           </label>
+          {twin && (
+            <p id="exercise-name-twin" className="field-warning" role="status">
+              You already have an exercise called {twin.name}.
+            </p>
+          )}
           <label>
             Category
             <select
