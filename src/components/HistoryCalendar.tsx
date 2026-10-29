@@ -10,7 +10,6 @@ import {
 import { type RecordDoc } from "@/data/model";
 import { shiftDate } from "@/data/summary";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
-import { heatmapWindow, spanInfo } from "@/lib/heatmap";
 import {
   calendarCells,
   calendarRangeEdges,
@@ -45,7 +44,7 @@ export default function HistoryCalendar({
   const currentYear = Number(now.slice(0, 4));
   const heat = display === "simple";
   const canReset = heat
-    ? value.heatEnd !== now || !!selectedDate
+    ? !!selectedDate
     : mode === "range" || month !== currentMonth || !!selectedDate;
   const instructionsId = useId();
   const headingId = useId();
@@ -115,37 +114,16 @@ export default function HistoryCalendar({
   );
 
   if (heat) {
-    const window = heatmapWindow(value.heatEnd, value.span);
-    const spanName = spanInfo(value.span).phrase;
     return (
       <section
         className="history-calendar calendar-heatmap"
         aria-label="Workout calendar"
       >
         <div className="calendar-header">
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={`Previous ${spanName}`}
-            disabled={window.start <= "1901-01-01"}
-            onClick={() => change({ type: "shift", direction: -1 })}
-          >
-            <ChevronLeft size={22} aria-hidden="true" />
-          </button>
-          <h2 className="heatmap-title" id={headingId} aria-live="polite">
-            {localizedDate(window.start, { month: "short", year: "numeric" })} –{" "}
-            {localizedDate(window.end, { month: "short", year: "numeric" })}
+          <h2 className="heatmap-title" id={headingId}>
+            Last year
           </h2>
           {viewToggle}
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={`Next ${spanName}`}
-            disabled={value.heatEnd >= now}
-            onClick={() => change({ type: "shift", direction: 1 })}
-          >
-            <ChevronRight size={22} aria-hidden="true" />
-          </button>
         </div>
         <ActivityHeatmap
           value={value}

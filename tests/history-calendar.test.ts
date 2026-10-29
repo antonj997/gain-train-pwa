@@ -8,39 +8,26 @@ import {
 import { type RecordDoc, type Workout } from "../src/data/model";
 import * as calendar from "../src/lib/history-calendar";
 
-test("history defaults to the heatmap, filtering to its span until a day is chosen", () => {
+test("history defaults to the heatmap, filtering to the last year until a day is chosen", () => {
   const now = "2026-10-26";
   let state = calendar.createHistoryCalendar(now);
   assert.equal(state.display, "simple");
   assert.deepEqual(calendar.historyCalendarBounds(state, now), {
-    start: "2026-07-27",
-    end: "2026-10-26",
+    start: "2025-10-27",
+    end: now,
   });
   state = calendar.changeHistoryCalendar(
     state,
-    { type: "span", span: "year" },
+    { type: "date", date: "2026-10-20" },
     now,
   );
-  assert.equal(calendar.historyCalendarBounds(state, now)?.start, "2025-10-27");
-  state = calendar.changeHistoryCalendar(
-    state,
-    { type: "shift", direction: -1 },
-    now,
-  );
-  assert.equal(state.heatEnd, "2025-10-26");
-  state = calendar.changeHistoryCalendar(
-    state,
-    { type: "shift", direction: 1 },
-    now,
-  );
-  state = calendar.changeHistoryCalendar(
-    state,
-    { type: "shift", direction: 1 },
-    now,
-  );
-  assert.equal(state.heatEnd, now);
+  assert.deepEqual(calendar.historyCalendarBounds(state, now), {
+    start: "2026-10-20",
+    end: "2026-10-20",
+  });
   state = calendar.changeHistoryCalendar(state, { type: "reset" }, now);
-  assert.equal(state.span, "year");
+  assert.equal(state.selectedDate, null);
+  assert.equal(state.display, "simple");
 });
 
 test("cross-month and reverse range selection includes both dates and survives browsing", () => {

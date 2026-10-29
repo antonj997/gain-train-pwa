@@ -1,6 +1,6 @@
 /* History calendar in the Quiet visual system. Colours, spacing, type sizes and
    radii come from tokens.css. Controls are 44px or larger, except the heatmap
-   squares and its span switch, which are compact by design.
+   squares, which are compact by design.
 
    Two displays. "simple" (the default) is the activity heatmap, styled below.
    "detailed" lines the days up
@@ -195,55 +195,47 @@
 }
 
 /* Activity heatmap (the "simple" display): a GitHub-style grid of small
-   squares, one column per Monday-first week and one row per weekday. The
-   shade is the day's workout count: surface-2 for none, then a growing mix of
-   the done colour up to the full colour for three or more. Squares are
-   smaller than 44px by design; they sit in one tab stop with arrow-key
-   movement. */
+   squares for the last year, one column per Monday-first week and one row per
+   weekday. The shade is the day's workout count: surface-2 for none, then a
+   growing mix of the done colour up to the full colour for three or more; two
+   or more also print the count. Empty squares alternate a faint tint by month
+   so months read apart without changing the grid. Squares are smaller than
+   44px by design; they sit in one tab stop with arrow-key movement. */
 .calendar-heatmap {
-  --hm-size: 13px;
+  --hm-size: 16px;
   --hm-gap: 3px;
   --hm-label: 16px;
 }
-.calendar-heatmap .calendar-header {
-  gap: var(--gt-space-1);
+.calendar-heatmap > * {
+  min-width: 0;
 }
 .heatmap-title {
   flex: 1;
   margin: 0;
   min-width: 0;
-  overflow: hidden;
+  padding-left: var(--gt-space-1);
   color: var(--gt-ink);
-  font-size: var(--gt-fs-3);
+  font-size: var(--gt-fs-4);
   font-weight: 600;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.calendar-heatmap .segmented button {
-  min-height: 36px;
-  font-size: var(--gt-fs-2);
-}
-.heatmap-summary {
-  margin: 0;
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-2);
-  font-variant-numeric: tabular-nums;
 }
 .heatmap {
   display: flex;
   gap: var(--gt-space-2);
   min-width: 0;
 }
+/* Fixed column, so the letters stay put while the grid scrolls. */
 .heatmap-weekdays {
   display: grid;
   flex: none;
+  width: 12px;
   grid-template-rows: repeat(7, var(--hm-size));
   row-gap: var(--hm-gap);
   padding-top: calc(var(--hm-label) + var(--hm-gap) + 2px);
   color: var(--gt-ink-2);
-  font-size: 10px;
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
   line-height: var(--hm-size);
+  text-align: center;
 }
 /* The only part that scrolls sideways, so the page never does. */
 .heatmap-scroll {
@@ -283,7 +275,10 @@
   row-gap: var(--hm-gap);
 }
 .heatmap-day {
-  display: block;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: var(--hm-size);
   height: var(--hm-size);
   margin: 0;
@@ -292,24 +287,36 @@
   border-radius: 3px;
   background-color: var(--gt-surface-2);
   box-shadow: inset 0 0 0 1px var(--gt-line);
+  color: var(--gt-on-accent);
+}
+.heatmap-day.level-0.tone-1 {
+  background-color: color-mix(in srgb, var(--gt-ink) 5%, var(--gt-surface-2));
 }
 .heatmap-day.level-1 {
   background-color: color-mix(in srgb, var(--gt-done) 40%, var(--gt-surface-2));
   box-shadow: none;
 }
 .heatmap-day.level-2 {
-  background-color: color-mix(in srgb, var(--gt-done) 72%, var(--gt-surface-2));
+  background-color: color-mix(in srgb, var(--gt-done) 88%, var(--gt-surface-2));
   box-shadow: none;
 }
 .heatmap-day.level-3 {
   background-color: var(--gt-done);
   box-shadow: none;
 }
+.heatmap-count {
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  pointer-events: none;
+}
 .heatmap-grid .heatmap-day.is-today {
-  box-shadow: inset 0 0 0 1.5px var(--gt-ink-2);
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
 }
 .heatmap-grid .heatmap-day.is-selected {
-  outline: 2px solid var(--gt-accent);
+  z-index: 1;
+  outline: 2px solid var(--gt-ink);
   outline-offset: 1px;
 }
 .heatmap-footer {
@@ -317,21 +324,14 @@
   margin-top: 0;
   padding-top: 0;
 }
-.heatmap-legend {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--hm-gap);
-  margin-left: auto;
-  font-size: var(--gt-fs-1);
-}
-.heatmap-legend .heatmap-day {
+.heatmap-caption {
+  flex: 1;
   margin: 0;
-}
-.heatmap-legend .heatmap-day:first-of-type {
-  margin-left: var(--gt-space-1);
-}
-.heatmap-legend .heatmap-day:last-of-type {
-  margin-right: var(--gt-space-1);
+  min-width: 0;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Range: an accent-soft band, accent-filled start and end, rounded where a
@@ -403,7 +403,7 @@
     outline-offset: 0;
   }
   .heatmap-grid .heatmap-day.is-selected:hover {
-    outline-color: var(--gt-accent);
+    outline-color: var(--gt-ink);
     outline-offset: 1px;
   }
   .calendar-range-toggle:not([aria-pressed="true"]):hover {
