@@ -67,6 +67,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [store, auth.ready, auth.user?.id]);
   useEffect(() => {
+    store.activate();
     const sync = () => {
       void store.sync();
     };

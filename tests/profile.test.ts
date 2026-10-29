@@ -462,3 +462,17 @@ test("new and repeated unfinished sets do not inherit an old bodyweight snapshot
   assert.equal(repeated[0].sets[0].reps, 12);
   assert.equal(prior.bodyWeightKg, 78.5);
 });
+
+test("a store disposed by a simulated unmount works again once reactivated", async () => {
+  const { ProfileStore } = await library();
+  const store = new ProfileStore({ account: "phone", storage: storage() });
+  let heard = 0;
+  store.subscribe(() => heard++);
+  // StrictMode and Fast Refresh unmount and remount with the same store.
+  store.dispose();
+  assert.throws(() => store.saveProfile({ bodyWeightKg: 70 }));
+  store.activate();
+  store.saveProfile({ bodyWeightKg: 70 });
+  assert.equal(store.getSnapshot().bodyWeightKg, 70);
+  assert.equal(heard, 1);
+});
