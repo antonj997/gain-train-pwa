@@ -6,14 +6,12 @@ import {
   type CSSProperties,
   type KeyboardEvent,
 } from "react";
-import { X } from "lucide-react";
 import { shiftDate } from "@/data/summary";
 import { localizedDate } from "@/lib/dates";
 import {
   heatmapMonthLabels,
   heatmapWeeks,
-  intensityLevel,
-  lastWorkoutDate,
+  heatClass,
   monthTone,
   weekdayIndex,
 } from "@/lib/heatmap";
@@ -24,8 +22,6 @@ import {
 import { countLabel } from "@/lib/labels";
 
 const WEEKDAY_LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
-const shortDay = (date: string) =>
-  localizedDate(date, { weekday: "short", day: "numeric", month: "short" });
 
 /**
  * A GitHub-style activity grid for the last year: columns are Monday-first
@@ -38,7 +34,6 @@ export default function ActivityHeatmap({
   value,
   now,
   counts,
-  canReset,
   instructionsId,
   headingId,
   change,
@@ -46,7 +41,6 @@ export default function ActivityHeatmap({
   value: HistoryCalendarState;
   now: string;
   counts: ReadonlyMap<string, number>;
-  canReset: boolean;
   instructionsId: string;
   headingId: string;
   change: (action: HistoryCalendarAction) => void;
@@ -59,12 +53,6 @@ export default function ActivityHeatmap({
   const pendingFocus = useRef<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const focusable = focused >= start && focused <= now ? focused : now;
-  const last = lastWorkoutDate(counts, now);
-  const caption = selectedDate
-    ? `${shortDay(selectedDate)} · ${countLabel(counts.get(selectedDate) ?? 0, "workout")}`
-    : last
-      ? `Last workout ${shortDay(last)}`
-      : "Tap a day to see its workouts";
 
   // Start on the most recent week.
   useLayoutEffect(() => {
@@ -140,7 +128,7 @@ export default function ActivityHeatmap({
                         if (node) buttons.current.set(date, node);
                         else buttons.current.delete(date);
                       }}
-                      className={`heatmap-day level-${intensityLevel(count)} tone-${monthTone(date)}${date === now ? " is-today" : ""}${selected ? " is-selected" : ""}`}
+                      className={`heatmap-day ${heatClass(count)} tone-${monthTone(date)}${date === now ? " is-today" : ""}${selected ? " is-selected" : ""}`}
                       style={{ gridColumn: column + 1, gridRow: row + 1 }}
                       tabIndex={date === focusable ? 0 : -1}
                       aria-current={date === now ? "date" : undefined}
@@ -163,22 +151,6 @@ export default function ActivityHeatmap({
             </div>
           </div>
         </div>
-      </div>
-      <div className="calendar-footer heatmap-footer">
-        <p className="heatmap-caption" aria-live="polite">
-          {caption}
-        </p>
-        {canReset && (
-          <button
-            type="button"
-            className="text-button calendar-reset"
-            title="Clear the selection and show the whole year"
-            onClick={() => change({ type: "reset" })}
-          >
-            <X size={16} aria-hidden="true" />
-            Clear selection
-          </button>
-        )}
       </div>
     </>
   );
