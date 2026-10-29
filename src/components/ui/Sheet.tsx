@@ -15,6 +15,8 @@ type Props = {
   description?: ReactNode;
   /** "light" dims the page only slightly, so it stays readable behind the sheet. */
   backdrop?: "dim" | "light";
+  /** "full" opens a near full-screen panel for editors and long details. */
+  size?: "sheet" | "full";
   className?: string;
   contentRef?: Ref<HTMLDivElement>;
   /** Runs before Escape closes the sheet; call preventDefault to keep it open. */
@@ -32,6 +34,7 @@ export default function Sheet({
   title,
   description,
   backdrop,
+  size,
   className,
   contentRef,
   onEscapeKeyDown,
@@ -47,6 +50,7 @@ export default function Sheet({
       <DialogContent
         ref={contentRef}
         backdrop={backdrop}
+        size={size}
         className={className}
         onEscapeKeyDown={onEscapeKeyDown}
         // Without a description Radix warns about a missing one in development.

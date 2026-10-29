@@ -201,7 +201,7 @@ export default function Progress() {
         onClose={() => setOpenId(null)}
         title={open?.name}
         description="Results, sessions and chart"
-        className="exercise-sheet"
+        size="full"
       >
         {open && (
           <ExerciseProgressDetail item={open} cutoffDate={daysAgo(30)} />

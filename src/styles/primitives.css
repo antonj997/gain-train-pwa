@@ -72,16 +72,26 @@
   box-shadow: 0 -8px 32px rgb(20 22 26 / 0.16);
 }
 
-/* The exercise picker keeps a full-height sheet, with a strip of page above. */
-.dialog-content.picker-dialog {
+/* size="full": an editor that covers the width and the height from the top
+   safe area plus 8px down to the bottom edge. The handle and the title stay at
+   the top while the body scrolls. */
+.dialog-content.dialog-full {
   height: calc(
-    var(--viewport-height, 100dvh) - var(--gt-space-6) -
-      env(safe-area-inset-top)
+    var(--viewport-height, 100dvh) - env(safe-area-inset-top) -
+      var(--gt-space-2)
   );
   max-height: calc(
-    var(--viewport-height, 100dvh) - var(--gt-space-6) -
-      env(safe-area-inset-top)
+    var(--viewport-height, 100dvh) - env(safe-area-inset-top) -
+      var(--gt-space-2)
   );
+}
+.dialog-full .dialog-header {
+  position: sticky;
+  top: 44px;
+  z-index: 1;
+  margin: 0 calc(var(--gt-space-4) * -1);
+  padding: 0 var(--gt-space-4) var(--gt-space-2);
+  background-color: var(--gt-surface);
 }
 
 /* The Close button is the grab handle. It is last in the markup, so the first
@@ -214,12 +224,13 @@
     border-radius: var(--gt-radius-xl);
     box-shadow: 0 16px 48px rgb(20 22 26 / 0.24);
   }
-  .dialog-content.picker-dialog {
-    height: min(
-      760px,
+  .dialog-content.dialog-full {
+    max-width: 640px;
+    height: min(90vh, calc(var(--viewport-height, 100dvh) - var(--gt-space-6)));
+    max-height: min(
+      90vh,
       calc(var(--viewport-height, 100dvh) - var(--gt-space-6))
     );
-    max-height: calc(var(--viewport-height, 100dvh) - var(--gt-space-6));
   }
   .dialog-content[data-state="open"] {
     animation-name: panel-in;

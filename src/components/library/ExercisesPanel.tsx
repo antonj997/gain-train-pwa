@@ -231,6 +231,7 @@ export default function ExercisesPanel() {
         {edit ? "Resume exercise draft" : "New exercise"}
       </button>
       <Sheet
+        size="full"
         open={open && !!edit}
         onClose={() => {
           if (!busy) setOpen(false);

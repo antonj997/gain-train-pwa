@@ -136,6 +136,7 @@ export default function ExercisePicker({
       }}
     >
       <DialogContent
+        size="full"
         className={`picker-dialog${creating ? " is-creating" : searchFocused || search.trim() ? " is-searching" : ""}`}
         onOpenAutoFocus={(event) => {
           event.preventDefault();
