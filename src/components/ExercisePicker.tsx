@@ -8,10 +8,13 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useData } from "@/contexts/useData";
-import { catalogue, categories } from "@/data/catalogue";
+import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
+import FacetChips from "@/components/FacetChips";
+import { useHiddenExercises } from "@/hooks/useHiddenExercises";
+import { matchesFacets, searchExercises } from "@/lib/exercise-search";
 import { type CustomExercise } from "@/data/model";
 import { workouts } from "@/data/selectors";
-import { favouriteIds, ownExercises } from "@/data/exercises";
+import { favouriteIds, ownExercises, visibleExercises } from "@/data/exercises";
 import { errorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
@@ -26,6 +29,7 @@ export default function ExercisePicker({
   onAdd: (items: { id: string; name: string }[]) => void;
 }) {
   const { state, save } = useData();
+  const { hidden } = useHiddenExercises();
   const { account } = useAuth();
   const creationDraft = useRetainedDraft(
     draftKey(account, "picker-exercise"),
@@ -52,6 +56,7 @@ export default function ExercisePicker({
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
     [filter, setFilter] = useState("All"),
+    [equipment, setEquipment] = useState(""),
     [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -67,24 +72,33 @@ export default function ExercisePicker({
     }),
     [state.records],
   );
-  const items = all
-    .filter(
-      (e) =>
-        e.name.toLowerCase().includes(search.toLowerCase()) &&
-        (filter === "All" ||
-          (filter === "Recent" && recent.has(e.id)) ||
-          (filter === "Favourites" && favourites.has(e.id)) ||
-          e.category === filter),
-    )
-    .sort(
-      (a, b) =>
-        Number(recent.has(b.id)) - Number(recent.has(a.id)) ||
-        a.name.localeCompare(b.name),
-    );
+  const items = searchExercises(
+    visibleExercises(all, hidden)
+      .filter(
+        (e) =>
+          matchesFacets(e, {
+            category: categories.includes(filter) ? filter : "",
+            equipment,
+          }) &&
+          (filter === "Recent"
+            ? recent.has(e.id)
+            : filter === "Favourites"
+              ? favourites.has(e.id)
+              : true),
+      )
+      .sort(
+        (a, b) =>
+          Number(recent.has(b.id)) - Number(recent.has(a.id)) ||
+          a.name.localeCompare(b.name),
+      ),
+    search,
+  );
   const close = () => {
     if (busy) return;
     setSelected([]);
     setSearch("");
+    setFilter("All");
+    setEquipment("");
     setSearchFocused(false);
     setCreating(false);
     setError("");
@@ -238,11 +252,12 @@ export default function ExercisePicker({
                 </button>
               )}
             </div>
-            <div className="chips">
+            <div className="facet-chips" role="group" aria-label="Show">
               {["All", "Recent", "Favourites", ...categories].map((c) => (
                 <button
                   key={c}
-                  className={filter === c ? "chip selected" : "chip"}
+                  type="button"
+                  className="filter-chip"
                   aria-pressed={filter === c}
                   onClick={() => setFilter(c)}
                 >
@@ -250,6 +265,12 @@ export default function ExercisePicker({
                 </button>
               ))}
             </div>
+            <FacetChips
+              name="Equipment"
+              options={equipmentTypes}
+              value={equipment}
+              onChange={setEquipment}
+            />
             <div
               className="picker-list"
               role="group"
@@ -275,6 +296,7 @@ export default function ExercisePicker({
                     <strong>{e.name}</strong>
                     <small>
                       {e.category}
+                      {"equipment" in e ? ` · ${e.equipment}` : ""}
                       {recent.has(e.id) ? " · Recent" : ""}
                     </small>
                   </span>

@@ -109,7 +109,7 @@ select,
   .picker-dialog.is-searching .picker-description {
     display: none;
   }
-  .picker-dialog .chips {
+  .picker-dialog .facet-chips {
     gap: 6px;
   }
   .picker-dialog .exercise-choice {
