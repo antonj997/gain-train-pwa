@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 import { toast } from "sonner";
 import App from "./App";
+import ErrorBoundary, { watchGlobalErrors } from "./components/ErrorBoundary";
 import "./index.css";
 import "./styles/usability.css";
 import "./styles/pages.css";
@@ -43,7 +44,12 @@ function showUpdate() {
   });
 }
 window.addEventListener("gain-route-change", showUpdate);
-createRoot(document.getElementById("root")!).render(<App />);
+watchGlobalErrors();
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>,
+);
 
 // Remove the legacy network cache; workout records live in IndexedDB.
 if ("caches" in window) void caches.delete("supabase-cache");
