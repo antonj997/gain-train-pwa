@@ -3,6 +3,7 @@
 // model.ts imports normalizeDrops from here, and a runtime import would be a cycle.
 import type { WorkoutSet } from "./model";
 import { hasExtraWeight } from "../lib/set-load";
+import { t } from "../i18n";
 
 export type SetTone = "working" | "warmup" | "winddown" | "drop";
 export type SetBadgeInfo = {
@@ -139,37 +140,37 @@ export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
     return {
       text: "↓",
       tone: "drop",
-      label: `Drop ${position} after set ${parent}. Change load or delete`,
-      title: "Drop",
-      name: `drop ${position} after set ${parent}`,
+      label: t("badge.dropLabel", { position, parent }),
+      title: t("badge.dropTitle"),
+      name: t("badge.dropName", { position, parent }),
     };
   }
   if (set.section === "warmup") {
     const n = ordinal("warmup", index);
     return {
-      text: "W",
+      text: t("badge.warmupText"),
       tone: "warmup",
-      label: `Warm-up set ${n}. Change type, load or delete`,
-      title: "Warm-up set",
-      name: `warm-up set ${n}`,
+      label: t("badge.warmupLabel", { n }),
+      title: t("badge.warmupTitle"),
+      name: t("badge.warmupName", { n }),
     };
   }
   if (set.section === "winddown") {
     const n = ordinal("winddown", index);
     return {
-      text: "C",
+      text: t("badge.cooldownText"),
       tone: "winddown",
-      label: `Cool-down set ${n}. Change type, load or delete`,
-      title: "Cool-down set",
-      name: `cool-down set ${n}`,
+      label: t("badge.cooldownLabel", { n }),
+      title: t("badge.cooldownTitle"),
+      name: t("badge.cooldownName", { n }),
     };
   }
   const n = ordinal("working", index);
   return {
     text: String(n),
     tone: "working",
-    label: `Set ${n}, working set. Change type, load or delete`,
-    title: `Set ${n}`,
-    name: `set ${n}`,
+    label: t("badge.setLabel", { n }),
+    title: t("badge.setTitle", { n }),
+    name: t("badge.setName", { n }),
   };
 }

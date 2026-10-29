@@ -10,13 +10,13 @@ import {
 import { errorMessage } from "@/lib/errors";
 import { local } from "@/lib/storage";
 import { assertNotFuture, workoutContentKey } from "@/lib/workout-editor";
+import { t } from "@/i18n";
 
 // Save once typing pauses instead of on every keystroke. The recovery draft is
 // still written on every change, so nothing typed is lost in between.
 const AUTOSAVE_DELAY_MS = 600;
-const SAVE_FAILED = "Could not save. Retry to keep your changes.";
-const FINISHED_ELSEWHERE =
-  "This workout was finished on another device, so changes here are not saved. Your entries are kept on this phone; open the workout in History to edit it.";
+const saveFailed = () => t("actions.saveFailed");
+const finishedElsewhereMessage = () => t("autosave.finishedElsewhere");
 
 type PendingSave = { value: Workout; version: number; retained: boolean };
 
@@ -57,8 +57,8 @@ export function useWorkoutAutosave(
   const [error, setError] = useState<string | null>(
     recovered
       ? editing
-        ? "Recovered changes you had not saved. Save to keep them, or leave to discard them."
-        : "Recovered unsaved entries. Correct any errors, then retry saving."
+        ? t("autosave.recoveredEdit")
+        : t("autosave.recoveredDraft")
       : null,
   );
   const queue = useRef(Promise.resolve());
@@ -100,7 +100,7 @@ export function useWorkoutAutosave(
       queue.current = queue.current
         .catch(() => {})
         .then(async () => {
-          if (finishedRef.current) throw new Error(FINISHED_ELSEWHERE);
+          if (finishedRef.current) throw new Error(finishedElsewhereMessage());
           // Saving normalizes the entry (e.g. trims the name); compare that form.
           const key = workoutContentKey(validate("workout", job.value));
           inFlight.current = key;
@@ -119,9 +119,9 @@ export function useWorkoutAutosave(
         .catch((cause) => {
           if (job.version === version.current)
             setError(
-              cause instanceof Error && cause.message === FINISHED_ELSEWHERE
-                ? FINISHED_ELSEWHERE
-                : errorMessage(cause, SAVE_FAILED) +
+              cause instanceof Error && cause.message === finishedElsewhereMessage()
+                ? finishedElsewhereMessage()
+                : errorMessage(cause, saveFailed()) +
                     (job.retained
                       ? " Unsaved entries are kept on this phone. Retry saving."
                       : " Keep this screen open and retry saving."),
@@ -132,7 +132,7 @@ export function useWorkoutAutosave(
   /** Saves `value` (e.g. the finished workout) after anything still waiting. */
   const saveNow = async (value: Workout) => {
     await flush();
-    if (finishedRef.current) throw new Error(FINISHED_ELSEWHERE);
+    if (finishedRef.current) throw new Error(finishedElsewhereMessage());
     const key = workoutContentKey(validate("workout", value));
     inFlight.current = key;
     try {
@@ -175,7 +175,7 @@ export function useWorkoutAutosave(
     }
     const retained = retain(value);
     if (finishedRef.current) {
-      setError(FINISHED_ELSEWHERE);
+      setError(finishedElsewhereMessage());
       return;
     }
     try {
@@ -185,7 +185,7 @@ export function useWorkoutAutosave(
       // Keep the last valid state: save what was waiting, not this entry.
       void flush();
       setError(
-        errorMessage(cause, SAVE_FAILED) +
+        errorMessage(cause, saveFailed()) +
           (retained
             ? " Unsaved entries are kept on this phone."
             : " Keep this screen open until corrected."),

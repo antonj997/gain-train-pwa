@@ -1,6 +1,7 @@
 import { finishSummary } from "@/lib/labels";
 import Sheet from "@/components/ui/Sheet";
 import Switch from "@/components/ui/Switch";
+import { useT } from "@/i18n/useT";
 
 type BodyProps = {
   /** Checked sets that will be saved. */
@@ -29,6 +30,7 @@ function FinishSheetBody({
   onKeepLogging,
   onAbandon,
 }: BodyProps) {
+  const { t } = useT();
   return (
     <>
       <p className="sheet-note" role="status">
@@ -36,7 +38,7 @@ function FinishSheetBody({
       </p>
       {showRoutineSwitch && (
         <Switch
-          label="Save as a routine"
+          label={t("workout.saveAsRoutine")}
           checked={saveRoutine}
           disabled={busy}
           onChange={onSaveRoutine}
@@ -48,7 +50,7 @@ function FinishSheetBody({
         disabled={busy || completed === 0}
         onClick={onSave}
       >
-        {busy ? "Saving…" : "Save workout"}
+        {busy ? t("workout.saving") : t("workout.saveWorkout")}
       </button>
       <button
         type="button"
@@ -56,7 +58,7 @@ function FinishSheetBody({
         disabled={busy}
         onClick={onKeepLogging}
       >
-        Keep logging
+        {t("workout.keepLogging")}
       </button>
       <button
         type="button"
@@ -64,7 +66,7 @@ function FinishSheetBody({
         disabled={busy}
         onClick={onAbandon}
       >
-        Abandon workout
+        {t("workout.abandonWorkout")}
       </button>
     </>
   );
@@ -76,6 +78,7 @@ export default function FinishSheet({
   onClose,
   ...body
 }: BodyProps & { open: boolean; onClose: () => void }) {
+  const { t } = useT();
   return (
     <Sheet
       open={open}
@@ -83,7 +86,7 @@ export default function FinishSheet({
       onClose={() => {
         if (!body.busy) onClose();
       }}
-      title="Finish workout"
+      title={t("workout.finishTitle")}
     >
       <FinishSheetBody {...body} />
     </Sheet>

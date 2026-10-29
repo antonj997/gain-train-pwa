@@ -1,6 +1,7 @@
 import { type Workout, today } from "@/data/model";
 import { selectInputValue } from "@/lib/set-editing";
 import Sheet from "@/components/ui/Sheet";
+import { useT } from "@/i18n/useT";
 
 type BodyProps = {
   workout: Workout;
@@ -9,10 +10,11 @@ type BodyProps = {
 
 /** The details sheet's fields: name, date and an optional duration. */
 function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
+  const { t } = useT();
   return (
     <>
       <label className="sheet-field">
-        <span className="sheet-label">Name</span>
+        <span className="sheet-label">{t("workout.name")}</span>
         <input
           value={w.name}
           maxLength={100}
@@ -21,7 +23,7 @@ function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
         />
       </label>
       <label className="sheet-field">
-        <span className="sheet-label">Date</span>
+        <span className="sheet-label">{t("workout.date")}</span>
         <input
           type="date"
           value={w.date}
@@ -30,14 +32,16 @@ function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
         />
       </label>
       <label className="sheet-field">
-        <span className="sheet-label">Duration (optional, minutes)</span>
+        <span className="sheet-label">{t("workout.durationLabel")}</span>
         <input
           type="number"
           inputMode="numeric"
           min="0"
           max="1440"
           step="1"
-          placeholder={w.startedAt ? "Automatic timer" : "Not recorded"}
+          placeholder={
+            w.startedAt ? t("workout.autoTimer") : t("workout.notRecorded")
+          }
           value={w.duration ?? ""}
           onFocus={selectInputValue}
           onClick={selectInputValue}
@@ -59,8 +63,9 @@ export default function WorkoutDetailsSheet({
   onClose,
   ...body
 }: BodyProps & { open: boolean; onClose: () => void }) {
+  const { t } = useT();
   return (
-    <Sheet open={open} onClose={onClose} title="Workout details">
+    <Sheet open={open} onClose={onClose} title={t("workout.details")}>
       <WorkoutDetailsSheetBody {...body} />
     </Sheet>
   );

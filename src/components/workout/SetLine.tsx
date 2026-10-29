@@ -15,12 +15,15 @@ import { formatDuration, formatKm, parseDuration, parseKm } from "@/lib/cardio";
 import SetNumberInput from "@/components/SetNumberInput";
 import SetBadge from "@/components/workout/SetBadge";
 import "@/styles/workout.css";
+// The module translator, not a hook: the workout page remounts on a new
+// language, and tests render this row with a minimal hook host.
+import { formatDecimal, t } from "@/i18n";
 
 // What a screen reader hears after the set's name, by the kind of load.
 const LOAD_NAMES = {
-  plus: "added kilograms",
-  minus: "assistance kilograms",
-  kg: "kilograms",
+  plus: "set.loadPlus",
+  minus: "set.loadMinus",
+  kg: "set.loadKg",
 } as const;
 
 /**
@@ -120,7 +123,7 @@ export default function SetLine({
     marker === "bw" || (set.load === "bodyweight" && !extraWeight);
   const displayedBodyWeight = bodyWeightForSet(set, bodyWeightKg);
   // The marker names what the field shows; with none, the set's own load does.
-  const loadName =
+  const loadName = t(
     LOAD_NAMES[
       marker === "plus" || marker === "minus" || marker === "kg"
         ? marker
@@ -129,7 +132,8 @@ export default function SetLine({
           : set.load === "assisted"
             ? "minus"
             : "kg"
-    ];
+    ],
+  );
   const issues = getSetIssues(set);
   const errorId = `set-errors-${set.id}`;
   const lockId = `set-locked-${set.id}`;
@@ -150,7 +154,7 @@ export default function SetLine({
     )
     .map(([, issue]) => issue);
   if (set.done && !validSet(set) && !visibleIssues.length)
-    visibleIssues.push("Uncheck this set to correct its missing values.");
+    visibleIssues.push(t("set.uncheckToFix"));
   const describedBy = (field: InputField) =>
     [
       visibleIssues.length && issues[field] ? errorId : "",
@@ -173,15 +177,15 @@ export default function SetLine({
   const cardioFields = [
     {
       field: "durationSec",
-      name: "time",
-      placeholder: "mm:ss",
+      name: t("set.fieldTime"),
+      placeholder: t("set.phTime"),
       inputMode: "text",
       parse: parseDuration,
       format: formatDuration,
     },
     {
       field: "distanceM",
-      name: "distance in kilometres",
+      name: t("set.fieldDistance"),
       placeholder: "km",
       inputMode: "decimal",
       parse: parseKm,
@@ -189,15 +193,15 @@ export default function SetLine({
     },
     {
       field: "level",
-      name: "level",
-      placeholder: "lvl",
+      name: t("set.fieldLevel"),
+      placeholder: t("set.phLevel"),
       inputMode: "numeric",
       parse: undefined,
       format: undefined,
     },
     {
       field: "calories",
-      name: "calories",
+      name: t("set.fieldCalories"),
       placeholder: "kcal",
       inputMode: "numeric",
       parse: undefined,
@@ -229,7 +233,7 @@ export default function SetLine({
       className={classes}
       onFocusCapture={onFocus}
     >
-      {next && <span className="sr-only">Next set</span>}
+      {next && <span className="sr-only">{t("set.nextSr")}</span>}
       <SetBadge
         badge={badge}
         editing={editing}
@@ -239,13 +243,13 @@ export default function SetLine({
         <span className="set-previous">
           {previous ? (
             <>
-              <span className="sr-only">Previous: </span>
+              <span className="sr-only">{t("set.previousSr") + " "}</span>
               {previous}
             </>
           ) : (
             <>
               <span aria-hidden="true">–</span>
-              <span className="sr-only">No previous result</span>
+              <span className="sr-only">{t("set.noPrevious")}</span>
             </>
           )}
         </span>
@@ -282,15 +286,18 @@ export default function SetLine({
           {plainBodyweight ? (
             <span className="set-field set-bodyweight">
               <span aria-hidden="true">
-                BW
+                {t("set.bwShort")}
                 {displayedBodyWeight !== null && (
-                  <small>{` ${displayedBodyWeight} kg`}</small>
+                  <small>{` ${formatDecimal(displayedBodyWeight)} kg`}</small>
                 )}
               </span>
               <span className="sr-only">
                 {displayedBodyWeight === null
-                  ? `${label}: Bodyweight`
-                  : `${label}: Bodyweight ${displayedBodyWeight} kilograms`}
+                  ? t("set.bwSr", { label })
+                  : t("set.bwKgSr", {
+                      label,
+                      kg: formatDecimal(displayedBodyWeight),
+                    })}
               </span>
             </span>
           ) : (
@@ -338,7 +345,7 @@ export default function SetLine({
           )}
           <div className="set-field">
             <SetNumberInput
-              aria-label={`${label} ${timed ? "seconds" : "reps"}`}
+              aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}`}
               aria-invalid={
                 !!issues.reps &&
                 (set.reps !== null ||
@@ -349,7 +356,7 @@ export default function SetLine({
               min="1"
               max="10000"
               step="1"
-              placeholder={timed ? "sec" : "reps"}
+              placeholder={timed ? t("set.phSec") : t("set.phReps")}
               value={set.reps}
               inputText={getSetInputText(set, "reps")}
               readOnly={locked}
@@ -364,7 +371,11 @@ export default function SetLine({
           <button
             type="button"
             className={`set-check${showLock ? " unlock-highlight" : ""}`}
-            aria-label={`${set.done ? "Uncheck" : "Complete"} ${label}`}
+            aria-label={
+              set.done
+                ? t("set.uncheck", { label })
+                : t("set.complete", { label })
+            }
             aria-pressed={set.done}
             aria-describedby={
               showLock
@@ -406,7 +417,7 @@ export default function SetLine({
       )}
       {showLock && (
         <p id={lockId} className="set-errors field-error" role="status">
-          Uncheck this set to edit its values.
+          {t("set.uncheckToEdit")}
         </p>
       )}
     </div>

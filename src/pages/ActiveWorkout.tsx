@@ -32,28 +32,28 @@ import WorkoutBanners from "@/components/workout/WorkoutBanners";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
 import WorkoutTopBar from "@/components/workout/WorkoutTopBar";
 import "@/styles/workout.css";
+import { useT } from "@/i18n/useT";
+import { workoutTitle } from "@/lib/workout-name";
 
 export default function ActiveWorkout() {
   const { id } = useParams();
   const { state } = useData();
   const { account } = useAuth();
+  const { t } = useT();
   const doc = id ? state.records[id] : null;
   if (!doc || doc.deleted || doc.kind !== "workout")
     return (
       <div className="empty">
-        <h1>Workout not found</h1>
-        <Link to="/">Back to workouts</Link>
+        <h1>{t("workout.notFound")}</h1>
+        <Link to="/">{t("workout.backToWorkouts")}</Link>
       </div>
     );
   if (isFromNewerApp(doc.payload))
     return (
       <div className="empty">
-        <h1>Update Gain Train to edit this workout</h1>
-        <p>
-          It was saved by a newer version of the app. Close and reopen Gain
-          Train to update; your workout is safe in the meantime.
-        </p>
-        <Link to="/">Back to workouts</Link>
+        <h1>{t("workout.newerTitle")}</h1>
+        <p>{t("workout.newerText")}</p>
+        <Link to="/">{t("workout.backToWorkouts")}</Link>
       </div>
     );
   return (
@@ -78,6 +78,7 @@ function Editor({
   const { state } = useData();
   const { bodyWeightKg } = useProfile();
   const navigate = useNavigate();
+  const { t } = useT();
   const autosave = useWorkoutAutosave(id, account, initial);
   const { workout: w, change, changeWith, editing, saved, error } = autosave;
   // Starting from a planned day type opens the picker on its categories, and
@@ -172,15 +173,15 @@ function Editor({
   // Checked values are editable while editing, so say why Save is off.
   const saveStatus = editing
     ? invalidChecked
-      ? "Fix marked sets"
+      ? t("workout.fixMarked")
       : dirty
-        ? "Unsaved"
-        : "Saved"
+        ? t("workout.unsaved")
+        : t("workout.saved")
     : error
-      ? "Needs attention"
+      ? t("workout.needsAttention")
       : saved
-        ? "Saved"
-        : "Saving…";
+        ? t("workout.saved")
+        : t("workout.saving");
 
   return (
     <div className="workout-editor" aria-busy={busy}>
@@ -242,7 +243,7 @@ function Editor({
           disabled={busy}
         >
           <Plus size={18} aria-hidden="true" />
-          Add exercise
+          {t("workout.addExercise")}
         </button>
       ) : (
         <button
@@ -252,7 +253,7 @@ function Editor({
           disabled={busy}
         >
           <Plus size={21} aria-hidden="true" />
-          Add your first exercise
+          {t("workout.addFirst")}
         </button>
       )}
       <div className="float-stack">
@@ -273,19 +274,19 @@ function Editor({
       />
       <ConfirmDialog
         open={!!removeExercise}
-        title={<>Remove {removeExercise?.name}?</>}
-        description="This exercise contains entered values or completed sets. Removing it deletes all of those sets from this workout."
-        cancelLabel="Keep exercise"
-        confirmLabel="Remove exercise"
+        title={t("workout.removeTitle", { name: removeExercise?.name ?? "" })}
+        description={t("workout.removeText")}
+        cancelLabel={t("workout.keepExercise")}
+        confirmLabel={t("workout.removeExercise")}
         onCancel={() => setRemoveExercise(null)}
         onConfirm={() => removeExercise && remove(removeExercise)}
       />
       <ConfirmDialog
         open={discardChanges}
-        title="Discard your changes?"
-        description="Your saved workout will stay as it was before editing."
-        cancelLabel="Keep editing"
-        confirmLabel="Discard changes"
+        title={t("workout.discardTitle")}
+        description={t("workout.discardText")}
+        cancelLabel={t("workout.keepEditing")}
+        confirmLabel={t("workout.discardChanges")}
         onCancel={() => setDiscardChanges(false)}
         onConfirm={() => {
           autosave.discard();
@@ -295,7 +296,7 @@ function Editor({
       {editing ? (
         <EditSaveDialog
           open={finish}
-          name={w.name}
+          name={workoutTitle(w.name)}
           completed={completed}
           total={total}
           invalidChecked={invalidChecked}

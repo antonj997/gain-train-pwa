@@ -10,6 +10,7 @@ import { syncAccount } from "@/data/sync";
 import { supabaseTransport } from "@/data/transport";
 import { supabase, syncClient } from "@/integrations/supabase/client";
 import { readSyncHealth, recordSyncResult } from "@/lib/sync-health";
+import { t } from "@/i18n";
 
 // Batches a burst of edits (typing a set, checking several sets) into one upload.
 const SYNC_DELAY_MS = 1500;
@@ -83,9 +84,7 @@ export function useSyncLoop({
         }
       } catch {
         if (activeAccount.current === account) {
-          setError(
-            "Saved on this phone. Sync will retry when the server is available.",
-          );
+          setError(t("syncLoop.serverDown"));
           setSyncHealth(recordSyncResult(account, false));
         }
       } finally {

@@ -10,7 +10,7 @@ export type Messages = {
   [K in keyof typeof en]: (typeof en)[K] extends Plural ? Plural : string;
 };
 export type MessageKey = keyof Messages;
-export type Params = Record<string, string | number>;
+export type Params = Record<string, string | number | null | undefined>;
 export type Translate = (key: MessageKey, params?: Params) => string;
 
 export const LANGUAGES: readonly Language[] = ["en", "sv"];
@@ -78,6 +78,13 @@ export function setCurrentLanguage(language: Language) {
 export const currentLocale = () => LOCALES[current];
 /** A message in the current language. */
 export const t: Translate = (key, params) => translate(current, key, params);
+
+/**
+ * A number as the current language writes decimals: "12.5" or "12,5". No
+ * grouping, so it reads the same in a label and in a set field.
+ */
+export const formatDecimal = (value: number) =>
+  current === "sv" ? String(value).replace(".", ",") : String(value);
 
 /**
  * Whether to ask once which language to use: only on a device that has never

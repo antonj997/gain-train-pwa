@@ -1,3 +1,4 @@
+import { useT } from "@/i18n/useT";
 type Props = {
   changedElsewhere: boolean;
   error: string | null;
@@ -18,21 +19,22 @@ export default function WorkoutBanners({
   onKeepMine,
   onRetry,
 }: Props) {
+  const { t } = useT();
   return (
     <>
       {changedElsewhere && !busy && (
         <div className="banner workout-banner" role="alert">
-          <p>This workout was changed in another tab or on another device.</p>
+          <p>{t("workout.changedElsewhere")}</p>
           <div className="banner-actions">
             <button
               type="button"
               className="btn-secondary"
               onClick={onLoadLatest}
             >
-              Load the latest version
+              {t("workout.loadLatest")}
             </button>
             <button type="button" className="btn-quiet" onClick={onKeepMine}>
-              Keep my entries
+              {t("workout.keepMine")}
             </button>
           </div>
         </div>
@@ -48,7 +50,7 @@ export default function WorkoutBanners({
                 disabled={busy}
                 onClick={onRetry}
               >
-                Retry saving
+                {t("workout.retrySaving")}
               </button>
             </div>
           )}

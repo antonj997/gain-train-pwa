@@ -5,6 +5,7 @@ import {
   changeSetMeasure,
   hasExtraWeight,
 } from "./set-load";
+import { t, type MessageKey } from "../i18n";
 
 export type LoadKey = "weight" | "bw" | "bwplus" | "assisted";
 export type LoadMarker = "none" | "bw" | "plus" | "minus" | "kg";
@@ -59,22 +60,23 @@ export function loadMarker(set: WorkoutSet, defaultKey: LoadKey): LoadMarker {
   return key === defaultKey ? "none" : MARKERS[key];
 }
 
-const HEADINGS: Record<LoadKey, "kg" | "BW" | "+kg" | "Assist"> = {
-  weight: "kg",
-  bw: "BW",
-  bwplus: "+kg",
-  assisted: "Assist",
-};
+const HEADINGS = {
+  weight: "load.headingKg",
+  bw: "load.headingBw",
+  bwplus: "load.headingPlusKg",
+  assisted: "load.headingAssist",
+} as const satisfies Record<LoadKey, MessageKey>;
 
-export function loadHeading(key: LoadKey): "kg" | "BW" | "+kg" | "Assist" {
-  return HEADINGS[key];
+/** The load column's heading: "kg", "BW", "+kg" or "Assist" in English. */
+export function loadHeading(key: LoadKey): string {
+  return t(HEADINGS[key]);
 }
 
-/** "Reps/sec" when the sets mix both measures. */
-export function countHeading(sets: WorkoutSet[]): "Reps" | "Sec" | "Reps/sec" {
+/** "Reps", "Sec", or "Reps/sec" when the sets mix both measures. */
+export function countHeading(sets: WorkoutSet[]): string {
   const measures = new Set(sets.map(measureOf));
-  if (measures.size > 1) return "Reps/sec";
-  return measures.has("seconds") ? "Sec" : "Reps";
+  if (measures.size > 1) return t("load.headingRepsSec");
+  return t(measures.has("seconds") ? "load.headingSec" : "load.headingReps");
 }
 
 /** Sets every unchecked set to the key, overwriting per-set exceptions. */

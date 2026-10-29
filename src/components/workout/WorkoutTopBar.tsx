@@ -5,7 +5,8 @@ import { useNow } from "@/hooks/useNow";
 import { useToastClearance } from "@/hooks/useToastClearance";
 import { localizedDate } from "@/lib/dates";
 import { durationLabel } from "@/lib/labels";
-import { DEFAULT_WORKOUT_NAME, autoWorkoutName } from "@/lib/workout-name";
+import { autoWorkoutName, workoutTitle } from "@/lib/workout-name";
+import { useT } from "@/i18n/useT";
 
 type Props = {
   workout: Workout;
@@ -40,6 +41,7 @@ export default function WorkoutTopBar({
   const timed = !editing && !!w.startedAt;
   const now = useNow(timed);
   const bar = useRef<HTMLDivElement>(null);
+  const { t } = useT();
   useToastClearance(bar, true);
   const status = [
     timed ? (
@@ -54,16 +56,14 @@ export default function WorkoutTopBar({
         type="button"
         className="date-chip"
         aria-haspopup="dialog"
-        aria-label={`Date ${localizedDate(w.date)}. Edit workout details`}
+        aria-label={t("workout.dateLabel", { date: localizedDate(w.date) })}
         disabled={busy}
         onClick={onDetails}
       >
         {localizedDate(w.date, { day: "numeric", month: "short" })}
       </button>
     ),
-    <span key="sets">
-      {completed} of {total} sets
-    </span>,
+    <span key="sets">{t("workout.setsOf", { done: completed, total })}</span>,
     <span
       key="save"
       role="status"
@@ -77,7 +77,7 @@ export default function WorkoutTopBar({
       <button
         type="button"
         className="icon-btn"
-        aria-label={editing ? "Back to history" : "Leave workout"}
+        aria-label={editing ? t("workout.backToHistory") : t("workout.leave")}
         onClick={onLeave}
         disabled={busy}
       >
@@ -91,9 +91,10 @@ export default function WorkoutTopBar({
             disabled={busy}
             onClick={onDetails}
           >
-            {editing ? "Edit " : ""}
             {/* A running workout's unnamed title follows its exercises. */}
-            {editing ? w.name || DEFAULT_WORKOUT_NAME : autoWorkoutName(w)}
+            {editing
+              ? t("workout.editTitle", { name: workoutTitle(w.name) })
+              : workoutTitle(autoWorkoutName(w))}
           </button>
         </h1>
         <p className="top-bar-status">
@@ -111,7 +112,7 @@ export default function WorkoutTopBar({
         disabled={finishDisabled}
         onClick={onFinish}
       >
-        {editing ? "Save" : "Finish"}
+        {editing ? t("workout.save") : t("workout.finish")}
       </button>
     </div>
   );

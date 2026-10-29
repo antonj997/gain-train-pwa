@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowDown } from "lucide-react";
 import { topBarRootMargin } from "@/lib/root-margin";
+import { useT } from "@/i18n/useT";
 
 const reducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -11,6 +12,7 @@ const reducedMotion = () =>
  */
 export default function NextSetChip({ setId }: { setId?: string }) {
   const [offscreen, setOffscreen] = useState(false);
+  const { t } = useT();
   useEffect(() => {
     setOffscreen(false);
     if (!setId) return;
@@ -48,7 +50,7 @@ export default function NextSetChip({ setId }: { setId?: string }) {
   };
   return (
     <button type="button" className="next-set-chip" onClick={go}>
-      Next set
+      {t("workout.nextSet")}
       <ArrowDown size={16} aria-hidden="true" />
     </button>
   );
