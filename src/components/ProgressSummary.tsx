@@ -9,6 +9,7 @@ import {
 } from "@/data/summary";
 import { localizedDate } from "@/lib/dates";
 import { timeTrainedLabel } from "@/lib/labels";
+import { formatKm } from "@/lib/cardio";
 
 /** The change text with its unit, such as "↑ +1.2 t". Arrows only; messages stay as they are. */
 const withUnit = (change: string, unit: string) =>
@@ -104,6 +105,24 @@ export default function ProgressSummary({
           </div>
         ))}
       </div>
+      {(current.cardioSec > 0 || previous.cardioSec > 0) && (
+        <p className="row-sub">
+          Cardio{" "}
+          <strong>
+            {timeTrainedLabel(Math.round(current.cardioSec / 60))}
+            {current.cardioM > 0 && ` · ${formatKm(current.cardioM)} km`}
+            {current.cardioKcal > 0 && ` · ${current.cardioKcal} kcal`}
+          </strong>{" "}
+          ·{" "}
+          {withUnit(
+            metricChange(
+              Math.round(current.cardioSec / 60),
+              Math.round(previous.cardioSec / 60),
+            ),
+            "min",
+          )}
+        </p>
+      )}
       <p className="row-sub">
         {current.duration === null
           ? "No recorded durations"
@@ -131,13 +150,14 @@ export default function ProgressSummary({
           </time>
           . Workouts per week counts Monday–Sunday weeks that are over and have
           at least one workout; the current week joins once it ends. Working
-          sets leave out warm-ups, cool-downs and drops; volume is weight × reps
-          for weighted sets, drops included. Time trained adds the recorded
-          durations. Exercises improving compares your latest working result
-          with the last session before the period, or the first session within
-          it. Only comparable load and measure count: estimated strength for
-          weighted sets of 1–10 reps, otherwise reps or seconds at the same
-          load. A dash means there is not enough data.
+          sets leave out warm-ups, cool-downs, drops and cardio; volume is
+          weight × reps for weighted sets, drops included. Cardio adds up the
+          time, distance and calories of checked cardio sets. Time trained adds
+          the recorded durations. Exercises improving compares your latest
+          working result with the last session before the period, or the first
+          session within it. Only comparable load and measure count: estimated
+          strength for weighted sets of 1–10 reps, otherwise reps or seconds at
+          the same load. A dash means there is not enough data.
         </p>
       </details>
     </section>

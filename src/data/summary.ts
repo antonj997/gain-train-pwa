@@ -1,6 +1,7 @@
 import { type Workout, type RecordDoc, validSet } from "./model";
 import { comparableSets, progressFor } from "./analytics";
 import { isDrop } from "./drops";
+import { cardioTotals, isCardioSet } from "../lib/cardio";
 
 export function improvementRate(
   records: RecordDoc[],
@@ -129,11 +130,19 @@ export function summarize(workouts: Workout[], days: number, now: string) {
     .filter((set) => set.done && validSet(set));
   // A set and its drops count as one set; volume still includes every drop.
   const counted = sets.filter((set) => !isDrop(set));
+  // Cardio is shown as time and distance; it is never volume or a strength set.
+  const strengthCounted = counted.filter((set) => !isCardioSet(set));
+  const cardio = cardioTotals(sets.filter(isCardioSet));
   return {
+    cardioSec: cardio.durationSec,
+    cardioM: cardio.distanceM,
+    cardioKcal: cardio.calories,
     volume: sets.reduce(
       (sum, set) =>
         sum +
-        (set.load === "weight" && set.measure !== "seconds"
+        (set.load === "weight" &&
+        set.measure !== "seconds" &&
+        set.measure !== "cardio"
           ? (set.weight ?? 0) * (set.reps ?? 0)
           : 0),
       0,
@@ -147,7 +156,8 @@ export function summarize(workouts: Workout[], days: number, now: string) {
       ? durations.reduce((sum, value) => sum + value, 0)
       : null,
     sets: counted.length,
-    workingSets: counted.filter((set) => set.section === "working").length,
+    workingSets: strengthCounted.filter((set) => set.section === "working")
+      .length,
   };
 }
 export function metricChange(
