@@ -18,6 +18,7 @@ import { errorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
+import { coarsePointer } from "@/lib/touch";
 
 /** A chosen exercise; a custom one carries the defaults it was saved with. */
 export type PickedExercise = { id: string; name: string } & ExerciseDefaults;
@@ -203,7 +204,8 @@ export default function ExercisePickerBody({
           <label>
             Exercise name
             <input
-              autoFocus
+              // A touch screen would open the keyboard before the form shows.
+              autoFocus={!coarsePointer()}
               value={name}
               onChange={(e) => updateDraft({ name: e.target.value })}
               maxLength={100}
