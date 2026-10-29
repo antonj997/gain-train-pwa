@@ -1,5 +1,11 @@
 import { type RecordDoc, type Workout } from "../data/model";
 import { shiftDate } from "../data/summary";
+import {
+  DEFAULT_HEATMAP_SPAN,
+  heatmapWindow,
+  stepHeatmapEnd,
+  type HeatmapSpan,
+} from "./heatmap";
 
 function parseMonth(month: string) {
   if (
@@ -24,7 +30,11 @@ function validDate(date: string) {
 export type HistoryCalendarState = {
   month: string;
   mode: "month" | "range";
+  /** "simple" is the activity heatmap. */
   display: "detailed" | "simple";
+  /** Heatmap only: how far back it reaches and the last day it shows. */
+  span: HeatmapSpan;
+  heatEnd: string;
   selectedDate: string | null;
   from: string | null;
   to: string | null;
@@ -35,6 +45,8 @@ export type HistoryCalendarAction =
   | { type: "browse"; month: string }
   | { type: "mode"; mode: HistoryCalendarState["mode"] }
   | { type: "display"; display: HistoryCalendarState["display"] }
+  | { type: "span"; span: HeatmapSpan }
+  | { type: "shift"; direction: -1 | 1 }
   | { type: "bound"; bound: HistoryCalendarState["activeBound"] }
   | { type: "date"; date: string }
   | { type: "clear" }
@@ -45,6 +57,8 @@ export function createHistoryCalendar(now: string): HistoryCalendarState {
     month: validDate(now).slice(0, 7),
     mode: "month",
     display: "simple",
+    span: DEFAULT_HEATMAP_SPAN,
+    heatEnd: now,
     selectedDate: null,
     from: null,
     to: null,
@@ -59,7 +73,24 @@ export function changeHistoryCalendar(
 ): HistoryCalendarState {
   switch (action.type) {
     case "reset":
-      return { ...createHistoryCalendar(now), display: state.display };
+      return {
+        ...createHistoryCalendar(now),
+        display: state.display,
+        span: state.span,
+      };
+    case "span":
+      return { ...state, span: action.span, selectedDate: null };
+    case "shift":
+      return {
+        ...state,
+        heatEnd: stepHeatmapEnd(
+          state.heatEnd,
+          state.span,
+          action.direction,
+          now,
+        ),
+        selectedDate: null,
+      };
     case "display":
       // A from–to range only exists in the detailed calendar.
       return action.display === "simple"
@@ -134,6 +165,8 @@ export function historyCalendarBounds(
   }
   if (state.selectedDate)
     return { start: state.selectedDate, end: state.selectedDate };
+  if (state.display === "simple")
+    return heatmapWindow(state.heatEnd, state.span);
   const first = parseMonth(state.month);
   const last = new Date(
     Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0),
@@ -151,17 +184,14 @@ export function moveCalendarMonth(month: string, offset: number) {
   return date.toISOString().slice(0, 7);
 }
 
-export function calendarCells(
-  month: string,
-  display: "detailed" | "simple" = "detailed",
-) {
+export function calendarCells(month: string) {
   const first = parseMonth(month);
   const offset = (first.getUTCDay() + 6) % 7;
   const last = new Date(
     Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0),
   );
   const length = Math.ceil((offset + last.getUTCDate()) / 7) * 7;
-  const cells = Array.from({ length }, (_, index) => {
+  return Array.from({ length }, (_, index) => {
     const date = shiftDate(month + "-01", index - offset);
     return {
       date,
@@ -169,7 +199,6 @@ export function calendarCells(
       inMonth: date.startsWith(month),
     };
   });
-  return display === "simple" ? cells.filter((cell) => cell.inMonth) : cells;
 }
 
 export function workoutDates(records: readonly RecordDoc[]) {
