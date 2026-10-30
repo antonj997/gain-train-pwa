@@ -1,27 +1,30 @@
 import { useMemo, useState } from "react";
-import { TrendingUp } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ChevronRight, Plus, Target, TrendingUp } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import { useData } from "@/contexts/useData";
 import {
   cardioProgressFor,
   exerciseStats,
   progressFor,
   recentBests,
-  sparklinePoints,
 } from "@/data/analytics";
 import { labelSet, today } from "@/data/model";
 import { historyPeriod } from "@/data/summary";
 import CardioProgressDetail from "@/components/CardioProgressDetail";
 import ExerciseProgressDetail from "@/components/ExerciseProgressDetail";
-import GoalsSection from "@/components/goals/GoalsSection";
+import GoalsPanel from "@/components/goals/GoalsPanel";
 import PageHeader from "@/components/PageHeader";
 import ProgressSummary from "@/components/ProgressSummary";
+import Sparkline from "@/components/Sparkline";
 import ListRow from "@/components/ui/ListRow";
 import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
 import { daysAgo, localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { totalsLabel } from "@/lib/cardio";
+import { useGoalEditor } from "@/hooks/useGoalEditor";
+import { useGoals } from "@/hooks/useGoals";
+import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import { useT } from "@/i18n/useT";
 
 const periods = [
@@ -31,31 +34,19 @@ const periods = [
 ] as const;
 type Period = (typeof periods)[number]["value"];
 
-/** A 64×28 trend line with no axes; the row text carries the numbers. */
-function Sparkline({ values }: { values: number[] }) {
-  return (
-    <svg
-      className="sparkline"
-      width="64"
-      height="28"
-      viewBox="0 0 64 28"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <polyline
-        points={sparklinePoints(values)}
-        fill="none"
-        stroke="var(--gt-accent)"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+type Tab = "stats" | "goals";
+const tabs = [
+  { value: "stats", label: "goals.tabStats" },
+  { value: "goals", label: "goals.tabGoals" },
+] as const;
 
+/** Progress: stats over a period, or goals with `?tab=goals`. */
 export default function Progress() {
   const { state } = useData();
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = params.get("tab") === "goals" ? "goals" : "stats";
+  const setTab = (next: Tab) =>
+    setParams(next === "goals" ? { tab: next } : {}, { replace: true });
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<Period>("4w");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -64,6 +55,9 @@ export default function Progress() {
     ({ value, label }) => ({ value, label: t(label) }),
   );
   const now = today();
+  const [preferences, updatePreferences] = useTrainingPreferences();
+  const goals = useGoals(preferences.weeklyGoal, now);
+  const goalEditor = useGoalEditor();
   const records = useMemo(() => Object.values(state.records), [state.records]);
   // Recomputed only when the log changes, not while typing in the search box.
   const items = useMemo(() => progressFor(records), [records]);
@@ -111,18 +105,78 @@ export default function Progress() {
   const openCardio = cardioItems.find((item) => item.id === openId);
   const hasData = items.length > 0 || cardioItems.length > 0;
   const before = periods.find((p) => p.value === range)!.before;
+  // "Goals: 2 active · this week 2/3", only once there is something to show.
+  const goalChip = (() => {
+    const parts = [
+      goals.open.length > 0 &&
+        t("goals.chipActive", { count: goals.open.length }),
+      goals.weekly &&
+        t("goals.chipWeek", {
+          done: goals.weekly.done,
+          goal: goals.weekly.goal,
+        }),
+    ].filter(Boolean);
+    if (!parts.length && goals.reached.length)
+      parts.push(t("goals.chipReached", { count: goals.reached.length }));
+    return parts.length ? t("goals.chip", { parts: parts.join(" · ") }) : null;
+  })();
   return (
     <div className="page progress-page">
-      <PageHeader
-        eyebrow={
-          hasData
-            ? t("progress.comparedWith", { before: t(before) })
-            : undefined
-        }
-        title={t("progress.title")}
+      {tab === "stats" ? (
+        <PageHeader
+          eyebrow={
+            hasData
+              ? t("progress.comparedWith", { before: t(before) })
+              : undefined
+          }
+          title={t("progress.title")}
+        />
+      ) : (
+        <PageHeader
+          eyebrow={
+            goals.open.length
+              ? t("goals.eyebrow", { count: goals.open.length })
+              : t("progress.title")
+          }
+          title={t("goals.title")}
+          action={
+            <button
+              type="button"
+              className="text-link"
+              onClick={() => goalEditor.edit("new")}
+            >
+              <Plus size={18} aria-hidden="true" />
+              {t("goals.add")}
+            </button>
+          }
+        />
+      )}
+      <Segmented<Tab>
+        label={t("goals.tabs")}
+        value={tab}
+        options={tabs.map(({ value, label }) => ({ value, label: t(label) }))}
+        onChange={setTab}
       />
-      <GoalsSection />
-      {hasData && (
+      {tab === "goals" && (
+        <GoalsPanel
+          {...goals}
+          preferences={preferences}
+          onPreferences={updatePreferences}
+          onEdit={goalEditor.edit}
+        />
+      )}
+      {tab === "stats" && goalChip && (
+        <button
+          type="button"
+          className="goals-chip-link"
+          onClick={() => setTab("goals")}
+        >
+          <Target size={18} aria-hidden="true" />
+          <span>{goalChip}</span>
+          <ChevronRight className="chev" size={18} aria-hidden="true" />
+        </button>
+      )}
+      {tab === "stats" && hasData && (
         <>
           <Segmented<Period>
             label={t("progress.period")}
@@ -206,7 +260,7 @@ export default function Progress() {
           </section>
         </>
       )}
-      {!hasData && (
+      {tab === "stats" && !hasData && (
         <div className="empty-card">
           <TrendingUp size={30} />
           <h2>{t("progress.emptyTitle")}</h2>
@@ -234,6 +288,7 @@ export default function Progress() {
           <CardioProgressDetail item={openCardio} cutoffDate={daysAgo(30)} />
         )}
       </Sheet>
+      {goalEditor.editor}
     </div>
   );
 }
