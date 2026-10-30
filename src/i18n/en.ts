@@ -1160,4 +1160,7 @@ export const en = {
   "auth.forgot": "Forgot password?",
   "auth.createAnAccount": "Create an account",
   "auth.backToSignIn": "Back to sign in",
+  "plan.legendPlanned": "Planned",
+  "plan.legendRest": "Rest",
+  "plan.legendChanged": "Changed",
 };

@@ -799,7 +799,7 @@ export const sv = {
   "picker.show": "Visa",
   "picker.suggested": "Förslag",
   "picker.all": "Alla",
-  "picker.recent": "Senaste",
+  "picker.recent": "Nyligen",
   "picker.favourites": "Favoriter",
   "picker.results": "Sökresultat för övningar",
   "picker.noMatch":
@@ -1170,4 +1170,7 @@ export const sv = {
   "auth.forgot": "Glömt lösenordet?",
   "auth.createAnAccount": "Skapa ett konto",
   "auth.backToSignIn": "Tillbaka till inloggning",
+  "plan.legendPlanned": "Planerat",
+  "plan.legendRest": "Vila",
+  "plan.legendChanged": "Ändrat",
 } satisfies Messages;

@@ -146,13 +146,16 @@ export default function PlanCalendar({
       {describe && (
         <div className="calendar-footer plan-legend">
           <span>
-            <span className="plan-mark planned" aria-hidden="true" /> Planned
+            <span className="plan-mark planned" aria-hidden="true" />{" "}
+            {t("plan.legendPlanned")}
           </span>
           <span>
-            <span className="plan-mark rest" aria-hidden="true" /> Rest
+            <span className="plan-mark rest" aria-hidden="true" />{" "}
+            {t("plan.legendRest")}
           </span>
           <span>
-            <span className="plan-swatch" aria-hidden="true" /> Changed
+            <span className="plan-swatch" aria-hidden="true" />{" "}
+            {t("plan.legendChanged")}
           </span>
         </div>
       )}
