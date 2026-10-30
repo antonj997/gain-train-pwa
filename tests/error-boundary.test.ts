@@ -31,3 +31,24 @@ test("a later deploy still reloads, but a reload that did not help does not loop
   assert.equal(shouldReloadForStaleCode(stale, 990_000, 1_000_000), false);
   assert.equal(shouldReloadForStaleCode("boom", null, 1_000_000), false);
 });
+
+test("the last crash is kept for a bug report and read back safely", async () => {
+  const store = new Map<string, string>();
+  (globalThis as { localStorage?: unknown }).localStorage = {
+    getItem: (k: string) => store.get(k) ?? null,
+    setItem: (k: string, v: string) => void store.set(k, v),
+    removeItem: (k: string) => void store.delete(k),
+  };
+  const { readLastError, storeLastError } =
+    await import("../src/components/ErrorBoundary.tsx");
+  assert.equal(readLastError(), null);
+  storeLastError(errorReport(new Error("boom"), "in SetLine"));
+  const last = readLastError();
+  assert.equal(last?.message, "boom");
+  assert.match(last!.stack, /in SetLine/);
+  store.set("gt-last-error", "{not json");
+  assert.equal(readLastError(), null);
+  store.set("gt-last-error", JSON.stringify({ message: 3 }));
+  assert.equal(readLastError(), null);
+  delete (globalThis as { localStorage?: unknown }).localStorage;
+});

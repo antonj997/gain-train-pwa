@@ -363,7 +363,7 @@ export default function ExercisePickerBody({
                   <strong className="exercise-name">
                     {e.name}
                     {own.has(e.id) && (
-                      <span className="stat-chip">{t("exercises.yours")}</span>
+                      <span className="stat-chip">{t("exercises.mine")}</span>
                     )}
                   </strong>
                   <small>

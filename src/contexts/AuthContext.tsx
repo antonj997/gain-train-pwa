@@ -84,7 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw Error(t("err.deleteOffline"));
     const id = user.id;
     const { data, error } = await supabase.functions.invoke("delete-account", {
-      body: { confirmation: t("deleteAccount.word") },
+      // The server's fixed protocol word, whatever word the sheet asked for.
+      body: { confirmation: "DELETE" },
     });
     if (error || !data?.deleted) throw Error(t("err.deleteFailed"));
     try {

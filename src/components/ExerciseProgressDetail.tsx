@@ -11,9 +11,10 @@ import {
   baseline,
   comparableSets,
   exerciseStats,
+  heaviestLift,
   type progressFor,
 } from "@/data/analytics";
-import { labelSet } from "@/data/model";
+import { labelSet, type RecordDoc } from "@/data/model";
 import { metricChange } from "@/data/summary";
 import ListRow from "@/components/ui/ListRow";
 import { localizedDate } from "@/lib/dates";
@@ -25,10 +26,16 @@ type Props = {
   item: ReturnType<typeof progressFor>[number];
   /** Sessions on or before this date count towards the 30-day baseline. */
   cutoffDate: string;
+  /** Every record, to find the heaviest set ever lifted. */
+  records: RecordDoc[];
 };
 
 /** The sheet body for one exercise: latest and best results, sessions and the chart. */
-export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
+export default function ExerciseProgressDetail({
+  item,
+  cutoffDate,
+  records,
+}: Props) {
   const { latest, weighted, timed, comparable, valueOf, best } =
     exerciseStats(item);
   const unit = t(
@@ -54,6 +61,7 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
     .filter((point) => comparableSets(point.set, latest.set))
     .map((point) => ({ ...point, value: valueOf(point) }));
   const decimals = weighted ? 1 : 0;
+  const heaviest = heaviestLift(records, item.id);
   return (
     <div className="exercise-detail">
       <div className="card performance">
@@ -107,7 +115,7 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
           </strong>
           <small className="row-sub">{t("detail.vsPrior", { unit })}</small>
         </div>
-        <div className="card tile tile-wide">
+        <div className={"card tile" + (heaviest ? "" : " tile-wide")}>
           <span className="row-sub">{t("detail.sessions30")}</span>
           <strong className="tile-value">
             {item.points.filter((point) => point.date > cutoffDate).length}
@@ -116,6 +124,17 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
             {t("detail.total", { count: item.points.length })}
           </small>
         </div>
+        {heaviest && (
+          <div className="card tile">
+            <span className="row-sub">{t("detail.heaviest")}</span>
+            <strong className="tile-value tile-value-text">
+              {labelSet(heaviest.set)}
+            </strong>
+            <time className="row-sub" dateTime={heaviest.date}>
+              {localizedDate(heaviest.date)}
+            </time>
+          </div>
+        )}
       </div>
       <p className="row-sub">
         {t("detail.bestResult", { date: localizedDate(best.date) })}{" "}

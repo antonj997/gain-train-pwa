@@ -1,11 +1,12 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { t } from "../i18n";
+import { local, storageKeys, writeStored } from "../lib/storage";
 
 const CHUNK_RELOAD_KEY = "gt-chunk-reload";
 /** A stale-code error this soon after the last reload means reloading did not help. */
 const RELOAD_RETRY_MS = 60_000;
 
-type ErrorReport = {
+export type ErrorReport = {
   message: string;
   stack: string;
   path: string;
@@ -20,6 +21,30 @@ export function errorReport(error: unknown, extra = ""): ErrorReport {
     path: typeof location === "undefined" ? "" : location.pathname,
     at: new Date().toISOString(),
   };
+}
+
+/** Remembers the crash on this device, so a bug report can include it. */
+export function storeLastError(report: ErrorReport) {
+  writeStored(storageKeys.lastError, JSON.stringify(report));
+}
+
+/** The last crash this device saw, or null. */
+export function readLastError(): ErrorReport | null {
+  try {
+    const raw = local.getItem(storageKeys.lastError);
+    const value = raw ? JSON.parse(raw) : null;
+    if (!value || typeof value.message !== "string") return null;
+    const text = (v: unknown, max: number) =>
+      typeof v === "string" ? v.slice(0, max) : "";
+    return {
+      message: text(value.message, 500),
+      stack: text(value.stack, 4000),
+      path: text(value.path, 200),
+      at: text(value.at, 40),
+    };
+  } catch {
+    return null;
+  }
 }
 
 /** A deploy replaced the code this page still refers to: a reload fixes it. */
@@ -81,6 +106,7 @@ export default class ErrorBoundary extends Component<
   componentDidCatch(error: unknown, info: ErrorInfo) {
     const report = errorReport(error, info.componentStack ?? "");
     if (reloadForStaleCode(report.message)) return;
+    storeLastError(report);
     this.setState({ report });
   }
 

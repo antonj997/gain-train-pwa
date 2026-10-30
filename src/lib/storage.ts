@@ -57,6 +57,8 @@ export const storageKeys = {
   persistRequested: "gt-persist-requested",
   /** This device closed Train's "Sign in to sync" banner. */
   signInBannerDismissed: "gt-sign-in-banner-dismissed",
+  /** The last crash the error screen showed, offered with a bug report. */
+  lastError: "gt-last-error",
   deleted: (account: string) => "gt-deleted-" + account,
   syncHealth: (account: string) => "gt-sync-health:" + account,
   /** The device-only plan of the earlier version; imported once, then removed. */

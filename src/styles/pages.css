@@ -227,7 +227,7 @@ label.row {
   background-color: var(--gt-done-soft);
   color: var(--gt-done);
 }
-/* Solid, so "Shared" stands apart from the soft "Yours" beside it. */
+/* Solid, so "Shared" stands apart from the soft "Mine" beside it. */
 .stat-chip.strong {
   background-color: var(--gt-accent);
   color: var(--gt-on-accent);
@@ -458,6 +458,12 @@ label.row {
 }
 .tile-wide {
   grid-column: 1 / -1;
+}
+/* A set label ("100 kg × 2", "BW + 20 kg × 5") rather than one number. */
+.tile-value.tile-value-text {
+  font-size: var(--gt-fs-5);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 .tile-value {
   font-size: var(--gt-fs-6);
@@ -970,4 +976,168 @@ details[open] > .session-summary > svg {
 .name-form {
   display: grid;
   gap: var(--gt-space-3);
+}
+
+/* Settings → Send feedback. */
+.feedback-form {
+  display: grid;
+  gap: var(--gt-space-4);
+}
+.feedback-description {
+  min-height: 140px;
+  resize: vertical;
+}
+.feedback-count {
+  margin-top: calc(var(--gt-space-3) * -1);
+  text-align: right;
+}
+.feedback-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.feedback-images {
+  display: grid;
+  gap: var(--gt-space-2);
+}
+.feedback-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gt-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.feedback-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface-2);
+}
+.feedback-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* A 28px round control in the corner with a 44px target. */
+.feedback-thumb-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background-color: rgb(20 22 26 / 0.72);
+  color: #ffffff;
+}
+.feedback-thumb-remove::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+.feedback-thumb-open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.feedback-thumb-missing {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  text-align: center;
+}
+.my-reports {
+  display: grid;
+  gap: var(--gt-space-2);
+  margin-top: var(--gt-space-3);
+}
+.my-reports .list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.my-report-reply {
+  color: var(--gt-ink);
+}
+.stat-chip.muted {
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
+
+/* Settings → Admin → Reports. */
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.chip-count {
+  margin-left: 6px;
+  font-weight: 400;
+  opacity: 0.8;
+}
+.report-kind {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background-color: var(--gt-danger-bg);
+  color: var(--gt-danger-fg);
+}
+.report-kind.feature {
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.report-images-count {
+  white-space: nowrap;
+}
+.report-images-count svg {
+  display: inline-block;
+  margin-right: 3px;
+  vertical-align: -2px;
+}
+.report-section {
+  display: grid;
+  gap: var(--gt-space-2);
+}
+.report-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.report-details summary {
+  padding: var(--gt-space-2) 0;
+}
+.report-details pre {
+  margin: 0;
+  max-height: 40vh;
+  overflow: auto;
+  padding: var(--gt-space-3);
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--gt-fs-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.report-image-full {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: calc(var(--viewport-height, 100dvh) - 140px);
+  object-fit: contain;
+  border-radius: var(--gt-radius-md);
 }

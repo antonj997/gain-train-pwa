@@ -37,7 +37,7 @@ export type LibraryExercise = {
   best: string | null;
 };
 
-export type ExerciseFilter = "all" | "yours" | "recent" | "hidden";
+export type ExerciseFilter = "all" | "mine" | "recent" | "hidden";
 
 /**
  * Every exercise the Library lists: the catalogue and the user's own, with
@@ -112,7 +112,7 @@ export function filterExercises(
           matchesFacets(item, facets) &&
           (filter === "all" ||
             filter === "hidden" ||
-            (filter === "yours" && item.custom) ||
+            (filter === "mine" && item.custom) ||
             (filter === "recent" && item.lastDate !== null)),
       )
       .sort(byName),

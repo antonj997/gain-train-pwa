@@ -32,10 +32,10 @@ import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
 type Filter = ExerciseFilter | "shared";
 const filters = [
   { value: "all", label: "exercises.filterAll" },
-  { value: "yours", label: "exercises.filterYours" },
+  { value: "mine", label: "exercises.filterMine" },
+  { value: "shared", label: "exercises.filterShared" },
   { value: "recent", label: "exercises.filterRecent" },
   { value: "hidden", label: "exercises.filterHidden" },
-  { value: "shared", label: "exercises.filterShared" },
 ] as const satisfies readonly { value: Filter; label: MessageKey }[];
 
 /** Library → Exercises: search, filters, groups and the custom exercise editor. */
@@ -214,7 +214,11 @@ export default function ExercisesPanel() {
           onChange={(e) => setSearch(e.target.value)}
         />
       </label>
-      <div className="filters" role="group" aria-label={t("exercises.show")}>
+      <div
+        className="facet-chips"
+        role="group"
+        aria-label={t("exercises.show")}
+      >
         {filters.map((f) => (
           <button
             key={f.value}
@@ -278,8 +282,8 @@ export default function ExercisesPanel() {
         <p className="empty" role="status">
           {filter === "recent" && !search.trim()
             ? t("exercises.emptyRecent")
-            : filter === "yours" && !search.trim()
-              ? t("exercises.emptyYours")
+            : filter === "mine" && !search.trim()
+              ? t("exercises.emptyMine")
               : filter === "hidden" && !search.trim()
                 ? t("exercises.emptyHidden")
                 : t("exercises.noMatch")}

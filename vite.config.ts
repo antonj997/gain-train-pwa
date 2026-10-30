@@ -1,10 +1,26 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { VitePWA } from "vite-plugin-pwa";
 const base = process.env.GITHUB_PAGES === "true" ? "/gain-train-pwa/" : "/";
+// The build a bug report came from: the commit and the build date.
+const commit = (() => {
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: "pipe" })
+      .toString()
+      .trim();
+  } catch {
+    return process.env.GITHUB_SHA?.slice(0, 7) ?? "dev";
+  }
+})();
 export default defineConfig({
   base,
+  define: {
+    __APP_BUILD__: JSON.stringify(
+      commit + " · " + new Date().toISOString().slice(0, 10),
+    ),
+  },
   plugins: [
     react(),
     VitePWA({

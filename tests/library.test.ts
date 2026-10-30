@@ -41,7 +41,7 @@ test("filters search by name and the chosen chip", () => {
     ["Arnold Press", "Bench Press"],
   );
   assert.deepEqual(
-    filterExercises(all, "", "yours").map((e) => e.name),
+    filterExercises(all, "", "mine").map((e) => e.name),
     ["Cable Fly", "my custom"],
   );
   assert.equal(filterExercises(all, "", "recent").length, 6);
