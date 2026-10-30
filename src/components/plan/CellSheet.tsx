@@ -2,7 +2,15 @@ import { Check } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
 import type { RoutineGroup } from "@/data/model";
-import { REST, dayTypes, groupCell, typeCell } from "@/data/plans";
+import {
+  REST,
+  dayTypeLabel,
+  dayTypes,
+  groupCell,
+  typeCell,
+} from "@/data/plans";
+import { t } from "@/i18n";
+import { categoryLabel } from "@/lib/catalogue-labels";
 
 type Routines = readonly { id: string; payload: { name: string } }[];
 
@@ -45,7 +53,11 @@ export default function CellSheet({
       onClick={() => onChoose(cell)}
       trailing={
         current === cell ? (
-          <Check size={20} className="plan-check" aria-label="Selected" />
+          <Check
+            size={20}
+            className="plan-check"
+            aria-label={t("plan.selected")}
+          />
         ) : undefined
       }
     />
@@ -54,29 +66,37 @@ export default function CellSheet({
     <Sheet open={open} onClose={onClose} title={title}>
       <div className="list">
         {useTemplate !== undefined &&
-          option(undefined, "Use the template", useTemplate || "Nothing")}
+          option(
+            undefined,
+            t("plan.useTemplate"),
+            useTemplate || t("plan.nothing"),
+          )}
         {option(null, emptyLabel)}
-        {option(REST, "Rest")}
+        {option(REST, t("plan.rest"))}
       </div>
-      <section aria-label="Day types">
-        <h3 className="group-title">Day types</h3>
+      <section aria-label={t("plan.dayTypes")}>
+        <h3 className="group-title">{t("plan.dayTypes")}</h3>
         <div className="list">
-          {dayTypes.map((t) =>
-            option(typeCell(t.id), t.label, t.categories.join(", ")),
+          {dayTypes.map((type) =>
+            option(
+              typeCell(type.id),
+              dayTypeLabel(type),
+              type.categories.map(categoryLabel).join(", "),
+            ),
           )}
         </div>
       </section>
       {groups.length > 0 && (
-        <section aria-label="Groups">
-          <h3 className="group-title">Groups</h3>
+        <section aria-label={t("plan.groups")}>
+          <h3 className="group-title">{t("plan.groups")}</h3>
           <div className="list">
             {groups.map((g) => option(groupCell(g.id), g.name))}
           </div>
         </section>
       )}
       {routines.length > 0 && (
-        <section aria-label="Routines">
-          <h3 className="group-title">Routines</h3>
+        <section aria-label={t("plan.routines")}>
+          <h3 className="group-title">{t("plan.routines")}</h3>
           <div className="list">
             {routines.map((r) => option(r.id, r.payload.name))}
           </div>

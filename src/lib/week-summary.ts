@@ -1,4 +1,4 @@
-import { shiftDate, weekStart } from "@/lib/dates";
+import { shiftDate, weekStart, weekdayNames } from "@/lib/dates";
 import { doneSetCount } from "@/data/selectors";
 import type { Workout } from "@/data/model";
 
@@ -14,13 +14,11 @@ export type WeekDay = {
   today: boolean;
 };
 
-const LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
-
 /** Monday to Sunday of the week that contains `now`, marking days with a workout. */
 export function weekStrip(dates: readonly string[], now: string): WeekDay[] {
   const start = weekStart(now);
   const done = new Set(dates);
-  return LETTERS.map((label, index) => {
+  return weekdayNames("narrow").map((label, index) => {
     const date = shiftDate(start, index);
     return {
       date,

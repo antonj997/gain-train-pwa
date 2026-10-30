@@ -37,9 +37,7 @@ import { PHONE_ACCOUNT } from "@/lib/auth-account";
 import { staleDraftKeys } from "@/lib/drafts";
 import { local, storedKeys } from "@/lib/storage";
 import { notifyOtherTabs, onOtherTabChange } from "@/lib/tab-sync";
-
-const IN_PROGRESS_MESSAGE =
-  "Another workout is already in progress. Finish or abandon it on Train, then try again.";
+import { t } from "@/i18n";
 
 type Failure = {
   /** Shown when the device write fails for a reason other than validation. */
@@ -79,9 +77,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (active) {
-          setError(
-            "Device storage is unavailable. Allow site storage to safely log workouts.",
-          );
+          setError(t("err.storageUnavailable"));
           setReady(true);
         }
       });
@@ -133,8 +129,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     const deleteRecord: Data["deleteRecord"] = (id) =>
       commit(() => change((s) => deleteRecordIn(s, id)), {
-        storage:
-          "Could not remove the saved record on this phone. Keep this screen open and try again.",
+        storage: t("err.removeFailed"),
       });
     const save: Data["save"] = (id, kind, payload, deleted = false) => {
       if (deleted) return deleteRecord(id);
@@ -144,29 +139,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return change((s) => saveRecordIn(s, id, kind, parsed));
         },
         {
-          storage:
-            "Could not save on this phone. Keep this screen open and free some storage.",
-          inProgress: IN_PROGRESS_MESSAGE,
+          storage: t("err.saveOnPhone"),
+          inProgress: t("err.inProgressTrain"),
         },
       );
     };
     const startWorkout: Data["startWorkout"] = (id, payload, replace) =>
       commit(() => change((s) => createWorkout(s, id, payload, replace)), {
-        storage:
-          "Could not start on this phone. Your current workout has been kept. Free some storage and try again.",
+        storage: t("err.startOnPhone"),
       });
     const restoreWorkout: Data["restoreWorkout"] = (id) =>
       commit(() => change((s) => restoreRemovedWorkout(s, id)), {
-        storage:
-          "Could not restore this workout on this phone. Free some storage and try again.",
+        storage: t("err.restoreWorkoutPhone"),
       });
     const resolve: Data["resolve"] = (id, mine) =>
       commit(() => change((s) => resolveConflictIn(s, id, mine)), {
-        storage: "Could not save your choice on this phone. Try again.",
+        storage: t("err.choiceOnPhone"),
       });
     const retryRejected: Data["retryRejected"] = () =>
       commit(() => change(retryRejectedIn), {
-        storage: "Could not retry on this phone. Try again.",
+        storage: t("err.retryOnPhone"),
       });
     const importRecords: Data["importRecords"] = async (records) => {
       // Download what the server has first, so records it already holds are
@@ -181,8 +173,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           });
         },
         {
-          storage:
-            "Could not restore the backup on this phone. Free some storage and try again.",
+          storage: t("err.restoreBackupPhone"),
         },
       );
       return result;
@@ -200,8 +191,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           });
         },
         {
-          storage:
-            "Could not copy this phone’s log. Free some storage and try again.",
+          storage: t("err.copyPhoneStorage"),
         },
       );
       return result;
@@ -213,8 +203,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           return change((s) => saveLibraryIn(s, account, parsed));
         },
         {
-          storage:
-            "Could not save on this phone. Keep this screen open and free some storage.",
+          storage: t("err.saveOnPhone"),
         },
       );
     return {

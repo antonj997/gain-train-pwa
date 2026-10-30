@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { t } from "../i18n";
 
 const CHUNK_RELOAD_KEY = "gt-chunk-reload";
 /** A stale-code error this soon after the last reload means reloading did not help. */
@@ -102,21 +103,18 @@ export default class ErrorBoundary extends Component<
     const Root = this.props.scope === "page" ? "div" : "main";
     return (
       <Root className="crash-screen" role="alert">
-        <h1>Something went wrong</h1>
-        <p>
-          Your workout is saved. Reload to continue, and send the details below
-          if it keeps happening.
-        </p>
+        <h1>{t("crash.title")}</h1>
+        <p>{t("crash.text")}</p>
         <div className="crash-actions">
           <button
             type="button"
             className="btn-primary"
             onClick={() => location.reload()}
           >
-            Reload
+            {t("crash.reload")}
           </button>
           <button type="button" className="btn-secondary" onClick={this.copy}>
-            {copied ? "Copied" : "Copy details"}
+            {copied ? t("crash.copied") : t("crash.copy")}
           </button>
         </div>
         <pre className="crash-details">

@@ -5,6 +5,7 @@ import type { PlannedDay } from "@/data/plans";
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
+import { useT } from "@/i18n/useT";
 
 type Props = {
   /** Finished workouts, newest first. */
@@ -16,6 +17,7 @@ type Props = {
 
 /** "This week": the goal chip, a dot per day (done, today, planned) and the totals. */
 export default function WeekCard({ completed, goal, day, planned }: Props) {
+  const { t, language } = useT();
   const week = useMemo(() => {
     const dates = completed.map((r) => r.payload.date);
     const days = weekStrip(dates, day);
@@ -28,21 +30,23 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
       ),
       streak: goalStreak(dates, goal, day),
     };
-  }, [completed, goal, day, planned]);
+    // The weekday letters follow the language.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [completed, goal, day, planned, language]);
   const { totals } = week;
   const goalMet = goal !== null && totals.workouts >= goal;
   return (
     <section className="card col-12" aria-labelledby="week-heading">
       <div className="card-head">
-        <h2 id="week-heading">This week</h2>
+        <h2 id="week-heading">{t("home.thisWeek")}</h2>
         <span className="card-head-end">
           <span className={"stat-chip" + (goalMet ? " done" : "")}>
             {goal !== null
-              ? `${totals.workouts} of ${goal} workouts`
+              ? t("home.goalProgress", { done: totals.workouts, goal })
               : countLabel(totals.workouts, "workout")}
           </span>
           <Link className="text-link" to="/library?tab=plan">
-            Plan
+            {t("home.plan")}
           </Link>
         </span>
       </div>
@@ -55,9 +59,9 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
               className="day"
               aria-label={
                 localizedDate(d.date, { weekday: "long", day: "numeric" }) +
-                (d.done ? ", workout done" : "") +
-                (d.today ? ", today" : "") +
-                (entry ? `, planned: ${entry.title}` : "")
+                (d.done ? t("home.dayDone") : "") +
+                (d.today ? t("home.dayToday") : "") +
+                (entry ? t("home.dayPlanned", { title: entry.title }) : "")
               }
             >
               <span aria-hidden="true">{d.label}</span>
@@ -81,13 +85,13 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
           ? [
               countLabel(totals.sets, "set"),
               totals.minutes > 0 && durationLabel(totals.minutes),
-              week.streak >= 2 && `${week.streak} weeks in a row on goal`,
+              week.streak >= 2 && t("home.streak", { count: week.streak }),
             ]
               .filter(Boolean)
               .join(" · ")
           : week.streak >= 2
-            ? `${week.streak} weeks in a row on goal`
-            : "Nothing logged yet this week."}
+            ? t("home.streak", { count: week.streak })
+            : t("home.nothingThisWeek")}
       </p>
     </section>
   );

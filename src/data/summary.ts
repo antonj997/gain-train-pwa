@@ -9,6 +9,7 @@ import {
   shiftDate,
   weekStart,
 } from "../lib/dates";
+import { formatFixed, t } from "../i18n";
 
 /** The share of exercises whose latest result beats their baseline; takes `progressFor`'s result. */
 export function improvementRate(
@@ -137,9 +138,9 @@ export function metricChange(
   previous: number | null,
   decimals = 0,
 ) {
-  if (value === null || previous === null) return "No comparison";
+  if (value === null || previous === null) return t("progress.noComparison");
   const change = Number((value - previous).toFixed(decimals));
   return change === 0
-    ? "→ No change"
-    : `${change > 0 ? "↑ +" : "↓ −"}${Math.abs(change).toFixed(decimals)}`;
+    ? t("progress.noChange")
+    : `${change > 0 ? "↑ +" : "↓ −"}${formatFixed(Math.abs(change), decimals)}`;
 }

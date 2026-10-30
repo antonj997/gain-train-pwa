@@ -12,6 +12,8 @@ import {
 import { localizedDate } from "@/lib/dates";
 import { durationLabel } from "@/lib/labels";
 import { formatKm } from "@/lib/cardio";
+import { useT } from "@/i18n/useT";
+import { formatFixed, t } from "@/i18n";
 
 /** The change text with its unit, such as "↑ +1.2 t". Arrows only; messages stay as they are. */
 const withUnit = (change: string, unit: string) =>
@@ -49,23 +51,24 @@ function summaryFor({ records, progress, now, range }: Props) {
   const scale = tonnes ? 1000 : 1;
   const tiles = [
     {
-      label: "Workouts / week",
-      value: current.perWeek === null ? "—" : current.perWeek.toFixed(1),
+      label: t("progress.perWeek"),
+      value: current.perWeek === null ? "—" : formatFixed(current.perWeek, 1),
       change:
-        metricChange(current.perWeek, previous.perWeek, 1) +
-        (current.perWeek !== null && previous.perWeek !== null
-          ? " · finished weeks"
-          : ""),
+        current.perWeek !== null && previous.perWeek !== null
+          ? t("progress.finishedWeeks", {
+              change: metricChange(current.perWeek, previous.perWeek, 1),
+            })
+          : metricChange(current.perWeek, previous.perWeek, 1),
     },
     {
-      label: "Working sets",
+      label: t("progress.workingSets"),
       value: String(current.workingSets),
       change: metricChange(current.workingSets, previous.workingSets),
     },
     {
-      label: "Volume",
+      label: t("progress.volume"),
       value: tonnes
-        ? (current.volume / scale).toFixed(1)
+        ? formatFixed(current.volume / scale, 1)
         : String(Math.round(current.volume)),
       unit: tonnes ? "t" : "kg",
       change: withUnit(
@@ -78,7 +81,7 @@ function summaryFor({ records, progress, now, range }: Props) {
       ),
     },
     {
-      label: "Time trained",
+      label: t("progress.timeTrained"),
       value: current.minutes ? durationLabel(current.minutes) : "—",
       change: withUnit(
         metricChange(current.minutes ?? 0, previous.minutes ?? 0),
@@ -97,12 +100,15 @@ function summaryFor({ records, progress, now, range }: Props) {
  */
 function ProgressSummary(props: Props) {
   const { records, progress, now, range } = props;
+  const { language } = useT();
   const { period, current, previous, tiles, improving } = useMemo(
     () => summaryFor({ records, progress, now, range }),
-    [records, progress, now, range],
+    // The tiles' words follow the language too.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [records, progress, now, range, language],
   );
   return (
-    <section className="progress-summary" aria-label="Summary">
+    <section className="progress-summary" aria-label={t("progress.summary")}>
       <div className="tiles">
         {tiles.map((tile) => (
           <div className="card tile" key={tile.label}>
@@ -123,7 +129,7 @@ function ProgressSummary(props: Props) {
       </div>
       {(current.cardioSec > 0 || previous.cardioSec > 0) && (
         <p className="row-sub">
-          Cardio{" "}
+          {t("progress.cardio")}{" "}
           <strong>
             {current.cardioSec ? durationLabel(current.cardioSec / 60) : "—"}
             {current.cardioM > 0 && ` · ${formatKm(current.cardioM)} km`}
@@ -141,22 +147,24 @@ function ProgressSummary(props: Props) {
       )}
       <p className="row-sub">
         {current.duration === null
-          ? "No recorded durations"
-          : `Average workout ${durationLabel(current.duration)}`}
+          ? t("progress.noDurations")
+          : t("progress.averageWorkout", {
+              duration: durationLabel(current.duration),
+            })}
         {" · "}
         {improving === null
-          ? "no exercises to compare yet"
-          : `${Math.round(improving)}% of exercises improving`}
+          ? t("progress.noCompare")
+          : t("progress.improving", { percent: Math.round(improving) })}
       </p>
       <details className="period-summary">
         <summary className="session-summary">
-          <strong>About these stats</strong>
+          <strong>{t("progress.about")}</strong>
           <ChevronDown size={18} aria-hidden="true" />
         </summary>
         <p className="row-sub">
           <time dateTime={period.start}>{localizedDate(period.start)}</time> –{" "}
-          <time dateTime={period.end}>{localizedDate(period.end)}</time>,
-          compared with{" "}
+          <time dateTime={period.end}>{localizedDate(period.end)}</time>,{" "}
+          {t("progress.comparedWithShort")}{" "}
           <time dateTime={period.previousStart}>
             {localizedDate(period.previousStart)}
           </time>{" "}
@@ -164,16 +172,7 @@ function ProgressSummary(props: Props) {
           <time dateTime={period.previousEnd}>
             {localizedDate(period.previousEnd)}
           </time>
-          . Workouts per week counts Monday–Sunday weeks that are over and have
-          at least one workout; the current week joins once it ends. Working
-          sets leave out warm-ups, cool-downs, drops and cardio; volume is
-          weight × reps for weighted sets, drops included. Cardio adds up the
-          time, distance and calories of checked cardio sets. Time trained adds
-          the recorded durations. Exercises improving compares your latest
-          working result with the last session before the period, or the first
-          session within it. Only comparable load and measure count: estimated
-          strength for weighted sets of 1–10 reps, otherwise reps or seconds at
-          the same load. A dash means there is not enough data.
+          . {t("progress.aboutText")}
         </p>
       </details>
     </section>

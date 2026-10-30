@@ -2,6 +2,7 @@ import type { LoadKey } from "@/lib/load-keys";
 import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import Switch from "@/components/ui/Switch";
+import { useT } from "@/i18n/useT";
 
 type Measure = "reps" | "seconds";
 type Load = "weight" | "bodyweight" | "assisted";
@@ -28,19 +29,24 @@ function LoadCountSheetBody({
 }: BodyProps) {
   const timed = measure === "seconds";
   const load = loadOf(loadKey);
+  const { t } = useT();
   return (
     <>
       <div className="sheet-field">
         <span className="sheet-label" aria-hidden="true">
-          Load
+          {t("load.load")}
         </span>
         <Segmented<Load>
-          label="Load"
+          label={t("load.load")}
           value={load}
           options={[
-            { value: "weight", label: "Weight", disabled: timed },
-            { value: "bodyweight", label: "Bodyweight" },
-            { value: "assisted", label: "Assisted", disabled: timed },
+            { value: "weight", label: t("load.weight"), disabled: timed },
+            { value: "bodyweight", label: t("load.bodyweight") },
+            {
+              value: "assisted",
+              label: t("load.assisted"),
+              disabled: timed,
+            },
           ]}
           onChange={(next) =>
             onLoadKey(
@@ -52,10 +58,10 @@ function LoadCountSheetBody({
             )
           }
         />
-        {timed && <p className="sheet-hint">Timed sets use bodyweight</p>}
+        {timed && <p className="sheet-hint">{t("load.timedBodyweight")}</p>}
         {load === "bodyweight" && (
           <Switch
-            label="Add extra weight"
+            label={t("load.addExtra")}
             checked={loadKey === "bwplus"}
             onChange={(on) => onLoadKey(on ? "bwplus" : "bw")}
           />
@@ -63,23 +69,21 @@ function LoadCountSheetBody({
       </div>
       <div className="sheet-field">
         <span className="sheet-label" aria-hidden="true">
-          Count
+          {t("load.count")}
         </span>
         <Segmented<Measure>
-          label="Count"
+          label={t("load.count")}
           value={measure}
           options={[
-            { value: "reps", label: "Reps" },
-            { value: "seconds", label: "Seconds" },
+            { value: "reps", label: t("load.reps") },
+            { value: "seconds", label: t("load.seconds") },
           ]}
           onChange={onMeasure}
         />
       </div>
-      <p className="sheet-hint">
-        Applies to the sets you haven&apos;t checked yet.
-      </p>
+      <p className="sheet-hint">{t("load.appliesUnchecked")}</p>
       <button type="button" className="btn-primary" onClick={onDone}>
-        Done
+        {t("common.done")}
       </button>
     </>
   );
@@ -91,8 +95,9 @@ export default function LoadCountSheet({
   onClose,
   ...body
 }: BodyProps & { open: boolean; onClose: () => void }) {
+  const { t } = useT();
   return (
-    <Sheet open={open} onClose={onClose} title="Load and count">
+    <Sheet open={open} onClose={onClose} title={t("exercise.loadAndCount")}>
       <LoadCountSheetBody {...body} />
     </Sheet>
   );

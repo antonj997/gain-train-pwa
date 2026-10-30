@@ -19,6 +19,7 @@ import {
   type SetReorderEvent,
 } from "@/lib/set-editing";
 import "@/styles/workout.css";
+import { t } from "@/i18n";
 
 type Drag = {
   pointerId?: number;
@@ -102,13 +103,19 @@ export default function SortableSetList({
         if (result.commit) onReorderRef.current(result.commit);
         setAnnouncement(
           result.finished.cancelled
-            ? "Move cancelled. Set order unchanged."
-            : `Set dropped at position ${result.finished.targetIndex + 1} of ${setsRef.current.length}.`,
+            ? t("set.moveCancelled")
+            : t("set.droppedAt", {
+                position: result.finished.targetIndex + 1,
+                total: setsRef.current.length,
+              }),
         );
       } else if (result.order) {
         if (!dragRef.current && handle) dragRef.current = { handle };
         setAnnouncement(
-          `Set at position ${result.order.targetIndex + 1} of ${setsRef.current.length}. Use arrow keys or drag to move, Space or Enter to drop.`,
+          t("set.movingAt", {
+            position: result.order.targetIndex + 1,
+            total: setsRef.current.length,
+          }),
         );
       }
       return true;
@@ -257,7 +264,7 @@ export default function SortableSetList({
             <button
               type="button"
               className="set-drag-handle"
-              aria-label={`Move ${name} set ${index + 1}`}
+              aria-label={t("set.moveHandle", { name, n: index + 1 })}
               aria-describedby={instructionsId}
               aria-pressed={order?.id === set.id}
               onPointerDown={(event) => {

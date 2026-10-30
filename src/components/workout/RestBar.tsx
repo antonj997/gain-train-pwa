@@ -1,4 +1,5 @@
 import type { useRestTimer } from "@/hooks/useRestTimer";
+import { useT } from "@/i18n/useT";
 
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
@@ -9,16 +10,17 @@ export default function RestBar({
 }: {
   rest: ReturnType<typeof useRestTimer>;
 }) {
+  const { t } = useT();
   if (!(rest.remaining > 0 || rest.elapsed)) return null;
   return (
     <div className="rest-bar">
       {rest.elapsed ? (
         <>
           <span className="rest-bar-time" role="status">
-            Rest done
+            {t("workout.restDone")}
           </span>
           <button type="button" className="btn-quiet" onClick={rest.skip}>
-            Dismiss
+            {t("workout.dismiss")}
           </button>
         </>
       ) : (
@@ -26,15 +28,15 @@ export default function RestBar({
           <span
             className="rest-bar-time"
             role="timer"
-            aria-label="Rest time remaining"
+            aria-label={t("workout.restRemaining")}
           >
             {clock(rest.remaining)}
           </span>
           <button type="button" className="btn-quiet" onClick={rest.extend}>
-            +30 s
+            {t("workout.plus30")}
           </button>
           <button type="button" className="btn-quiet" onClick={rest.skip}>
-            Skip
+            {t("workout.skip")}
           </button>
         </>
       )}

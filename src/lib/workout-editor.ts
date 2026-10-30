@@ -19,6 +19,7 @@ import { CARDIO_MAX, isCardioSet } from "./cardio";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
 import { autoWorkoutName } from "./workout-name";
+import { t } from "../i18n";
 
 export type SetIssues = Partial<
   Record<
@@ -34,64 +35,62 @@ function getCardioIssues(set: WorkoutSet): SetIssues {
     value !== undefined &&
     (!Number.isFinite(value) || value < min || value > max);
   if (set.durationSec === null || set.durationSec === undefined)
-    issues.durationSec = "Enter a time to complete this set.";
+    issues.durationSec = t("issue.timeRequired");
   else if (bad(set.durationSec, CARDIO_MAX.durationSec, 1))
-    issues.durationSec = "Enter a time from 0:01 to 24:00:00.";
+    issues.durationSec = t("issue.timeRange");
   if (bad(set.distanceM, CARDIO_MAX.distanceM))
-    issues.distanceM = "Enter a distance from 0 to 1,000 km.";
-  if (bad(set.level, CARDIO_MAX.level))
-    issues.level = "Enter a level from 0 to 100.";
+    issues.distanceM = t("issue.distance");
+  if (bad(set.level, CARDIO_MAX.level)) issues.level = t("issue.level");
   if (bad(set.calories, CARDIO_MAX.calories))
-    issues.calories = "Enter calories from 0 to 100,000.";
+    issues.calories = t("issue.calories");
   // Text that is not a number yet ("20:", "3.") is not a value either.
   if (getSetInputText(set, "durationSec") !== undefined)
-    issues.durationSec = "Enter a time like 20:00, or minutes like 20.";
+    issues.durationSec = t("issue.timeFormat");
   if (getSetInputText(set, "distanceM") !== undefined)
-    issues.distanceM = "Enter a distance from 0 to 1,000 km.";
+    issues.distanceM = t("issue.distance");
   if (getSetInputText(set, "level") !== undefined)
-    issues.level = "Enter a level from 0 to 100.";
+    issues.level = t("issue.level");
   if (getSetInputText(set, "calories") !== undefined)
-    issues.calories = "Enter calories from 0 to 100,000.";
+    issues.calories = t("issue.calories");
   return issues;
 }
 
 export function getSetIssues(set: WorkoutSet): SetIssues {
   if (set.measure === "cardio") return getCardioIssues(set);
   const issues: SetIssues = {};
-  const unit = set.measure === "seconds" ? "seconds" : "reps";
-  if (set.reps === null) issues.reps = `Enter ${unit} to complete this set.`;
+  const timed = set.measure === "seconds";
+  const repsRange = t(timed ? "issue.secondsRange" : "issue.repsRange");
+  if (set.reps === null)
+    issues.reps = t(timed ? "issue.secondsRequired" : "issue.repsRequired");
   else if (!Number.isInteger(set.reps) || set.reps < 1 || set.reps > 10000)
-    issues.reps = `Enter whole ${unit} from 1 to 10,000.`;
+    issues.reps = repsRange;
   if (hasExtraWeight(set)) {
-    if (set.weight === null)
-      issues.weight = "Enter added kg to complete this set.";
+    if (set.weight === null) issues.weight = t("issue.addedRequired");
     else if (
       !Number.isFinite(set.weight) ||
       set.weight <= 0 ||
       set.weight > 10000
     )
-      issues.weight = "Enter added weight greater than 0 and up to 10,000 kg.";
+      issues.weight = t("issue.addedRange");
   } else if (set.load !== "bodyweight") {
-    if (set.weight === null)
-      issues.weight = "Enter kg, or choose Bodyweight above.";
+    if (set.weight === null) issues.weight = t("issue.kgRequired");
     else if (
       !Number.isFinite(set.weight) ||
       set.weight < 0 ||
       set.weight > 10000
     )
-      issues.weight = "Enter a weight from 0 to 10,000 kg.";
+      issues.weight = t("issue.weightRange");
   }
-  if (getSetInputText(set, "reps") !== undefined)
-    issues.reps = `Enter whole ${unit} from 1 to 10,000.`;
+  if (getSetInputText(set, "reps") !== undefined) issues.reps = repsRange;
   if (getSetInputText(set, "weight") !== undefined)
-    issues.weight = "Enter a weight from 0 to 10,000 kg.";
+    issues.weight = t("issue.weightRange");
   return issues;
 }
 
 /** The date input's max only limits its picker; typed or pasted dates need this too. */
 export function assertNotFuture(workout: Workout) {
   if (workout.date > today())
-    throw new RecordValidationError("Choose today or an earlier date.");
+    throw new RecordValidationError(t("issue.notFuture"));
 }
 
 // Fields a save adds, so they don't count as someone else's edit.
@@ -118,7 +117,7 @@ export function finishWorkout(workout: Workout, now = Date.now()): Workout {
       ex.sets.some((set) => set.done && !validSet(set)),
     )
   )
-    throw Error("Correct the checked sets, or uncheck them before saving.");
+    throw Error(t("issue.fixChecked"));
   const exercises = workout.exercises
     .map((ex) => ({
       ...ex,
@@ -165,24 +164,26 @@ export function groupComplete(sets: WorkoutSet[], index: number) {
 export function checkHintFor(sets: WorkoutSet[], index: number) {
   const set = sets[index];
   if (!set || set.done || groupComplete(sets, index)) return undefined;
-  if (validSet(set)) return "Fill in or delete its drops to check this set.";
+  if (validSet(set)) return t("issue.fillDrops");
   const empty = (field: "weight" | "reps" | "durationSec") =>
     (set[field] ?? null) === null && getSetInputText(set, field) === undefined;
   const issues = getSetIssues(set);
   const missing = isCardioSet(set)
-    ? [issues.durationSec && empty("durationSec") && "a time"]
+    ? [issues.durationSec && empty("durationSec") && t("issue.aTime")]
     : [
         issues.weight &&
           empty("weight") &&
-          (hasExtraWeight(set) ? "added kg" : "kg"),
+          (hasExtraWeight(set) ? t("issue.addedKg") : t("issue.kg")),
         issues.reps &&
           empty("reps") &&
-          (set.measure === "seconds" ? "seconds" : "reps"),
+          (set.measure === "seconds" ? t("issue.seconds") : t("issue.reps")),
       ];
   const names = missing.filter(Boolean);
   return names.length && names.length === Object.keys(issues).length
-    ? `Add ${names.join(" and ")} to check this set.`
-    : "Fix this set's values to check it.";
+    ? t("issue.addToCheck", {
+        fields: names.map(String).reduce((a, b) => t("issue.and", { a, b })),
+      })
+    : t("issue.fixValues");
 }
 
 /**

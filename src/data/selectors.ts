@@ -7,6 +7,7 @@ import {
   type WorkoutRecord,
 } from "./model";
 import { isDrop } from "./drops";
+import { t } from "../i18n";
 
 type Records = Record<string, RecordDoc> | readonly RecordDoc[];
 const list = (records: Records) =>
@@ -99,7 +100,8 @@ export function nextSetLabel({ exercises }: HasSets) {
     for (const set of exercise.sets) {
       if (isDrop(set)) continue;
       number++;
-      if (!set.done) return `${exercise.name} set ${number}`;
+      if (!set.done)
+        return t("badge.nextSet", { exercise: exercise.name, n: number });
     }
   }
   return null;

@@ -5,6 +5,8 @@ import { isDrop, type SetBadgeInfo } from "@/data/drops";
 import { allowedLoadKeys, loadKeyOf, type LoadKey } from "@/lib/load-keys";
 import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
+import { useT } from "@/i18n/useT";
+import { t, type MessageKey } from "@/i18n";
 
 type BodyProps = {
   badge: SetBadgeInfo;
@@ -22,25 +24,23 @@ type BodyProps = {
   onDelete: () => void;
 };
 
-const LOAD_OPTIONS: { value: LoadKey; label: string }[] = [
-  { value: "weight", label: "Weight" },
-  { value: "bw", label: "BW" },
-  { value: "bwplus", label: "BW + kg" },
-  { value: "assisted", label: "Assist" },
+const LOAD_OPTIONS: { value: LoadKey; label: MessageKey }[] = [
+  { value: "weight", label: "set.optWeight" },
+  { value: "bw", label: "set.optBw" },
+  { value: "bwplus", label: "set.optBwPlus" },
+  { value: "assisted", label: "set.optAssist" },
 ];
 
-const SECTION_OPTIONS: { value: WorkoutSet["section"]; label: string }[] = [
-  { value: "warmup", label: "Warm-up" },
-  { value: "working", label: "Working" },
-  { value: "winddown", label: "Cool-down" },
+const SECTION_OPTIONS: { value: WorkoutSet["section"]; label: MessageKey }[] = [
+  { value: "warmup", label: "set.optWarmup" },
+  { value: "working", label: "set.optWorking" },
+  { value: "winddown", label: "set.optCooldown" },
 ];
 
 function deleteLabel(set: WorkoutSet, dropCount: number) {
-  if (isDrop(set)) return "Delete drop";
-  if (dropCount === 0) return "Delete set";
-  return dropCount === 1
-    ? "Delete set and 1 drop"
-    : `Delete set and ${dropCount} drops`;
+  if (isDrop(set)) return t("set.deleteDrop");
+  if (dropCount === 0) return t("set.deleteSet");
+  return t("set.deleteSetDrops", { count: dropCount });
 }
 
 /** The Set sheet's content below its title; changes apply as they are made. */
@@ -61,23 +61,22 @@ function SetSheetBody({
     set.measure === "seconds" ? "seconds" : "reps",
   );
   const canAddDrop = !cardio && !set.done && set.section === "working";
+  const { t } = useT();
   return (
     <>
       {drop ? (
-        <p className="sheet-note">
-          Done straight after the set above, at a lower weight. No rest in
-          between.
-        </p>
+        <p className="sheet-note">{t("set.dropNote")}</p>
       ) : (
         <div className="sheet-field">
           <span className="sheet-label" aria-hidden="true">
-            Type
+            {t("set.type")}
           </span>
           <Segmented
-            label={`${badge.title} type`}
+            label={t("set.typeOf", { title: badge.title })}
             value={set.section}
             options={SECTION_OPTIONS.map((option) => ({
               ...option,
+              label: t(option.label),
               disabled: set.done,
             }))}
             onChange={onSection}
@@ -87,34 +86,37 @@ function SetSheetBody({
       {!cardio && (
         <div className="sheet-field">
           <span className="sheet-label" aria-hidden="true">
-            Load for this set
+            {t("set.loadForSet")}
           </span>
           <Segmented
-            label="Load for this set"
+            label={t("set.loadForSet")}
             value={key}
             options={LOAD_OPTIONS.map((option) => ({
               ...option,
+              label: t(option.label),
               disabled: set.done || !allowed.includes(option.value),
             }))}
             onChange={onLoadKey}
           />
           <p className="sheet-hint">
             {key === exerciseDefault
-              ? "Same as the exercise"
-              : "Differs from the exercise"}
+              ? t("set.sameAsExercise")
+              : t("set.differsFromExercise")}
           </p>
         </div>
       )}
       {set.done && (
         <p className="sheet-hint">
-          Uncheck this set to change its type{cardio ? "" : " or load"}.
+          {cardio
+            ? t("set.uncheckToChangeType")
+            : t("set.uncheckToChangeTypeLoad")}
         </p>
       )}
       <div className="sheet-actions">
         {canAddDrop && (
           <button type="button" className="btn-secondary" onClick={onAddDrop}>
             <Plus size={18} aria-hidden="true" />
-            {drop ? "Add another drop" : "Add drop"}
+            {drop ? t("set.addAnotherDrop") : t("set.addDrop")}
           </button>
         )}
         <button type="button" className="btn-danger" onClick={onDelete}>
@@ -137,6 +139,7 @@ export default function SetSheet({
   onClose: () => void;
   contentRef: Ref<HTMLDivElement>;
 }) {
+  const { t } = useT();
   return (
     <Sheet
       open={open}
@@ -147,7 +150,9 @@ export default function SetSheet({
         <span className="sheet-title-line">
           <span>{body.badge.title}</span>
           {body.previous && (
-            <span className="sheet-title-aside">Last time {body.previous}</span>
+            <span className="sheet-title-aside">
+              {t("set.lastTime", { value: body.previous })}
+            </span>
           )}
         </span>
       }

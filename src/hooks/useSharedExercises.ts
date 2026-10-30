@@ -18,6 +18,7 @@ import {
   visibleShared,
   type SharedRow,
 } from "@/lib/shared-exercises";
+import { t } from "@/i18n";
 
 export type SharedStatus = "loading" | "error" | "ready";
 
@@ -106,9 +107,9 @@ export function useSharedExercises({
       setAdding(row.id);
       try {
         await save(crypto.randomUUID(), "exercise", fromSharedRow(row));
-        toast(`${row.name} added to your exercises`);
+        toast(t("shared.added", { name: row.name }));
       } catch {
-        toast.error(`Could not add ${row.name}. Retry.`);
+        toast.error(t("shared.addFailed", { name: row.name }));
       } finally {
         setAdding("");
       }
@@ -122,12 +123,12 @@ export function useSharedExercises({
       try {
         id = await publishExercise(payload);
         await setSharedId(e, id);
-        toast(`${e.name} shared to the library`);
+        toast(t("shared.sharedOk", { name: e.name }));
         return true;
       } catch {
         // Remove the row again if only the local save failed, so nothing is half done.
         if (id) await unpublishExercise(id).catch(() => {});
-        toast.error(`Could not share ${e.name}. Nothing changed; retry.`);
+        toast.error(t("shared.shareFailed", { name: e.name }));
         return false;
       } finally {
         setSharing(false);
@@ -140,20 +141,16 @@ export function useSharedExercises({
       try {
         await unpublishExercise(e.sharedId);
       } catch {
-        toast.error(
-          `Could not stop sharing ${e.name}. Nothing changed; retry.`,
-        );
+        toast.error(t("shared.stopFailed", { name: e.name }));
         setSharing(false);
         return false;
       }
       try {
         await setSharedId(e, null);
-        toast(`${e.name} is no longer shared`);
+        toast(t("shared.stopped", { name: e.name }));
         return true;
       } catch {
-        toast.error(
-          "Removed from the library. Could not update this phone; retry.",
-        );
+        toast.error(t("shared.phoneFailed"));
         return false;
       } finally {
         setSharing(false);
@@ -164,9 +161,7 @@ export function useSharedExercises({
       const sharedId = before?.sharedId;
       if (!sharedId || !before || !sharedFieldsChanged(before, after)) return;
       await updateSharedExercise(sharedId, after).catch(() =>
-        toast.error(
-          "The shared copy still shows the old details. Stop sharing and share again to update it.",
-        ),
+        toast.error(t("shared.staleCopy")),
       );
     },
   };

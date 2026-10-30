@@ -10,6 +10,7 @@ import { ProfileContext } from "./useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { local } from "@/lib/storage";
 import { ProfileStore, createProfileConnection } from "@/lib/profile";
+import { t } from "@/i18n";
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
@@ -38,7 +39,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
           data.session.user.id !== account ||
           !isCurrent()
         )
-          throw new Error("Sign in again to sync your profile.");
+          throw new Error(t("err.signInProfile"));
         return createProfileConnection({
           account,
           token: data.session.access_token,

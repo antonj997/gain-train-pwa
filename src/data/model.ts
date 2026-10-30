@@ -4,6 +4,7 @@ import { hasExtraWeight } from "../lib/set-load";
 import { isIsoDay, isoDate } from "../lib/dates";
 import { CARDIO_MAX, cardioLabel } from "../lib/cardio";
 import { normalizeDrops } from "./drops";
+import { formatDecimal, t } from "../i18n";
 export const setSchema = z.object({
   id: z.string().uuid(),
   reps: z.number().int().min(0).max(10000).nullable(),
@@ -189,10 +190,10 @@ export function recordLabel(record: RecordDoc | RemoteDoc) {
   const p = record.payload as { name?: unknown };
   if (typeof p.name === "string") return p.name;
   return record.kind === "goal"
-    ? "Goal"
+    ? t("kind.goal")
     : record.kind === "library"
-      ? "Exercise settings"
-      : "Record";
+      ? t("kind.library")
+      : t("kind.record");
 }
 export interface RemoteDoc {
   id: string;
@@ -321,7 +322,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
     goal: goalSchema,
     library: librarySchema,
   }[kind as string] as z.ZodTypeAny | undefined;
-  if (!schema) throw new RecordValidationError("Unknown record type.");
+  if (!schema) throw new RecordValidationError(t("val.unknownType"));
   const result = schema.safeParse(payload);
   if (!result.success) {
     const issue = result.error.issues[0];
@@ -332,52 +333,46 @@ export function validate(kind: Kind, payload: unknown): Payload {
         Number(issue.path[3])
       ];
     if (field === "weight" && candidateSet && hasExtraWeight(candidateSet))
-      throw new RecordValidationError(
-        "Added weight must be greater than 0 and no more than 10000 kg, or blank for an unfinished set.",
-      );
+      throw new RecordValidationError(t("val.addedWeight"));
     const messages: Record<string, string> = {
-      name: "Enter a name between 1 and 100 characters.",
-      date: "Choose a valid workout date.",
-      duration:
-        "Duration must be a whole number from 0 to 1440 minutes, or blank.",
-      weight: "Weight must be a number from 0 to 10000 kg, or blank.",
-      bodyWeightKg:
-        "Bodyweight must be greater than 0 and no more than 1000 kg.",
-      extraWeight: "Choose whether this bodyweight set uses extra weight.",
-      measure: "Choose reps or seconds for this set.",
-      durationSec: "Time must be from 0:00 to 24:00:00, or blank.",
-      distanceM: "Distance must be from 0 to 1,000 km, or blank.",
-      level: "Level must be a number from 0 to 100, or blank.",
-      calories: "Calories must be a number from 0 to 100,000, or blank.",
-      load: "Choose weight, bodyweight or assisted load.",
-      section: "Choose working, warm-up or cool-down for this set.",
-      exercises: "Use no more than 100 exercises in a session.",
-      sets: "Use no more than 100 sets per exercise.",
-      startDate: "Choose a valid plan start date.",
-      endDate: "A plan must end on or after the day it starts.",
-      cycleWeeks: "A plan repeats every 1 to 6 weeks.",
-      template:
-        "The plan needs one row of seven days for each week of the cycle.",
-      overrides: "Check the dates you changed in this plan.",
-      goalIds: "A plan can link up to 50 goals.",
-      kind: "Choose a bodyweight or lift goal.",
-      targetKg: "The target must be greater than 0 and no more than 10000 kg.",
-      exerciseId: "Choose the exercise for this lift goal.",
-      byDate: "Choose a valid date for this goal.",
-      hiddenExerciseIds: "Check the list of hidden exercises.",
-      groups: "Check the names and routines of your groups.",
-      routineIds: "A group can hold up to 50 routines.",
-      startKg:
-        "The starting weight must be greater than 0 and at most 1000 kg.",
+      name: t("val.name"),
+      date: t("val.date"),
+      duration: t("val.duration"),
+      weight: t("val.weight"),
+      bodyWeightKg: t("val.bodyWeightKg"),
+      extraWeight: t("val.extraWeight"),
+      measure: t("val.measure"),
+      durationSec: t("val.durationSec"),
+      distanceM: t("val.distanceM"),
+      level: t("val.level"),
+      calories: t("val.calories"),
+      load: t("val.load"),
+      section: t("val.section"),
+      exercises: t("val.exercises"),
+      sets: t("val.sets"),
+      startDate: t("val.startDate"),
+      endDate: t("val.endDate"),
+      cycleWeeks: t("val.cycleWeeks"),
+      template: t("val.template"),
+      overrides: t("val.overrides"),
+      goalIds: t("val.goalIds"),
+      kind: t("val.kind"),
+      targetKg: t("val.targetKg"),
+      exerciseId: t("val.exerciseId"),
+      byDate: t("val.byDate"),
+      hiddenExerciseIds: t("val.hiddenExerciseIds"),
+      groups: t("val.groups"),
+      routineIds: t("val.routineIds"),
+      startKg: t("val.startKg"),
     };
     if (field === "reps") {
       const timed = candidateSet?.measure === "seconds";
       throw new RecordValidationError(
-        `${timed ? "Seconds" : "Reps"} must be a whole number from 0 to 10000, or blank.`,
+        t(timed ? "val.secondsRange" : "val.repsRange"),
       );
     }
     throw new RecordValidationError(
-      messages[String(field)] ?? "Check the record details before saving.",
+      messages[String(field)] ?? t("val.checkDetails"),
     );
   }
   const p = keepUnknownFields(payload, result.data);
@@ -387,68 +382,54 @@ export function validate(kind: Kind, payload: unknown): Payload {
         ex.sets.some(hasSetInputText),
       )
     )
-      throw new RecordValidationError(
-        "Finish entering the set values before saving.",
-      );
+      throw new RecordValidationError(t("val.finishEntering"));
     for (const ex of (p as Workout | Routine).exercises) {
       ex.sets = normalizeDrops(ex.sets);
       for (const s of ex.sets) {
         if (s.measure === "cardio") {
           if (s.reps !== null || s.weight !== null)
-            throw new RecordValidationError(
-              "Cardio sets have a time and distance, not reps or weight.",
-            );
+            throw new RecordValidationError(t("val.cardioNoReps"));
           if (s.done && !validSet(s))
-            throw new RecordValidationError(
-              "Checked cardio sets need a time. Uncheck the set to leave it unfinished.",
-            );
+            throw new RecordValidationError(t("val.cardioNeedsTime"));
           continue;
         }
         if (s.extraWeight === true && s.load !== "bodyweight")
-          throw new RecordValidationError(
-            "Extra weight is available for bodyweight sets only.",
-          );
+          throw new RecordValidationError(t("val.extraBodyweightOnly"));
         if (hasExtraWeight(s) && s.weight !== null && s.weight <= 0)
-          throw new RecordValidationError(
-            "Added weight must be greater than 0 and no more than 10000 kg.",
-          );
+          throw new RecordValidationError(t("val.addedWeightRange"));
         if (s.measure === "seconds" && s.load !== "bodyweight")
-          throw new RecordValidationError(
-            "Timed sets use bodyweight. Choose bodyweight to log seconds.",
-          );
+          throw new RecordValidationError(t("val.timedBodyweight"));
         if (s.done && !validSet(s))
-          throw new RecordValidationError(
-            "Checked sets need positive reps or seconds and a valid weight or bodyweight load. Uncheck the set to leave it unfinished.",
-          );
+          throw new RecordValidationError(t("val.checkedInvalid"));
       }
     }
   }
   if (kind === "workout") {
     const w = p as Workout;
-    if (!isIsoDay(w.date))
-      throw new RecordValidationError("Choose a valid workout date.");
+    if (!isIsoDay(w.date)) throw new RecordValidationError(t("val.date"));
     if (
       w.status === "completed" &&
       !w.exercises.some((e) => e.sets.some((s) => s.done))
     )
-      throw new RecordValidationError(
-        "Complete at least one valid set. Checked sets need reps or seconds and a valid load.",
-      );
+      throw new RecordValidationError(t("val.completeOne"));
   }
   return p;
 }
-export const labelSet = (s: WorkoutSet) =>
-  s.measure === "cardio"
-    ? cardioLabel(s)
-    : hasExtraWeight(s)
-      ? `BW + ${s.weight} kg${s.measure === "seconds" ? ` · ${s.reps} sec` : ` × ${s.reps}`}`
-      : s.measure === "seconds"
-        ? s.reps + " sec"
-        : s.load === "bodyweight"
-          ? "BW × " + s.reps
-          : s.load === "assisted"
-            ? s.weight + " kg assist × " + s.reps
-            : s.weight + " kg × " + s.reps;
+export const labelSet = (s: WorkoutSet) => {
+  if (s.measure === "cardio") return cardioLabel(s);
+  const kg = s.weight === null ? "null" : formatDecimal(s.weight);
+  if (hasExtraWeight(s))
+    return (
+      t("label.bwPlus", { kg }) +
+      (s.measure === "seconds"
+        ? ` · ${t("label.sec", { n: s.reps })}`
+        : ` × ${s.reps}`)
+    );
+  if (s.measure === "seconds") return t("label.sec", { n: s.reps });
+  if (s.load === "bodyweight") return t("label.bwReps", { n: s.reps });
+  if (s.load === "assisted") return t("label.assist", { kg, n: s.reps });
+  return t("label.weight", { kg, n: s.reps });
+};
 export const repeatExercises = (items: Exercise[]) =>
   items.map((e) => ({
     ...e,

@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import PlanCalendar from "@/components/PlanCalendar";
 import type { Plan } from "@/data/model";
 import { shiftDate } from "@/lib/dates";
+import { t } from "@/i18n";
 
 type Props = {
   startDate: string;
@@ -36,7 +37,7 @@ export default function PlanPeriodPicker({
     <>
       <div className="field-row">
         <label>
-          From
+          {t("plan.from")}
           <input
             type="date"
             value={startDate}
@@ -44,7 +45,7 @@ export default function PlanPeriodPicker({
           />
         </label>
         <label>
-          To
+          {t("plan.to")}
           <input
             type="date"
             value={endDate}
@@ -56,7 +57,7 @@ export default function PlanPeriodPicker({
       <section aria-labelledby="period-heading">
         <div className="section-head">
           <h3 className="group-title" id="period-heading">
-            {step === "start" ? "Tap the first day" : "Now tap the last day"}
+            {step === "start" ? t("plan.tapFirst") : t("plan.tapLast")}
           </h3>
           <button
             type="button"
@@ -67,7 +68,7 @@ export default function PlanPeriodPicker({
             }}
           >
             <X size={16} aria-hidden="true" />
-            Clear
+            {t("plan.clear")}
           </button>
         </div>
         <PlanCalendar
@@ -78,7 +79,7 @@ export default function PlanPeriodPicker({
           )}
           last={shiftDate(today, 5 * 366)}
           range={range}
-          label="Plan period"
+          label={t("plan.period")}
           initialMonth={(startDate || today).slice(0, 7)}
           onPick={pickDay}
         />

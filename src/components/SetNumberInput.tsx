@@ -4,6 +4,7 @@ import {
   parseSetNumber,
   isSetInputEditKey,
 } from "../lib/set-input";
+import { formatDecimal } from "../i18n";
 
 type Props = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -19,8 +20,9 @@ type Props = Omit<
   format?: (value: number | null) => string;
 };
 
+// Shown with the language's decimal mark; typing accepts both "," and ".".
 const plainText = (value: number | null) =>
-  value === null || !Number.isFinite(value) ? "" : String(value);
+  value === null || !Number.isFinite(value) ? "" : formatDecimal(value);
 
 export default function SetNumberInput({
   value,

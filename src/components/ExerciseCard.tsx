@@ -45,6 +45,7 @@ import SetSheet from "@/components/workout/SetSheet";
 import LoadCountSheet from "@/components/workout/LoadCountSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
+import { useT } from "@/i18n/useT";
 
 export type ExerciseCardProps = {
   exercise: Exercise;
@@ -90,7 +91,7 @@ type OpenSheet =
  */
 const keepTogether = (label: string) =>
   label
-    .replace(/BW \+ /, "BW +\u00a0")
+    .replace(/(\S) \+ /, "$1 +\u00a0")
     .replace(/(\d) kg/, "$1\u00a0kg")
     .replace(/× (\d)/, "×\u00a0$1");
 
@@ -127,6 +128,7 @@ function ExerciseCard({
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
   const headingId = useId();
+  const { t } = useT();
   const [sheet, setSheet] = useState<OpenSheet>(null);
   const setSheetRef = useRef<HTMLDivElement>(null);
   const openSetId = sheet?.kind === "set" ? sheet.setId : null;
@@ -171,7 +173,7 @@ function ExerciseCard({
           </h2>
           {mode === "log" && lastSession && (
             <p className="ex-last">
-              Last:{" "}
+              {t("exercise.last")}{" "}
               {cardio
                 ? totalsLabel(
                     cardioTotals(
@@ -190,7 +192,7 @@ function ExerciseCard({
         <button
           type="button"
           className="icon-btn"
-          aria-label={`${ex.name} options`}
+          aria-label={t("exercise.options", { name: ex.name })}
           aria-haspopup="dialog"
           onClick={() => setSheet({ kind: "menu" })}
         >
@@ -199,18 +201,20 @@ function ExerciseCard({
       </div>
       {cardio ? (
         <div className="set-columns" data-mode={mode} data-kind="cardio">
-          <span>Set</span>
-          <span>Time</span>
+          <span>{t("exercise.colSet")}</span>
+          <span>{t("exercise.colTime")}</span>
           <span>km</span>
-          <span>Level</span>
+          <span>{t("exercise.colLevel")}</span>
           <span>kcal</span>
-          {mode === "log" && <span>Done</span>}
+          {mode === "log" && <span>{t("exercise.colDone")}</span>}
         </div>
       ) : (
         <div className="set-columns" data-mode={mode}>
-          <span>Set</span>
+          <span>{t("exercise.colSet")}</span>
           {mode === "log" && (
-            <span className="set-previous-heading">Previous</span>
+            <span className="set-previous-heading">
+              {t("exercise.colPrevious")}
+            </span>
           )}
           <button
             type="button"
@@ -230,7 +234,7 @@ function ExerciseCard({
             {countHeading(sets)}
             <ChevronDown size={14} aria-hidden="true" />
           </button>
-          {mode === "log" && <span>Done</span>}
+          {mode === "log" && <span>{t("exercise.colDone")}</span>}
         </div>
       )}
       {sets.map((s, i) => (
@@ -259,7 +263,7 @@ function ExerciseCard({
         onClick={() => onChange(appendSet(ex, defaults))}
       >
         <Plus size={18} aria-hidden="true" />
-        Add set
+        {t("exercise.addSet")}
       </button>
       {shown && (
         <SetSheet
@@ -306,7 +310,7 @@ function ExerciseCard({
         hint={
           cardio
             ? undefined
-            : `${loadHeading(defaultKey)} · ${countHeading(sets).toLowerCase()}`
+            : `${loadHeading(defaultKey)} · ${countHeading(sets).toLocaleLowerCase()}`
         }
         canMoveUp={!isFirst}
         canMoveDown={!isLast}

@@ -24,9 +24,11 @@ import PageHeader from "@/components/PageHeader";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
 import { newBestWorkoutIds, progressFor } from "@/data/analytics";
+import { t } from "@/i18n";
+import { workoutTitle } from "@/lib/workout-name";
 /** "This week", or the Monday–Sunday span such as "19–25 Oct". */
 function weekTitle(week: string, now: string) {
-  if (week === weekStart(now)) return "This week";
+  if (week === weekStart(now)) return t("history.thisWeek");
   const end = shiftDate(week, 6);
   const day = (date: string) => localizedDate(date, { day: "numeric" });
   const month = (date: string) => localizedDate(date, { month: "short" });
@@ -69,14 +71,12 @@ export default function History() {
       setConfirmDelete(false);
       setParams({});
       toastWithUndo(
-        "Workout deleted",
+        t("history.deleted"),
         () => restoreWorkout(selected.id),
-        "Could not restore the workout. Try restoring a backup.",
+        t("history.restoreFailed"),
       );
     } catch (error) {
-      toast.error(
-        errorMessage(error, "Could not delete this workout. Try again."),
-      );
+      toast.error(errorMessage(error, t("history.deleteFailed")));
     } finally {
       setBusy(false);
     }
@@ -99,10 +99,18 @@ export default function History() {
       <PageHeader
         eyebrow={
           calendar.display === "simple"
-            ? `${countLabel(filtered.length, "workout")} ${calendar.selectedDate ? "on this day" : "in view"}`
-            : `${countLabel(inMonth, "workout")} in ${monthName}`
+            ? t(
+                calendar.selectedDate ? "history.onThisDay" : "history.inView",
+                {
+                  workouts: countLabel(filtered.length, "workout"),
+                },
+              )
+            : t("history.inMonth", {
+                workouts: countLabel(inMonth, "workout"),
+                month: monthName,
+              })
         }
-        title="History"
+        title={t("history.title")}
       />
       <HistoryCalendar
         value={calendar}
@@ -121,7 +129,7 @@ export default function History() {
               const w = r.payload;
               const sub = [
                 w.date === now
-                  ? "Today"
+                  ? t("common.todayCap")
                   : localizedDate(w.date, {
                       weekday: "short",
                       day: "numeric",
@@ -144,11 +152,11 @@ export default function History() {
                       ? "row-selected"
                       : undefined
                   }
-                  title={w.name}
+                  title={workoutTitle(w.name)}
                   sub={sub}
                   trailing={
                     bests.has(r.id) ? (
-                      <span className="badge-new">New best</span>
+                      <span className="badge-new">{t("history.newBest")}</span>
                     ) : undefined
                   }
                   chevron
@@ -161,7 +169,7 @@ export default function History() {
       ))}
       {!period && (
         <p className="small-note" role="status">
-          Choose a date on the calendar to begin your range.
+          {t("history.chooseDateToBegin")}
         </p>
       )}
       {period && !filtered.length && (
@@ -169,19 +177,19 @@ export default function History() {
           <CalendarDays size={26} />
           <h2>
             {calendar.selectedDate
-              ? "No workouts on this day"
-              : "No workouts in this period"}
+              ? t("history.noneOnDay")
+              : t("history.noneInPeriod")}
           </h2>
-          <p>Choose another date on the calendar or log your next workout.</p>
+          <p>{t("history.emptyText")}</p>
           <Link className="primary" to="/">
-            Log a workout
+            {t("history.logWorkout")}
           </Link>
         </div>
       )}
       <Sheet
         open={!!selected}
         onClose={() => setParams({})}
-        title={w?.name}
+        title={w && workoutTitle(w.name)}
         description={
           w &&
           localizedDate(w.date) +
@@ -201,11 +209,11 @@ export default function History() {
           onClick={() => void repeat()}
         >
           <Repeat size={18} aria-hidden="true" />
-          {busy ? "Please wait…" : "Repeat workout"}
+          {busy ? t("history.pleaseWait") : t("history.repeatWorkout")}
         </button>
         <Link className="btn-secondary" to={workoutPath(selected?.id ?? "")}>
           <Pencil size={18} aria-hidden="true" />
-          Edit workout
+          {t("history.editWorkout")}
         </Link>
         <button
           className="btn-danger"
@@ -213,15 +221,17 @@ export default function History() {
           onClick={() => setConfirmDelete(true)}
         >
           <Trash2 size={17} aria-hidden="true" />
-          Delete workout
+          {t("history.deleteWorkout")}
         </button>
       </Sheet>
       <ConfirmDialog
         open={confirmDelete && !!selected}
-        title={`Delete ${w?.name ?? "this workout"}?`}
-        description="You can undo immediately afterwards."
-        cancelLabel="Keep workout"
-        confirmLabel={busy ? "Deleting…" : "Delete workout"}
+        title={t("history.deleteTitle", {
+          name: w ? workoutTitle(w.name) : t("history.thisWorkout"),
+        })}
+        description={t("history.undoAfter")}
+        cancelLabel={t("history.keepWorkout")}
+        confirmLabel={busy ? t("history.deleting") : t("history.deleteWorkout")}
         busy={busy}
         onCancel={() => setConfirmDelete(false)}
         onConfirm={() => void remove()}

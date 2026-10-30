@@ -11,6 +11,7 @@ import { isCardioSet } from "@/lib/cardio";
 import { toastWithUndo } from "@/lib/undo-toast";
 import ExercisePicker from "@/components/ExercisePicker";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { t } from "@/i18n";
 
 /**
  * "Change exercise" for a whole workout or routine: one picker shared by every
@@ -46,9 +47,9 @@ export default function ChangeExercisePicker({
   const apply = (from: Exercise, card: Exercise, target: ExerciseTarget) => {
     onChange(changeExercise(card, target));
     toastWithUndo(
-      `Changed to ${target.name}`,
+      t("change.changedTo", { name: target.name }),
       async () => onChangeRef.current(from),
-      "Could not undo the change.",
+      t("change.undoFailed"),
     );
   };
   const choose = (items: ExerciseTarget[]) => {
@@ -64,7 +65,7 @@ export default function ChangeExercisePicker({
     <>
       <ExercisePicker
         single
-        title="Change exercise"
+        title={t("exercise.changeExercise")}
         excludeId={current?.exerciseId}
         open={!!exercise}
         onClose={onClose}
@@ -72,10 +73,13 @@ export default function ChangeExercisePicker({
       />
       <ConfirmDialog
         open={!!pending}
-        title={<>Change to {pending?.target.name}?</>}
-        description={`Your ${logged} logged ${logged === 1 ? "set doesn't" : "sets don't"} fit a ${cardio ? "strength" : "cardio"} exercise and will be cleared.`}
-        cancelLabel="Keep exercise"
-        confirmLabel="Change exercise"
+        title={t("change.title", { name: pending?.target.name ?? "" })}
+        description={t(
+          cardio ? "change.cardioToStrength" : "change.strengthToCardio",
+          { count: logged },
+        )}
+        cancelLabel={t("workout.keepExercise")}
+        confirmLabel={t("exercise.changeExercise")}
         onCancel={() => setPending(null)}
         onConfirm={() => {
           const choice = pending;

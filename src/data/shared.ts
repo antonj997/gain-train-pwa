@@ -7,6 +7,7 @@ import {
   type SharedRow,
 } from "@/lib/shared-exercises";
 import type { CustomExercise } from "./model";
+import { t } from "../i18n";
 
 // A simple in-memory cache: the list is fetched when the Shared chip is chosen,
 // kept for a minute and dropped after publishing or unsharing.
@@ -21,7 +22,7 @@ export async function fetchShared(
   me: string,
   force = false,
 ): Promise<SharedRow[]> {
-  if (!supabase) throw new Error("Sharing is unavailable.");
+  if (!supabase) throw new Error(t("shared.unavailable"));
   if (!force && cache && Date.now() - cache.at < TTL_MS) return cache.rows;
   const feed = await supabase.rpc("shared_exercise_feed");
   let rows: SharedRow[];
@@ -41,7 +42,7 @@ export async function fetchShared(
 
 /** Publishes an exercise and returns the new row's id. */
 export async function publishExercise(exercise: CustomExercise) {
-  if (!supabase) throw new Error("Sharing is unavailable.");
+  if (!supabase) throw new Error(t("shared.unavailable"));
   const { data, error } = await supabase
     .from("shared_exercises")
     .insert(toSharedInsert(exercise))
@@ -57,20 +58,20 @@ export async function updateSharedExercise(
   sharedId: string,
   exercise: CustomExercise,
 ) {
-  if (!supabase) throw new Error("Sharing is unavailable.");
+  if (!supabase) throw new Error(t("shared.unavailable"));
   const { data, error } = await supabase
     .from("shared_exercises")
     .update(toSharedInsert(exercise))
     .eq("id", sharedId)
     .select("id");
   if (error) throw error;
-  if (!data?.length) throw new Error("The shared copy was not updated.");
+  if (!data?.length) throw new Error(t("shared.notUpdated"));
   cache = null;
 }
 
 /** Removes a published row. Copies other people made are unaffected. */
 export async function unpublishExercise(sharedId: string) {
-  if (!supabase) throw new Error("Sharing is unavailable.");
+  if (!supabase) throw new Error(t("shared.unavailable"));
   const { error } = await supabase
     .from("shared_exercises")
     .delete()

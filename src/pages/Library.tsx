@@ -4,27 +4,29 @@ import Segmented from "@/components/ui/Segmented";
 import RoutinesPanel from "@/components/library/RoutinesPanel";
 import ExercisesPanel from "@/components/library/ExercisesPanel";
 import PlanPanel from "@/components/plan/PlanPanel";
+import { useT } from "@/i18n/useT";
 
 type Tab = "routines" | "exercises" | "plan";
-const tabs: { value: Tab; label: string }[] = [
-  { value: "routines", label: "Routines" },
-  { value: "exercises", label: "Exercises" },
-  { value: "plan", label: "Plan" },
-];
+const tabs = [
+  { value: "routines", label: "library.routines" },
+  { value: "exercises", label: "library.exercises" },
+  { value: "plan", label: "library.plan" },
+] as const;
 
 /** Library: routines, exercises and the optional plan, chosen with `?tab=`. */
 export default function Library() {
   const [params, setParams] = useSearchParams();
+  const { t } = useT();
   const requested = params.get("tab");
   const tab: Tab =
     requested === "exercises" || requested === "plan" ? requested : "routines";
   return (
     <div className="page library-page">
-      <PageHeader eyebrow="Your plans and exercises" title="Library" />
+      <PageHeader eyebrow={t("library.eyebrow")} title={t("library.title")} />
       <Segmented<Tab>
-        label="Library section"
+        label={t("library.section")}
         value={tab}
-        options={tabs}
+        options={tabs.map(({ value, label }) => ({ value, label: t(label) }))}
         onChange={(next) =>
           setParams(next === "routines" ? {} : { tab: next }, { replace: true })
         }

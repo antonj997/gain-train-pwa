@@ -1,5 +1,6 @@
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { countLabel } from "@/lib/labels";
+import { useT } from "@/i18n/useT";
 
 type Props = {
   open: boolean;
@@ -23,19 +24,22 @@ export default function EditSaveDialog({
   onCancel,
   onConfirm,
 }: Props) {
+  const { t } = useT();
   return (
     <ConfirmDialog
       open={open}
       tone="primary"
-      title={<>Save changes to {name}?</>}
+      title={t("workout.saveChangesTitle", { name })}
       description={
         <>
-          {countLabel(completed, "completed set")} will be saved.
-          {total > completed ? " Unchecked sets will be left out." : ""}
+          {t("workout.willBeSaved", {
+            sets: countLabel(completed, "completed set"),
+          })}
+          {total > completed ? " " + t("workout.uncheckedLeftOut") : ""}
         </>
       }
-      cancelLabel="Keep editing"
-      confirmLabel={busy ? "Saving…" : "Save changes"}
+      cancelLabel={t("workout.keepEditing")}
+      confirmLabel={busy ? t("workout.saving") : t("workout.saveChanges")}
       busy={busy}
       confirmDisabled={!completed || invalidChecked}
       onCancel={onCancel}
@@ -43,13 +47,13 @@ export default function EditSaveDialog({
     >
       {completed < total && (
         <p className="completion-warning" role="alert">
-          {countLabel(total - completed, "unchecked set")} will be left out.
+          {t("workout.leftOut", {
+            sets: countLabel(total - completed, "unchecked set"),
+          })}
         </p>
       )}
       {!completed && (
-        <p className="completion-warning">
-          Complete at least one set before saving.
-        </p>
+        <p className="completion-warning">{t("workout.completeOne")}</p>
       )}
     </ConfirmDialog>
   );

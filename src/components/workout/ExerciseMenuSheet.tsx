@@ -7,6 +7,7 @@ import {
   Trash2,
 } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
+import { useT } from "@/i18n/useT";
 
 type BodyProps = {
   /** The current load and count, for example "kg · reps". */
@@ -34,6 +35,7 @@ function ExerciseMenuSheetBody({
   onMoveDown,
   onRemove,
 }: BodyProps) {
+  const { t } = useT();
   return (
     <div className="sheet-menu">
       <button
@@ -42,7 +44,7 @@ function ExerciseMenuSheetBody({
         onClick={onChangeExercise}
       >
         <Replace size={18} aria-hidden="true" />
-        <span>Change exercise</span>
+        <span>{t("exercise.changeExercise")}</span>
       </button>
       {onLoadAndCount && (
         <button
@@ -51,13 +53,13 @@ function ExerciseMenuSheetBody({
           onClick={onLoadAndCount}
         >
           <SlidersHorizontal size={18} aria-hidden="true" />
-          <span>Load and count</span>
+          <span>{t("exercise.loadAndCount")}</span>
           <span className="sheet-menu-hint">{hint}</span>
         </button>
       )}
       <button type="button" className="sheet-menu-item" onClick={onReorder}>
         <ListOrdered size={18} aria-hidden="true" />
-        <span>Reorder sets</span>
+        <span>{t("exercise.reorderSets")}</span>
       </button>
       <button
         type="button"
@@ -66,7 +68,7 @@ function ExerciseMenuSheetBody({
         onClick={onMoveUp}
       >
         <ArrowUp size={18} aria-hidden="true" />
-        <span>Move up</span>
+        <span>{t("exercise.moveUp")}</span>
       </button>
       <button
         type="button"
@@ -75,11 +77,11 @@ function ExerciseMenuSheetBody({
         onClick={onMoveDown}
       >
         <ArrowDown size={18} aria-hidden="true" />
-        <span>Move down</span>
+        <span>{t("exercise.moveDown")}</span>
       </button>
       <button type="button" className="btn-danger" onClick={onRemove}>
         <Trash2 size={18} aria-hidden="true" />
-        Remove exercise
+        {t("workout.removeExercise")}
       </button>
     </div>
   );

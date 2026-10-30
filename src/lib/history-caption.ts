@@ -2,6 +2,7 @@ import { localizedDate } from "./dates";
 import { lastWorkoutDate } from "./heatmap";
 import { countLabel } from "./labels";
 import { type HistoryCalendarState } from "./history-calendar";
+import { t } from "../i18n";
 
 const shortDay = (date: string) =>
   localizedDate(date, { weekday: "short", day: "numeric", month: "short" });
@@ -28,12 +29,17 @@ export function historyCaption(
   }
   if (value.mode === "range") {
     const { from, to } = value;
-    if (!from && !to) return "Choose a start date";
+    if (!from && !to) return t("history.chooseStart");
     if (!from || !to || from === to) {
       const only = (from ?? to)!;
       return from && to
         ? day(only)
-        : `${shortDate(only)} · choose the ${value.activeBound === "to" ? "end" : "start"} date`;
+        : t(
+            value.activeBound === "to"
+              ? "history.chooseEndOf"
+              : "history.chooseStartOf",
+            { date: shortDate(only) },
+          );
     }
     let total = 0;
     for (const [date, count] of counts)
@@ -43,6 +49,6 @@ export function historyCaption(
   if (value.selectedDate) return day(value.selectedDate);
   const last = lastWorkoutDate(counts, now);
   return last
-    ? `Last workout ${shortDay(last)}`
-    : "Tap a day to see its workouts";
+    ? t("history.lastWorkout", { date: shortDay(last) })
+    : t("history.tapDay");
 }

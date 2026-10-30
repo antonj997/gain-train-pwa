@@ -13,8 +13,9 @@ import { today as todayDate } from "@/data/model";
 import { completedWorkouts } from "@/data/selectors";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
+import { formatDecimal, t } from "@/i18n";
 
-const kg = (value: number) => `${Number(value.toFixed(1))} kg`;
+const kg = (value: number) => `${formatDecimal(Number(value.toFixed(1)))} kg`;
 
 /** Progress → Goals: a card per goal and "+ Add goal". Needs no plan and no workouts. */
 export default function GoalsSection() {
@@ -65,10 +66,10 @@ export default function GoalsSection() {
   return (
     <section aria-labelledby="goals-heading">
       <div className="section-head">
-        <h2 id="goals-heading">Goals</h2>
+        <h2 id="goals-heading">{t("goals.title")}</h2>
         <button type="button" className="text-link" onClick={() => edit("new")}>
           <Plus size={18} aria-hidden="true" />
-          Add goal
+          {t("goals.add")}
         </button>
       </div>
       {cards.length > 0 && (
@@ -84,7 +85,7 @@ export default function GoalsSection() {
                 <strong className="card-title">{goalTitle(goal)}</strong>
                 <span className={"stat-chip" + (progress.met ? " done" : "")}>
                   {progress.met
-                    ? "Reached"
+                    ? t("goals.reached")
                     : localizedDate(goal.byDate, {
                         day: "numeric",
                         month: "short",
@@ -94,7 +95,9 @@ export default function GoalsSection() {
               <span
                 className={"goal-bar" + (progress.met ? " is-done" : "")}
                 role="progressbar"
-                aria-label={`${goalTitle(goal)} progress`}
+                aria-label={t("goals.progressLabel", {
+                  title: goalTitle(goal),
+                })}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.round(progress.fraction * 100)}
@@ -104,29 +107,35 @@ export default function GoalsSection() {
               <span className="row-sub">
                 {progress.current === null
                   ? goal.kind === "bodyweight"
-                    ? "Add your bodyweight in Settings to follow this goal."
-                    : "No sets logged yet"
-                  : `Now ${kg(progress.current)}`}
+                    ? t("goals.addBodyweight")
+                    : t("goals.noSets")
+                  : t("goals.now", { value: kg(progress.current) })}
                 {" · "}
-                {progress.unit === "kg e1RM" ? "Target est. 1RM " : "Target "}
-                {kg(progress.target)}
+                {t(
+                  progress.unit === "kg e1RM"
+                    ? "goals.targetE1rm"
+                    : "goals.target",
+                  { value: kg(progress.target) },
+                )}
               </span>
               <span className="row-sub">
                 {progress.met && progress.reachedOn
-                  ? `Reached on ${localizedDate(progress.reachedOn)}`
+                  ? t("goals.reachedOn", {
+                      date: localizedDate(progress.reachedOn),
+                    })
                   : progress.daysLeft >= 0
-                    ? `${countLabel(progress.daysLeft, "day")} left`
-                    : `${countLabel(-progress.daysLeft, "day")} past the date`}
+                    ? t("goals.left", {
+                        days: countLabel(progress.daysLeft, "day"),
+                      })
+                    : t("goals.past", {
+                        days: countLabel(-progress.daysLeft, "day"),
+                      })}
               </span>
             </button>
           ))}
         </div>
       )}
-      {!cards.length && (
-        <p className="row-sub">
-          Aim for a lift or a bodyweight by a date, with or without a plan.
-        </p>
-      )}
+      {!cards.length && <p className="row-sub">{t("goals.empty")}</p>}
       {current && (
         <GoalEditor
           key={session}

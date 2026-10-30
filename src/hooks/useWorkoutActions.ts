@@ -9,6 +9,7 @@ import { toastWithUndo } from "@/lib/undo-toast";
 import { finishWorkout } from "@/lib/workout-editor";
 import type { useRestTimer } from "@/hooks/useRestTimer";
 import type { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
+import { t } from "@/i18n";
 
 /**
  * Finishing (or saving an edit) and abandoning a workout. Both lock the editor
@@ -33,9 +34,7 @@ export function useWorkoutActions(
     try {
       await action();
     } catch (cause) {
-      setError(
-        errorMessage(cause, "Could not save. Retry to keep your changes."),
-      );
+      setError(errorMessage(cause, t("actions.saveFailed")));
       toast.error(failure);
     } finally {
       actionLocked.current = false;
@@ -61,21 +60,15 @@ export function useWorkoutActions(
               })),
             });
           } catch {
-            toast.error(
-              "Workout saved. The routine could not be saved; create it from History.",
-            );
+            toast.error(t("actions.routineFailed"));
           }
         }
         toast.success(
-          editing
-            ? "Changes saved on this phone"
-            : "Workout saved on this phone",
+          editing ? t("actions.changesSaved") : t("actions.workoutSaved"),
         );
         navigate(historyPath(id));
       },
-      editing
-        ? "Changes could not be saved. Your original workout is unchanged."
-        : "Could not finish. Your draft is still here.",
+      editing ? t("actions.changesFailed") : t("actions.finishFailed"),
     );
   const abandon = () =>
     runLocked(async () => {
@@ -86,17 +79,15 @@ export function useWorkoutActions(
       try {
         await deleteRecord(id);
       } catch (cause) {
-        toast.error(
-          errorMessage(cause, "Could not abandon. The workout is still here."),
-        );
+        toast.error(errorMessage(cause, t("actions.abandonFailed")));
         return;
       }
       rest.skip();
       toastWithUndo(
-        "Workout abandoned",
+        t("home.abandoned"),
         () => restoreWorkout(id),
-        "Could not restore the workout. Try importing a backup.",
+        t("home.restoreFailed"),
       );
-    }, "Could not abandon. The workout is still here; retry.");
+    }, t("actions.abandonRetry"));
   return { busy, complete, abandon };
 }

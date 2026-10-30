@@ -11,6 +11,7 @@ import {
   weekStart,
   weekdayIndex,
 } from "../lib/dates";
+import { t, type MessageKey } from "../i18n";
 
 /**
  * Plan cells are plain strings: a routine's id, "rest", "type:<day type id>",
@@ -39,6 +40,10 @@ export const dayTypes: DayType[] = [
   },
   { id: "cardio", label: "Cardio", categories: ["Cardio"] },
 ];
+
+/** A day type's name to show ("Legs", "Ben"); the id and `label` stay English. */
+export const dayTypeLabel = (type: DayType) =>
+  t(("dayType." + type.id) as MessageKey);
 
 export type PlanItem = Plan & { id: string };
 
@@ -149,13 +154,18 @@ export function resolveCell(
 ): PlannedDay | null {
   if (!cell) return null;
   if (cell === REST)
-    return { kind: "rest", title: "Rest day", routineIds: [], categories: [] };
+    return {
+      kind: "rest",
+      title: t("plan.restDay"),
+      routineIds: [],
+      categories: [],
+    };
   if (cell.startsWith("type:")) {
     const type = dayTypes.find((t) => t.id === cell.slice(5));
     return type
       ? {
           kind: "type",
-          title: type.label,
+          title: dayTypeLabel(type),
           routineIds: [],
           categories: type.categories,
         }
@@ -187,8 +197,8 @@ export function resolveCell(
 export function cellText(cell: string | null | undefined, names: Names) {
   if (!cell) return "";
   return cell === REST
-    ? "Rest"
-    : (resolveCell(cell, names)?.title ?? "Deleted");
+    ? t("plan.rest")
+    : (resolveCell(cell, names)?.title ?? t("plan.deleted"));
 }
 
 /** The last day of the default period for an imported plan: three months after `today`. */
@@ -232,7 +242,7 @@ export function legacyPlanToPlan(
         overrides[date] = entry;
   if (!row.some(Boolean) && !Object.keys(overrides).length) return null;
   return {
-    name: "My plan",
+    name: t("plan.defaultName"),
     startDate: today,
     endDate,
     cycleWeeks: 1,

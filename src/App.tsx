@@ -7,6 +7,7 @@ import { DataProvider } from "@/contexts/DataContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useTheme } from "@/contexts/useTheme";
+import { LanguageProvider } from "@/i18n/LanguageProvider";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import ActiveWorkout from "@/pages/ActiveWorkout";
@@ -76,11 +77,13 @@ function AccountApp() {
 }
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <AccountApp />
-        <AppToaster />
-      </AuthProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AccountApp />
+          <AppToaster />
+        </AuthProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }

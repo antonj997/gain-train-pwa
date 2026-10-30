@@ -10,6 +10,7 @@ import {
 } from "@/data/selectors";
 import { routineEditPath } from "@/lib/routes";
 import { routineAverageMinutes } from "@/lib/routine-preview";
+import { useT } from "@/i18n/useT";
 
 type Props = {
   /** Finished workouts, newest first. */
@@ -33,6 +34,7 @@ export default function RoutinesSection({
 }: Props) {
   const { state } = useData();
   const navigate = useNavigate();
+  const { t } = useT();
   // Routines last used first; those never used keep their saved order.
   const recentRoutines = useMemo(() => {
     const lastUsed = new Map<string, number>();
@@ -79,16 +81,18 @@ export default function RoutinesSection({
   return (
     <section aria-labelledby="routines-heading">
       <div className="section-head">
-        <h2 id="routines-heading">Start a routine</h2>
+        <h2 id="routines-heading">{t("home.startRoutine")}</h2>
         <Link className="text-link" to="/library">
-          All routines
+          {t("home.allRoutines")}
         </Link>
       </div>
       {todayPlan && (
         <div className="card plan-today">
           <span className="plan-today-text">
-            <span className="row-sub">From your plan</span>
-            <strong className="card-title">Today: {todayPlan.title}</strong>
+            <span className="row-sub">{t("home.fromPlan")}</span>
+            <strong className="card-title">
+              {t("home.todayPlan", { title: todayPlan.title })}
+            </strong>
           </span>
           {todayPlan.kind === "routine" && planRoutines[0] && (
             <button
@@ -96,7 +100,7 @@ export default function RoutinesSection({
               disabled={starting}
               onClick={() => onStart(planRoutines[0])}
             >
-              Start
+              {t("common.start")}
             </button>
           )}
           {todayPlan.kind === "type" && (
@@ -105,7 +109,7 @@ export default function RoutinesSection({
               disabled={starting}
               onClick={onStartSuggestions}
             >
-              Start with suggestions
+              {t("home.startSuggestions")}
             </button>
           )}
         </div>
@@ -121,7 +125,7 @@ export default function RoutinesSection({
               disabled={starting}
               onClick={onStartSuggestions}
             >
-              Start with suggestions
+              {t("home.startSuggestions")}
             </button>
           )}
         </div>
@@ -130,12 +134,10 @@ export default function RoutinesSection({
         <div className="list">{recentRoutines.map(renderRoutine)}</div>
       ) : (
         <div className="card col-12">
-          <h3 className="card-title">A routine makes next time easier</h3>
-          <p className="row-sub">
-            Save a workout as a routine after finishing, or create one now.
-          </p>
+          <h3 className="card-title">{t("home.emptyRoutinesTitle")}</h3>
+          <p className="row-sub">{t("home.emptyRoutinesText")}</p>
           <Link className="btn-secondary" to="/library">
-            Create a routine
+            {t("home.createRoutine")}
           </Link>
         </div>
       )}

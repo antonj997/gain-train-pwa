@@ -4,6 +4,7 @@ import { isDrop } from "../data/drops";
 import { hasExtraWeight } from "./set-load";
 import { cardioLabel, isCardioSet } from "./cardio";
 import { countLabel, durationLabel } from "./labels";
+import { formatDecimal, t } from "../i18n";
 
 /** Minutes rounded to the nearest 5, never below 5. */
 const roundToFive = (minutes: number) =>
@@ -42,7 +43,7 @@ export function plannedSummary(exercise: Exercise) {
   const real = exercise.sets.filter((s) => !isDrop(s));
   const sets = real.filter((s) => s.section === "working");
   const main = sets.length ? sets : real;
-  if (!main.length) return "No sets";
+  if (!main.length) return t("routine.noSets");
   const first = main[0];
   if (main.length === 1 && isCardioSet(first)) return cardioLabel(first);
   const same = main.every(
@@ -56,12 +57,14 @@ export function plannedSummary(exercise: Exercise) {
   if (!same || isCardioSet(first) || first.reps === null)
     return countLabel(main.length, "set");
   const reps =
-    `${main.length} × ${first.reps}` +
-    (first.measure === "seconds" ? " sec" : "");
-  if (hasExtraWeight(first)) return `${reps} · BW + ${first.weight} kg`;
-  if (first.load === "bodyweight") return `${reps} · BW`;
+    first.measure === "seconds"
+      ? t("label.timesSec", { sets: main.length, n: first.reps })
+      : `${main.length} × ${first.reps}`;
+  const kg = first.weight === null ? "" : formatDecimal(first.weight);
+  if (hasExtraWeight(first)) return `${reps} · ${t("label.bwPlus", { kg })}`;
+  if (first.load === "bodyweight") return `${reps} · ${t("label.bw")}`;
   if (first.weight === null) return reps;
-  return `${reps} · ${first.weight} kg${first.load === "assisted" ? " assist" : ""}`;
+  return `${reps} · ${first.load === "assisted" ? t("label.assistSuffix", { kg }) : `${kg} kg`}`;
 }
 
 /** Warm-up, cool-down and drop sets of an exercise: "2 warm-up · 1 drop". */
@@ -72,8 +75,8 @@ export function exerciseExtras(exercise: Exercise) {
   const winddown = count((s) => !isDrop(s) && s.section === "winddown");
   const drops = count(isDrop);
   return [
-    warmup && `${warmup} warm-up`,
-    winddown && `${winddown} cool-down`,
+    warmup && t("routine.warmups", { count: warmup }),
+    winddown && t("routine.cooldowns", { count: winddown }),
     drops && countLabel(drops, "drop"),
   ]
     .filter(Boolean)

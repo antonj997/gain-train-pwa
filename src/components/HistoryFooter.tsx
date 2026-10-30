@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { t } from "@/i18n";
 
 /** The caption line under both calendar views, with Clear only when something is chosen. */
 export default function HistoryFooter({
@@ -25,7 +26,7 @@ export default function HistoryFooter({
           onClick={onReset}
         >
           <X size={14} aria-hidden="true" />
-          Clear selection
+          {t("history.clearSelection")}
         </button>
       )}
     </div>

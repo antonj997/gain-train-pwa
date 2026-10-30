@@ -8,6 +8,7 @@ import {
 import { dropGroup, isDrop, setBadge } from "@/data/drops";
 import Sheet from "@/components/ui/Sheet";
 import SortableSetList from "@/components/SortableSetList";
+import { t } from "@/i18n";
 
 /**
  * The sets in the order of `parentIds`, each followed by its drops. A set that
@@ -30,7 +31,7 @@ export function reorderGroups(
 }
 
 const summary = (set: WorkoutSet) =>
-  validSet(set) ? labelSet(set) : "Not filled in";
+  validSet(set) ? labelSet(set) : t("set.notFilled");
 
 /** Moves sets, and the drops that follow them, with handles or arrow keys. */
 export default function ReorderSetsSheet({
@@ -50,7 +51,7 @@ export default function ReorderSetsSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title="Reorder sets"
+      title={t("set.reorderTitle")}
       // Escape cancels a move in progress; only a second one closes the sheet.
       onEscapeKeyDown={(event) => {
         if (moving.current) event.preventDefault();
@@ -89,7 +90,7 @@ export default function ReorderSetsSheet({
               {drops.map((drop) => (
                 <p key={drop.id} className="reorder-drop">
                   <span aria-hidden="true">↓ </span>
-                  <span className="sr-only">Drop: </span>
+                  <span className="sr-only">{t("set.dropSr") + " "}</span>
                   {summary(drop)}
                 </p>
               ))}

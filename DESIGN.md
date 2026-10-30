@@ -167,6 +167,7 @@ Inputs, badges, small buttons and the done control are 10px; buttons are 12px; c
 - **Do** put rarely used controls in a sheet and keep the card to the values, ✓ and one-tap headings.
 - **Do** keep targets at 44px, tabular numerals and motion of 150–200ms.
 - **Do** retain clear save status, planned-routine fields and readable completed data.
+- **Do** write every visible string, aria-label and toast through `t()` from `src/i18n`, and check new copy in Swedish at 360px: its words run longer (Uppvärmning, Nedvarvning, Assisterad), so segmented controls, chips and buttons must fit or wrap, never scroll sideways. Swedish copy is casual du-form: pass, set, rutin, övning, vila, uppvärmning.
 - **Don't** add gradients, a general card shadow, web fonts or a second accent colour.
 - **Don't** bring back the “Edit sets” mode, compact rows, per-row type selects or remove buttons, or the top-bar Abandon.
 - **Don't** reintroduce the Training Ledger palette, flattened exercise layout or restrained-corner redesign; the owner rejected that visual direction.

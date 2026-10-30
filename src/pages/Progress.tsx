@@ -22,16 +22,14 @@ import Sheet from "@/components/ui/Sheet";
 import { daysAgo, localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { totalsLabel } from "@/lib/cardio";
+import { useT } from "@/i18n/useT";
 
 const periods = [
-  { value: "4w", label: "4 weeks", before: "the 4 weeks before" },
-  { value: "3m", label: "3 months", before: "the 3 months before" },
-  { value: "12m", label: "Year", before: "the year before" },
+  { value: "4w", label: "progress.p4w", before: "progress.before4w" },
+  { value: "3m", label: "progress.p3m", before: "progress.before3m" },
+  { value: "12m", label: "progress.p12m", before: "progress.before12m" },
 ] as const;
 type Period = (typeof periods)[number]["value"];
-const periodOptions: { value: Period; label: string }[] = periods.map(
-  ({ value, label }) => ({ value, label }),
-);
 
 /** A 64×28 trend line with no axes; the row text carries the numbers. */
 function Sparkline({ values }: { values: number[] }) {
@@ -61,6 +59,10 @@ export default function Progress() {
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<Period>("4w");
   const [openId, setOpenId] = useState<string | null>(null);
+  const { t } = useT();
+  const periodOptions: { value: Period; label: string }[] = periods.map(
+    ({ value, label }) => ({ value, label: t(label) }),
+  );
   const now = today();
   const records = useMemo(() => Object.values(state.records), [state.records]);
   // Recomputed only when the log changes, not while typing in the search box.
@@ -79,7 +81,7 @@ export default function Progress() {
           id: item.id,
           name: item.name,
           sessions: item.points.filter(inPeriod).length,
-          best: `Best ${labelSet(stats.best.set)}`,
+          best: t("progress.best", { set: labelSet(stats.best.set) }),
           trend: stats.comparable.slice(-8).map(stats.valueOf),
         };
       }),
@@ -89,20 +91,22 @@ export default function Progress() {
           id: item.id,
           name: item.name,
           sessions: item.sessions.filter(inPeriod).length,
-          best: `Latest ${totalsLabel(latest)}`,
+          best: t("progress.latest", { value: totalsLabel(latest) }),
           trend: item.sessions.slice(-8).map((x) => x.durationSec),
         };
       }),
     ]
       .filter((row) => row.sessions > 0)
       .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name));
-  }, [items, cardioItems, period.start, period.end]);
+  }, [items, cardioItems, period.start, period.end, t]);
   const bests = useMemo(
     () => recentBests(items, period.start, period.end),
     [items, period.start, period.end],
   );
-  const query = search.trim().toLowerCase();
-  const shown = rows.filter((row) => row.name.toLowerCase().includes(query));
+  const query = search.trim().toLocaleLowerCase();
+  const shown = rows.filter((row) =>
+    row.name.toLocaleLowerCase().includes(query),
+  );
   const open = items.find((item) => item.id === openId);
   const openCardio = cardioItems.find((item) => item.id === openId);
   const hasData = items.length > 0 || cardioItems.length > 0;
@@ -110,14 +114,18 @@ export default function Progress() {
   return (
     <div className="page progress-page">
       <PageHeader
-        eyebrow={hasData ? `Compared with ${before}` : undefined}
-        title="Progress"
+        eyebrow={
+          hasData
+            ? t("progress.comparedWith", { before: t(before) })
+            : undefined
+        }
+        title={t("progress.title")}
       />
       <GoalsSection />
       {hasData && (
         <>
           <Segmented<Period>
-            label="Period"
+            label={t("progress.period")}
             value={range}
             options={periodOptions}
             onChange={setRange}
@@ -131,7 +139,7 @@ export default function Progress() {
           {bests.length > 0 && (
             <section aria-labelledby="bests-heading">
               <div className="section-head">
-                <h2 id="bests-heading">Recent bests</h2>
+                <h2 id="bests-heading">{t("progress.recentBests")}</h2>
               </div>
               <div className="best-grid">
                 {bests.map((best) => (
@@ -140,7 +148,7 @@ export default function Progress() {
                     <strong>{labelSet(best.set)}</strong>
                     <time className="row-sub" dateTime={best.date}>
                       {best.date === now
-                        ? "Today"
+                        ? t("common.todayCap")
                         : localizedDate(best.date, {
                             weekday: "short",
                             day: "numeric",
@@ -154,13 +162,13 @@ export default function Progress() {
           )}
           <section aria-labelledby="exercises-heading">
             <div className="section-head">
-              <h2 id="exercises-heading">Exercises</h2>
-              <span className="row-sub">Most trained first</span>
+              <h2 id="exercises-heading">{t("progress.exercises")}</h2>
+              <span className="row-sub">{t("progress.mostTrained")}</span>
             </div>
             {rows.length > 0 && (
               <input
-                aria-label="Find exercise progress"
-                placeholder="Find an exercise"
+                aria-label={t("progress.find")}
+                placeholder={t("progress.findPlaceholder")}
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
@@ -182,21 +190,16 @@ export default function Progress() {
             )}
             {rows.length === 0 && (
               <div className="card col-12" role="status">
-                <h3 className="card-title">No sessions in this period</h3>
-                <p className="row-sub">
-                  Pick a longer period to see earlier exercises.
-                </p>
+                <h3 className="card-title">{t("progress.noSessions")}</h3>
+                <p className="row-sub">{t("progress.longerPeriod")}</p>
               </div>
             )}
             {rows.length > 0 && shown.length === 0 && (
               <div className="card col-12" role="status">
-                <h3 className="card-title">No matching exercises</h3>
-                <p className="row-sub">
-                  Try another name or clear your search to see all recorded
-                  progress.
-                </p>
+                <h3 className="card-title">{t("progress.noMatch")}</h3>
+                <p className="row-sub">{t("progress.noMatchText")}</p>
                 <button className="btn-secondary" onClick={() => setSearch("")}>
-                  Clear search
+                  {t("progress.clearSearch")}
                 </button>
               </div>
             )}
@@ -206,13 +209,10 @@ export default function Progress() {
       {!hasData && (
         <div className="empty-card">
           <TrendingUp size={30} />
-          <h2>Your working sets will appear here</h2>
-          <p>
-            Finish a workout with a working set to see an exact result. Another
-            comparable session gives you a comparison.
-          </p>
+          <h2>{t("progress.emptyTitle")}</h2>
+          <p>{t("progress.emptyText")}</p>
           <Link className="btn-primary" to="/">
-            Start a workout
+            {t("progress.startWorkout")}
           </Link>
         </div>
       )}
@@ -220,7 +220,7 @@ export default function Progress() {
         open={!!open || !!openCardio}
         onClose={() => setOpenId(null)}
         title={open?.name ?? openCardio?.name}
-        description="Results, sessions and chart"
+        description={t("progress.sheetDescription")}
         size="full"
       >
         {open && (

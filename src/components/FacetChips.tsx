@@ -1,15 +1,22 @@
-const label = (value: string) => value[0].toUpperCase() + value.slice(1);
+const capital = (value: string) =>
+  value.charAt(0).toLocaleUpperCase() + value.slice(1);
 
 /** One scrolling row of filter chips. The first chip, All, clears the choice. */
 export default function FacetChips({
   name,
+  allLabel,
   options,
+  format = (option) => option,
   value,
   onChange,
 }: {
   /** Names the group for assistive technology, e.g. "Category". */
   name: string;
+  /** The first chip, which clears the choice: "All equipment". */
+  allLabel: string;
   options: readonly string[];
+  /** The label of a stored option value. */
+  format?: (option: string) => string;
   value: string;
   onChange: (value: string) => void;
 }) {
@@ -23,7 +30,7 @@ export default function FacetChips({
           aria-pressed={value === option}
           onClick={() => onChange(option)}
         >
-          {option ? label(option) : `All ${name.toLowerCase()}`}
+          {option ? capital(format(option)) : allLabel}
         </button>
       ))}
     </div>

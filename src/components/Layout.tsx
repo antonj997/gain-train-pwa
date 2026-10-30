@@ -6,19 +6,22 @@ import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { useLegacyPlanImport } from "@/hooks/useLegacyPlanImport";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import LanguagePrompt from "@/components/LanguagePrompt";
+import { useT } from "@/i18n/useT";
 
 const tabs = [
-  { to: "/", title: "Train", Icon: Dumbbell },
-  { to: "/history", title: "History", Icon: History },
-  { to: "/progress", title: "Progress", Icon: TrendingUp },
-  { to: "/library", title: "Library", Icon: Library },
-];
+  { to: "/", title: "nav.train", Icon: Dumbbell },
+  { to: "/history", title: "nav.history", Icon: History },
+  { to: "/progress", title: "nav.progress", Icon: TrendingUp },
+  { to: "/library", title: "nav.library", Icon: Library },
+] as const;
 
 export default function Layout() {
   useVisualViewport();
   useLegacyPlanImport();
   const { ready } = useData();
   const { passwordRecovery } = useAuth();
+  const { t, language } = useT();
   const path = useLocation().pathname;
   const activeWorkout = path.startsWith("/workout/");
   useEffect(() => {
@@ -35,12 +38,13 @@ export default function Layout() {
       <main>
         {ready ? (
           // A page that fails to render shows the crash screen in its place;
-          // the tab bar stays, and another tab starts afresh.
-          <ErrorBoundary key={path} scope="page">
+          // the tab bar stays, and another tab starts afresh. A new language
+          // remounts the page, so nothing keeps text built in the old one.
+          <ErrorBoundary key={path + ":" + language} scope="page">
             <Suspense
               fallback={
                 <p className="empty" role="status">
-                  Opening…
+                  {t("app.opening")}
                 </p>
               }
             >
@@ -48,11 +52,11 @@ export default function Layout() {
             </Suspense>
           </ErrorBoundary>
         ) : (
-          <p className="empty">Opening your workout log…</p>
+          <p className="empty">{t("app.openingLog")}</p>
         )}
       </main>
       {!activeWorkout && (
-        <nav className="bottom-nav" aria-label="Main navigation">
+        <nav className="bottom-nav" aria-label={t("nav.main")}>
           {tabs.map((tab) => {
             const active = isActive(tab);
             return (
@@ -63,12 +67,13 @@ export default function Layout() {
                 aria-current={active ? "page" : undefined}
               >
                 <tab.Icon size={22} aria-hidden="true" />
-                <span>{tab.title}</span>
+                <span>{t(tab.title)}</span>
               </Link>
             );
           })}
         </nav>
       )}
+      {ready && <LanguagePrompt />}
     </div>
   );
 }

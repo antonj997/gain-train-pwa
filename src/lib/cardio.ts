@@ -1,5 +1,6 @@
 import type { WorkoutSet } from "../data/model";
 import { parseSetNumber } from "./set-input";
+import { formatDecimal } from "../i18n";
 
 /** The server's limits for cardio values (see the cardio migration). */
 export const CARDIO_MAX = {
@@ -45,7 +46,7 @@ export function parseDuration(text: string): number | null {
 export function formatKm(meters: number | null | undefined) {
   if (meters === null || meters === undefined || !Number.isFinite(meters))
     return "";
-  return String(Number((meters / 1000).toFixed(3)));
+  return formatDecimal(Number((meters / 1000).toFixed(3)));
 }
 
 /** Kilometres as typed ("3.2" or "3,2") to whole metres. Blank is null; unfinished text is NaN. */

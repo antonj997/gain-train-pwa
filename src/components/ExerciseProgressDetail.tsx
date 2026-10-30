@@ -19,6 +19,7 @@ import ListRow from "@/components/ui/ListRow";
 import { localizedDate } from "@/lib/dates";
 import { chartDomain, chartSessions } from "@/lib/progressPresentation";
 import { historyPath } from "@/lib/routes";
+import { formatFixed, t } from "@/i18n";
 
 type Props = {
   item: ReturnType<typeof progressFor>[number];
@@ -30,12 +31,20 @@ type Props = {
 export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
   const { latest, weighted, timed, comparable, valueOf, best } =
     exerciseStats(item);
-  const unit = weighted ? "kg" : timed ? "seconds" : "reps";
-  const metricLabel = weighted
-    ? "Estimated 1RM (kg)"
-    : timed
-      ? "Seconds"
-      : "Reps";
+  const unit = t(
+    weighted
+      ? "detail.unitKg"
+      : timed
+        ? "detail.unitSeconds"
+        : "detail.unitReps",
+  );
+  const metricLabel = t(
+    weighted
+      ? "detail.metricKg"
+      : timed
+        ? "detail.metricSeconds"
+        : "detail.metricReps",
+  );
   const previous = comparable.at(-2);
   const latestValue = valueOf(latest);
   const bestValue = valueOf(best);
@@ -48,7 +57,7 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
   return (
     <div className="exercise-detail">
       <div className="card performance">
-        <span className="performance-label">Latest working set</span>
+        <span className="performance-label">{t("detail.latestSet")}</span>
         <strong className="performance-value">{labelSet(latest.set)}</strong>
         <time className="row-sub" dateTime={latest.date}>
           {localizedDate(latest.date)}
@@ -56,30 +65,39 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
         <p className="row-sub">
           {previous ? (
             <>
-              Prior comparable · {localizedDate(previous.date)}:{" "}
+              {t("detail.prior", { date: localizedDate(previous.date) })}{" "}
               <strong>{labelSet(previous.set)}</strong>
             </>
           ) : (
-            "No prior comparable working set yet."
+            t("detail.noPrior")
           )}
         </p>
       </div>
       <div className="tiles">
         <div className="card tile">
           <span className="row-sub">
-            {weighted ? "Best est. 1RM" : timed ? "Best duration" : "Best reps"}
+            {t(
+              weighted
+                ? "detail.bestE1rm"
+                : timed
+                  ? "detail.bestDuration"
+                  : "detail.bestReps",
+            )}
           </span>
           <strong className="tile-value">
-            {bestValue.toFixed(decimals)} {unit}
+            {formatFixed(bestValue, decimals)} {unit}
           </strong>
           <small className="row-sub">
             {latestValue === bestValue
-              ? "At your best"
-              : `${(bestValue - latestValue).toFixed(decimals)} ${unit} from best`}
+              ? t("detail.atBest")
+              : t("detail.fromBest", {
+                  value: formatFixed(bestValue - latestValue, decimals),
+                  unit,
+                })}
           </small>
         </div>
         <div className="card tile">
-          <span className="row-sub">Latest change</span>
+          <span className="row-sub">{t("detail.latestChange")}</span>
           <strong className="tile-value">
             {metricChange(
               latestValue,
@@ -87,18 +105,20 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
               decimals,
             )}
           </strong>
-          <small className="row-sub">{unit} · vs prior comparable</small>
+          <small className="row-sub">{t("detail.vsPrior", { unit })}</small>
         </div>
         <div className="card tile tile-wide">
-          <span className="row-sub">Sessions · 30 days</span>
+          <span className="row-sub">{t("detail.sessions30")}</span>
           <strong className="tile-value">
             {item.points.filter((point) => point.date > cutoffDate).length}
           </strong>
-          <small className="row-sub">{item.points.length} total</small>
+          <small className="row-sub">
+            {t("detail.total", { count: item.points.length })}
+          </small>
         </div>
       </div>
       <p className="row-sub">
-        Best comparable working result · {localizedDate(best.date)}:{" "}
+        {t("detail.bestResult", { date: localizedDate(best.date) })}{" "}
         <strong>{labelSet(best.set)}</strong>
       </p>
       {points.length > 1 ? (
@@ -106,7 +126,10 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
           <div
             className="chart"
             role="img"
-            aria-label={`${item.name}: ${metricLabel.toLowerCase()} by session. The vertical scale starts at zero; exact results are listed below.`}
+            aria-label={t("detail.chartLabel", {
+              name: item.name,
+              metric: metricLabel.toLocaleLowerCase(),
+            })}
           >
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
@@ -135,7 +158,7 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
                     payload[0]?.payload.fullLabel ?? ""
                   }
                   formatter={(value) => [
-                    Number(value).toFixed(decimals),
+                    formatFixed(Number(value), decimals),
                     metricLabel,
                   ]}
                 />
@@ -151,17 +174,14 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
             </ResponsiveContainer>
           </div>
           <p className="row-sub">
-            {metricLabel} · scale starts at zero. Same-day sessions use their
-            recorded order.
+            {t("detail.chartNote", { metric: metricLabel })}
           </p>
         </>
       ) : (
-        <p className="row-sub">
-          Your chart starts after your next comparable session.
-        </p>
+        <p className="row-sub">{t("detail.chartLater")}</p>
       )}
       <section>
-        <h3 className="group-title">Recorded sessions</h3>
+        <h3 className="group-title">{t("detail.recorded")}</h3>
         <div className="list">
           {[...sessions].reverse().map((point) => (
             <ListRow
@@ -177,15 +197,17 @@ export default function ExerciseProgressDetail({ item, cutoffDate }: Props) {
       <p className="row-sub">
         {weighted ? (
           <>
-            Estimated strength uses working sets of 1–10 reps.
+            {t("detail.estimatedNote")}{" "}
             {base !== null
-              ? ` ${latestValue - base >= 0 ? "+" : ""}${(latestValue - base).toFixed(1)} kg vs the baseline at least 30 days ago.`
-              : " No comparable baseline from 30 days ago yet."}
+              ? t("detail.baseline", {
+                  change: `${latestValue - base >= 0 ? "+" : ""}${formatFixed(latestValue - base, 1)}`,
+                })
+              : t("detail.noBaseline")}
           </>
         ) : timed ? (
-          "Working-set duration in seconds at the same load as your latest session."
+          t("detail.timedNote")
         ) : (
-          "Working-set reps at the same load as your latest session. Assisted weight is assistance, not lifted weight."
+          t("detail.repsNote")
         )}
       </p>
     </div>

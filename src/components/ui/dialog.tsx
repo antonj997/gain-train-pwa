@@ -2,6 +2,7 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { capturePointer } from "@/lib/pointer-capture";
 import { coarsePointer, opensKeyboard } from "@/lib/touch";
+import { t } from "@/i18n";
 
 // Base classes live in styles/primitives.css; callers add their own.
 const classes = (base: string, extra?: string) =>
@@ -165,7 +166,7 @@ const DialogContent = React.forwardRef<
           {children}
           <DialogPrimitive.Close
             className="dialog-handle"
-            aria-label="Close"
+            aria-label={t("dialog.close")}
             {...handle}
           >
             <span className="dialog-handle-bar" aria-hidden="true" />

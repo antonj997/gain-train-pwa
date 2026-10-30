@@ -22,11 +22,17 @@ import {
   type HistoryCalendarAction,
   type HistoryCalendarState,
 } from "@/lib/history-calendar";
-import { localizedDate, shiftDate, weekdayIndex } from "@/lib/dates";
+import {
+  localizedDate,
+  shiftDate,
+  weekdayIndex,
+  weekdayNames,
+} from "@/lib/dates";
 import { heatClass } from "@/lib/heatmap";
 import { historyCaption } from "@/lib/history-caption";
 import { countLabel } from "@/lib/labels";
 import "@/styles/history-calendar.css";
+import { t } from "@/i18n";
 
 export default function HistoryCalendar({
   value,
@@ -137,8 +143,8 @@ export default function HistoryCalendar({
     <button
       type="button"
       className="icon-btn"
-      aria-label={toDetailed ? "Show month calendar" : "Show activity grid"}
-      title={toDetailed ? "Show month calendar" : "Show activity grid"}
+      aria-label={toDetailed ? t("history.showMonth") : t("history.showGrid")}
+      title={toDetailed ? t("history.showMonth") : t("history.showGrid")}
       onClick={() =>
         change({ type: "display", display: toDetailed ? "detailed" : "simple" })
       }
@@ -157,8 +163,10 @@ export default function HistoryCalendar({
       canReset={canReset}
       resetTitle={
         heat
-          ? "Clear the selection and show the whole year"
-          : `Clear the selection and show ${localizedDate(now, { month: "long", year: "numeric" })}`
+          ? t("history.clearToYear")
+          : t("history.clearToMonth", {
+              month: localizedDate(now, { month: "long", year: "numeric" }),
+            })
       }
       onReset={() => change({ type: "reset" })}
     />
@@ -168,11 +176,11 @@ export default function HistoryCalendar({
     return (
       <section
         className="history-calendar calendar-heatmap"
-        aria-label="Workout calendar"
+        aria-label={t("history.calendar")}
       >
         <div className="history-bar">
           <h2 className="history-title" id={headingId}>
-            Last year
+            {t("history.lastYear")}
           </h2>
           <div className="history-controls">{viewToggle}</div>
         </div>
@@ -192,7 +200,7 @@ export default function HistoryCalendar({
   return (
     <section
       className="history-calendar calendar-month"
-      aria-label="Workout calendar"
+      aria-label={t("history.calendar")}
     >
       <div className="history-bar">
         <h2 className="history-title" id={headingId} aria-live="polite">
@@ -201,7 +209,12 @@ export default function HistoryCalendar({
             className="month-title-button"
             aria-haspopup="dialog"
             aria-expanded={picking}
-            aria-label={`${localizedDate(month + "-01", { month: "long", year: "numeric" })}, choose month and year`}
+            aria-label={t("history.monthChoose", {
+              month: localizedDate(month + "-01", {
+                month: "long",
+                year: "numeric",
+              }),
+            })}
             onClick={() => setPicking(!picking)}
           >
             {localizedDate(month + "-01", { month: "long", year: "numeric" })}
@@ -212,7 +225,7 @@ export default function HistoryCalendar({
           <button
             type="button"
             className="icon-btn"
-            aria-label="Previous month"
+            aria-label={t("history.previousMonth")}
             disabled={month <= "1900-01"}
             onClick={() => browse(moveCalendarMonth(month, -1))}
           >
@@ -221,7 +234,7 @@ export default function HistoryCalendar({
           <button
             type="button"
             className="icon-btn"
-            aria-label="Next month"
+            aria-label={t("history.nextMonth")}
             disabled={month >= currentMonth}
             onClick={() => browse(moveCalendarMonth(month, 1))}
           >
@@ -247,15 +260,15 @@ export default function HistoryCalendar({
         aria-pressed={mode === "range"}
         title={
           mode === "month"
-            ? "Choose a From and To date"
-            : "Date range selected · show one month"
+            ? t("history.chooseFromTo")
+            : t("history.rangeSelected")
         }
         onClick={() =>
           change({ type: "mode", mode: mode === "month" ? "range" : "month" })
         }
       >
         <CalendarRange size={20} aria-hidden="true" />
-        Date range
+        {t("history.dateRange")}
       </button>
       {mode === "range" && (
         <div className="calendar-range-fields">
@@ -264,11 +277,24 @@ export default function HistoryCalendar({
               type="button"
               className="calendar-bound"
               key={bound}
-              aria-label={`Choose ${bound === "from" ? "From" : "To"} date${value[bound] ? `, ${localizedDate(value[bound])}` : ""}`}
+              aria-label={
+                value[bound]
+                  ? t("history.chooseBoundValue", {
+                      bound: t(
+                        bound === "from" ? "history.from" : "history.to",
+                      ),
+                      date: localizedDate(value[bound]),
+                    })
+                  : t("history.chooseBound", {
+                      bound: t(
+                        bound === "from" ? "history.from" : "history.to",
+                      ),
+                    })
+              }
               aria-pressed={activeBound === bound}
               onClick={() => change({ type: "bound", bound })}
             >
-              <span>{bound === "from" ? "From" : "To"}</span>
+              <span>{t(bound === "from" ? "history.from" : "history.to")}</span>
               {value[bound] ? (
                 <time dateTime={value[bound]}>
                   {localizedDate(value[bound], {
@@ -278,25 +304,18 @@ export default function HistoryCalendar({
                   })}
                 </time>
               ) : (
-                <strong>Choose date</strong>
+                <strong>{t("history.chooseDate")}</strong>
               )}
             </button>
           ))}
         </div>
       )}
       <p className="sr-only" id={instructionsId}>
-        Use arrow keys to move between days, Home and End to move within a week,
-        and Shift with an arrow key to select a range. With a pointer, press and
-        hold a day, then drag to select a range. Date ranges include both dates.
+        {t("history.monthInstructions")}
       </p>
       <div className="month-weekdays" aria-hidden="true">
-        {Array.from({ length: 7 }, (_, i) => (
-          <span key={i}>
-            {new Date(Date.UTC(2024, 0, i + 1)).toLocaleDateString(undefined, {
-              weekday: "short",
-              timeZone: "UTC",
-            })}
-          </span>
+        {weekdayNames("short").map((name, i) => (
+          <span key={i}>{name}</span>
         ))}
       </div>
       <div

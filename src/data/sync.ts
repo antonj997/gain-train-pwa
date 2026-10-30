@@ -6,6 +6,7 @@ import {
   type RecordDoc,
   validate,
 } from "./model";
+import { t } from "../i18n";
 export interface Transport {
   push: (op: Operation) => Promise<{ record: RemoteDoc; conflict?: boolean }>;
   pull: (cursor: number) => Promise<RemoteDoc[]>;
@@ -30,9 +31,8 @@ function isRejectedByServer(error: unknown) {
 /** The server's reason, in words that say what to do about it. */
 function rejectionMessage(error: ServerError) {
   const message = String(error?.message ?? "");
-  if (message === "Invalid record name or size")
-    return "The name is missing or longer than 100 characters, or the record is too large to sync.";
-  return message || "The server rejected this change.";
+  if (message === "Invalid record name or size") return t("err.invalidName");
+  return message || t("err.serverRejected");
 }
 
 const readable = (row: RemoteDoc) => {

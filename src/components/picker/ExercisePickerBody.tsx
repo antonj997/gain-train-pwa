@@ -23,6 +23,8 @@ import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { coarsePointer } from "@/lib/touch";
+import { t, type MessageKey } from "@/i18n";
+import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
 
 /** A chosen exercise; a custom one carries the defaults it was saved with. */
 export type PickedExercise = { id: string; name: string } & ExerciseDefaults;
@@ -38,6 +40,14 @@ export type PickerOptions = {
   title?: string;
   /** An exercise to leave out of the list, such as the one being replaced. */
   excludeId?: string;
+};
+
+// The picker's own filters; the other chips are categories.
+const FILTER_LABELS: Record<string, MessageKey> = {
+  Suggested: "picker.suggested",
+  All: "picker.all",
+  Recent: "picker.recent",
+  Favourites: "picker.favourites",
 };
 
 /** The picker's content: search, filters, the list and "New exercise". Mounted only while open. */
@@ -172,12 +182,7 @@ export default function ExercisePickerBody({
       busyRef.current = false;
       onClose();
     } catch (cause) {
-      setError(
-        errorMessage(
-          cause,
-          "Could not save. Your entries are still here; retry.",
-        ),
-      );
+      setError(errorMessage(cause, t("picker.saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -188,27 +193,27 @@ export default function ExercisePickerBody({
       <DialogHeader>
         <DialogTitle tabIndex={-1} className="picker-title">
           {creating
-            ? "Create exercise"
+            ? t("picker.create")
             : title
               ? title
               : single
-                ? "Choose an exercise"
-                : "Add exercises"}
+                ? t("picker.chooseOne")
+                : t("picker.addExercises")}
         </DialogTitle>
         <DialogDescription
           className={"picker-description" + (searching ? " is-searching" : "")}
         >
           {creating
-            ? "Create it once and use it in any workout. Unfinished details are kept on this phone."
+            ? t("picker.createDescription")
             : single
-              ? "Tap an exercise to choose it."
-              : "Choose one or more exercises."}
+              ? t("picker.tapToChoose")
+              : t("picker.chooseMany")}
         </DialogDescription>
       </DialogHeader>
       {creating ? (
         <div className="stack">
           <label>
-            Exercise name
+            {t("picker.exerciseName")}
             <input
               // A touch screen would open the keyboard before the form shows.
               autoFocus={!coarsePointer()}
@@ -220,17 +225,19 @@ export default function ExercisePickerBody({
           </label>
           {twin && (
             <p id="picker-name-twin" className="field-warning" role="status">
-              You already have an exercise called {twin.name}.
+              {t("editor.twin", { name: twin.name })}
             </p>
           )}
           <label>
-            Category
+            {t("facet.category")}
             <select
               value={category}
               onChange={(e) => updateDraft({ category: e.target.value })}
             >
               {categories.map((c) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>
+                  {categoryLabel(c)}
+                </option>
               ))}
             </select>
           </label>
@@ -239,7 +246,7 @@ export default function ExercisePickerBody({
             onClick={() => void create()}
             disabled={busy || !name.trim()}
           >
-            {busy ? "Saving…" : "Create and add"}
+            {busy ? t("common.saving") : t("picker.createAndAdd")}
           </button>
           {error && (
             <p className="field-error" role="alert">
@@ -248,7 +255,7 @@ export default function ExercisePickerBody({
           )}
           {!creationDraft.retained && (
             <p className="field-error" role="alert">
-              Storage is unavailable. Keep this form open until saved.
+              {t("editor.storageUnavailable")}
             </p>
           )}
           <button
@@ -256,7 +263,7 @@ export default function ExercisePickerBody({
             disabled={busy}
             onClick={() => setCreating(false)}
           >
-            Back to exercises
+            {t("picker.backToExercises")}
           </button>
           <button
             className="text-button danger"
@@ -266,7 +273,7 @@ export default function ExercisePickerBody({
               setCreating(false);
             }}
           >
-            Discard exercise draft
+            {t("picker.discardDraft")}
           </button>
         </div>
       ) : (
@@ -276,8 +283,8 @@ export default function ExercisePickerBody({
             <input
               ref={searchRef}
               type="search"
-              aria-label="Search exercises"
-              placeholder="Search exercises"
+              aria-label={t("exercises.search")}
+              placeholder={t("exercises.search")}
               value={search}
               autoComplete="off"
               onFocus={() => setSearchFocused(true)}
@@ -287,7 +294,7 @@ export default function ExercisePickerBody({
             {search && (
               <button
                 className="icon-button"
-                aria-label="Clear exercise search"
+                aria-label={t("picker.clearSearch")}
                 onClick={() => {
                   setSearch("");
                   searchRef.current?.focus();
@@ -297,7 +304,11 @@ export default function ExercisePickerBody({
               </button>
             )}
           </div>
-          <div className="facet-chips" role="group" aria-label="Show">
+          <div
+            className="facet-chips"
+            role="group"
+            aria-label={t("picker.show")}
+          >
             {[
               ...(suggested?.length ? ["Suggested"] : []),
               "All",
@@ -312,12 +323,14 @@ export default function ExercisePickerBody({
                 aria-pressed={filter === c}
                 onClick={() => setFilter(c)}
               >
-                {c}
+                {FILTER_LABELS[c] ? t(FILTER_LABELS[c]) : categoryLabel(c)}
               </button>
             ))}
           </div>
           <FacetChips
-            name="Equipment"
+            name={t("facet.equipment")}
+            allLabel={t("facet.allEquipment")}
+            format={equipmentLabel}
             options={equipmentTypes}
             value={equipment}
             onChange={setEquipment}
@@ -325,7 +338,7 @@ export default function ExercisePickerBody({
           <div
             className="picker-list"
             role="group"
-            aria-label="Exercise search results"
+            aria-label={t("picker.results")}
           >
             {items.map((e) => (
               <button
@@ -349,12 +362,16 @@ export default function ExercisePickerBody({
                 <span>
                   <strong className="exercise-name">
                     {e.name}
-                    {own.has(e.id) && <span className="stat-chip">Yours</span>}
+                    {own.has(e.id) && (
+                      <span className="stat-chip">{t("exercises.yours")}</span>
+                    )}
                   </strong>
                   <small>
-                    {e.category}
-                    {"equipment" in e ? ` · ${e.equipment}` : ""}
-                    {recent.has(e.id) ? " · Recent" : ""}
+                    {categoryLabel(e.category)}
+                    {"equipment" in e && e.equipment
+                      ? ` · ${equipmentLabel(e.equipment)}`
+                      : ""}
+                    {recent.has(e.id) ? ` · ${t("picker.recent")}` : ""}
                   </small>
                 </span>
                 {single ? null : selected.includes(e.id) ? (
@@ -364,11 +381,7 @@ export default function ExercisePickerBody({
                 )}
               </button>
             ))}
-            {!items.length && (
-              <p className="empty">
-                No matching exercises. Try another search or create one.
-              </p>
-            )}
+            {!items.length && <p className="empty">{t("picker.noMatch")}</p>}
           </div>
           <div className="picker-footer">
             <button
@@ -378,7 +391,7 @@ export default function ExercisePickerBody({
                 setCreating(true);
               }}
             >
-              {pending ? "Resume draft" : "New exercise"}
+              {pending ? t("picker.resumeDraft") : t("exercises.new")}
             </button>
             {!single && (
               <button
@@ -389,8 +402,9 @@ export default function ExercisePickerBody({
                   close();
                 }}
               >
-                Add {selected.length || ""}{" "}
-                {selected.length === 1 ? "exercise" : "exercises"}
+                {selected.length
+                  ? t("picker.addCount", { count: selected.length })
+                  : t("picker.addNone")}
               </button>
             )}
           </div>

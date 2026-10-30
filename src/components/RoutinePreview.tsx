@@ -9,6 +9,7 @@ import {
   routineMeta,
 } from "@/lib/routine-preview";
 import Sheet from "@/components/ui/Sheet";
+import { useT } from "@/i18n/useT";
 
 export type RoutineStats = {
   /** Average length in minutes, rounded to 5; null with no finished workout. */
@@ -34,12 +35,13 @@ export function RoutineRow({
   onStart,
 }: RowProps) {
   const name = routine.payload.name;
+  const { t } = useT();
   return (
     <div className="routine-row">
       <button
         type="button"
         className="row routine-row-open"
-        aria-label={`Preview ${name}`}
+        aria-label={t("routine.preview", { name })}
         onClick={onPreview}
       >
         <span className="row-main">
@@ -52,7 +54,7 @@ export function RoutineRow({
       <button
         type="button"
         className="play-round routine-row-play"
-        aria-label={`Start ${name}`}
+        aria-label={t("routine.startNamed", { name })}
         disabled={disabled}
         onClick={onStart}
       >
@@ -83,6 +85,7 @@ export function RoutinePreviewSheet({
   onEdit,
 }: SheetProps) {
   const exercises = routine?.payload.exercises ?? [];
+  const { t } = useT();
   return (
     <Sheet
       open={!!routine}
@@ -104,8 +107,10 @@ export function RoutinePreviewSheet({
         <>
           <p className="sheet-hint">
             {stats.lastDone
-              ? `Last done ${lastUsedLabel(stats.lastDone, now)}`
-              : "Never done"}
+              ? t("routine.lastDone", {
+                  when: lastUsedLabel(stats.lastDone, now),
+                })
+              : t("routine.neverDone")}
           </p>
           <ul className="list preview-list">
             {exercises.map((exercise) => {
@@ -134,10 +139,10 @@ export function RoutinePreviewSheet({
                 stroke="none"
                 aria-hidden="true"
               />
-              Start routine
+              {t("routine.start")}
             </button>
             <button type="button" className="btn-quiet" onClick={onEdit}>
-              Edit
+              {t("common.edit")}
             </button>
           </div>
         </>
