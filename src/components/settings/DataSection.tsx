@@ -12,6 +12,7 @@ import {
 } from "@/lib/backup";
 import { errorMessage } from "@/lib/errors";
 import { requestPersistentStorage } from "@/lib/persistence";
+import { t } from "@/i18n";
 
 /** "Your data": export and restore a backup, and ask the browser to keep the log. */
 export default function DataSection() {
@@ -40,8 +41,11 @@ export default function DataSection() {
       const file = new File([text], name, { type: "application/json" });
       if (navigator.canShare?.({ files: [file] })) {
         try {
-          await navigator.share({ files: [file], title: "Gain Train backup" });
-          toast.success("Backup exported");
+          await navigator.share({
+            files: [file],
+            title: t("data.backupTitle"),
+          });
+          toast.success(t("data.exported"));
           return;
         } catch (error) {
           if ((error as Error)?.name === "AbortError") return;
@@ -54,21 +58,20 @@ export default function DataSection() {
       a.click();
       // Slow devices can still be reading the file a second later.
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      toast.success(`Backup saved as ${name}`);
+      toast.success(t("data.savedAs", { name }));
     } catch (error) {
-      toast.error(errorMessage(error, "Could not export a backup."));
+      toast.error(errorMessage(error, t("data.exportFailed")));
     }
   };
   const restore = async (file?: File) => {
     if (!file) return;
     setImporting(true);
     try {
-      if (file.size > MAX_BACKUP_BYTES)
-        throw Error("Choose a backup smaller than 20 MB.");
+      if (file.size > MAX_BACKUP_BYTES) throw Error(t("data.tooBig"));
       const records = parseBackup(await file.text());
       toast.success(importSummary(await importRecords(records)));
     } catch (e) {
-      toast.error(errorMessage(e, "Could not restore backup"));
+      toast.error(errorMessage(e, t("data.restoreFailed")));
     } finally {
       setImporting(false);
     }
@@ -77,31 +80,25 @@ export default function DataSection() {
     try {
       const ok = await requestPersistentStorage();
       setProtectedStorage(ok);
-      toast(
-        ok
-          ? "Persistent storage enabled"
-          : "Your browser manages storage automatically. Keep a backup too.",
-      );
+      toast(ok ? t("data.persistOn") : t("data.persistAuto"));
     } catch {
-      toast.error(
-        "Your browser could not enable persistent storage. Export a backup to keep a separate copy.",
-      );
+      toast.error(t("data.persistFailed"));
     }
   };
 
   return (
     <section>
-      <h2 className="group-title">Your data</h2>
+      <h2 className="group-title">{t("data.title")}</h2>
       <div className="list">
         <ListRow
-          title="Export a backup"
+          title={t("data.export")}
           chevron
           onClick={() => void exportData()}
         />
         <label className="row row-file">
           <span className="row-main">
             <span className="row-title">
-              {importing ? "Restoring…" : "Restore a backup"}
+              {importing ? t("data.restoring") : t("data.restore")}
             </span>
           </span>
           <ChevronRight className="chev" size={20} aria-hidden="true" />
@@ -118,14 +115,16 @@ export default function DataSection() {
           />
         </label>
         <ListRow
-          title="Storage on this device"
+          title={t("data.storage")}
           onClick={() => void keepOnDevice()}
           trailing={
             protectedStorage === null ? undefined : (
               <span
                 className={"stat-chip " + (protectedStorage ? "done" : "warm")}
               >
-                {protectedStorage ? "Protected" : "Not protected"}
+                {protectedStorage
+                  ? t("data.protected")
+                  : t("data.notProtected")}
               </span>
             )
           }

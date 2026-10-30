@@ -1,6 +1,6 @@
 import { local } from "./storage";
-const BODYWEIGHT_ERROR =
-  "Bodyweight must be greater than 0 and no more than 1000 kg, or blank to clear it.";
+import { t } from "../i18n";
+const bodyweightError = () => t("err.bodyweight");
 
 export type Profile = { bodyWeightKg: number | null };
 type SavedProfile = Profile & { updatedAt: number; dirty: boolean };
@@ -38,9 +38,9 @@ export function parseBodyWeightInput(input: string): number | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
   if (!/^(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(trimmed))
-    throw new Error(BODYWEIGHT_ERROR);
+    throw new Error(bodyweightError());
   const value = Number(trimmed.replace(",", "."));
-  if (!validWeight(value)) throw new Error(BODYWEIGHT_ERROR);
+  if (!validWeight(value)) throw new Error(bodyweightError());
   return value;
 }
 const cacheKey = (account: string) =>
@@ -86,9 +86,7 @@ export function createProfileConnection(options: {
   const request = options.request ?? fetch;
   const send = async (method: "GET" | "PUT", data?: unknown) => {
     if (!options.isCurrent() || options.signal.aborted)
-      throw new Error(
-        "Your account changed. Sign in again to sync your profile.",
-      );
+      throw new Error(t("err.accountChangedSignIn"));
     const response = await request(
       `${options.url.replace(/\/$/, "")}/auth/v1/user`,
       {
@@ -102,14 +100,14 @@ export function createProfileConnection(options: {
         signal: options.signal,
       },
     );
-    if (!response.ok) throw new Error("Could not sync your profile.");
+    if (!response.ok) throw new Error(t("err.profileSync"));
     const user = object(await response.json());
     if (
       !options.isCurrent() ||
       options.signal.aborted ||
       user.id !== options.account
     )
-      throw new Error("Your account changed. Profile sync was stopped.");
+      throw new Error(t("err.accountChangedStopped"));
     return user.user_metadata;
   };
   return {
@@ -184,9 +182,7 @@ export class ProfileStore {
         JSON.stringify(record),
       );
     } catch {
-      throw new Error(
-        "Could not save your profile on this device. Allow storage or free some space and try again.",
-      );
+      throw new Error(t("err.profileStorage"));
     }
     this.record = record;
   }
@@ -202,11 +198,8 @@ export class ProfileStore {
     }
   }
   saveProfile = (profile: Profile) => {
-    if (!this.active)
-      throw new Error(
-        "Your account changed. Open Settings again to save your profile.",
-      );
-    if (!validWeight(profile.bodyWeightKg)) throw new Error(BODYWEIGHT_ERROR);
+    if (!this.active) throw new Error(t("err.accountChangedSettings"));
+    if (!validWeight(profile.bodyWeightKg)) throw new Error(bodyweightError());
     const next = {
       bodyWeightKg: profile.bodyWeightKg,
       updatedAt: Math.max(
@@ -274,7 +267,7 @@ export class ProfileStore {
           saved.bodyWeightKg !== pending.bodyWeightKg ||
           saved.updatedAt !== pending.updatedAt
         )
-          throw new Error("Profile update was not confirmed.");
+          throw new Error(t("err.profileUnconfirmed"));
         if (this.record.updatedAt === pending.updatedAt)
           this.persist({ ...pending, dirty: false });
       }
@@ -284,8 +277,8 @@ export class ProfileStore {
       this.publish(
         "error",
         this.record.dirty
-          ? "Saved on this device. Profile sync failed; retry when connected."
-          : "Could not check your profile sync. Retry when connected.",
+          ? t("err.profileSyncFailed")
+          : t("err.profileCheckFailed"),
       );
     }
   }

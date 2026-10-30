@@ -6,6 +6,7 @@ import {
   type Workout,
   type WorkoutRecord,
 } from "./model";
+import { t } from "../i18n";
 
 export type StartedWorkout = {
   id: string;
@@ -41,9 +42,7 @@ export function startedWorkouts(state: LocalState): StartedWorkout[] {
 export function restoreRemovedWorkout(state: LocalState, id: string) {
   const record = state.records[id];
   if (!record || record.kind !== "workout")
-    throw new RecordValidationError(
-      "Could not find this workout to restore it.",
-    );
+    throw new RecordValidationError(t("err.workoutNotFound"));
   if (!record.deleted) return;
   const workout = validate("workout", record.payload);
   if (
@@ -51,9 +50,7 @@ export function restoreRemovedWorkout(state: LocalState, id: string) {
     workout.startedAt !== null &&
     startedWorkouts(state).length
   )
-    throw new RecordValidationError(
-      "Another workout is already in progress. Finish or abandon it before restoring this one.",
-    );
+    throw new RecordValidationError(t("err.inProgressRestore"));
   state.records[id] = {
     ...record,
     payload: workout,
@@ -73,7 +70,7 @@ export function createWorkout(
 ) {
   const workout = validate("workout", payload);
   if (workout.status !== "draft" || state.records[id])
-    throw new RecordValidationError("Could not start this workout. Try again.");
+    throw new RecordValidationError(t("err.startFailed"));
   const started = startedWorkouts(state);
   if (workout.startedAt !== null) {
     if (

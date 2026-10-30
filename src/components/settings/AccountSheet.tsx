@@ -6,6 +6,8 @@ import { useData } from "@/contexts/useData";
 import Sheet from "@/components/ui/Sheet";
 import { copySummary } from "@/data/actions";
 import { errorMessage } from "@/lib/errors";
+import { t } from "@/i18n";
+import { localizedMoment } from "@/lib/dates";
 
 /** The signed-in account: sync state, Sync now and copying the phone-only log. */
 export default function AccountSheet({
@@ -24,23 +26,25 @@ export default function AccountSheet({
     <Sheet
       open={open}
       onClose={onClose}
-      title="Account"
+      title={t("account.title")}
       description={user?.email}
     >
       <p className="row-sub">
         {dirty
-          ? `${dirty} changes waiting to sync${!online ? " when you reconnect" : ""}.`
-          : "Your local log is up to date."}
+          ? t(online ? "account.waiting" : "account.waitingOffline", {
+              count: dirty,
+            })
+          : t("account.upToDate")}
         {syncHealth.lastSyncedAt &&
-          ` Last synced ${new Date(syncHealth.lastSyncedAt).toLocaleString(
-            undefined,
-            {
-              day: "numeric",
-              month: "short",
-              hour: "numeric",
-              minute: "2-digit",
-            },
-          )}.`}
+          " " +
+            t("account.lastSynced", {
+              when: localizedMoment(syncHealth.lastSyncedAt, {
+                day: "numeric",
+                month: "short",
+                hour: "numeric",
+                minute: "2-digit",
+              }),
+            })}
       </p>
       <button
         className="btn-secondary"
@@ -48,7 +52,11 @@ export default function AccountSheet({
         onClick={() => void sync()}
       >
         <RefreshCw size={18} aria-hidden="true" />
-        {syncing ? "Syncing…" : online ? "Sync now" : "Connect to sync"}
+        {syncing
+          ? t("account.syncing")
+          : online
+            ? t("account.syncNow")
+            : t("account.connect")}
       </button>
       <button
         className="btn-quiet"
@@ -58,18 +66,13 @@ export default function AccountSheet({
           try {
             toast.success(copySummary(await copyPhoneLog()));
           } catch (error) {
-            toast.error(
-              errorMessage(
-                error,
-                "Could not copy this phone’s log. Try again.",
-              ),
-            );
+            toast.error(errorMessage(error, t("account.copyFailed")));
           } finally {
             setBusy(false);
           }
         }}
       >
-        Copy this phone's unsigned-in workouts to my account
+        {t("account.copyPhone")}
       </button>
     </Sheet>
   );

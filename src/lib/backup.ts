@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { RecordDoc } from "../data/model";
 import { isoDate } from "./dates";
+import { t } from "../i18n";
 
 const FORMAT = "gain-train";
 const VERSION = 2;
@@ -54,14 +55,14 @@ export function parseBackup(text: string): RecordDoc[] {
   try {
     data = JSON.parse(text);
   } catch {
-    throw new BackupError("This is not a Gain Train backup.");
+    throw new BackupError(t("err.notBackup"));
   }
   const result = envelope.safeParse(data);
   if (!result.success)
     throw new BackupError(
       (data as { format?: unknown })?.format === FORMAT
-        ? "This backup is damaged or from an unsupported version."
-        : "This is not a Gain Train backup.",
+        ? t("err.backupDamaged")
+        : t("err.notBackup"),
     );
   return result.data.records as unknown as RecordDoc[];
 }

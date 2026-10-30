@@ -895,4 +895,269 @@ export const en = {
   "group.deleteText":
     "Plans that use this group show nothing on those days. Your routines stay.",
   "group.keep": "Keep group",
+
+  // Data, settings and auth
+  "err.newerApp":
+    "This was saved by a newer version of Gain Train. Close and reopen the app to update it, then try again.",
+  "err.workoutRemoved":
+    "This workout was removed. Return to your log to resume your current workout.",
+  "err.tooLarge":
+    "This is too large to save and sync. Remove some exercises or sets, or split it into two.",
+  "err.recordMissing":
+    "Could not find the saved record. Return to your log and try again.",
+  "err.backupTooLarge": "Backup is too large.",
+  "err.backupInvalidId": "Backup contains an invalid record ID or type.",
+  "err.backupStarted":
+    "A workout is already in progress. Finish or abandon it before restoring a backup with another started workout. No backup records were changed.",
+  "err.nothingToRestore":
+    "Nothing to restore: this log already has everything in the backup.",
+  "err.nothingToCopy": "Nothing new to copy: this account already has it all.",
+  "err.bodyweight":
+    "Bodyweight must be greater than 0 and no more than 1000 kg, or blank to clear it.",
+  "err.accountChangedSignIn":
+    "Your account changed. Sign in again to sync your profile.",
+  "err.profileSync": "Could not sync your profile.",
+  "err.accountChangedStopped":
+    "Your account changed. Profile sync was stopped.",
+  "err.profileStorage":
+    "Could not save your profile on this device. Allow storage or free some space and try again.",
+  "err.accountChangedSettings":
+    "Your account changed. Open Settings again to save your profile.",
+  "err.profileUnconfirmed": "Profile update was not confirmed.",
+  "err.profileSyncFailed":
+    "Saved on this device. Profile sync failed; retry when connected.",
+  "err.profileCheckFailed":
+    "Could not check your profile sync. Retry when connected.",
+  "err.deleteOffline":
+    "Connect to the internet and sign in to delete your account.",
+  "err.deleteFailed":
+    "Could not delete your account. Sign in again and retry. Your account may still exist.",
+  "err.inProgressTrain":
+    "Another workout is already in progress. Finish or abandon it on Train, then try again.",
+  "err.storageUnavailable":
+    "Device storage is unavailable. Allow site storage to safely log workouts.",
+  "err.removeFailed":
+    "Could not remove the saved record on this phone. Keep this screen open and try again.",
+  "err.saveOnPhone":
+    "Could not save on this phone. Keep this screen open and free some storage.",
+  "err.startOnPhone":
+    "Could not start on this phone. Your current workout has been kept. Free some storage and try again.",
+  "err.restoreWorkoutPhone":
+    "Could not restore this workout on this phone. Free some storage and try again.",
+  "err.choiceOnPhone": "Could not save your choice on this phone. Try again.",
+  "err.retryOnPhone": "Could not retry on this phone. Try again.",
+  "err.restoreBackupPhone":
+    "Could not restore the backup on this phone. Free some storage and try again.",
+  "err.copyPhoneStorage":
+    "Could not copy this phone’s log. Free some storage and try again.",
+  "err.signInProfile": "Sign in again to sync your profile.",
+  "err.workoutNotFound": "Could not find this workout to restore it.",
+  "err.inProgressRestore":
+    "Another workout is already in progress. Finish or abandon it before restoring this one.",
+  "err.startFailed": "Could not start this workout. Try again.",
+  "err.accountDeleted": "This account was deleted.",
+  "err.saveDevice": "Could not save on this device.",
+  "err.eraseLog": "Could not erase this account's log.",
+  "err.invalidName":
+    "The name is missing or longer than 100 characters, or the record is too large to sync.",
+  "err.serverRejected": "The server rejected this change.",
+  "err.notBackup": "This is not a Gain Train backup.",
+  "err.backupDamaged": "This backup is damaged or from an unsupported version.",
+  "val.unknownType": "Unknown record type.",
+  "val.addedWeight":
+    "Added weight must be greater than 0 and no more than 10000 kg, or blank for an unfinished set.",
+  "val.name": "Enter a name between 1 and 100 characters.",
+  "val.date": "Choose a valid workout date.",
+  "val.duration":
+    "Duration must be a whole number from 0 to 1440 minutes, or blank.",
+  "val.weight": "Weight must be a number from 0 to 10000 kg, or blank.",
+  "val.bodyWeightKg":
+    "Bodyweight must be greater than 0 and no more than 1000 kg.",
+  "val.extraWeight": "Choose whether this bodyweight set uses extra weight.",
+  "val.measure": "Choose reps or seconds for this set.",
+  "val.durationSec": "Time must be from 0:00 to 24:00:00, or blank.",
+  "val.distanceM": "Distance must be from 0 to 1,000 km, or blank.",
+  "val.level": "Level must be a number from 0 to 100, or blank.",
+  "val.calories": "Calories must be a number from 0 to 100,000, or blank.",
+  "val.load": "Choose weight, bodyweight or assisted load.",
+  "val.section": "Choose working, warm-up or cool-down for this set.",
+  "val.exercises": "Use no more than 100 exercises in a session.",
+  "val.sets": "Use no more than 100 sets per exercise.",
+  "val.startDate": "Choose a valid plan start date.",
+  "val.endDate": "A plan must end on or after the day it starts.",
+  "val.cycleWeeks": "A plan repeats every 1 to 6 weeks.",
+  "val.template":
+    "The plan needs one row of seven days for each week of the cycle.",
+  "val.overrides": "Check the dates you changed in this plan.",
+  "val.goalIds": "A plan can link up to 50 goals.",
+  "val.kind": "Choose a bodyweight or lift goal.",
+  "val.targetKg":
+    "The target must be greater than 0 and no more than 10000 kg.",
+  "val.exerciseId": "Choose the exercise for this lift goal.",
+  "val.byDate": "Choose a valid date for this goal.",
+  "val.hiddenExerciseIds": "Check the list of hidden exercises.",
+  "val.groups": "Check the names and routines of your groups.",
+  "val.routineIds": "A group can hold up to 50 routines.",
+  "val.startKg":
+    "The starting weight must be greater than 0 and at most 1000 kg.",
+  "val.repsRange": "Reps must be a whole number from 0 to 10000, or blank.",
+  "val.secondsRange":
+    "Seconds must be a whole number from 0 to 10000, or blank.",
+  "val.checkDetails": "Check the record details before saving.",
+  "val.finishEntering": "Finish entering the set values before saving.",
+  "val.cardioNoReps":
+    "Cardio sets have a time and distance, not reps or weight.",
+  "val.cardioNeedsTime":
+    "Checked cardio sets need a time. Uncheck the set to leave it unfinished.",
+  "val.extraBodyweightOnly":
+    "Extra weight is available for bodyweight sets only.",
+  "val.addedWeightRange":
+    "Added weight must be greater than 0 and no more than 10000 kg.",
+  "val.timedBodyweight":
+    "Timed sets use bodyweight. Choose bodyweight to log seconds.",
+  "val.checkedInvalid":
+    "Checked sets need positive reps or seconds and a valid weight or bodyweight load. Uncheck the set to leave it unfinished.",
+  "val.completeOne":
+    "Complete at least one valid set. Checked sets need reps or seconds and a valid load.",
+  "summary.restored": "Backup restored: {parts}.",
+  "summary.added": {
+    one: "{count} record added",
+    other: "{count} records added",
+  },
+  "summary.broughtBack": {
+    one: "{count} deleted record brought back",
+    other: "{count} deleted records brought back",
+  },
+  "summary.kept": {
+    one: "{count} already here was kept.",
+    other: "{count} already here were kept.",
+  },
+  "summary.copied": {
+    one: "Copied {count} record from this phone.",
+    other: "Copied {count} records from this phone.",
+  },
+  "summary.pastWorkout":
+    "The workout running there was copied as a past workout.",
+  "kind.workout": "Workout",
+  "kind.routine": "Routine",
+  "kind.exercise": "Exercise",
+  "kind.plan": "Plan",
+  "kind.goal": "Goal",
+  "kind.library": "Exercise settings",
+  "kind.record": "Record",
+  "summary.deleted": "Deleted",
+  "summary.changed": "Changed",
+  "summary.notFinished": "not finished",
+  "account.title": "Account",
+  "account.waiting": {
+    one: "{count} change waiting to sync.",
+    other: "{count} changes waiting to sync.",
+  },
+  "account.waitingOffline": {
+    one: "{count} change waiting to sync when you reconnect.",
+    other: "{count} changes waiting to sync when you reconnect.",
+  },
+  "account.upToDate": "Your local log is up to date.",
+  "account.lastSynced": "Last synced {when}.",
+  "account.syncing": "Syncing…",
+  "account.syncNow": "Sync now",
+  "account.connect": "Connect to sync",
+  "account.copyFailed": "Could not copy this phone’s log. Try again.",
+  "account.copyPhone": "Copy this phone's unsigned-in workouts to my account",
+  "data.backupTitle": "Gain Train backup",
+  "data.exported": "Backup exported",
+  "data.savedAs": "Backup saved as {name}",
+  "data.exportFailed": "Could not export a backup.",
+  "data.tooBig": "Choose a backup smaller than 20 MB.",
+  "data.restoreFailed": "Could not restore backup",
+  "data.persistOn": "Persistent storage enabled",
+  "data.persistAuto":
+    "Your browser manages storage automatically. Keep a backup too.",
+  "data.persistFailed":
+    "Your browser could not enable persistent storage. Export a backup to keep a separate copy.",
+  "data.title": "Your data",
+  "data.export": "Export a backup",
+  "data.restoring": "Restoring…",
+  "data.restore": "Restore a backup",
+  "data.storage": "Storage on this device",
+  "data.protected": "Protected",
+  "data.notProtected": "Not protected",
+  "deleteAccount.title": "Delete your account?",
+  "deleteAccount.description":
+    "This permanently deletes your account and all associated workouts, routines and exercises from the server and this device. This cannot be undone. Export a backup first if you want to keep your log. Downloaded backups and offline copies on other devices cannot be remotely erased.",
+  "deleteAccount.word": "DELETE",
+  "deleteAccount.typeToConfirm": "Type {word} to confirm",
+  "deleteAccount.keep": "Keep account",
+  "deleteAccount.deleted": "Account deleted",
+  "deleteAccount.failed": "Could not delete account.",
+  "deleteAccount.deleting": "Deleting…",
+  "deleteAccount.confirm": "Permanently delete account",
+  "issues.choiceFailed": "Could not save your choice.",
+  "issues.parked": {
+    one: "{count} synced record needs a newer version of Gain Train. Close and reopen the app to update; they appear once it can read them.",
+    other:
+      "{count} synced records need a newer version of Gain Train. Close and reopen the app to update; they appear once it can read them.",
+  },
+  "issues.rejectedTitle": "Changes the server didn't accept",
+  "issues.rejectedText":
+    "These stay saved on this phone. Editing one sends it again; Retry sends them all, for example after an app update.",
+  "issues.retryFailed": "Could not retry.",
+  "issues.chooseTitle": "Choose which version to keep",
+  "issues.changedElsewhere":
+    "{kind} “{name}” changed on another device. Export a backup first to keep your local version separately.",
+  "issues.thisPhone": "This phone",
+  "issues.server": "Server",
+  "issues.useServer": "Use server version",
+  "issues.keepPhone": "Keep this phone's version",
+  "profile.saveFailed": "Could not save your bodyweight. Try again.",
+  "profile.unsaved": "Unsaved changes.",
+  "profile.checking": "Checking profile sync…",
+  "profile.pendingSignedIn": "Saved on this device. Will sync when connected.",
+  "profile.pendingSignIn": "Saved on this device. Sign in to sync.",
+  "profile.synced": "Profile synced.",
+  "profile.cleared": "Bodyweight cleared on this device.",
+  "profile.none": "No bodyweight saved.",
+  "profile.savedDevice": "Saved on this device.",
+  "profile.intro": "Your bodyweight appears when you choose BW in a workout.",
+  "profile.label": "Bodyweight (kg)",
+  "profile.placeholder": "e.g. 75.5",
+  "profile.save": "Save bodyweight",
+  "profile.clearHint": "Leave blank and save to clear your bodyweight.",
+  "profile.retry": "Retry profile sync",
+  "auth.offline":
+    "Connect to the internet to use your account. Your phone log is still available.",
+  "auth.mismatch":
+    "The passwords do not match. Enter the same new password twice.",
+  "auth.resetSent":
+    "If an account uses this email, you’ll receive a password-reset link. Open it to choose a new password.",
+  "auth.checkEmail":
+    "Check your email to confirm your account, then sign in here.",
+  "auth.failed": "Could not complete this request. Please try again.",
+  "auth.back": "Back",
+  "auth.titleUpdate": "Choose a new password",
+  "auth.titleReset": "Reset your password",
+  "auth.titleSignup": "Create an account",
+  "auth.titleSignin": "Sign in to sync",
+  "auth.textUpdate":
+    "Enter a new password for your account. Use at least 8 characters.",
+  "auth.textReset":
+    "Enter your account email and we’ll send a link to choose a new password.",
+  "auth.textSignin":
+    "Sync your workout log across devices. You can keep logging on this phone without an account.",
+  "auth.linkExpired":
+    "This reset link is unavailable or has expired. Request a new link below.",
+  "auth.email": "Email",
+  "auth.newPassword": "New password",
+  "auth.password": "Password",
+  "auth.confirmPassword": "Confirm new password",
+  "auth.pleaseWait": "Please wait…",
+  "auth.saveNewPassword": "Save new password",
+  "auth.sendReset": "Send reset link",
+  "auth.createAccount": "Create account",
+  "auth.signIn": "Sign in",
+  "auth.notConfigured":
+    "Cloud sync is not configured. Your phone log still works.",
+  "auth.forgot": "Forgot password?",
+  "auth.createAnAccount": "Create an account",
+  "auth.backToSignIn": "Back to sign in",
 };

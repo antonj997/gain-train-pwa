@@ -4,16 +4,20 @@ import { useAuth } from "@/contexts/useAuth";
 import { useProfile } from "@/contexts/useProfile";
 import { parseBodyWeightInput } from "@/lib/profile";
 import "@/styles/profile.css";
+import { formatDecimal, t } from "@/i18n";
 
 export default function ProfileForm() {
   const { user } = useAuth();
   const { bodyWeightKg, saveProfile, status, error, retrySync } = useProfile();
-  const [draft, setDraft] = useState(bodyWeightKg?.toString() ?? "");
+  const [draft, setDraft] = useState(
+    bodyWeightKg === null ? "" : formatDecimal(bodyWeightKg),
+  );
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
   const [fieldError, setFieldError] = useState("");
   useEffect(() => {
-    if (!editing) setDraft(bodyWeightKg?.toString() ?? "");
+    if (!editing)
+      setDraft(bodyWeightKg === null ? "" : formatDecimal(bodyWeightKg));
   }, [bodyWeightKg, editing]);
   const save = (event: FormEvent) => {
     event.preventDefault();
@@ -23,33 +27,29 @@ export default function ProfileForm() {
       setEditing(false);
       setSaved(true);
     } catch (error) {
-      setFieldError(
-        errorMessage(error, "Could not save your bodyweight. Try again."),
-      );
+      setFieldError(errorMessage(error, t("profile.saveFailed")));
     }
   };
   const saveMessage = editing
-    ? "Unsaved changes."
+    ? t("profile.unsaved")
     : status === "syncing"
-      ? "Checking profile sync…"
+      ? t("profile.checking")
       : status === "pending"
         ? user
-          ? "Saved on this device. Will sync when connected."
-          : "Saved on this device. Sign in to sync."
+          ? t("profile.pendingSignedIn")
+          : t("profile.pendingSignIn")
         : status === "synced"
-          ? "Profile synced."
+          ? t("profile.synced")
           : bodyWeightKg === null
             ? saved
-              ? "Bodyweight cleared on this device."
-              : "No bodyweight saved."
-            : "Saved on this device.";
+              ? t("profile.cleared")
+              : t("profile.none")
+            : t("profile.savedDevice");
   return (
     <section className="profile-section">
-      <p className="small-note">
-        Your bodyweight appears when you choose BW in a workout.
-      </p>
+      <p className="small-note">{t("profile.intro")}</p>
       <form className="profile-form" onSubmit={save} noValidate>
-        <label htmlFor="profile-bodyweight">Bodyweight (kg)</label>
+        <label htmlFor="profile-bodyweight">{t("profile.label")}</label>
         <div className="profile-input-row">
           <input
             id="profile-bodyweight"
@@ -57,7 +57,7 @@ export default function ProfileForm() {
             inputMode="decimal"
             autoComplete="off"
             maxLength={12}
-            placeholder="e.g. 75.5"
+            placeholder={t("profile.placeholder")}
             value={draft}
             aria-describedby={`profile-weight-help${fieldError ? " profile-weight-error" : ""}`}
             aria-invalid={!!fieldError}
@@ -68,11 +68,11 @@ export default function ProfileForm() {
             }}
           />
           <button className="primary" type="submit" disabled={!editing}>
-            Save bodyweight
+            {t("profile.save")}
           </button>
         </div>
         <p className="small-note" id="profile-weight-help">
-          Leave blank and save to clear your bodyweight.
+          {t("profile.clearHint")}
         </p>
         {fieldError && (
           <p className="error-text" role="alert" id="profile-weight-error">
@@ -91,7 +91,7 @@ export default function ProfileForm() {
         )}
         {status === "error" && user && (
           <button className="text-button" type="button" onClick={retrySync}>
-            Retry profile sync
+            {t("profile.retry")}
           </button>
         )}
       </form>

@@ -907,4 +907,267 @@ export const sv = {
   "group.deleteText":
     "Scheman som använder gruppen visar inget de dagarna. Dina rutiner finns kvar.",
   "group.keep": "Behåll gruppen",
+
+  // Data, settings and auth
+  "err.newerApp":
+    "Det här sparades av en nyare version av Gain Train. Stäng och öppna appen igen för att uppdatera, och försök sedan igen.",
+  "err.workoutRemoved":
+    "Passet har tagits bort. Gå tillbaka till loggen för att fortsätta ditt pågående pass.",
+  "err.tooLarge":
+    "Det här är för stort för att sparas och synkas. Ta bort några övningar eller set, eller dela upp det i två.",
+  "err.recordMissing":
+    "Kunde inte hitta den sparade posten. Gå tillbaka till loggen och försök igen.",
+  "err.backupTooLarge": "Säkerhetskopian är för stor.",
+  "err.backupInvalidId":
+    "Säkerhetskopian innehåller ett ogiltigt post-id eller en ogiltig typ.",
+  "err.backupStarted":
+    "Ett pass pågår redan. Avsluta eller avbryt det innan du återställer en säkerhetskopia med ett annat startat pass. Inga poster ändrades.",
+  "err.nothingToRestore":
+    "Inget att återställa: loggen har redan allt i säkerhetskopian.",
+  "err.nothingToCopy": "Inget nytt att kopiera: kontot har redan allt.",
+  "err.bodyweight":
+    "Kroppsvikten måste vara över 0 och högst 1000 kg, eller tom för att rensa den.",
+  "err.accountChangedSignIn":
+    "Ditt konto har ändrats. Logga in igen för att synka din profil.",
+  "err.profileSync": "Kunde inte synka din profil.",
+  "err.accountChangedStopped":
+    "Ditt konto har ändrats. Profilsynken stoppades.",
+  "err.profileStorage":
+    "Kunde inte spara din profil på enheten. Tillåt lagring eller frigör utrymme och försök igen.",
+  "err.accountChangedSettings":
+    "Ditt konto har ändrats. Öppna Inställningar igen för att spara din profil.",
+  "err.profileUnconfirmed": "Profiluppdateringen bekräftades inte.",
+  "err.profileSyncFailed":
+    "Sparat på enheten. Profilsynken misslyckades; försök igen när du är uppkopplad.",
+  "err.profileCheckFailed":
+    "Kunde inte kontrollera profilsynken. Försök igen när du är uppkopplad.",
+  "err.deleteOffline":
+    "Anslut till internet och logga in för att radera ditt konto.",
+  "err.deleteFailed":
+    "Kunde inte radera ditt konto. Logga in igen och försök igen. Kontot kan fortfarande finnas.",
+  "err.inProgressTrain":
+    "Ett annat pass pågår redan. Avsluta eller avbryt det under Träna och försök sedan igen.",
+  "err.storageUnavailable":
+    "Lagringen på enheten är inte tillgänglig. Tillåt lagring för webbplatsen för att logga pass säkert.",
+  "err.removeFailed":
+    "Kunde inte ta bort posten på mobilen. Låt skärmen vara öppen och försök igen.",
+  "err.saveOnPhone":
+    "Kunde inte spara på mobilen. Låt skärmen vara öppen och frigör lite lagring.",
+  "err.startOnPhone":
+    "Kunde inte starta på mobilen. Ditt pågående pass finns kvar. Frigör lite lagring och försök igen.",
+  "err.restoreWorkoutPhone":
+    "Kunde inte återställa passet på mobilen. Frigör lite lagring och försök igen.",
+  "err.choiceOnPhone": "Kunde inte spara ditt val på mobilen. Försök igen.",
+  "err.retryOnPhone": "Kunde inte försöka igen på mobilen. Försök igen.",
+  "err.restoreBackupPhone":
+    "Kunde inte återställa säkerhetskopian på mobilen. Frigör lite lagring och försök igen.",
+  "err.copyPhoneStorage":
+    "Kunde inte kopiera mobilens logg. Frigör lite lagring och försök igen.",
+  "err.signInProfile": "Logga in igen för att synka din profil.",
+  "err.workoutNotFound": "Kunde inte hitta passet för att återställa det.",
+  "err.inProgressRestore":
+    "Ett annat pass pågår redan. Avsluta eller avbryt det innan du återställer det här.",
+  "err.startFailed": "Kunde inte starta passet. Försök igen.",
+  "err.accountDeleted": "Kontot har raderats.",
+  "err.saveDevice": "Kunde inte spara på enheten.",
+  "err.eraseLog": "Kunde inte radera kontots logg.",
+  "err.invalidName":
+    "Namnet saknas eller är längre än 100 tecken, eller så är posten för stor för att synkas.",
+  "err.serverRejected": "Servern avvisade ändringen.",
+  "err.notBackup": "Det här är inte en säkerhetskopia från Gain Train.",
+  "err.backupDamaged":
+    "Säkerhetskopian är skadad eller från en version som inte stöds.",
+  "val.unknownType": "Okänd posttyp.",
+  "val.addedWeight":
+    "Extra vikt måste vara över 0 och högst 10000 kg, eller tom för ett ofärdigt set.",
+  "val.name": "Ange ett namn på 1 till 100 tecken.",
+  "val.date": "Välj ett giltigt datum för passet.",
+  "val.duration":
+    "Längden måste vara ett heltal från 0 till 1440 minuter, eller tom.",
+  "val.weight": "Vikten måste vara ett tal från 0 till 10000 kg, eller tom.",
+  "val.bodyWeightKg": "Kroppsvikten måste vara över 0 och högst 1000 kg.",
+  "val.extraWeight": "Välj om kroppsviktssetet har extra vikt.",
+  "val.measure": "Välj reps eller sekunder för setet.",
+  "val.durationSec": "Tiden måste vara från 0:00 till 24:00:00, eller tom.",
+  "val.distanceM": "Distansen måste vara från 0 till 1 000 km, eller tom.",
+  "val.level": "Nivån måste vara ett tal från 0 till 100, eller tom.",
+  "val.calories": "Kalorier måste vara ett tal från 0 till 100 000, eller tom.",
+  "val.load": "Välj vikt, kroppsvikt eller assisterad belastning.",
+  "val.section": "Välj arbetsset, uppvärmning eller nedvarvning för setet.",
+  "val.exercises": "Använd högst 100 övningar per pass.",
+  "val.sets": "Använd högst 100 set per övning.",
+  "val.startDate": "Välj ett giltigt startdatum för schemat.",
+  "val.endDate":
+    "Ett schema måste sluta samma dag som det börjar eller senare.",
+  "val.cycleWeeks": "Ett schema upprepas var 1 till 6 vecka.",
+  "val.template":
+    "Schemat behöver en rad med sju dagar för varje vecka i cykeln.",
+  "val.overrides": "Kontrollera datumen du ändrade i schemat.",
+  "val.goalIds": "Ett schema kan länka upp till 50 mål.",
+  "val.kind": "Välj ett kroppsviktsmål eller ett lyftmål.",
+  "val.targetKg": "Målet måste vara över 0 och högst 10000 kg.",
+  "val.exerciseId": "Välj övningen för lyftmålet.",
+  "val.byDate": "Välj ett giltigt datum för målet.",
+  "val.hiddenExerciseIds": "Kontrollera listan över dolda övningar.",
+  "val.groups": "Kontrollera namnen och rutinerna i dina grupper.",
+  "val.routineIds": "En grupp kan innehålla upp till 50 rutiner.",
+  "val.startKg": "Startvikten måste vara över 0 och högst 1000 kg.",
+  "val.repsRange": "Reps måste vara ett heltal från 0 till 10000, eller tom.",
+  "val.secondsRange":
+    "Sekunder måste vara ett heltal från 0 till 10000, eller tom.",
+  "val.checkDetails": "Kontrollera uppgifterna innan du sparar.",
+  "val.finishEntering": "Fyll i setens värden klart innan du sparar.",
+  "val.cardioNoReps":
+    "Konditionsset har tid och distans, inte reps eller vikt.",
+  "val.cardioNeedsTime":
+    "Ikryssade konditionsset behöver en tid. Kryssa ur setet för att lämna det ofärdigt.",
+  "val.extraBodyweightOnly": "Extra vikt finns bara för kroppsviktsset.",
+  "val.addedWeightRange": "Extra vikt måste vara över 0 och högst 10000 kg.",
+  "val.timedBodyweight":
+    "Tidsset använder kroppsvikt. Välj kroppsvikt för att logga sekunder.",
+  "val.checkedInvalid":
+    "Ikryssade set behöver positiva reps eller sekunder och en giltig vikt eller kroppsvikt. Kryssa ur setet för att lämna det ofärdigt.",
+  "val.completeOne":
+    "Kryssa i minst ett giltigt set. Ikryssade set behöver reps eller sekunder och en giltig belastning.",
+  "summary.restored": "Säkerhetskopian återställd: {parts}.",
+  "summary.added": {
+    one: "{count} post tillagd",
+    other: "{count} poster tillagda",
+  },
+  "summary.broughtBack": {
+    one: "{count} raderad post återställd",
+    other: "{count} raderade poster återställda",
+  },
+  "summary.kept": {
+    one: "{count} som redan fanns behölls.",
+    other: "{count} som redan fanns behölls.",
+  },
+  "summary.copied": {
+    one: "Kopierade {count} post från mobilen.",
+    other: "Kopierade {count} poster från mobilen.",
+  },
+  "summary.pastWorkout":
+    "Passet som pågick där kopierades som ett tidigare pass.",
+  "kind.workout": "Pass",
+  "kind.routine": "Rutin",
+  "kind.exercise": "Övning",
+  "kind.plan": "Schema",
+  "kind.goal": "Mål",
+  "kind.library": "Övningsinställningar",
+  "kind.record": "Post",
+  "summary.deleted": "Raderad",
+  "summary.changed": "Ändrad",
+  "summary.notFinished": "inte avslutat",
+  "account.title": "Konto",
+  "account.waiting": {
+    one: "{count} ändring väntar på synk.",
+    other: "{count} ändringar väntar på synk.",
+  },
+  "account.waitingOffline": {
+    one: "{count} ändring väntar på synk när du är uppkopplad igen.",
+    other: "{count} ändringar väntar på synk när du är uppkopplad igen.",
+  },
+  "account.upToDate": "Din lokala logg är uppdaterad.",
+  "account.lastSynced": "Senast synkad {when}.",
+  "account.syncing": "Synkar…",
+  "account.syncNow": "Synka nu",
+  "account.connect": "Anslut för att synka",
+  "account.copyFailed": "Kunde inte kopiera mobilens logg. Försök igen.",
+  "account.copyPhone": "Kopiera mobilens pass utan konto till mitt konto",
+  "data.backupTitle": "Säkerhetskopia av Gain Train",
+  "data.exported": "Säkerhetskopian exporterad",
+  "data.savedAs": "Säkerhetskopian sparad som {name}",
+  "data.exportFailed": "Kunde inte exportera en säkerhetskopia.",
+  "data.tooBig": "Välj en säkerhetskopia mindre än 20 MB.",
+  "data.restoreFailed": "Kunde inte återställa säkerhetskopian",
+  "data.persistOn": "Beständig lagring aktiverad",
+  "data.persistAuto":
+    "Webbläsaren hanterar lagringen automatiskt. Spara en säkerhetskopia också.",
+  "data.persistFailed":
+    "Webbläsaren kunde inte aktivera beständig lagring. Exportera en säkerhetskopia för att ha en separat kopia.",
+  "data.title": "Din data",
+  "data.export": "Exportera en säkerhetskopia",
+  "data.restoring": "Återställer…",
+  "data.restore": "Återställ en säkerhetskopia",
+  "data.storage": "Lagring på enheten",
+  "data.protected": "Skyddad",
+  "data.notProtected": "Inte skyddad",
+  "deleteAccount.title": "Radera ditt konto?",
+  "deleteAccount.description":
+    "Det här raderar ditt konto och alla tillhörande pass, rutiner och övningar permanent från servern och den här enheten. Det går inte att ångra. Exportera en säkerhetskopia först om du vill behålla loggen. Nedladdade säkerhetskopior och offlinekopior på andra enheter kan inte raderas på distans.",
+  "deleteAccount.word": "RADERA",
+  "deleteAccount.typeToConfirm": "Skriv {word} för att bekräfta",
+  "deleteAccount.keep": "Behåll kontot",
+  "deleteAccount.deleted": "Kontot raderat",
+  "deleteAccount.failed": "Kunde inte radera kontot.",
+  "deleteAccount.deleting": "Raderar…",
+  "deleteAccount.confirm": "Radera kontot permanent",
+  "issues.choiceFailed": "Kunde inte spara ditt val.",
+  "issues.parked": {
+    one: "{count} synkad post kräver en nyare version av Gain Train. Stäng och öppna appen igen för att uppdatera; den visas när appen kan läsa den.",
+    other:
+      "{count} synkade poster kräver en nyare version av Gain Train. Stäng och öppna appen igen för att uppdatera; de visas när appen kan läsa dem.",
+  },
+  "issues.rejectedTitle": "Ändringar som servern inte godtog",
+  "issues.rejectedText":
+    "De ligger kvar på mobilen. Redigerar du en skickas den igen; Försök igen skickar alla, till exempel efter en uppdatering av appen.",
+  "issues.retryFailed": "Kunde inte försöka igen.",
+  "issues.chooseTitle": "Välj vilken version du vill behålla",
+  "issues.changedElsewhere":
+    "{kind} ”{name}” ändrades på en annan enhet. Exportera en säkerhetskopia först för att spara din lokala version separat.",
+  "issues.thisPhone": "Den här mobilen",
+  "issues.server": "Servern",
+  "issues.useServer": "Använd serverns version",
+  "issues.keepPhone": "Behåll mobilens version",
+  "profile.saveFailed": "Kunde inte spara din kroppsvikt. Försök igen.",
+  "profile.unsaved": "Osparade ändringar.",
+  "profile.checking": "Kontrollerar profilsynk…",
+  "profile.pendingSignedIn": "Sparat på enheten. Synkas när du är uppkopplad.",
+  "profile.pendingSignIn": "Sparat på enheten. Logga in för att synka.",
+  "profile.synced": "Profilen synkad.",
+  "profile.cleared": "Kroppsvikten rensad på enheten.",
+  "profile.none": "Ingen kroppsvikt sparad.",
+  "profile.savedDevice": "Sparat på enheten.",
+  "profile.intro": "Din kroppsvikt visas när du väljer KV i ett pass.",
+  "profile.label": "Kroppsvikt (kg)",
+  "profile.placeholder": "t.ex. 75,5",
+  "profile.save": "Spara kroppsvikt",
+  "profile.clearHint": "Lämna tomt och spara för att rensa kroppsvikten.",
+  "profile.retry": "Försök synka profilen igen",
+  "auth.offline":
+    "Anslut till internet för att använda ditt konto. Mobilens logg finns kvar.",
+  "auth.mismatch":
+    "Lösenorden matchar inte. Ange samma nya lösenord två gånger.",
+  "auth.resetSent":
+    "Om ett konto använder den här e-postadressen får du en länk för att återställa lösenordet. Öppna den för att välja ett nytt lösenord.",
+  "auth.checkEmail":
+    "Kolla din e-post för att bekräfta kontot, och logga sedan in här.",
+  "auth.failed": "Kunde inte slutföra begäran. Försök igen.",
+  "auth.back": "Tillbaka",
+  "auth.titleUpdate": "Välj ett nytt lösenord",
+  "auth.titleReset": "Återställ ditt lösenord",
+  "auth.titleSignup": "Skapa ett konto",
+  "auth.titleSignin": "Logga in för att synka",
+  "auth.textUpdate":
+    "Ange ett nytt lösenord för ditt konto. Använd minst 8 tecken.",
+  "auth.textReset":
+    "Ange e-postadressen för ditt konto så skickar vi en länk för att välja ett nytt lösenord.",
+  "auth.textSignin":
+    "Synka din träningslogg mellan enheter. Du kan fortsätta logga på mobilen utan konto.",
+  "auth.linkExpired":
+    "Återställningslänken är ogiltig eller har gått ut. Begär en ny länk nedan.",
+  "auth.email": "E-post",
+  "auth.newPassword": "Nytt lösenord",
+  "auth.password": "Lösenord",
+  "auth.confirmPassword": "Bekräfta nytt lösenord",
+  "auth.pleaseWait": "Vänta…",
+  "auth.saveNewPassword": "Spara nytt lösenord",
+  "auth.sendReset": "Skicka återställningslänk",
+  "auth.createAccount": "Skapa konto",
+  "auth.signIn": "Logga in",
+  "auth.notConfigured":
+    "Molnsynk är inte konfigurerad. Mobilens logg fungerar ändå.",
+  "auth.forgot": "Glömt lösenordet?",
+  "auth.createAnAccount": "Skapa ett konto",
+  "auth.backToSignIn": "Tillbaka till inloggning",
 } satisfies Messages;

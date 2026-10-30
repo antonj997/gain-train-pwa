@@ -14,13 +14,13 @@ import {
 } from "./model";
 import { startedWorkouts, WorkoutInProgressError } from "./workout-start";
 import { libraryRecordId, mergeLibraries } from "./exercises";
+import { t } from "../i18n";
 
 // The local writes behind DataContext, as plain functions on the stored state.
 // Each runs inside one IndexedDB transaction (see `transact`): a throw rolls the
 // whole change back. Keeping them free of React makes them testable on their own.
 
-export const NEWER_APP_MESSAGE =
-  "This was saved by a newer version of Gain Train. Close and reopen the app to update it, then try again.";
+export const newerAppMessage = () => t("err.newerApp");
 
 /** Below the server's 512 KB jsonb limit, with room for its encoding. */
 export const MAX_PAYLOAD_CHARS = 450_000;
@@ -51,17 +51,13 @@ export function saveRecordIn(
 ) {
   const old = s.records[id];
   if (old && isFromNewerApp(old.payload))
-    throw new RecordValidationError(NEWER_APP_MESSAGE);
+    throw new RecordValidationError(newerAppMessage());
   if (kind === "workout" && old?.deleted)
-    throw new RecordValidationError(
-      "This workout was removed. Return to your log to resume your current workout.",
-    );
+    throw new RecordValidationError(t("err.workoutRemoved"));
   let saved: Payload = { ...parsed, schemaVersion: SCHEMA_VERSION };
   // The server refuses payloads over 512 KB; say so before anything is queued.
   if (JSON.stringify(saved).length > MAX_PAYLOAD_CHARS)
-    throw new RecordValidationError(
-      "This is too large to save and sync. Remove some exercises or sets, or split it into two.",
-    );
+    throw new RecordValidationError(t("err.tooLarge"));
   if (kind === "workout") {
     const workout = saved as Workout;
     // One running workout at a time is checked when a workout starts running
@@ -103,10 +99,7 @@ export function saveRecordIn(
 /** Marks a record deleted. The payload is kept, so Undo can bring it back. */
 export function deleteRecordIn(s: LocalState, id: string) {
   const saved = s.records[id];
-  if (!saved)
-    throw new RecordValidationError(
-      "Could not find the saved record. Return to your log and try again.",
-    );
+  if (!saved) throw new RecordValidationError(t("err.recordMissing"));
   if (saved.deleted) return;
   s.records[id] = {
     ...saved,
@@ -145,16 +138,14 @@ export function retryRejectedIn(s: LocalState) {
  */
 export function parseImport(records: RecordDoc[]) {
   if (records.length > 10000)
-    throw new RecordValidationError("Backup is too large.");
+    throw new RecordValidationError(t("err.backupTooLarge"));
   const restored: RecordDoc[] = [];
   for (const r of records) {
     if (
       !z.string().uuid().safeParse(r.id).success ||
       !z.enum(recordKinds).safeParse(r.kind).success
     )
-      throw new RecordValidationError(
-        "Backup contains an invalid record ID or type.",
-      );
+      throw new RecordValidationError(t("err.backupInvalidId"));
     if (!r.deleted)
       restored.push({
         ...r,
@@ -210,24 +201,20 @@ export function importRecordsIn(
       restoredStartedWorkout = true;
   }
   if (restoredStartedWorkout && startedWorkouts(s).length > 1)
-    throw new RecordValidationError(
-      "A workout is already in progress. Finish or abandon it before restoring a backup with another started workout. No backup records were changed.",
-    );
+    throw new RecordValidationError(t("err.backupStarted"));
   return result;
 }
 
 /** The toast after a restore: what was added and brought back, and what was kept. */
 export function importSummary({ added, restored, kept }: ImportResult) {
-  if (!added && !restored)
-    return "Nothing to restore: this log already has everything in the backup.";
+  if (!added && !restored) return t("err.nothingToRestore");
   const parts = [
-    added && `${added} ${added === 1 ? "record" : "records"} added`,
-    restored &&
-      `${restored} deleted ${restored === 1 ? "record" : "records"} brought back`,
+    added && t("summary.added", { count: added }),
+    restored && t("summary.broughtBack", { count: restored }),
   ].filter(Boolean);
   return (
-    `Backup restored: ${parts.join(", ")}.` +
-    (kept ? ` ${kept} already here ${kept === 1 ? "was" : "were"} kept.` : "")
+    t("summary.restored", { parts: parts.join(", ") }) +
+    (kept ? " " + t("summary.kept", { count: kept }) : "")
   );
 }
 
@@ -318,11 +305,9 @@ export function copyPhoneLogIn(
 
 /** The toast after copying the phone log. */
 export function copySummary({ added, pastWorkouts }: CopyResult) {
-  if (!added) return "Nothing new to copy: this account already has it all.";
+  if (!added) return t("err.nothingToCopy");
   return (
-    `Copied ${added} ${added === 1 ? "record" : "records"} from this phone.` +
-    (pastWorkouts
-      ? ` The workout running there was copied as a past workout.`
-      : "")
+    t("summary.copied", { count: added }) +
+    (pastWorkouts ? " " + t("summary.pastWorkout") : "")
   );
 }

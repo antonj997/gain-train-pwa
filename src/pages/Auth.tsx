@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { recoveryRedirect } from "@/lib/authRecovery";
+import { t } from "@/i18n";
 
 type FormMode = "signin" | "signup" | "reset";
 export default function Auth() {
@@ -43,15 +44,11 @@ export default function Auth() {
     setMessage("");
     setError("");
     if (!online) {
-      setError(
-        "Connect to the internet to use your account. Your phone log is still available.",
-      );
+      setError(t("auth.offline"));
       return;
     }
     if (mode === "update" && password !== confirmation) {
-      setError(
-        "The passwords do not match. Enter the same new password twice.",
-      );
+      setError(t("auth.mismatch"));
       return;
     }
     setBusy(true);
@@ -67,9 +64,7 @@ export default function Auth() {
           },
         );
         if (error) throw error;
-        setMessage(
-          "If an account uses this email, you’ll receive a password-reset link. Open it to choose a new password.",
-        );
+        setMessage(t("auth.resetSent"));
       } else if (mode === "update") {
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
@@ -96,18 +91,10 @@ export default function Auth() {
               });
         if (error) throw error;
         if (data.session) navigate("/", { replace: true });
-        else
-          setMessage(
-            "Check your email to confirm your account, then sign in here.",
-          );
+        else setMessage(t("auth.checkEmail"));
       }
     } catch (error) {
-      setError(
-        errorMessage(
-          error,
-          "Could not complete this request. Please try again.",
-        ),
-      );
+      setError(errorMessage(error, t("auth.failed")));
     } finally {
       setBusy(false);
     }
@@ -115,28 +102,27 @@ export default function Auth() {
   return (
     <div className="auth-page stack">
       <Link className="back-link" to="/" onClick={finishPasswordRecovery}>
-        <ArrowLeft size={18} /> Back
+        <ArrowLeft size={18} /> {t("auth.back")}
       </Link>
       <h1>
         {mode === "update"
-          ? "Choose a new password"
+          ? t("auth.titleUpdate")
           : mode === "reset"
-            ? "Reset your password"
+            ? t("auth.titleReset")
             : mode === "signup"
-              ? "Create an account"
-              : "Sign in to sync"}
+              ? t("auth.createAnAccount")
+              : t("auth.titleSignin")}
       </h1>
       <p>
         {mode === "update"
-          ? "Enter a new password for your account. Use at least 8 characters."
+          ? t("auth.textUpdate")
           : mode === "reset"
-            ? "Enter your account email and we’ll send a link to choose a new password."
-            : "Sync your workout log across devices. You can keep logging on this phone without an account."}
+            ? t("auth.textReset")
+            : t("auth.textSignin")}
       </p>
       {passwordRecovery && !recoveredSession && (
         <p className="notice" role="status">
-          This reset link is unavailable or has expired. Request a new link
-          below.
+          {t("auth.linkExpired")}
         </p>
       )}
       {supabase ? (
@@ -147,7 +133,7 @@ export default function Auth() {
         >
           {mode !== "update" && (
             <label>
-              Email
+              {t("auth.email")}
               <input
                 type="email"
                 autoComplete="email"
@@ -160,7 +146,7 @@ export default function Auth() {
           )}
           {mode !== "reset" && (
             <label>
-              {mode === "update" ? "New password" : "Password"}
+              {mode === "update" ? t("auth.newPassword") : t("auth.password")}
               <input
                 type="password"
                 autoComplete={
@@ -176,7 +162,7 @@ export default function Auth() {
           )}
           {mode === "update" && (
             <label>
-              Confirm new password
+              {t("auth.confirmPassword")}
               <input
                 type="password"
                 autoComplete="new-password"
@@ -195,20 +181,18 @@ export default function Auth() {
           )}
           <button className="primary" disabled={busy}>
             {busy
-              ? "Please wait…"
+              ? t("auth.pleaseWait")
               : mode === "update"
-                ? "Save new password"
+                ? t("auth.saveNewPassword")
                 : mode === "reset"
-                  ? "Send reset link"
+                  ? t("auth.sendReset")
                   : mode === "signup"
-                    ? "Create account"
-                    : "Sign in"}
+                    ? t("auth.createAccount")
+                    : t("auth.signIn")}
           </button>
         </form>
       ) : (
-        <p className="notice">
-          Cloud sync is not configured. Your phone log still works.
-        </p>
+        <p className="notice">{t("auth.notConfigured")}</p>
       )}
       {message && (
         <p role="status" className="notice">
@@ -230,7 +214,9 @@ export default function Auth() {
           disabled={busy}
           onClick={() => changeMode(mode === "signin" ? "signup" : "signin")}
         >
-          {mode === "signin" ? "Create an account" : "Back to sign in"}
+          {mode === "signin"
+            ? t("auth.createAnAccount")
+            : t("auth.backToSignIn")}
         </button>
       )}
     </div>

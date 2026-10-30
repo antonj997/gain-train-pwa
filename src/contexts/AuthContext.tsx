@@ -11,6 +11,7 @@ import {
   recoveryRequested,
   recoveredSessionMatches,
 } from "@/lib/authRecovery";
+import { t } from "@/i18n";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null),
     [account, setAccount] = useState(
@@ -80,17 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
   const deleteAccount = async () => {
     if (!user || !supabase || !navigator.onLine)
-      throw Error(
-        "Connect to the internet and sign in to delete your account.",
-      );
+      throw Error(t("err.deleteOffline"));
     const id = user.id;
     const { data, error } = await supabase.functions.invoke("delete-account", {
-      body: { confirmation: "DELETE" },
+      body: { confirmation: t("deleteAccount.word") },
     });
-    if (error || !data?.deleted)
-      throw Error(
-        "Could not delete your account. Sign in again and retry. Your account may still exist.",
-      );
+    if (error || !data?.deleted) throw Error(t("err.deleteFailed"));
     try {
       await eraseAccount(id);
     } finally {

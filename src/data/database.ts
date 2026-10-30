@@ -1,5 +1,6 @@
 import { emptyState, type LocalState } from "./model";
 import { local, storageKeys } from "../lib/storage";
+import { t } from "../i18n";
 let dbPromise: Promise<IDBDatabase> | undefined;
 function db() {
   if (dbPromise) return dbPromise;
@@ -45,7 +46,7 @@ export async function transact(
     r.onsuccess = () => {
       try {
         if (local.getItem(storageKeys.deleted(account)))
-          throw Error("This account was deleted.");
+          throw Error(t("err.accountDeleted"));
         next = r.result ?? emptyState();
         change(next);
         store.put(next, account);
@@ -56,8 +57,7 @@ export async function transact(
     };
     tx.oncomplete = () => resolve(next);
     tx.onerror = () => reject(tx.error);
-    tx.onabort = () =>
-      reject(tx.error ?? Error("Could not save on this device."));
+    tx.onabort = () => reject(tx.error ?? Error(t("err.saveDevice")));
   });
 }
 export async function eraseAccount(account: string) {
@@ -71,7 +71,6 @@ export async function eraseAccount(account: string) {
     tx.onerror = () => reject(tx.error);
     // A transaction can also end by aborting (for example over quota) without
     // an error event; without this the caller would wait forever.
-    tx.onabort = () =>
-      reject(tx.error ?? Error("Could not erase this account's log."));
+    tx.onabort = () => reject(tx.error ?? Error(t("err.eraseLog")));
   });
 }

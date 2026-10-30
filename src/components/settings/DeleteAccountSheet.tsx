@@ -4,8 +4,9 @@ import { useAuth } from "@/contexts/useAuth";
 import Sheet from "@/components/ui/Sheet";
 import { errorMessage } from "@/lib/errors";
 import { removeProfileCache } from "@/lib/profile";
+import { t } from "@/i18n";
 
-/** Asks for "DELETE" before deleting the account; it stays open while deleting. */
+/** Asks for "DELETE" (or "RADERA") before deleting the account; it stays open while deleting. */
 export default function DeleteAccountSheet({
   open,
   onClose,
@@ -32,11 +33,11 @@ export default function DeleteAccountSheet({
       onClose={() => {
         if (!deleting) onClose();
       }}
-      title="Delete your account?"
-      description="This permanently deletes your account and all associated workouts, routines and exercises from the server and this device. This cannot be undone. Export a backup first if you want to keep your log. Downloaded backups and offline copies on other devices cannot be remotely erased."
+      title={t("deleteAccount.title")}
+      description={t("deleteAccount.description")}
     >
       <label>
-        Type DELETE to confirm
+        {t("deleteAccount.typeToConfirm", { word: t("deleteAccount.word") })}
         <input
           value={confirmation}
           autoComplete="off"
@@ -49,11 +50,15 @@ export default function DeleteAccountSheet({
         </p>
       )}
       <button className="btn-secondary" disabled={deleting} onClick={onClose}>
-        Keep account
+        {t("deleteAccount.keep")}
       </button>
       <button
         className="btn-danger"
-        disabled={deleting || confirmation !== "DELETE" || !navigator.onLine}
+        disabled={
+          deleting ||
+          confirmation.trim().toLocaleUpperCase() !== t("deleteAccount.word") ||
+          !navigator.onLine
+        }
         onClick={async () => {
           setDeleting(true);
           setDeleteError("");
@@ -61,15 +66,15 @@ export default function DeleteAccountSheet({
             await deleteAccount();
             removeProfileCache(account);
             onClose();
-            toast.success("Account deleted");
+            toast.success(t("deleteAccount.deleted"));
           } catch (error) {
-            setDeleteError(errorMessage(error, "Could not delete account."));
+            setDeleteError(errorMessage(error, t("deleteAccount.failed")));
           } finally {
             setDeleting(false);
           }
         }}
       >
-        {deleting ? "Deleting…" : "Permanently delete account"}
+        {deleting ? t("deleteAccount.deleting") : t("deleteAccount.confirm")}
       </button>
     </Sheet>
   );
