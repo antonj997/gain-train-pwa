@@ -29,6 +29,8 @@ export type LibraryExercise = {
   note: string;
   /** Set while the user's custom exercise is published to the shared library. */
   sharedId?: string;
+  /** Shared rows only: the sharer's display name, when they set one. */
+  sharedBy?: string;
   /** Date of the newest finished workout that includes it. */
   lastDate: string | null;
   /** Label of the best set, such as "100 kg × 5". */

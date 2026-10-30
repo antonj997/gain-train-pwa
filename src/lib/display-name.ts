@@ -7,8 +7,11 @@ export const DISPLAY_NAME_MAX = 40;
  * characters removed. Null clears the name. Throws when it is too long.
  */
 export function normalizeDisplayName(input: string): string | null {
-  // eslint-disable-next-line no-control-regex
-  const name = input.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+  const name = input
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!name) return null;
   if ([...name].length > DISPLAY_NAME_MAX)
     throw new Error(t("name.tooLong", { max: DISPLAY_NAME_MAX }));

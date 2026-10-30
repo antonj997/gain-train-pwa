@@ -12,7 +12,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import { Plus, Play, Trash2, MoreHorizontal } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Play, Trash2, MoreHorizontal, Share2 } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { type Exercise, type Routine } from "@/data/model";
@@ -26,6 +27,9 @@ import Sheet from "@/components/ui/Sheet";
 import { countLabel } from "@/lib/labels";
 import { lastUsedLabel } from "@/lib/library";
 import RoutinePlan from "@/components/RoutinePlan";
+import SharedRoutineList from "@/components/library/SharedRoutineList";
+import { useSharedRoutines } from "@/hooks/useSharedRoutines";
+import { unpublishRoutine } from "@/data/shared-routines";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -34,7 +38,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { t } from "@/i18n";
+import { t, type MessageKey } from "@/i18n";
+
+type View = "yours" | "shared";
+const views = [
+  { value: "yours", label: "routines.viewYours" },
+  { value: "shared", label: "routines.viewShared" },
+] as const satisfies readonly { value: View; label: MessageKey }[];
 
 /** Library → Routines: a card per routine, the routine editor and a link to the training plan. */
 export default function RoutinesPanel() {
@@ -53,6 +63,18 @@ export default function RoutinesPanel() {
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
+  const [view, setView] = useState<View>("yours");
+  const shared = useSharedRoutines({
+    browsing: view === "shared",
+    // An open draft of the routine follows its shared id.
+    onSharedId: (id, sharedId) => {
+      if (edit?.id !== id) return;
+      const data = structuredClone(edit.data);
+      if (sharedId) data.sharedId = sharedId;
+      else delete data.sharedId;
+      setEdit({ ...edit, data });
+    },
+  });
   const categories = useMemo(
     () => customDefaults(state.records),
     [state.records],
@@ -152,77 +174,127 @@ export default function RoutinesPanel() {
     setError(null);
     setOpen(true);
   };
-  const remove = (r: (typeof records)[number]) =>
-    run(async () => {
+  const remove = (r: (typeof records)[number]) => {
+    const sharedId = r.payload.sharedId;
+    // A shared routine leaves the shared library first, while its record
+    // still holds the id needed to remove it.
+    if (sharedId && !shared.ready) {
+      toast.error(t("exercises.stopSharingFirst", { name: r.payload.name }));
+      return;
+    }
+    return run(async () => {
+      if (sharedId)
+        try {
+          await unpublishRoutine(sharedId);
+        } catch {
+          toast.error(t("exercises.unpublishFailed", { name: r.payload.name }));
+          return;
+        }
       await deleteRecord(r.id);
       setMenu(null);
+      // Undo brings the routine back unshared: its shared row is gone.
+      const restored = structuredClone(r.payload);
+      delete restored.sharedId;
       toastWithUndo(
         t("routines.deleted"),
-        () => save(r.id, "routine", r.payload),
+        () => save(r.id, "routine", restored),
         t("routines.restoreFailed"),
       );
     });
+  };
   return (
     <div className="col-12">
       {workoutStart.confirmation}
-      {records.map((r) => {
-        const done = lastDone.get(r.id);
-        return (
-          <section className="card col-12" key={r.id}>
-            <div className="card-head routine-head">
-              <div className="routine-title">
-                <h2 className="card-title">{r.payload.name}</h2>
-                <span className="row-sub">
-                  {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
-                  {countLabel(setCount(r.payload), "set")} ·{" "}
-                  {done
-                    ? t("routines.lastDone", {
-                        when: lastUsedLabel(done, now),
-                      })
-                    : t("routines.neverDone")}
-                </span>
+      <div className="filters" role="group" aria-label={t("routines.view")}>
+        {views.map((v) => (
+          <button
+            key={v.value}
+            type="button"
+            className="filter-chip"
+            aria-pressed={view === v.value}
+            onClick={() => setView(v.value)}
+          >
+            {t(v.label)}
+          </button>
+        ))}
+      </div>
+      {view === "shared" && (
+        <SharedRoutineList
+          canShare={shared.canShare}
+          ready={shared.ready}
+          status={shared.status}
+          hasRows={shared.hasRows}
+          rows={shared.rows}
+          added={shared.added}
+          adding={shared.adding}
+          onRetry={shared.retry}
+          onAdd={(id) => void shared.add(id)}
+        />
+      )}
+      {view === "yours" &&
+        records.map((r) => {
+          const done = lastDone.get(r.id);
+          return (
+            <section className="card col-12" key={r.id}>
+              <div className="card-head routine-head">
+                <div className="routine-title">
+                  <h2 className="card-title routine-name">
+                    {r.payload.name}
+                    {r.payload.sharedId && (
+                      <span className="stat-chip">{t("exercises.shared")}</span>
+                    )}
+                  </h2>
+                  <span className="row-sub">
+                    {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
+                    {countLabel(setCount(r.payload), "set")} ·{" "}
+                    {done
+                      ? t("routines.lastDone", {
+                          when: lastUsedLabel(done, now),
+                        })
+                      : t("routines.neverDone")}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="icon-btn routine-more"
+                  aria-label={t("routines.options", { name: r.payload.name })}
+                  disabled={busy}
+                  onClick={() => setMenu(r.id)}
+                >
+                  <MoreHorizontal size={22} aria-hidden="true" />
+                </button>
               </div>
-              <button
-                type="button"
-                className="icon-btn routine-more"
-                aria-label={t("routines.options", { name: r.payload.name })}
-                disabled={busy}
-                onClick={() => setMenu(r.id)}
-              >
-                <MoreHorizontal size={22} aria-hidden="true" />
-              </button>
-            </div>
-            <p className="routine-exercises">
-              {r.payload.exercises.map((ex) => ex.name).join(" · ")}
-            </p>
-            <div className="routine-actions">
-              <button
-                className="btn-primary"
-                disabled={busy || workoutStart.busy}
-                onClick={() =>
-                  void workoutStart.start(
-                    newWorkout(Object.values(state.records), { routine: r }),
-                  )
-                }
-              >
-                <Play size={16} fill="currentColor" stroke="none" />
-                {t("common.start")}
-              </button>
-              <button
-                className="btn-secondary"
-                disabled={busy}
-                onClick={() => startEdit(r.id, r.payload)}
-              >
-                {t("common.edit")}
-              </button>
-            </div>
-          </section>
-        );
-      })}
-      {!records.length && !edit && (
+              <p className="routine-exercises">
+                {r.payload.exercises.map((ex) => ex.name).join(" · ")}
+              </p>
+              <div className="routine-actions">
+                <button
+                  className="btn-primary"
+                  disabled={busy || workoutStart.busy}
+                  onClick={() =>
+                    void workoutStart.start(
+                      newWorkout(Object.values(state.records), { routine: r }),
+                    )
+                  }
+                >
+                  <Play size={16} fill="currentColor" stroke="none" />
+                  {t("common.start")}
+                </button>
+                <button
+                  className="btn-secondary"
+                  disabled={busy}
+                  onClick={() => startEdit(r.id, r.payload)}
+                >
+                  {t("common.edit")}
+                </button>
+              </div>
+            </section>
+          );
+        })}
+      {view === "yours" && !records.length && !edit && (
         <p className="empty">{t("routines.empty")}</p>
       )}
-      {edit && !open && (
+      {view === "yours" && edit && !open && (
         <p className="draft-receipt" role="status">
           {t("routines.unfinished", {
             name: edit.data.name || t("routines.untitled"),
@@ -230,25 +302,60 @@ export default function RoutinesPanel() {
           {draft.retained ? t("routines.keptOnPhone") : t("routines.keepOpen")}
         </p>
       )}
-      <button type="button" className="btn-dashed" onClick={create}>
-        <Plus size={20} aria-hidden="true" />
-        {edit ? t("routines.resumeDraft") : t("routines.new")}
-      </button>
+      {view === "yours" && (
+        <button type="button" className="btn-dashed" onClick={create}>
+          <Plus size={20} aria-hidden="true" />
+          {edit ? t("routines.resumeDraft") : t("routines.new")}
+        </button>
+      )}
       <Sheet
         open={!!menuRoutine}
         onClose={() => setMenu(null)}
         title={menuRoutine?.payload.name}
       >
         {menuRoutine && (
-          <div className="list">
-            <ListRow
-              tone="danger"
-              title={t("routines.delete")}
-              leading={<Trash2 size={20} aria-hidden="true" />}
-              disabled={busy}
-              onClick={() => void remove(menuRoutine)}
-            />
-          </div>
+          <>
+            <div className="list">
+              {shared.canShare ? (
+                <ListRow
+                  title={
+                    shared.sharing
+                      ? t("exercises.working")
+                      : menuRoutine.payload.sharedId
+                        ? t("exercises.stopSharing")
+                        : t("exercises.shareToLibrary")
+                  }
+                  leading={<Share2 size={20} aria-hidden="true" />}
+                  disabled={busy || shared.sharing}
+                  onClick={async () => {
+                    const done = menuRoutine.payload.sharedId
+                      ? await shared.stopSharing(menuRoutine.id)
+                      : await shared.share(menuRoutine.id);
+                    if (done) setMenu(null);
+                  }}
+                />
+              ) : (
+                <Link to="/auth" className="row">
+                  <Share2 size={20} aria-hidden="true" />
+                  <span className="row-main">
+                    <span className="row-title">
+                      {t("exercises.signInToShare")}
+                    </span>
+                  </span>
+                </Link>
+              )}
+              <ListRow
+                tone="danger"
+                title={t("routines.delete")}
+                leading={<Trash2 size={20} aria-hidden="true" />}
+                disabled={busy}
+                onClick={() => void remove(menuRoutine)}
+              />
+            </div>
+            {shared.canShare && (
+              <p className="row-sub">{t("sharedRoutines.menuNote")}</p>
+            )}
+          </>
         )}
       </Sheet>
       <Dialog
@@ -351,10 +458,16 @@ export default function RoutinesPanel() {
                   }
                   onClick={() =>
                     void run(async () => {
+                      const record = state.records[edit.id];
+                      const before =
+                        record?.kind === "routine" && !record.deleted
+                          ? record.payload
+                          : null;
                       await save(edit.id, "routine", edit.data);
                       setEdit(null);
                       setOpen(false);
                       toast.success(t("routines.saved"));
+                      await shared.syncEdit(before, edit.data);
                     })
                   }
                 >

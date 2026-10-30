@@ -83,8 +83,7 @@ export class SharedRoutineError extends Error {
   }
 }
 
-const UUID =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const BUILTIN = /^builtin:[a-z0-9-]{1,190}$/;
 const SET_FIELDS = [
   "reps",
@@ -102,8 +101,7 @@ const SET_FIELDS = [
 
 const sharedSet = (set: WorkoutSet): SharedSet => {
   const out: Record<string, unknown> = {};
-  for (const key of SET_FIELDS)
-    if (set[key] !== undefined) out[key] = set[key];
+  for (const key of SET_FIELDS) if (set[key] !== undefined) out[key] = set[key];
   return out as SharedSet;
 };
 
@@ -310,10 +308,7 @@ export function importSharedRoutine(
   const created: SharedRoutineImport["exercises"] = [];
   const findCustom = (custom: SharedCustom) => {
     const key = customKey(custom.name, custom.category);
-    const pool = [
-      ...created.map((c) => ({ id: c.id, ...c.payload })),
-      ...own,
-    ];
+    const pool = [...created.map((c) => ({ id: c.id, ...c.payload })), ...own];
     const match =
       (custom.sharedFrom &&
         pool.find(
@@ -340,14 +335,12 @@ export function importSharedRoutine(
     });
     return id;
   };
-  const exercises = parsed.map(
-    (ex): Exercise => ({
-      id: newId(),
-      exerciseId: ex.builtin ?? findCustom(ex.custom!),
-      name: ex.name,
-      sets: ex.sets.flatMap((s) => parseSharedSet(s, newId()) ?? []),
-    }),
-  );
+  const exercises = parsed.map((ex): Exercise => ({
+    id: newId(),
+    exerciseId: ex.builtin ?? findCustom(ex.custom!),
+    name: ex.name,
+    sets: ex.sets.flatMap((s) => parseSharedSet(s, newId()) ?? []),
+  }));
   return {
     routine: {
       name: clip(row.name, 100) || exercises[0].name,

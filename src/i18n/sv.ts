@@ -774,6 +774,48 @@ export const sv = {
     "Den delade kopian visar fortfarande de gamla uppgifterna. Sluta dela och dela igen för att uppdatera den.",
   "shared.unavailable": "Delning är inte tillgänglig.",
   "shared.notUpdated": "Den delade kopian uppdaterades inte.",
+  "shared.by": "av {name}",
+  "shared.bySomeone": "av någon",
+  "shared.signInLink": "Logga in",
+  "sharedRoutines.offline":
+    "Du är offline. Delade rutiner kräver en anslutning.",
+  "sharedRoutines.signIn":
+    "Logga in för att bläddra bland rutiner som andra har delat.",
+  "sharedRoutines.loading": "Laddar delade rutiner…",
+  "sharedRoutines.loadFailed": "Kunde inte ladda delade rutiner.",
+  "sharedRoutines.empty": "Ingen har delat någon rutin än.",
+  "sharedRoutines.added": "Tillagd",
+  "sharedRoutines.addedToast": "{name} tillagd bland dina rutiner",
+  "sharedRoutines.unusable":
+    "{name} har inga övningar som den här versionen kan lägga till.",
+  "sharedRoutines.tooMany": "Bara rutiner med högst {max} övningar kan delas.",
+  "sharedRoutines.tooBig":
+    "Rutinen är för stor för att delas. Ta bort några set och försök igen.",
+  "sharedRoutines.limitDay":
+    "Du kan dela upp till 20 rutiner per dag. Försök igen i morgon.",
+  "sharedRoutines.limitTotal":
+    "Du kan dela upp till 100 rutiner. Sluta dela några först.",
+  "sharedRoutines.menuNote":
+    "Alla som är inloggade kan lägga till en kopia, med ditt namn om du har angett ett i Inställningar. När du sparar ändringar uppdateras den delade kopian.",
+  "routines.view": "Visa rutiner",
+  "routines.viewYours": "Dina",
+  "routines.viewShared": "Delade",
+  "settings.name": "Namn",
+  "settings.nameNote": "Visas på rutiner och övningar som du delar.",
+  "name.title": "Ditt namn",
+  "name.description":
+    "Visas som ”av …” på rutiner och övningar som du delar. Lämna tomt för att dela utan namn.",
+  "name.label": "Namn",
+  "name.placeholder": "t.ex. Anna",
+  "name.save": "Spara namn",
+  "name.saving": "Sparar…",
+  "name.remove": "Ta bort namn",
+  "name.saved": "Namnet sparat",
+  "name.removed": "Namnet borttaget",
+  "name.saveFailed": "Kunde inte spara ditt namn. Försök igen.",
+  "name.loadFailed": "Kunde inte ladda ditt namn.",
+  "name.offline": "Anslut för att ändra ditt namn.",
+  "name.tooLong": "Använd högst {max} tecken.",
   "editor.description":
     "Namn i avslutade pass förblir som de loggades. Ofärdiga ändringar sparas när du stänger formuläret.",
   "editor.name": "Namn",
