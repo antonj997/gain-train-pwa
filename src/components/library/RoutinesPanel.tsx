@@ -39,9 +39,9 @@ import {
 } from "@/components/ui/dialog";
 import { t, type MessageKey } from "@/i18n";
 
-type View = "yours" | "shared";
+type View = "mine" | "shared";
 const views = [
-  { value: "yours", label: "routines.viewYours" },
+  { value: "mine", label: "routines.viewMine" },
   { value: "shared", label: "routines.viewShared" },
 ] as const satisfies readonly { value: View; label: MessageKey }[];
 
@@ -62,7 +62,7 @@ export default function RoutinesPanel() {
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
-  const [view, setView] = useState<View>("yours");
+  const [view, setView] = useState<View>("mine");
   const shared = useSharedRoutines({
     browsing: view === "shared",
     // An open draft of the routine follows its shared id.
@@ -230,7 +230,7 @@ export default function RoutinesPanel() {
           onAdd={(id) => void shared.add(id)}
         />
       )}
-      {view === "yours" &&
+      {view === "mine" &&
         records.map((r) => {
           const done = lastDone.get(r.id);
           return (
@@ -292,10 +292,10 @@ export default function RoutinesPanel() {
             </section>
           );
         })}
-      {view === "yours" && !records.length && !edit && (
+      {view === "mine" && !records.length && !edit && (
         <p className="empty">{t("routines.empty")}</p>
       )}
-      {view === "yours" && edit && !open && (
+      {view === "mine" && edit && !open && (
         <p className="draft-receipt" role="status">
           {t("routines.unfinished", {
             name: edit.data.name || t("routines.untitled"),
@@ -303,7 +303,7 @@ export default function RoutinesPanel() {
           {draft.retained ? t("routines.keptOnPhone") : t("routines.keepOpen")}
         </p>
       )}
-      {view === "yours" && (
+      {view === "mine" && (
         <button type="button" className="btn-dashed" onClick={create}>
           <Plus size={20} aria-hidden="true" />
           {edit ? t("routines.resumeDraft") : t("routines.new")}

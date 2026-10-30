@@ -87,7 +87,7 @@ export default function SharedRoutineList({
               <span className="row-title exercise-name">
                 {row.name}
                 {row.mine && (
-                  <span className="stat-chip">{t("exercises.yours")}</span>
+                  <span className="stat-chip">{t("exercises.mine")}</span>
                 )}
               </span>
               {!row.mine && (

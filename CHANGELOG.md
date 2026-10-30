@@ -1,5 +1,10 @@
 # Changelog
 
+## 30 October 2026 — Mine instead of Yours
+
+- Library → Exercises: the chips All, Mine, Shared, Recently used and Hidden are one row that scrolls sideways, like the category and equipment rows, instead of wrapping onto two lines. Shared now comes right after Mine.
+- “Yours” is now “Mine” everywhere: the exercise filter, the Routines Mine/Shared chips and the pill on custom exercises and your own shared routines (Swedish “Mina” for the filter and view, “Min” for the pill).
+
 ## 30 October 2026 — display names and shared routines
 
 - Settings → Account has a Name row (signed in only). The name is shown as “by <name>” on routines and exercises you share, and on the account row.

@@ -23,7 +23,7 @@ function ExerciseRow({
     <>
       <span className="row-title exercise-name">
         {e.name}
-        {e.custom && <span className="stat-chip">{t("exercises.yours")}</span>}
+        {e.custom && <span className="stat-chip">{t("exercises.mine")}</span>}
         {e.sharedId && (
           <span className="stat-chip strong">{t("exercises.shared")}</span>
         )}

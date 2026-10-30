@@ -227,7 +227,7 @@ label.row {
   background-color: var(--gt-done-soft);
   color: var(--gt-done);
 }
-/* Solid, so "Shared" stands apart from the soft "Yours" beside it. */
+/* Solid, so "Shared" stands apart from the soft "Mine" beside it. */
 .stat-chip.strong {
   background-color: var(--gt-accent);
   color: var(--gt-on-accent);
