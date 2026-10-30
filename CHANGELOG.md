@@ -1,5 +1,14 @@
 # Changelog
 
+## 30 October 2026 — display names and shared routines
+
+- Settings → Account has a Name row (signed in only). The name is shown as “by <name>” on routines and exercises you share, and on the account row.
+- A routine's ⋯ menu has “Share to library” and “Stop sharing”. Saving a shared routine updates the shared copy; deleting it unshares it first.
+- Library → Routines has Yours/Shared chips. Shared lists routines people shared with who shared them, the exercises and Add. Add copies the routine and the sharer's own exercises it uses, reusing a matching exercise of yours instead of making a duplicate.
+- Signed out, the Shared views of exercises and routines link to sign in.
+- Server: migration `20261030090000_profiles_and_shared_routines.sql` adds `profiles`, `shared_routines` (hidden owner, per-person limits, payload size and shape checks), `shared_routine_feed()` and `by_name` on `shared_exercise_feed()`. The app works with the older exercise feed too. New optional routine fields `sharedId` and `sharedFrom`; no schema bump.
+- Code: `src/lib/shared-routines.ts` (payload build, parse and import with exercise reuse) and `src/lib/display-name.ts` are pure and tested.
+
 ## 30 October 2026 — English and Swedish
 
 - The app speaks English or Swedish. Settings → Training has a Language row next to Theme; the choice is kept on this phone. English is the default.
