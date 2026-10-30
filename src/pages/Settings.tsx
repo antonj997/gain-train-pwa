@@ -13,7 +13,9 @@ import Sheet from "@/components/ui/Sheet";
 import AccountSheet from "@/components/settings/AccountSheet";
 import DataSection from "@/components/settings/DataSection";
 import DeleteAccountSheet from "@/components/settings/DeleteAccountSheet";
+import FeedbackSheet from "@/components/settings/FeedbackSheet";
 import NameSheet from "@/components/settings/NameSheet";
+import { useAdmin } from "@/hooks/useAdmin";
 import { useDisplayName } from "@/hooks/useDisplayName";
 import {
   GoalSheet,
@@ -32,7 +34,14 @@ import {
 } from "@/lib/preferences";
 
 type SheetName =
-  "bodyweight" | "goal" | "rest" | "theme" | "language" | "account" | "name";
+  | "bodyweight"
+  | "goal"
+  | "rest"
+  | "theme"
+  | "language"
+  | "account"
+  | "name"
+  | "feedback";
 
 export default function Settings() {
   const { user, account, signOut } = useAuth(),
@@ -41,7 +50,8 @@ export default function Settings() {
     { bodyWeightKg } = useProfile(),
     navigate = useNavigate(),
     { t, language } = useT(),
-    displayName = useDisplayName();
+    displayName = useDisplayName(),
+    admin = useAdmin({ withCount: true });
   const [sheet, setSheet] = useState<SheetName | null>(null);
   const [preferences, setPreferences] = useState(readTrainingPreferences);
   const [accountBusy, setAccountBusy] = useState(false);
@@ -169,6 +179,33 @@ export default function Settings() {
       <DataSection />
 
       <section>
+        <h2 className="group-title">{t("settings.help")}</h2>
+        <div className="list">
+          <ListRow
+            title={t("settings.feedback")}
+            sub={t("settings.feedbackNote")}
+            chevron
+            onClick={() => setSheet("feedback")}
+          />
+          {admin.isAdmin && (
+            <ListRow
+              title={t("settings.admin")}
+              sub={t("settings.adminNote")}
+              trailing={
+                admin.openCount ? (
+                  <span className="stat-chip">
+                    {t("settings.adminOpen", { count: admin.openCount })}
+                  </span>
+                ) : undefined
+              }
+              chevron
+              to="/settings/admin"
+            />
+          )}
+        </div>
+      </section>
+
+      <section>
         <h2 className="group-title">{t("settings.account")}</h2>
         {/* Signed out, the account row above is the way in. */}
         {(user || account !== "phone") && (
@@ -255,6 +292,7 @@ export default function Settings() {
         online={displayName.online}
         onSave={displayName.save}
       />
+      <FeedbackSheet open={sheet === "feedback"} onClose={closeSheet} />
       <DeleteAccountSheet
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
