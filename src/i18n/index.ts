@@ -86,6 +86,12 @@ export const t: Translate = (key, params) => translate(current, key, params);
 export const formatDecimal = (value: number) =>
   current === "sv" ? String(value).replace(".", ",") : String(value);
 
+/** `value.toFixed(decimals)` with the language's decimal mark. */
+export const formatFixed = (value: number, decimals: number) =>
+  current === "sv"
+    ? value.toFixed(decimals).replace(".", ",")
+    : value.toFixed(decimals);
+
 /**
  * Whether to ask once which language to use: only on a device that has never
  * chosen and already holds someone's log. A new user gets English silently.

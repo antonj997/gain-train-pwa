@@ -12,14 +12,15 @@ import { type Goal, today as todayDate } from "@/data/model";
 import { shiftDate } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
 import { parseSetNumber } from "@/lib/set-input";
+import { formatDecimal, t } from "@/i18n";
 
-const kinds: { value: Goal["kind"]; label: string }[] = [
-  { value: "lift", label: "Lift" },
-  { value: "bodyweight", label: "Bodyweight" },
+const kinds = (): { value: Goal["kind"]; label: string }[] => [
+  { value: "lift", label: t("goals.lift") },
+  { value: "bodyweight", label: t("goals.bodyweight") },
 ];
 
 const text = (value: number | undefined) =>
-  value === undefined ? "" : String(Number(value.toFixed(2)));
+  value === undefined ? "" : formatDecimal(Number(value.toFixed(2)));
 
 /** Creates, edits or deletes one goal. `goal` is null for a new one. */
 export default function GoalEditor({
@@ -44,7 +45,10 @@ export default function GoalEditor({
   );
   const [exercise, setExercise] = useState(
     goal?.exerciseId
-      ? { id: goal.exerciseId, name: goal.exerciseName ?? "Exercise" }
+      ? {
+          id: goal.exerciseId,
+          name: goal.exerciseName ?? t("goals.exercise"),
+        }
       : null,
   );
   const [byDate, setByDate] = useState(goal?.byDate ?? shiftDate(today, 90));
@@ -63,26 +67,26 @@ export default function GoalEditor({
     targetKg <= 0 ||
     targetKg > maxKg
       ? kind === "lift"
-        ? "Enter the weight you want to lift, in kg."
-        : "Enter your target weight, in kg."
+        ? t("goals.enterLift")
+        : t("goals.enterTarget")
       : kind === "lift" && !exercise
-        ? "Choose the exercise."
+        ? t("goals.chooseExercise")
         : kind === "lift" &&
             (repCount === null ||
               !Number.isInteger(repCount) ||
               repCount < 1 ||
               repCount > 10)
-          ? "Reps must be a whole number from 1 to 10."
+          ? t("goals.repsRange")
           : kind === "bodyweight" &&
               (startKg === null ||
                 Number.isNaN(startKg) ||
                 startKg <= 0 ||
                 startKg > 1000)
-            ? "Enter your weight today, in kg. The progress bar starts there."
+            ? t("goals.enterToday")
             : !/^\d{4}-\d{2}-\d{2}$/.test(byDate)
-              ? "Choose the date to reach it by."
+              ? t("goals.chooseBy")
               : !goal && byDate < today
-                ? "Choose a date that has not passed."
+                ? t("goals.notPassed")
                 : "";
 
   const submit = async () => {
@@ -110,10 +114,10 @@ export default function GoalEditor({
     };
     try {
       await save(goal?.id ?? crypto.randomUUID(), "goal", payload);
-      toast.success("Goal saved");
+      toast.success(t("goals.saved"));
       onClose();
     } catch (cause) {
-      setError(errorMessage(cause, "Could not save the goal. Try again."));
+      setError(errorMessage(cause, t("goals.saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -126,28 +130,28 @@ export default function GoalEditor({
         onClose={() => {
           if (!busy) onClose();
         }}
-        title={goal ? "Edit goal" : "New goal"}
-        description="A goal stands on its own. A plan can link to it, but it does not need one."
+        title={goal ? t("goals.edit") : t("goals.new")}
+        description={t("goals.description")}
       >
         <Segmented<Goal["kind"]>
-          label="Kind of goal"
+          label={t("goals.kind")}
           value={kind}
-          options={kinds}
+          options={kinds()}
           onChange={setKind}
         />
         {kind === "lift" ? (
           <>
             <div className="list">
               <ListRow
-                title="Exercise"
-                value={exercise?.name ?? "Choose"}
+                title={t("goals.exercise")}
+                value={exercise?.name ?? t("goals.choose")}
                 chevron
                 onClick={() => setPicking(true)}
               />
             </div>
             <div className="field-row">
               <label>
-                Weight (kg)
+                {t("goals.weightKg")}
                 <input
                   inputMode="decimal"
                   autoComplete="off"
@@ -157,7 +161,7 @@ export default function GoalEditor({
                 />
               </label>
               <label>
-                Reps
+                {t("goals.reps")}
                 <input
                   inputMode="numeric"
                   autoComplete="off"
@@ -166,15 +170,12 @@ export default function GoalEditor({
                 />
               </label>
             </div>
-            <p className="row-sub">
-              One rep compares with your heaviest set. More reps compare with
-              your estimated one-rep max.
-            </p>
+            <p className="row-sub">{t("goals.repsNote")}</p>
           </>
         ) : (
           <div className="field-row">
             <label>
-              Target (kg)
+              {t("goals.targetKg")}
               <input
                 inputMode="decimal"
                 autoComplete="off"
@@ -184,7 +185,7 @@ export default function GoalEditor({
               />
             </label>
             <label>
-              Weight today (kg)
+              {t("goals.todayKg")}
               <input
                 inputMode="decimal"
                 autoComplete="off"
@@ -195,7 +196,7 @@ export default function GoalEditor({
           </div>
         )}
         <label>
-          By
+          {t("goals.by")}
           <input
             type="date"
             value={byDate}
@@ -218,7 +219,7 @@ export default function GoalEditor({
           disabled={busy || !!problem}
           onClick={() => void submit()}
         >
-          {busy ? "Saving…" : "Save goal"}
+          {busy ? t("common.saving") : t("goals.save")}
         </button>
         {goal && (
           <button
@@ -227,7 +228,7 @@ export default function GoalEditor({
             disabled={busy}
             onClick={() => setDeleting(true)}
           >
-            Delete goal
+            {t("goals.delete")}
           </button>
         )}
       </Sheet>
@@ -241,10 +242,10 @@ export default function GoalEditor({
       />
       <ConfirmDialog
         open={deleting}
-        title="Delete this goal?"
-        description="The goal is removed. Your workouts and plans stay."
-        cancelLabel="Keep goal"
-        confirmLabel={busy ? "Deleting…" : "Delete goal"}
+        title={t("goals.deleteTitle")}
+        description={t("goals.deleteText")}
+        cancelLabel={t("goals.keep")}
+        confirmLabel={busy ? t("history.deleting") : t("goals.delete")}
         busy={busy}
         onCancel={() => setDeleting(false)}
         onConfirm={async () => {
@@ -252,10 +253,10 @@ export default function GoalEditor({
           setBusy(true);
           try {
             await deleteRecord(goal.id);
-            toast("Goal deleted");
+            toast(t("goals.deleted"));
             onClose();
           } catch {
-            toast.error("Could not delete. The goal is still here; retry.");
+            toast.error(t("goals.deleteFailed"));
           } finally {
             setBusy(false);
             setDeleting(false);

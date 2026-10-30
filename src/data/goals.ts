@@ -4,6 +4,7 @@ import { isDrop } from "./drops";
 import { completedWorkouts } from "./selectors";
 import { isCardioSet } from "../lib/cardio";
 import { daysBetween, isoDate } from "../lib/dates";
+import { formatDecimal, t } from "../i18n";
 
 export type GoalItem = Goal & { id: string };
 
@@ -144,10 +145,11 @@ export function goalProgress(
 
 /** A goal's name for lists: "Bench Press 110 kg × 1" or "Bodyweight 80 kg". */
 export function goalTitle(goal: Goal) {
-  const kg = (value: number) => `${Number(value.toFixed(2))} kg`;
-  if (goal.kind === "bodyweight") return `Bodyweight ${kg(goal.targetKg)}`;
-  const name = goal.exerciseName ?? "Lift";
+  const kg = (value: number) => `${formatDecimal(Number(value.toFixed(2)))} kg`;
+  if (goal.kind === "bodyweight")
+    return t("goals.titleBodyweight", { kg: kg(goal.targetKg) });
+  const name = goal.exerciseName ?? t("goals.lift");
   return goal.estimated
-    ? `${name} ${kg(goal.targetKg)} est. 1RM`
+    ? t("goals.titleEstimated", { name, kg: kg(goal.targetKg) })
     : `${name} ${kg(goal.targetKg)} × ${goal.reps ?? 1}`;
 }

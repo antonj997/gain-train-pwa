@@ -1,4 +1,5 @@
 import { localizedDate } from "./dates";
+import { t } from "../i18n";
 
 export function chartSessions<T extends { date: string; workoutId: string }>(
   points: T[],
@@ -22,7 +23,9 @@ export function chartSessions<T extends { date: string; workoutId: string }>(
       label: date + (totals.get(point.date)! > 1 ? ` · ${ordinal}` : ""),
       fullLabel:
         localizedDate(point.date, undefined, locale) +
-        (totals.get(point.date)! > 1 ? ` · Session ${ordinal}` : ""),
+        (totals.get(point.date)! > 1
+          ? ` · ${t("detail.session", { n: ordinal })}`
+          : ""),
     };
   });
 }
