@@ -11,6 +11,8 @@ export type SharedRow = {
   measure: string | null;
   /** True for rows the signed-in user published. */
   mine: boolean;
+  /** The sharer's display name. Absent from an older server's feed. */
+  by_name?: string | null;
 };
 
 /** The columns an older server (before `shared_exercise_feed`) is read with. */

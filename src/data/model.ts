@@ -51,6 +51,10 @@ export const routineSchema = z.object({
   schemaVersion,
   name: z.string().trim().min(1).max(100),
   exercises: z.array(exerciseSchema).max(100),
+  /** Id of this routine's row in shared_routines while it is shared. */
+  sharedId: z.string().uuid().optional(),
+  /** Id of the shared routine this one was copied from. It works without that row. */
+  sharedFrom: z.string().uuid().optional(),
 });
 export const customSchema = z.object({
   schemaVersion,

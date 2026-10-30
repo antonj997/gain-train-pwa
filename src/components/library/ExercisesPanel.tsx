@@ -102,6 +102,7 @@ export default function ExercisesPanel() {
           note: "",
           lastDate: null,
           best: null,
+          ...(r.by_name ? { sharedBy: r.by_name } : {}),
         })),
         search,
         "all",

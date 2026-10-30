@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
 import type { SharedStatus } from "@/hooks/useSharedExercises";
 import type { LibraryExercise } from "@/lib/library";
 import { t } from "@/i18n";
 import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
+import { sharedByLine } from "@/lib/display-name";
 
 /** Library → Exercises → Shared: what other people shared, each with Add. */
 export default function SharedExerciseList({
@@ -32,7 +34,16 @@ export default function SharedExerciseList({
   if (!ready)
     return (
       <p className="empty" role="status">
-        {canShare ? t("shared.offline") : t("shared.signIn")}
+        {canShare ? (
+          t("shared.offline")
+        ) : (
+          <>
+            {t("shared.signIn")}{" "}
+            <Link className="text-button" to="/auth">
+              {t("shared.signInLink")}
+            </Link>
+          </>
+        )}
       </p>
     );
   if (status === "loading" && !hasRows)
@@ -66,6 +77,7 @@ export default function SharedExerciseList({
               {[
                 categoryLabel(e.category),
                 e.equipment && equipmentLabel(e.equipment),
+                e.sharedBy && sharedByLine(e.sharedBy),
               ]
                 .filter(Boolean)
                 .join(" · ")}

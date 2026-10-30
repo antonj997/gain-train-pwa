@@ -555,6 +555,12 @@ details[open] > .session-summary > svg {
   gap: 2px;
   min-width: 0;
 }
+.routine-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-2);
+}
 .routine-more {
   margin: calc(-1 * var(--gt-space-2)) calc(-1 * var(--gt-space-2)) 0 0;
 }
@@ -953,4 +959,10 @@ details[open] > .session-summary > svg {
   word-break: break-word;
   max-height: 50vh;
   overflow: auto;
+}
+
+/* Settings → Name. */
+.name-form {
+  display: grid;
+  gap: var(--gt-space-3);
 }

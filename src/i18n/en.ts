@@ -765,6 +765,47 @@ export const en = {
     "The shared copy still shows the old details. Stop sharing and share again to update it.",
   "shared.unavailable": "Sharing is unavailable.",
   "shared.notUpdated": "The shared copy was not updated.",
+  "shared.by": "by {name}",
+  "shared.bySomeone": "by someone",
+  "shared.signInLink": "Sign in",
+  "sharedRoutines.offline":
+    "You are offline. Shared routines need a connection.",
+  "sharedRoutines.signIn": "Sign in to browse routines others have shared.",
+  "sharedRoutines.loading": "Loading shared routines…",
+  "sharedRoutines.loadFailed": "Could not load shared routines.",
+  "sharedRoutines.empty": "No one has shared a routine yet.",
+  "sharedRoutines.added": "Added",
+  "sharedRoutines.addedToast": "{name} added to your routines",
+  "sharedRoutines.unusable": "{name} has no exercises this version can add.",
+  "sharedRoutines.tooMany":
+    "Only routines with up to {max} exercises can be shared.",
+  "sharedRoutines.tooBig":
+    "This routine is too big to share. Remove some sets and retry.",
+  "sharedRoutines.limitDay":
+    "You can share up to 20 routines a day. Try again tomorrow.",
+  "sharedRoutines.limitTotal":
+    "You can share up to 100 routines. Stop sharing some first.",
+  "sharedRoutines.menuNote":
+    "Anyone signed in can add a copy, with your name if you set one in Settings. Saving changes updates the shared copy.",
+  "routines.view": "Show routines",
+  "routines.viewYours": "Yours",
+  "routines.viewShared": "Shared",
+  "settings.name": "Name",
+  "settings.nameNote": "Shown on routines and exercises you share.",
+  "name.title": "Your name",
+  "name.description":
+    "Shown as “by …” on routines and exercises you share. Leave it empty to share without a name.",
+  "name.label": "Name",
+  "name.placeholder": "e.g. Anna",
+  "name.save": "Save name",
+  "name.saving": "Saving…",
+  "name.remove": "Remove name",
+  "name.saved": "Name saved",
+  "name.removed": "Name removed",
+  "name.saveFailed": "Could not save your name. Retry.",
+  "name.loadFailed": "Could not load your name.",
+  "name.offline": "Connect to change your name.",
+  "name.tooLong": "Use at most {max} characters.",
   "editor.description":
     "Names in completed workouts stay as originally recorded. Unfinished edits are kept when you close this form.",
   "editor.name": "Name",
