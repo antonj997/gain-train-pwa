@@ -240,7 +240,7 @@ export default function RoutinesPanel() {
                   <h2 className="card-title routine-name">
                     {r.payload.name}
                     {r.payload.sharedId && (
-                      <span className="stat-chip">{t("exercises.shared")}</span>
+                      <span className="stat-chip strong">{t("exercises.shared")}</span>
                     )}
                   </h2>
                   <span className="row-sub">

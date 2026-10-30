@@ -1,4 +1,4 @@
-import { lazy } from "react";
+import { lazy, type CSSProperties } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -31,11 +31,18 @@ function AppToaster() {
       visibleToasts={2}
       closeButton
       toastOptions={{
+        // Inverted against the page, so a toast never melts into the
+        // cards behind it in either theme.
         style: {
-          background: "var(--surface)",
-          color: "var(--ink)",
-          border: "1px solid var(--line)",
-        },
+          "--normal-bg": "var(--gt-ink)",
+          "--normal-text": "var(--gt-ground)",
+          "--normal-border": "var(--gt-ink)",
+          background: "var(--gt-ink)",
+          color: "var(--gt-ground)",
+          border: "1px solid var(--gt-ink)",
+          boxShadow: "var(--gt-shadow-chip)",
+          fontWeight: 600,
+        } as CSSProperties,
       }}
     />
   );
