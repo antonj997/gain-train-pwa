@@ -82,6 +82,11 @@ select,
 [data-sonner-toast] {
   font-family: inherit !important;
 }
+[data-sonner-toast] [data-close-button] {
+  background: var(--gt-ink);
+  color: var(--gt-ground);
+  border-color: var(--gt-ground);
+}
 /* Toasts start under the page header or the workout's top bar, which set
    --toast-top as they lay out (useToastClearance); this is the fallback. */
 :root {

@@ -25,7 +25,7 @@ function ExerciseRow({
         {e.name}
         {e.custom && <span className="stat-chip">{t("exercises.yours")}</span>}
         {e.sharedId && (
-          <span className="stat-chip">{t("exercises.shared")}</span>
+          <span className="stat-chip strong">{t("exercises.shared")}</span>
         )}
       </span>
       <span className="row-sub">{exerciseSub(e, now)}</span>
