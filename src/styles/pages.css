@@ -960,3 +960,9 @@ details[open] > .session-summary > svg {
   max-height: 50vh;
   overflow: auto;
 }
+
+/* Settings → Name. */
+.name-form {
+  display: grid;
+  gap: var(--gt-space-3);
+}

@@ -12,7 +12,6 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import { Link } from "react-router-dom";
 import { Plus, Play, Trash2, MoreHorizontal, Share2 } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
@@ -335,14 +334,11 @@ export default function RoutinesPanel() {
                   }}
                 />
               ) : (
-                <Link to="/auth" className="row">
-                  <Share2 size={20} aria-hidden="true" />
-                  <span className="row-main">
-                    <span className="row-title">
-                      {t("exercises.signInToShare")}
-                    </span>
-                  </span>
-                </Link>
+                <ListRow
+                  title={t("exercises.signInToShare")}
+                  leading={<Share2 size={20} aria-hidden="true" />}
+                  to="/auth"
+                />
               )}
               <ListRow
                 tone="danger"

@@ -13,6 +13,8 @@ import Sheet from "@/components/ui/Sheet";
 import AccountSheet from "@/components/settings/AccountSheet";
 import DataSection from "@/components/settings/DataSection";
 import DeleteAccountSheet from "@/components/settings/DeleteAccountSheet";
+import NameSheet from "@/components/settings/NameSheet";
+import { useDisplayName } from "@/hooks/useDisplayName";
 import {
   GoalSheet,
   RestSheet,
@@ -30,7 +32,7 @@ import {
 } from "@/lib/preferences";
 
 type SheetName =
-  "bodyweight" | "goal" | "rest" | "theme" | "language" | "account";
+  "bodyweight" | "goal" | "rest" | "theme" | "language" | "account" | "name";
 
 export default function Settings() {
   const { user, account, signOut } = useAuth(),
@@ -38,7 +40,8 @@ export default function Settings() {
     { theme } = useTheme(),
     { bodyWeightKg } = useProfile(),
     navigate = useNavigate(),
-    { t, language } = useT();
+    { t, language } = useT(),
+    displayName = useDisplayName();
   const [sheet, setSheet] = useState<SheetName | null>(null);
   const [preferences, setPreferences] = useState(readTrainingPreferences);
   const [accountBusy, setAccountBusy] = useState(false);
@@ -103,10 +106,10 @@ export default function Settings() {
           className="account-row"
           leading={
             <span className="avatar" aria-hidden="true">
-              {(user?.email?.[0] ?? "?").toUpperCase()}
+              {(displayName.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
             </span>
           }
-          title={user?.email ?? t("settings.notSignedIn")}
+          title={displayName.name ?? user?.email ?? t("settings.notSignedIn")}
           sub={
             <span className="status-line">
               <span
@@ -172,6 +175,15 @@ export default function Settings() {
           <div className="list">
             {user ? (
               <>
+                {displayName.available && (
+                  <ListRow
+                    title={t("settings.name")}
+                    sub={t("settings.nameNote")}
+                    value={displayName.name ?? t("settings.notSet")}
+                    chevron
+                    onClick={() => setSheet("name")}
+                  />
+                )}
                 <ListRow
                   title={t("settings.signOut")}
                   tone="accent"
@@ -234,6 +246,14 @@ export default function Settings() {
         open={sheet === "account"}
         onClose={closeSheet}
         dirty={dirty}
+      />
+      <NameSheet
+        open={sheet === "name"}
+        onClose={closeSheet}
+        name={displayName.name}
+        status={displayName.status}
+        online={displayName.online}
+        onSave={displayName.save}
       />
       <DeleteAccountSheet
         open={confirmDelete}
