@@ -1,5 +1,13 @@
 # Changelog
 
+## 30 October 2026 — English and Swedish
+
+- The app speaks English or Swedish. Settings → Training has a Language row next to Theme; the choice is kept on this phone. English is the default.
+- Existing users are asked once on launch, “Choose your language · Välj språk”. Closing the question keeps English; new users are never asked.
+- Dates, months, weekday letters and decimals follow the chosen language instead of the phone's region, so screens no longer mix English labels with Swedish dates. The Train headline has its own Swedish list.
+- Built-in exercise names stay in English; categories, equipment and day types (Ben, Press, Drag, Överkropp, Underkropp, Helkropp, Kondition) are translated on screen only, and search finds exercises by the Swedish category names too. Saved data does not change.
+- Code: a small dependency-free i18n layer in `src/i18n` (`en.ts`, `sv.ts`, `t()`, `useT()`, plurals and `{name}` parameters) with tests for its helpers and the prompt decision.
+
 ## 29 October 2026 — sharing custom exercises
 
 - A custom exercise's ⋯ menu has "Share to library" (publishes it to the `shared_exercises` table) and "Stop sharing" (deletes that row). Signed-out users see "Sign in to share". A failed request shows a toast and changes nothing.
