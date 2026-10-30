@@ -1260,7 +1260,7 @@ export const en = {
   "feedback.signInText":
     "Reports are sent with your account, so you can follow what happens to them.",
   "feedback.signIn": "Sign in",
-  "feedback.mine": "Your reports",
+  "feedback.mine": "My reports",
   "feedback.mineEmpty": "Reports you send show up here with their status.",
   "feedback.mineLoading": "Loading your reports…",
   "feedback.mineFailed": "Could not load your reports.",

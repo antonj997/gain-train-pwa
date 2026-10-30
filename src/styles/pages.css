@@ -1098,6 +1098,7 @@ details[open] > .session-summary > svg {
   white-space: nowrap;
 }
 .report-images-count svg {
+  display: inline-block;
   margin-right: 3px;
   vertical-align: -2px;
 }

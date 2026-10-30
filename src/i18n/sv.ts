@@ -1271,7 +1271,7 @@ export const sv = {
   "feedback.signInText":
     "Rapporter skickas med ditt konto, så att du kan följa vad som händer med dem.",
   "feedback.signIn": "Logga in",
-  "feedback.mine": "Dina rapporter",
+  "feedback.mine": "Mina rapporter",
   "feedback.mineEmpty": "Rapporter du skickar visas här med sin status.",
   "feedback.mineLoading": "Hämtar dina rapporter…",
   "feedback.mineFailed": "Kunde inte hämta dina rapporter.",
@@ -1280,7 +1280,7 @@ export const sv = {
   "feedback.status.open": "Öppen",
   "feedback.status.planned": "Planerad",
   "feedback.status.done": "Klar",
-  "feedback.status.wontfix": "Blir inte av",
+  "feedback.status.wontfix": "Görs inte",
   "feedback.imageCount": { one: "{count} bild", other: "{count} bilder" },
   "admin.title": "Rapporter",
   "admin.eyebrow": "Admin",
