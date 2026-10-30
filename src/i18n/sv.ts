@@ -554,6 +554,7 @@ export const sv = {
   "detail.fromBest": "{value} {unit} från bästa",
   "detail.latestChange": "Senaste ändring",
   "detail.vsPrior": "{unit} · mot föregående jämförbara",
+  "detail.heaviest": "Tyngsta lyft",
   "detail.sessions30": "Pass · 30 dagar",
   "detail.total": "{count} totalt",
   "detail.bestResult": "Bästa jämförbara arbetsresultat · {date}:",

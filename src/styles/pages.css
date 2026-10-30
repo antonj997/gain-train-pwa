@@ -459,6 +459,12 @@ label.row {
 .tile-wide {
   grid-column: 1 / -1;
 }
+/* A set label ("100 kg × 2", "BW + 20 kg × 5") rather than one number. */
+.tile-value.tile-value-text {
+  font-size: var(--gt-fs-5);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
 .tile-value {
   font-size: var(--gt-fs-6);
   line-height: 1.15;

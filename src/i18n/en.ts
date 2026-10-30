@@ -549,6 +549,7 @@ export const en = {
   "detail.fromBest": "{value} {unit} from best",
   "detail.latestChange": "Latest change",
   "detail.vsPrior": "{unit} · vs prior comparable",
+  "detail.heaviest": "Heaviest lift",
   "detail.sessions30": "Sessions · 30 days",
   "detail.total": "{count} total",
   "detail.bestResult": "Best comparable working result · {date}:",

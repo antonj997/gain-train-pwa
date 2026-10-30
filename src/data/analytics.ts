@@ -263,3 +263,65 @@ export function sparklinePoints(
     })
     .join(" ");
 }
+
+/** A set that counts as a lift with a load: weighted, or bodyweight with added weight; reps, not time. */
+const liftedLoad = (s: WorkoutSet): "weight" | "extra" | null =>
+  s.measure === "seconds" || s.measure === "cardio" || !s.weight
+    ? null
+    : s.load === "weight"
+      ? "weight"
+      : hasExtraWeight(s)
+        ? "extra"
+        : null;
+
+/**
+ * The heaviest weight lifted in any completed set of an exercise: drops count,
+ * warm-ups do not. A tie on weight goes to the set with the most reps, then
+ * the most recent. Weighted sets and bodyweight sets with added weight are not
+ * compared with each other: the kind of the latest such set decides. Null for
+ * assisted, bodyweight-only, timed and cardio exercises.
+ */
+export function heaviestLift(records: RecordDoc[], exerciseId: string) {
+  type Candidate = {
+    set: WorkoutSet;
+    date: string;
+    workoutId: string;
+    order: number;
+    kind: "weight" | "extra";
+  };
+  const candidates: Candidate[] = [];
+  let order = 0;
+  // Oldest first, so `order` grows with time within a day too.
+  for (const record of completedWorkouts(records).reverse()) {
+    for (const exercise of record.payload.exercises) {
+      if (exercise.exerciseId !== exerciseId) continue;
+      for (const set of exercise.sets) {
+        order++;
+        if (!set.done || set.section === "warmup" || !validSet(set)) continue;
+        const kind = liftedLoad(set);
+        if (!kind) continue;
+        candidates.push({
+          set,
+          date: record.payload.date,
+          workoutId: record.id,
+          order,
+          kind,
+        });
+      }
+    }
+  }
+  if (!candidates.length) return null;
+  const newer = (a: Candidate, b: Candidate) =>
+    a.date.localeCompare(b.date) || a.order - b.order;
+  const latest = candidates.reduce((a, b) => (newer(b, a) > 0 ? b : a));
+  const best = candidates
+    .filter((c) => c.kind === latest.kind)
+    .reduce((a, b) => {
+      const byWeight = (b.set.weight ?? 0) - (a.set.weight ?? 0);
+      if (byWeight) return byWeight > 0 ? b : a;
+      const byReps = (b.set.reps ?? 0) - (a.set.reps ?? 0);
+      if (byReps) return byReps > 0 ? b : a;
+      return newer(b, a) > 0 ? b : a;
+    });
+  return { set: best.set, date: best.date, workoutId: best.workoutId };
+}

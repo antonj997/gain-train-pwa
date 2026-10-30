@@ -1,5 +1,10 @@
 # Changelog
 
+## 30 October 2026 — heaviest lift
+
+- Progress → an exercise has a Heaviest lift tile (Swedish “Tyngsta lyft”) beside Sessions · 30 days: the heaviest weight in any completed set at any reps, with its reps and date, e.g. “100 kg × 2 · 27 Oct 2026”. A tie on weight goes to the most reps, then the most recent. Drops count, warm-ups do not. Bodyweight with added weight shows “BW + 25 kg × 3”; assisted, bodyweight-only, timed and cardio exercises have no tile.
+- Code: `heaviestLift()` in `src/data/analytics.ts`, tested.
+
 ## 30 October 2026 — bug reports and the admin inbox
 
 - Settings → Help and feedback → Send feedback: a bug or feature idea with a title, description, up to four images (shrunk to 1600 px JPEG on the phone) and optional technical details (build, language, browser, screen and the last crash). My reports below it shows each report's status and the admin's reply. Signed out it links to sign in; offline it keeps the draft and says so.

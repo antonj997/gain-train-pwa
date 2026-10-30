@@ -224,7 +224,11 @@ export default function Progress() {
         size="full"
       >
         {open && (
-          <ExerciseProgressDetail item={open} cutoffDate={daysAgo(30)} />
+          <ExerciseProgressDetail
+            item={open}
+            cutoffDate={daysAgo(30)}
+            records={records}
+          />
         )}
         {openCardio && (
           <CardioProgressDetail item={openCardio} cutoffDate={daysAgo(30)} />
