@@ -58,9 +58,10 @@ export function deletionHandler(
           503,
           "Could not delete your account. Sign in again and retry.",
         );
-      // Foreign keys cascade to gain_records, gain_sync_receipts and
+      // Foreign keys cascade to gain_records, gain_sync_receipts,
       // shared_exercises, and (from migration 20261029120000) to the legacy
-      // workout_sessions and workout_templates tables and their child rows.
+      // workout_sessions and workout_templates tables and their child rows,
+      // and (from migration 20261030090000) to profiles and shared_routines.
       return reply(200);
     } catch {
       return reply(
