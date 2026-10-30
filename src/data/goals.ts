@@ -4,6 +4,15 @@ import { isDrop } from "./drops";
 import { completedWorkouts } from "./selectors";
 import { isCardioSet } from "../lib/cardio";
 import { daysBetween, isoDate } from "../lib/dates";
+import {
+  type Deadline,
+  type GoalPoint,
+  type Pace,
+  deadline,
+  goalPace,
+  projectedDate,
+  trendPerDay,
+} from "../lib/goal-pace";
 import { formatDecimal, t } from "../i18n";
 
 export type GoalItem = Goal & { id: string };
@@ -70,6 +79,10 @@ const countsForLift = (set: WorkoutSet) =>
   set.load === "weight" &&
   validSet(set);
 
+/** The lift goal's measure: the heaviest weight for one rep, else the estimated 1RM. */
+const liftMode = (goal: Goal) =>
+  goal.estimated || (goal.reps ?? 1) > 1 ? "e1rm" : "weight";
+
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 
 /**
@@ -77,7 +90,8 @@ const clamp = (value: number) => Math.min(1, Math.max(0, value));
  * the weight saved when the goal was set. A lift goal compares the best checked
  * working set of the exercise: for one rep the heaviest weight, otherwise the
  * estimated one-rep max against the target's. The bar runs from the best before
- * the goal was made (zero if none) to the target.
+ * the goal was made (or, with none, the best of the first session after it) to
+ * the target.
  */
 export function goalProgress(
   goal: Goal,
@@ -111,7 +125,7 @@ export function goalProgress(
   }
 
   const reps = goal.reps ?? 1;
-  const mode = goal.estimated || reps > 1 ? "e1rm" : "weight";
+  const mode = liftMode(goal);
   const target =
     mode === "weight" || goal.estimated
       ? goal.targetKg
@@ -120,7 +134,12 @@ export function goalProgress(
   const created = isoDate(new Date(goal.createdAt));
   const best = (list: typeof samples) =>
     list.reduce((top, s) => Math.max(top, s.value), 0);
-  const start = best(samples.filter((s) => s.date <= created));
+  // The best before the goal; with none, the first session after it.
+  const before = samples.filter((s) => s.date <= created);
+  const firstDay = samples.find((s) => s.date > created)?.date;
+  const start = before.length
+    ? best(before)
+    : best(samples.filter((s) => s.date === firstDay));
   const current = samples.length ? best(samples) : null;
   const first = samples.find((s) => s.value >= target && s.date >= created);
   const reachedOn =
@@ -140,6 +159,113 @@ export function goalProgress(
     met,
     reachedOn,
     daysLeft,
+  };
+}
+
+/** One reading a day, oldest first: the day's highest value or its mean. */
+function daily(samples: readonly GoalPoint[], pick: "max" | "mean") {
+  const days = new Map<string, number[]>();
+  for (const s of samples)
+    days.set(s.date, [...(days.get(s.date) ?? []), s.value]);
+  return [...days]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, values]) => ({
+      date,
+      value:
+        pick === "max"
+          ? Math.max(...values)
+          : values.reduce((sum, v) => sum + v, 0) / values.length,
+    }));
+}
+
+/**
+ * The goal's metric over time, one reading a day, oldest first. A lift goal
+ * reads the best checked working set of each session in the goal's measure. A
+ * bodyweight goal reads the starting weight on the day the goal was made, the
+ * bodyweight saved with checked bodyweight sets, and the profile's weight today.
+ */
+export function goalSeries(
+  goal: Goal,
+  records: readonly RecordDoc[],
+  profile: { bodyWeightKg: number | null },
+  today: string,
+): GoalPoint[] {
+  if (goal.kind === "lift")
+    return daily(liftSamples(goal, records, liftMode(goal)), "max");
+  const created = isoDate(new Date(goal.createdAt));
+  const samples: GoalPoint[] = [];
+  for (const record of completedWorkouts(records as RecordDoc[]))
+    for (const exercise of record.payload.exercises)
+      for (const set of exercise.sets)
+        if (set.done && set.bodyWeightKg && record.payload.date <= today)
+          samples.push({ date: record.payload.date, value: set.bodyWeightKg });
+  const points = daily(samples, "mean").filter(
+    (p) => p.date !== created && p.date !== today,
+  );
+  if (goal.startKg !== undefined && created <= today)
+    points.push({ date: created, value: goal.startKg });
+  if (profile.bodyWeightKg !== null)
+    points.push({ date: today, value: profile.bodyWeightKg });
+  return points.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export type GoalInsight = {
+  progress: GoalProgress;
+  /** Readings since the goal was made (the start included), for the sparkline. */
+  sinceStart: GoalPoint[];
+  /** The six-week trend in kg per day, null with too little data. */
+  perDay: number | null;
+  deadline: Deadline;
+  /** Null once met or when no days are left. */
+  pace: Pace | null;
+  /** When the trend reaches the target; null when it does not head there. */
+  projected: string | null;
+};
+
+/** Everything the Goals tab shows for one goal. */
+export function goalInsight(
+  goal: Goal,
+  records: readonly RecordDoc[],
+  profile: { bodyWeightKg: number | null },
+  today: string,
+): GoalInsight {
+  const progress = goalProgress(goal, records, profile, today);
+  const series = goalSeries(goal, records, profile, today);
+  const created = isoDate(new Date(goal.createdAt));
+  // A lift starts from its best before the goal, drawn on the day it was made.
+  const before = series.filter((p) => p.date <= created);
+  const sinceStart = [
+    ...(goal.kind === "lift" && before.length
+      ? [{ date: created, value: Math.max(...before.map((p) => p.value)) }]
+      : []),
+    ...series.filter((p) =>
+      goal.kind === "lift" ? p.date > created : p.date >= created,
+    ),
+  ];
+  // The trend is in the goal's own measure, so it compares with the target.
+  const slope = trendPerDay(series, today);
+  const open = !progress.met;
+  return {
+    progress,
+    sinceStart,
+    perDay: slope,
+    deadline: deadline(progress.daysLeft),
+    pace: open
+      ? goalPace({
+          current: progress.current,
+          target: progress.target,
+          daysLeft: progress.daysLeft,
+          perDay: slope,
+        })
+      : null,
+    projected: open
+      ? projectedDate({
+          current: progress.current,
+          target: progress.target,
+          perDay: slope,
+          today,
+        })
+      : null,
   };
 }
 
