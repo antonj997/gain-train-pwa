@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Eye, EyeOff, Share2, Star } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
 import { exerciseSub, type LibraryExercise } from "@/lib/library";
+import { t } from "@/i18n";
 
 /** A Library exercise's menu: favourite, edit, share and hide. */
 export default function LibraryExerciseMenu({
@@ -44,7 +45,9 @@ export default function LibraryExerciseMenu({
             onClick={() => onToggleFavourite(menu)}
           >
             <Star size={18} aria-hidden="true" />
-            {menu.favourite ? "Unfavourite" : "Favourite"}
+            {menu.favourite
+              ? t("exercises.unfavourite")
+              : t("exercises.favourite")}
           </button>
           {menu.custom && (
             <button
@@ -52,7 +55,7 @@ export default function LibraryExerciseMenu({
               className="btn-secondary"
               onClick={() => onEdit(menu)}
             >
-              Edit exercise
+              {t("exercises.edit")}
             </button>
           )}
           {menu.custom &&
@@ -67,15 +70,15 @@ export default function LibraryExerciseMenu({
               >
                 <Share2 size={18} aria-hidden="true" />
                 {sharing
-                  ? "Working…"
+                  ? t("exercises.working")
                   : menu.sharedId
-                    ? "Stop sharing"
-                    : "Share to library"}
+                    ? t("exercises.stopSharing")
+                    : t("exercises.shareToLibrary")}
               </button>
             ) : (
               <Link to="/auth" className="btn-secondary">
                 <Share2 size={18} aria-hidden="true" />
-                Sign in to share
+                {t("exercises.signInToShare")}
               </Link>
             ))}
           <button
@@ -88,12 +91,11 @@ export default function LibraryExerciseMenu({
             ) : (
               <EyeOff size={18} aria-hidden="true" />
             )}
-            {menu.hidden ? "Unhide exercise" : "Hide exercise"}
+            {menu.hidden
+              ? t("exercises.unhideExercise")
+              : t("exercises.hideExercise")}
           </button>
-          <p className="row-sub">
-            Hidden exercises leave the picker and these lists. Saved workouts
-            keep them. Find them under Hidden.
-          </p>
+          <p className="row-sub">{t("exercises.hiddenNote")}</p>
         </div>
       )}
     </Sheet>

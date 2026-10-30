@@ -1,5 +1,7 @@
 import type { SharedStatus } from "@/hooks/useSharedExercises";
 import type { LibraryExercise } from "@/lib/library";
+import { t } from "@/i18n";
+import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
 
 /** Library → Exercises → Shared: what other people shared, each with Add. */
 export default function SharedExerciseList({
@@ -30,32 +32,28 @@ export default function SharedExerciseList({
   if (!ready)
     return (
       <p className="empty" role="status">
-        {canShare
-          ? "You are offline. Shared exercises need a connection."
-          : "Sign in to browse exercises other people have shared."}
+        {canShare ? t("shared.offline") : t("shared.signIn")}
       </p>
     );
   if (status === "loading" && !hasRows)
     return (
       <p className="empty" role="status">
-        Loading shared exercises…
+        {t("shared.loading")}
       </p>
     );
   if (status === "error" && !hasRows)
     return (
       <p className="empty" role="status">
-        Could not load shared exercises.{" "}
+        {t("shared.loadFailed")}{" "}
         <button type="button" className="text-button" onClick={onRetry}>
-          Retry
+          {t("common.retry")}
         </button>
       </p>
     );
   if (!items.length)
     return (
       <p className="empty" role="status">
-        {narrowed
-          ? "No shared exercises match."
-          : "Nothing new has been shared yet."}
+        {narrowed ? t("shared.noMatch") : t("shared.nothingNew")}
       </p>
     );
   return (
@@ -65,17 +63,22 @@ export default function SharedExerciseList({
           <span className="row-main">
             <span className="row-title exercise-name">{e.name}</span>
             <span className="row-sub">
-              {[e.category, e.equipment].filter(Boolean).join(" · ")}
+              {[
+                categoryLabel(e.category),
+                e.equipment && equipmentLabel(e.equipment),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           </span>
           <button
             type="button"
             className="unhide"
-            aria-label={"Add " + e.name}
+            aria-label={t("shared.addNamed", { name: e.name })}
             disabled={!!adding}
             onClick={() => onAdd(e.id)}
           >
-            {adding === e.id ? "Adding…" : "Add"}
+            {adding === e.id ? t("shared.adding") : t("shared.add")}
           </button>
         </div>
       ))}

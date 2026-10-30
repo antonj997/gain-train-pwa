@@ -26,15 +26,17 @@ import {
   type ExerciseFilter,
   type LibraryExercise,
 } from "@/lib/library";
+import { t, type MessageKey } from "@/i18n";
+import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
 
 type Filter = ExerciseFilter | "shared";
-const filters: { value: Filter; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "yours", label: "Yours" },
-  { value: "recent", label: "Recently used" },
-  { value: "hidden", label: "Hidden" },
-  { value: "shared", label: "Shared" },
-];
+const filters = [
+  { value: "all", label: "exercises.filterAll" },
+  { value: "yours", label: "exercises.filterYours" },
+  { value: "recent", label: "exercises.filterRecent" },
+  { value: "hidden", label: "exercises.filterHidden" },
+  { value: "shared", label: "exercises.filterShared" },
+] as const satisfies readonly { value: Filter; label: MessageKey }[];
 
 /** Library → Exercises: search, filters, groups and the custom exercise editor. */
 export default function ExercisesPanel() {
@@ -118,7 +120,7 @@ export default function ExercisesPanel() {
       const change = favouriteChange(state.records, e);
       await save(change.id, "exercise", change.payload, change.deleted);
     } catch {
-      toast.error("Could not update favourite. Retry.");
+      toast.error(t("exercises.favouriteFailed"));
     }
   });
   const toggleHidden = useStableCallback(
@@ -126,15 +128,20 @@ export default function ExercisesPanel() {
       try {
         await setHidden(e.id, hide);
         setMenu(null);
-        toast(hide ? `${e.name} hidden` : `${e.name} is back`);
+        toast(
+          t(hide ? "exercises.hidden" : "exercises.back", { name: e.name }),
+        );
       } catch {
-        toast.error(`Could not ${hide ? "hide" : "unhide"} ${e.name}. Retry.`);
+        toast.error(
+          t(hide ? "exercises.hideFailed" : "exercises.unhideFailed", {
+            name: e.name,
+          }),
+        );
       }
     },
   );
   const openEditor = useStableCallback((e: LibraryExercise) => {
-    if (edit && edit.id !== e.id)
-      toast("Resume or discard the existing exercise draft first.");
+    if (edit && edit.id !== e.id) toast(t("exercises.resumeFirst"));
     else if (!edit) {
       const record = state.records[e.id];
       if (record?.kind === "exercise")
@@ -155,10 +162,10 @@ export default function ExercisesPanel() {
       await save(edit.id, "exercise", edit.data);
       setEdit(null);
       setOpen(false);
-      toast.success("Exercise saved");
+      toast.success(t("exercises.saved"));
       await shared.syncEdit(before, edit.data);
     } catch (cause) {
-      setError(errorMessage(cause, "Could not save. Your draft is kept here."));
+      setError(errorMessage(cause, t("exercises.saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -169,9 +176,7 @@ export default function ExercisesPanel() {
     // A shared exercise leaves the shared library first, while its record
     // still holds the id needed to remove it.
     if (sharedId && !shared.ready) {
-      toast.error(
-        `Stop sharing ${deleting.name} first. Connect and sign in to remove it from the shared library.`,
-      );
+      toast.error(t("exercises.stopSharingFirst", { name: deleting.name }));
       setDeleting(null);
       return;
     }
@@ -181,17 +186,15 @@ export default function ExercisesPanel() {
         try {
           await unpublishExercise(sharedId);
         } catch {
-          toast.error(
-            `Could not remove ${deleting.name} from the shared library. Nothing was deleted; retry.`,
-          );
+          toast.error(t("exercises.unpublishFailed", { name: deleting.name }));
           return;
         }
       await deleteRecord(deleting.id);
       if (edit?.id === deleting.id) setEdit(null);
       setDeleting(null);
-      toast("Exercise deleted");
+      toast(t("exercises.deleted"));
     } catch {
-      toast.error("Could not delete. The exercise is still here; retry.");
+      toast.error(t("exercises.deleteFailed"));
     } finally {
       setBusy(false);
     }
@@ -204,13 +207,13 @@ export default function ExercisesPanel() {
         <Search size={20} aria-hidden="true" />
         <input
           type="search"
-          placeholder="Search exercises"
-          aria-label="Search exercises"
+          placeholder={t("exercises.search")}
+          aria-label={t("exercises.search")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
       </label>
-      <div className="filters" role="group" aria-label="Show exercises">
+      <div className="filters" role="group" aria-label={t("exercises.show")}>
         {filters.map((f) => (
           <button
             key={f.value}
@@ -219,18 +222,22 @@ export default function ExercisesPanel() {
             aria-pressed={filter === f.value}
             onClick={() => setFilter(f.value)}
           >
-            {f.label}
+            {t(f.label)}
           </button>
         ))}
       </div>
       <FacetChips
-        name="Category"
+        name={t("facet.category")}
+        allLabel={t("facet.allCategories")}
+        format={categoryLabel}
         options={categories}
         value={category}
         onChange={setCategory}
       />
       <FacetChips
-        name="Equipment"
+        name={t("facet.equipment")}
+        allLabel={t("facet.allEquipment")}
+        format={equipmentLabel}
         options={equipmentTypes}
         value={equipment}
         onChange={setEquipment}
@@ -269,20 +276,20 @@ export default function ExercisesPanel() {
       {filter !== "shared" && !groups.length && (
         <p className="empty" role="status">
           {filter === "recent" && !search.trim()
-            ? "Exercises you have trained show up here."
+            ? t("exercises.emptyRecent")
             : filter === "yours" && !search.trim()
-              ? "Exercises you create show up here."
+              ? t("exercises.emptyYours")
               : filter === "hidden" && !search.trim()
-                ? "Exercises you hide show up here."
-                : "No exercises match."}
+                ? t("exercises.emptyHidden")
+                : t("exercises.noMatch")}
         </p>
       )}
       {edit && !open && (
         <p className="draft-receipt">
-          Unfinished exercise: {edit.data.name || "Untitled"}.{" "}
-          {draft.retained
-            ? "Kept on this phone."
-            : "Keep this page open; storage is unavailable."}
+          {t("exercises.unfinished", {
+            name: edit.data.name || t("exercises.untitled"),
+          })}{" "}
+          {draft.retained ? t("routines.keptOnPhone") : t("routines.keepOpen")}
         </p>
       )}
       <button
@@ -298,7 +305,7 @@ export default function ExercisesPanel() {
         }}
       >
         <Plus size={20} aria-hidden="true" />
-        {edit ? "Resume exercise draft" : "New exercise"}
+        {edit ? t("exercises.resumeDraft") : t("exercises.new")}
       </button>
       <ExerciseEditorSheet
         open={open}
@@ -343,10 +350,10 @@ export default function ExercisesPanel() {
       />
       <ConfirmDialog
         open={!!deleting}
-        title={<>Delete {deleting?.name}?</>}
-        description="This removes the exercise from your library. Its entries in saved workouts and routines stay intact."
-        cancelLabel="Keep exercise"
-        confirmLabel={busy ? "Deleting…" : "Delete exercise"}
+        title={t("exercises.deleteTitle", { name: deleting?.name ?? "" })}
+        description={t("exercises.deleteText")}
+        cancelLabel={t("workout.keepExercise")}
+        confirmLabel={busy ? t("history.deleting") : t("exercises.delete")}
         busy={busy}
         onCancel={() => setDeleting(null)}
         onConfirm={() => void confirmDelete()}

@@ -9,6 +9,8 @@ import {
   searchExercises,
   type ExerciseFacets,
 } from "./exercise-search";
+import { t } from "../i18n";
+import { categoryLabel } from "./catalogue-labels";
 
 /** One row of the Library's exercise list: a built-in or the user's own. */
 export type LibraryExercise = {
@@ -128,38 +130,42 @@ export function groupExercises(
   searching = false,
 ): ExerciseGroup[] {
   if (searching)
-    return items.length ? [{ title: "Results", items: [...items] }] : [];
+    return items.length
+      ? [{ title: t("exercises.groupResults"), items: [...items] }]
+      : [];
   if (filter === "hidden")
     return items.length
-      ? [{ title: "Hidden", items: [...items].sort(byName) }]
+      ? [{ title: t("exercises.filterHidden"), items: [...items].sort(byName) }]
       : [];
   const used = items.filter((item) => item.lastDate !== null).sort(byRecent);
   if (filter === "recent")
-    return used.length ? [{ title: "Recently used", items: used }] : [];
+    return used.length
+      ? [{ title: t("exercises.filterRecent"), items: used }]
+      : [];
   const recent = used.slice(0, RECENT_LIMIT);
   const shown = new Set(recent);
   const rest = items.filter((item) => !shown.has(item)).sort(byName);
   return [
-    { title: "Recently used", items: recent },
-    { title: "A–Z", items: rest },
+    { title: t("exercises.filterRecent"), items: recent },
+    { title: t("exercises.groupAz"), items: rest },
   ].filter((group) => group.items.length);
 }
 
 /** "today" or a short date such as "Mon 26 Oct". */
 export function lastUsedLabel(date: string, now: string) {
   return date === now
-    ? "today"
+    ? t("common.today")
     : localizedDate(date, { weekday: "short", day: "numeric", month: "short" });
 }
 
 /** The muted line under an exercise: category, last date and best set. */
 export function exerciseSub(item: LibraryExercise, now: string) {
   return [
-    item.category,
+    categoryLabel(item.category),
     item.lastDate
-      ? `last ${lastUsedLabel(item.lastDate, now)}`
-      : "never logged",
-    item.best && `best ${item.best}`,
+      ? t("exercises.lastUsed", { when: lastUsedLabel(item.lastDate, now) })
+      : t("exercises.neverLogged"),
+    item.best && t("exercises.bestSet", { set: item.best }),
   ]
     .filter(Boolean)
     .join(" · ");

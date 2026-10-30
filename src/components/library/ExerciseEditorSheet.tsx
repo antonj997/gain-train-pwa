@@ -3,6 +3,8 @@ import Sheet from "@/components/ui/Sheet";
 import { categories } from "@/data/catalogue";
 import type { CustomExercise } from "@/data/model";
 import { sameNamedExercise } from "@/lib/exercise-search";
+import { t } from "@/i18n";
+import { categoryLabel } from "@/lib/catalogue-labels";
 
 export type ExerciseDraft = { id: string; data: CustomExercise };
 
@@ -48,13 +50,13 @@ export default function ExerciseEditorSheet({
       onClose={() => {
         if (!busy) onClose();
       }}
-      title={saved ? "Edit exercise" : "New exercise"}
-      description="Names in completed workouts stay as originally recorded. Unfinished edits are kept when you close this form."
+      title={saved ? t("exercises.edit") : t("exercises.new")}
+      description={t("editor.description")}
     >
       {draft && (
         <>
           <label>
-            Name
+            {t("editor.name")}
             <input
               value={draft.data.name}
               maxLength={100}
@@ -64,22 +66,24 @@ export default function ExerciseEditorSheet({
           </label>
           {twin && (
             <p id="exercise-name-twin" className="field-warning" role="status">
-              You already have an exercise called {twin.name}.
+              {t("editor.twin", { name: twin.name })}
             </p>
           )}
           <label>
-            Category
+            {t("facet.category")}
             <select
               value={draft.data.category}
               onChange={(e) => set({ category: e.target.value })}
             >
               {categories.map((c) => (
-                <option key={c}>{c}</option>
+                <option key={c} value={c}>
+                  {categoryLabel(c)}
+                </option>
               ))}
             </select>
           </label>
           <label>
-            Note
+            {t("editor.note")}
             <textarea
               value={draft.data.note}
               maxLength={1000}
@@ -91,7 +95,7 @@ export default function ExerciseEditorSheet({
             disabled={busy || !draft.data.name.trim()}
             onClick={onSave}
           >
-            {busy ? "Saving…" : "Save exercise"}
+            {busy ? t("common.saving") : t("editor.save")}
           </button>
           {error && (
             <p className="field-error" role="alert">
@@ -100,7 +104,7 @@ export default function ExerciseEditorSheet({
           )}
           {!retained && (
             <p className="field-error" role="alert">
-              Storage is unavailable. Keep this form open until saved.
+              {t("editor.storageUnavailable")}
             </p>
           )}
           {saved && (
@@ -111,19 +115,19 @@ export default function ExerciseEditorSheet({
               onClick={onDelete}
             >
               <Trash2 size={18} aria-hidden="true" />
-              Delete exercise
+              {t("exercises.delete")}
             </button>
           )}
           <div className="button-row">
             <button className="secondary" disabled={busy} onClick={onClose}>
-              Close and keep draft
+              {t("routines.closeKeep")}
             </button>
             <button
               className="text-button danger"
               disabled={busy}
               onClick={onDiscard}
             >
-              Discard draft
+              {t("routines.discardDraft")}
             </button>
           </div>
         </>

@@ -34,6 +34,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { t } from "@/i18n";
 
 /** Library → Routines: a card per routine, the routine editor and a link to the training plan. */
 export default function RoutinesPanel() {
@@ -115,10 +116,7 @@ export default function RoutinesPanel() {
     try {
       await action();
     } catch (cause) {
-      const message = errorMessage(
-        cause,
-        "Could not save. Retry; your draft is still here.",
-      );
+      const message = errorMessage(cause, t("routines.saveFailed"));
       setError(message);
       toast.error(message);
     } finally {
@@ -128,7 +126,7 @@ export default function RoutinesPanel() {
   };
   const startEdit = (id: string, data: Routine) => {
     if (edit && edit.id !== id) {
-      toast("Resume or discard the existing routine draft first.");
+      toast(t("routines.resumeFirst"));
       setOpen(true);
       return;
     }
@@ -159,9 +157,9 @@ export default function RoutinesPanel() {
       await deleteRecord(r.id);
       setMenu(null);
       toastWithUndo(
-        "Routine deleted",
+        t("routines.deleted"),
         () => save(r.id, "routine", r.payload),
-        "Could not restore the routine. Retry from a backup.",
+        t("routines.restoreFailed"),
       );
     });
   return (
@@ -178,14 +176,16 @@ export default function RoutinesPanel() {
                   {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
                   {countLabel(setCount(r.payload), "set")} ·{" "}
                   {done
-                    ? `last done ${lastUsedLabel(done, now)}`
-                    : "never done"}
+                    ? t("routines.lastDone", {
+                        when: lastUsedLabel(done, now),
+                      })
+                    : t("routines.neverDone")}
                 </span>
               </div>
               <button
                 type="button"
                 className="icon-btn routine-more"
-                aria-label={r.payload.name + " options"}
+                aria-label={t("routines.options", { name: r.payload.name })}
                 disabled={busy}
                 onClick={() => setMenu(r.id)}
               >
@@ -206,35 +206,33 @@ export default function RoutinesPanel() {
                 }
               >
                 <Play size={16} fill="currentColor" stroke="none" />
-                Start
+                {t("common.start")}
               </button>
               <button
                 className="btn-secondary"
                 disabled={busy}
                 onClick={() => startEdit(r.id, r.payload)}
               >
-                Edit
+                {t("common.edit")}
               </button>
             </div>
           </section>
         );
       })}
       {!records.length && !edit && (
-        <p className="empty">
-          Plan your usual exercises and sets once, then start them together.
-        </p>
+        <p className="empty">{t("routines.empty")}</p>
       )}
       {edit && !open && (
         <p className="draft-receipt" role="status">
-          Unfinished routine: {edit.data.name || "Untitled routine"}.{" "}
-          {draft.retained
-            ? "Kept on this phone."
-            : "Keep this page open; storage is unavailable."}
+          {t("routines.unfinished", {
+            name: edit.data.name || t("routines.untitled"),
+          })}{" "}
+          {draft.retained ? t("routines.keptOnPhone") : t("routines.keepOpen")}
         </p>
       )}
       <button type="button" className="btn-dashed" onClick={create}>
         <Plus size={20} aria-hidden="true" />
-        {edit ? "Resume routine draft" : "New routine"}
+        {edit ? t("routines.resumeDraft") : t("routines.new")}
       </button>
       <Sheet
         open={!!menuRoutine}
@@ -245,7 +243,7 @@ export default function RoutinesPanel() {
           <div className="list">
             <ListRow
               tone="danger"
-              title="Delete routine"
+              title={t("routines.delete")}
               leading={<Trash2 size={20} aria-hidden="true" />}
               disabled={busy}
               onClick={() => void remove(menuRoutine)}
@@ -266,18 +264,17 @@ export default function RoutinesPanel() {
           <DialogHeader>
             <DialogTitle>
               {edit && state.records[edit.id]
-                ? "Edit routine"
-                : "Create routine"}
+                ? t("routines.edit")
+                : t("routines.create")}
             </DialogTitle>
             <DialogDescription>
-              Plan sets, load and set types. Your unfinished work is kept on
-              this phone when you close this form.
+              {t("routines.editorDescription")}
             </DialogDescription>
           </DialogHeader>
           {edit && (
             <>
               <label>
-                Routine name
+                {t("routines.name")}
                 <input
                   value={edit.data.name}
                   maxLength={100}
@@ -312,12 +309,11 @@ export default function RoutinesPanel() {
                 disabled={busy}
               >
                 <Plus size={18} />
-                Add exercises
+                {t("routines.addExercises")}
               </button>
               {!draft.retained && (
                 <p className="field-error" role="alert">
-                  Storage is unavailable. Keep this form open and save before
-                  leaving.
+                  {t("routines.storageUnavailable")}
                 </p>
               )}
               <div className="button-row">
@@ -326,7 +322,7 @@ export default function RoutinesPanel() {
                   disabled={busy}
                   onClick={() => setOpen(false)}
                 >
-                  Close and keep draft
+                  {t("routines.closeKeep")}
                 </button>
                 <button
                   className="text-button danger"
@@ -336,7 +332,7 @@ export default function RoutinesPanel() {
                     setOpen(false);
                   }}
                 >
-                  Discard draft
+                  {t("routines.discardDraft")}
                 </button>
               </div>
               {/* Last, so it can stick to the bottom edge of the long form. */}
@@ -358,11 +354,11 @@ export default function RoutinesPanel() {
                       await save(edit.id, "routine", edit.data);
                       setEdit(null);
                       setOpen(false);
-                      toast.success("Routine saved");
+                      toast.success(t("routines.saved"));
                     })
                   }
                 >
-                  {busy ? "Saving…" : "Save routine"}
+                  {busy ? t("common.saving") : t("routines.save")}
                 </button>
               </div>
             </>
@@ -399,10 +395,10 @@ export default function RoutinesPanel() {
       />
       <ConfirmDialog
         open={!!removing}
-        title={<>Remove {removing?.name}?</>}
-        description="This exercise contains entered values. Removing it deletes its planned sets from this routine."
-        cancelLabel="Keep exercise"
-        confirmLabel="Remove exercise"
+        title={t("workout.removeTitle", { name: removing?.name ?? "" })}
+        description={t("routines.removeText")}
+        cancelLabel={t("workout.keepExercise")}
+        confirmLabel={t("workout.removeExercise")}
         onCancel={() => setRemoving(null)}
         onConfirm={() => removing && removeExercise(removing)}
       />

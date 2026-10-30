@@ -1,3 +1,4 @@
+import { categoryLabel, equipmentLabel } from "./catalogue-labels";
 /** What search needs to know about an exercise. Custom exercises have no equipment or aliases. */
 export type Searchable = {
   name: string;
@@ -49,7 +50,15 @@ export function matchRank(item: Searchable, query: string): number | null {
   if (!typed) return OTHER;
   const name = normalize(item.name);
   const aliases = (item.aliases ?? []).map(normalize);
-  const other = normalize(`${item.category} ${item.equipment ?? ""}`);
+  // English values and their labels in the chosen language ("Legs", "Ben").
+  const other = normalize(
+    [
+      item.category,
+      categoryLabel(item.category),
+      item.equipment ?? "",
+      item.equipment ? equipmentLabel(item.equipment) : "",
+    ].join(" "),
+  );
   const typedWords = words(query);
   const fields = [name, ...aliases, other];
   // Each word may match a different field, but every word needs a match.
