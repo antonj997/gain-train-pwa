@@ -20,7 +20,7 @@ import {
   ThemeSheet,
 } from "@/components/settings/PreferenceSheets";
 import SyncIssues from "@/components/settings/SyncIssues";
-import { LANGUAGE_NAMES } from "@/i18n";
+import { LANGUAGE_NAMES, formatDecimal } from "@/i18n";
 import { useT } from "@/i18n/useT";
 import { countLabel } from "@/lib/labels";
 import {
@@ -38,7 +38,7 @@ export default function Settings() {
     { theme } = useTheme(),
     { bodyWeightKg } = useProfile(),
     navigate = useNavigate(),
-    { t, language, locale } = useT();
+    { t, language } = useT();
   const [sheet, setSheet] = useState<SheetName | null>(null);
   const [preferences, setPreferences] = useState(readTrainingPreferences);
   const [accountBusy, setAccountBusy] = useState(false);
@@ -129,7 +129,7 @@ export default function Settings() {
             value={
               bodyWeightKg === null
                 ? t("settings.notSet")
-                : t("common.kg", { value: bodyWeightKg.toLocaleString(locale) })
+                : t("common.kg", { value: formatDecimal(bodyWeightKg) })
             }
             chevron
             onClick={() => setSheet("bodyweight")}

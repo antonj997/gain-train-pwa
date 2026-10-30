@@ -9,7 +9,7 @@ import {
   searchExercises,
   type ExerciseFacets,
 } from "./exercise-search";
-import { t } from "../i18n";
+import { currentLocale, t } from "../i18n";
 import { categoryLabel } from "./catalogue-labels";
 
 /** One row of the Library's exercise list: a built-in or the user's own. */
@@ -87,7 +87,7 @@ type ExerciseGroup = {
 const RECENT_LIMIT = 5;
 
 const byName = (a: LibraryExercise, b: LibraryExercise) =>
-  a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
+  a.name.localeCompare(b.name, currentLocale(), { sensitivity: "base" });
 const byRecent = (a: LibraryExercise, b: LibraryExercise) =>
   b.lastDate!.localeCompare(a.lastDate!) || byName(a, b);
 
