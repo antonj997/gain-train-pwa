@@ -4,7 +4,7 @@ import {
   hasUserData,
   interpolate,
   pluralForm,
-  shouldPromptLanguage,
+  languageOnLaunch,
   translate,
 } from "../src/i18n/index.ts";
 import { en } from "../src/i18n/en.ts";
@@ -43,10 +43,11 @@ test("Swedish has exactly the English keys, with the same kind of value", () => 
 });
 
 test("the language prompt shows once, only for a device with a log", () => {
-  assert.equal(shouldPromptLanguage(null, true), true);
-  assert.equal(shouldPromptLanguage(null, false), false);
-  assert.equal(shouldPromptLanguage("en", true), false);
-  assert.equal(shouldPromptLanguage("sv", true), false);
+  assert.equal(languageOnLaunch(null, true), "prompt");
+  // A new user keeps English, remembered, so a first workout never prompts.
+  assert.equal(languageOnLaunch(null, false), "default");
+  assert.equal(languageOnLaunch("en", true), "none");
+  assert.equal(languageOnLaunch("sv", false), "none");
 });
 
 test("user data means a live record or a saved bodyweight", () => {

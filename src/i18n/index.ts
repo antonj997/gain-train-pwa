@@ -93,14 +93,17 @@ export const formatFixed = (value: number, decimals: number) =>
     : value.toFixed(decimals);
 
 /**
- * Whether to ask once which language to use: only on a device that has never
- * chosen and already holds someone's log. A new user gets English silently.
+ * What to do about the language when the log has loaded: nothing once this
+ * device has chosen; ask once on a device that already holds someone's log;
+ * otherwise (a new user) keep English and remember it, so logging a first
+ * workout never brings up the question later.
  */
-export function shouldPromptLanguage(
+export function languageOnLaunch(
   stored: Language | null,
   hasUserData: boolean,
-) {
-  return stored === null && hasUserData;
+): "none" | "prompt" | "default" {
+  if (stored !== null) return "none";
+  return hasUserData ? "prompt" : "default";
 }
 
 /** True when the log holds anything the user made: workouts, routines, exercises, or a profile. */
