@@ -1,5 +1,13 @@
 # Changelog
 
+## 30 October 2026 — bug reports and the admin inbox
+
+- Settings → Help and feedback → Send feedback: a bug or feature idea with a title, description, up to four images (shrunk to 1600 px JPEG on the phone) and optional technical details (build, language, browser, screen and the last crash). My reports below it shows each report's status and the admin's reply. Signed out it links to sign in; offline it keeps the draft and says so.
+- Admins get an Admin row with the open count and a Reports page (`/settings/admin`): filter by status and kind, open a report for its images, details, status, a note to the reporter, and Delete. Others see “Not available”.
+- The error screen now remembers the last crash on the phone (`gt-last-error`) so a bug report can include it. The build's commit and date are compiled in as `__APP_BUILD__`.
+- Server: migration `20261030120000_feedback_reports.sql` adds `app_admins` (seeded with the owner's account), `is_admin()`, `feedback_reports` (reporter-only insert of open reports, admin-only status and note, 10 a day, reports kept with a null reporter after account deletion), `admin_feedback_feed()` and the private `feedback` bucket (5 MB JPEG/PNG/WebP, own-folder uploads, 40 a day, admin read and delete). The delete-account function removes the user's feedback images first, as Supabase will not delete a user who owns storage objects; redeploy it with the migration.
+- Code: `src/lib/feedback.ts` (validation, details, image size, paths, filters, ages) is pure and tested.
+
 ## 30 October 2026 — Mine instead of Yours
 
 - Library → Exercises: the chips All, Mine, Shared, Recently used and Hidden are one row that scrolls sideways, like the category and equipment rows, instead of wrapping onto two lines. Shared now comes right after Mine.
