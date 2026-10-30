@@ -7,8 +7,7 @@ import {
 } from "@/lib/history-calendar";
 import { localizedDate, weekdayNames } from "@/lib/dates";
 import "@/styles/history-calendar.css";
-
-const shortDays = weekdayNames("short");
+import { t } from "@/i18n";
 
 export type PlanDay = {
   kind: "planned" | "rest" | null;
@@ -30,7 +29,7 @@ export default function PlanCalendar({
   last,
   describe,
   range,
-  label = "Upcoming plan",
+  label,
   initialMonth = first.slice(0, 7),
   onPick,
 }: {
@@ -44,6 +43,7 @@ export default function PlanCalendar({
   initialMonth?: string;
   onPick: (date: string) => void;
 }) {
+  const shortDays = weekdayNames("short");
   const firstMonth = first.slice(0, 7),
     lastMonth = last.slice(0, 7);
   const [chosen, setMonth] = useState(initialMonth);
@@ -58,12 +58,15 @@ export default function PlanCalendar({
   const picking = range !== undefined;
   const cells = calendarCells(month);
   return (
-    <section className="card plan-calendar" aria-label={label}>
+    <section
+      className="card plan-calendar"
+      aria-label={label ?? t("plan.upcomingPlan")}
+    >
       <div className="calendar-header">
         <button
           type="button"
           className="icon-btn"
-          aria-label="Previous month"
+          aria-label={t("history.previousMonth")}
           disabled={month <= firstMonth}
           onClick={() => setMonth(moveCalendarMonth(month, -1))}
         >
@@ -75,7 +78,7 @@ export default function PlanCalendar({
         <button
           type="button"
           className="icon-btn"
-          aria-label="Next month"
+          aria-label={t("history.nextMonth")}
           disabled={month >= lastMonth}
           onClick={() => setMonth(moveCalendarMonth(month, 1))}
         >
@@ -122,8 +125,10 @@ export default function PlanCalendar({
               aria-pressed={picking ? !!edges : undefined}
               aria-label={
                 day
-                  ? `${spoken}, ${day.label}${day.override ? ", changed for this date" : ""}`
-                  : spoken + (isStart ? ", start" : "") + (isEnd ? ", end" : "")
+                  ? `${spoken}, ${day.label}${day.override ? t("plan.changedForDate") : ""}`
+                  : spoken +
+                    (isStart ? t("plan.startSuffix") : "") +
+                    (isEnd ? t("plan.endSuffix") : "")
               }
               onClick={() => onPick(cell.date)}
             >

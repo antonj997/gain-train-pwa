@@ -6,6 +6,8 @@ import Sheet from "@/components/ui/Sheet";
 import { categories } from "@/data/catalogue";
 import type { RoutineGroup } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
+import { t } from "@/i18n";
+import { categoryLabel } from "@/lib/catalogue-labels";
 
 const suggestable = categories.filter((c) => c !== "Other");
 
@@ -51,7 +53,7 @@ export default function GroupEditor({
       await work();
       onClose();
     } catch (cause) {
-      setError(errorMessage(cause, "Could not save. Try again."));
+      setError(errorMessage(cause, t("group.saveFailed")));
     } finally {
       setBusy(false);
       setDeleting(false);
@@ -65,21 +67,21 @@ export default function GroupEditor({
         onClose={() => {
           if (!busy) onClose();
         }}
-        title={group ? "Edit group" : "New group"}
-        description="A group is a day you can plan, such as Legday. Train offers its routines and can suggest exercises."
+        title={group ? t("group.edit") : t("plan.newGroup")}
+        description={t("group.description")}
       >
         <label>
-          Name
+          {t("group.name")}
           <input
             value={draft.name}
             maxLength={100}
-            placeholder="Legday"
+            placeholder={t("group.namePlaceholder")}
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
           />
         </label>
         <section aria-labelledby="group-routines">
           <h3 className="group-title" id="group-routines">
-            Routines
+            {t("group.routines")}
           </h3>
           {routines.length ? (
             <div className="list">
@@ -93,7 +95,7 @@ export default function GroupEditor({
                       <Check
                         size={20}
                         className="plan-check"
-                        aria-label="In this group"
+                        aria-label={t("group.inGroup")}
                       />
                     ) : undefined
                   }
@@ -101,14 +103,12 @@ export default function GroupEditor({
               ))}
             </div>
           ) : (
-            <p className="row-sub">
-              You have no routines yet. A group can still suggest exercises.
-            </p>
+            <p className="row-sub">{t("group.noRoutines")}</p>
           )}
         </section>
         <section aria-labelledby="group-categories">
           <h3 className="group-title" id="group-categories">
-            Suggest exercises from (optional)
+            {t("group.suggestFrom")}
           </h3>
           <div
             className="filters"
@@ -123,7 +123,7 @@ export default function GroupEditor({
                 aria-pressed={draft.categories.includes(c)}
                 onClick={() => toggle("categories", c)}
               >
-                {c}
+                {categoryLabel(c)}
               </button>
             ))}
           </div>
@@ -141,7 +141,7 @@ export default function GroupEditor({
             void run(() => onSave({ ...draft, name: draft.name.trim() }))
           }
         >
-          {busy ? "Saving…" : "Save group"}
+          {busy ? t("common.saving") : t("group.save")}
         </button>
         {group && (
           <button
@@ -150,16 +150,16 @@ export default function GroupEditor({
             disabled={busy}
             onClick={() => setDeleting(true)}
           >
-            Delete group
+            {t("group.delete")}
           </button>
         )}
       </Sheet>
       <ConfirmDialog
         open={deleting}
-        title={<>Delete {group?.name}?</>}
-        description="Plans that use this group show nothing on those days. Your routines stay."
-        cancelLabel="Keep group"
-        confirmLabel={busy ? "Deleting…" : "Delete group"}
+        title={t("plan.deleteTitle", { name: group?.name ?? "" })}
+        description={t("group.deleteText")}
+        cancelLabel={t("group.keep")}
+        confirmLabel={busy ? t("history.deleting") : t("group.delete")}
         busy={busy}
         onCancel={() => setDeleting(false)}
         onConfirm={() => group && void run(() => onDelete(group.id))}

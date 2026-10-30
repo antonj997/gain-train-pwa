@@ -27,8 +27,8 @@ import {
 import { routines as routineRecords } from "@/data/selectors";
 import { localizedDate, weekdayNames } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
+import { t } from "@/i18n";
 
-const dayNames = weekdayNames();
 const cycleOptions = [1, 2, 3, 4, 5, 6].map((n) => ({
   value: String(n),
   label: String(n),
@@ -60,6 +60,7 @@ export default function PlanEditor({
   const groups = useMemo(() => groupsOf(state.records), [state.records]);
   const goals = useMemo(() => activeGoals(state.records), [state.records]);
   const names = { routines, groups };
+  const dayNames = weekdayNames();
 
   const [draft, setDraft] = useState<Plan>(() => {
     if (!plan) return defaultNewPlan(plans, today);
@@ -79,11 +80,15 @@ export default function PlanEditor({
     draft.startDate <= draft.endDate;
   const overlap = validPeriod ? findOverlap(plans, draft, plan?.id) : null;
   const problem = !draft.name.trim()
-    ? "Give the plan a name."
+    ? t("plan.needName")
     : !validPeriod
-      ? "Choose a start date and an end date on or after it."
+      ? t("plan.needPeriod")
       : overlap
-        ? `This period overlaps “${overlap.name}” (${range(overlap.startDate)} – ${range(overlap.endDate)}). Only one plan can be active on a date; change these dates or edit that plan.`
+        ? t("plan.overlap", {
+            name: overlap.name,
+            from: range(overlap.startDate),
+            to: range(overlap.endDate),
+          })
         : "";
 
   const choose = (cell: string | null | undefined) => {
@@ -100,7 +105,12 @@ export default function PlanEditor({
     target === null
       ? ""
       : "week" in target
-        ? `${dayNames[target.day]}${draft.cycleWeeks > 1 ? `, week ${target.week + 1}` : ""}`
+        ? draft.cycleWeeks > 1
+          ? t("plan.dayWeek", {
+              day: dayNames[target.day],
+              week: target.week + 1,
+            })
+          : dayNames[target.day]
         : localizedDate(target.date, {
             weekday: "long",
             day: "numeric",
@@ -130,10 +140,10 @@ export default function PlanEditor({
         overrides: trimOverrides(draft),
         goalIds: draft.goalIds.filter((id) => goals.some((g) => g.id === id)),
       });
-      toast.success("Plan saved");
+      toast.success(t("plan.saved"));
       onClose();
     } catch (cause) {
-      setError(errorMessage(cause, "Could not save the plan. Try again."));
+      setError(errorMessage(cause, t("plan.saveFailed")));
     } finally {
       setBusy(false);
     }
@@ -147,15 +157,15 @@ export default function PlanEditor({
         onClose={() => {
           if (!busy) onClose();
         }}
-        title={plan ? "Edit plan" : "New plan"}
-        description="Nothing here is required. Train shows today's entry while the plan is active."
+        title={plan ? t("plan.edit") : t("plan.new")}
+        description={t("plan.description")}
       >
         <label>
-          Name
+          {t("plan.name")}
           <input
             value={draft.name}
             maxLength={100}
-            placeholder="Autumn block"
+            placeholder={t("plan.namePlaceholder")}
             onChange={(e) => set({ name: e.target.value })}
           />
         </label>
@@ -171,9 +181,9 @@ export default function PlanEditor({
           </p>
         )}
         <div className="plan-field">
-          <span className="group-title">Repeats every (weeks)</span>
+          <span className="group-title">{t("plan.repeatsEvery")}</span>
           <Segmented
-            label="Weeks in the cycle"
+            label={t("plan.weeksInCycle")}
             value={String(draft.cycleWeeks)}
             options={cycleOptions}
             onChange={(value) => setDraft((d) => withCycle(d, Number(value)))}
@@ -206,7 +216,7 @@ export default function PlanEditor({
             disabled={busy}
             onClick={() => setDeleting(true)}
           >
-            Delete plan
+            {t("plan.delete")}
           </button>
         )}
         {/* Last, so it can stick to the bottom edge of the long form. */}
@@ -222,7 +232,7 @@ export default function PlanEditor({
             disabled={busy || !!problem}
             onClick={() => void submit()}
           >
-            {busy ? "Saving…" : "Save plan"}
+            {busy ? t("common.saving") : t("plan.save")}
           </button>
         </div>
       </Sheet>
@@ -232,7 +242,11 @@ export default function PlanEditor({
         current={targetCurrent}
         routines={routines}
         groups={groups}
-        emptyLabel={target && "date" in target ? "Nothing planned" : "Empty"}
+        emptyLabel={
+          target && "date" in target
+            ? t("plan.nothingPlannedCap")
+            : t("plan.emptyCap")
+        }
         useTemplate={
           target && "date" in target
             ? cellText(templateCellForDate, names)
@@ -243,10 +257,10 @@ export default function PlanEditor({
       />
       <ConfirmDialog
         open={deleting}
-        title={<>Delete {plan?.name}?</>}
-        description="The plan and its dated changes are removed. Your routines and workouts stay."
-        cancelLabel="Keep plan"
-        confirmLabel={busy ? "Deleting…" : "Delete plan"}
+        title={t("plan.deleteTitle", { name: plan?.name ?? "" })}
+        description={t("plan.deleteText")}
+        cancelLabel={t("plan.keep")}
+        confirmLabel={busy ? t("history.deleting") : t("plan.delete")}
         busy={busy}
         onCancel={() => setDeleting(false)}
         onConfirm={async () => {
@@ -254,10 +268,10 @@ export default function PlanEditor({
           setBusy(true);
           try {
             await deleteRecord(plan.id);
-            toast("Plan deleted");
+            toast(t("plan.deletedToast"));
             onClose();
           } catch {
-            toast.error("Could not delete. The plan is still here; retry.");
+            toast.error(t("plan.deleteFailed"));
           } finally {
             setBusy(false);
             setDeleting(false);

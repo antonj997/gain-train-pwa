@@ -7,10 +7,18 @@ import PlanEditor from "@/components/plan/PlanEditor";
 import ListRow from "@/components/ui/ListRow";
 import { libraryOf } from "@/data/exercises";
 import { type RoutineGroup, today as todayDate } from "@/data/model";
-import { type PlanItem, activePlans, dayTypes, groupsOf } from "@/data/plans";
+import {
+  type PlanItem,
+  activePlans,
+  dayTypeLabel,
+  dayTypes,
+  groupsOf,
+} from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
+import { t } from "@/i18n";
+import { categoryLabel } from "@/lib/catalogue-labels";
 
 /** Which editor is open: a plan or a group, an existing one or "new". */
 type Editing =
@@ -49,20 +57,17 @@ export default function PlanPanel() {
 
   const status = (p: PlanItem) =>
     p.endDate < today
-      ? "Ended"
+      ? t("plan.ended")
       : p.startDate > today
-        ? `Starts ${short(p.startDate)}`
-        : "Active";
+        ? t("plan.starts", { date: short(p.startDate) })
+        : t("plan.active");
 
   return (
     <div className="plan-panel">
-      <p className="row-sub">
-        Plan your training if you like: pick what each day holds and Train shows
-        it. Nothing changes anywhere while you have no plan.
-      </p>
+      <p className="row-sub">{t("plan.intro")}</p>
       <section aria-labelledby="plans-heading">
         <h2 className="group-title" id="plans-heading">
-          Plans
+          {t("plan.plans")}
         </h2>
         {plans.length > 0 && (
           <div className="list">
@@ -72,8 +77,8 @@ export default function PlanPanel() {
                 title={p.name}
                 sub={`${short(p.startDate)} – ${short(p.endDate)} · ${
                   p.cycleWeeks === 1
-                    ? "repeats weekly"
-                    : `${p.cycleWeeks}-week cycle`
+                    ? t("plan.repeatsWeekly")
+                    : t("plan.cycle", { count: p.cycleWeeks })
                 }`}
                 value={status(p)}
                 chevron
@@ -88,12 +93,12 @@ export default function PlanPanel() {
           onClick={() => edit({ kind: "plan", plan: null })}
         >
           <Plus size={20} aria-hidden="true" />
-          New plan
+          {t("plan.new")}
         </button>
       </section>
       <section aria-labelledby="groups-heading">
         <h2 className="group-title" id="groups-heading">
-          Groups
+          {t("plan.groups")}
         </h2>
         {groups.length > 0 && (
           <div className="list">
@@ -103,7 +108,7 @@ export default function PlanPanel() {
                 title={g.name}
                 sub={[
                   countLabel(g.routineIds.length, "routine"),
-                  g.categories.join(", "),
+                  g.categories.map(categoryLabel).join(", "),
                 ]
                   .filter(Boolean)
                   .join(" · ")}
@@ -119,13 +124,12 @@ export default function PlanPanel() {
           onClick={() => edit({ kind: "group", group: null })}
         >
           <Plus size={20} aria-hidden="true" />
-          New group
+          {t("plan.newGroup")}
         </button>
         <p className="row-sub group-note">
-          A group such as Legday holds the routines you want for that day. You
-          can plan it, or one of the day types{" "}
-          {dayTypes.map((t) => t.label).join(", ")}, which suggest exercises by
-          category.
+          {t("plan.groupNote", {
+            types: dayTypes.map(dayTypeLabel).join(", "),
+          })}
         </p>
       </section>
       {current?.kind === "plan" && (

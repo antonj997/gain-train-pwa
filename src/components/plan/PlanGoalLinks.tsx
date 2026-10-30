@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
 import { goalTitle, type activeGoals } from "@/data/goals";
 import { localizedDate } from "@/lib/dates";
+import { t } from "@/i18n";
 
 /** The active goals, each toggled linked or not to the plan. */
 export default function PlanGoalLinks({
@@ -16,7 +17,7 @@ export default function PlanGoalLinks({
   return (
     <section aria-labelledby="plan-goals-heading">
       <h3 className="group-title" id="plan-goals-heading">
-        Goals this plan works toward
+        {t("plan.goalsHeading")}
       </h3>
       <div className="list">
         {goals.map((g) => {
@@ -25,7 +26,13 @@ export default function PlanGoalLinks({
             <ListRow
               key={g.id}
               title={goalTitle(g)}
-              sub={`By ${localizedDate(g.byDate, { day: "numeric", month: "short", year: "numeric" })}`}
+              sub={t("plan.by", {
+                date: localizedDate(g.byDate, {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }),
+              })}
               onClick={() =>
                 onChange(
                   linked
@@ -35,7 +42,11 @@ export default function PlanGoalLinks({
               }
               trailing={
                 linked ? (
-                  <Check size={20} className="plan-check" aria-label="Linked" />
+                  <Check
+                    size={20}
+                    className="plan-check"
+                    aria-label={t("plan.linked")}
+                  />
                 ) : undefined
               }
             />

@@ -1,6 +1,7 @@
 import PlanCalendar, { type PlanDay } from "@/components/PlanCalendar";
 import type { Plan } from "@/data/model";
 import { plannedFor, resolveCell } from "@/data/plans";
+import { t } from "@/i18n";
 
 type Names = Parameters<typeof resolveCell>[1];
 
@@ -23,14 +24,14 @@ export default function PlanUpcoming({
     const day = resolveCell(planned?.cell, names);
     return {
       kind: day ? (day.kind === "rest" ? "rest" : "planned") : null,
-      label: day ? day.title : "nothing planned",
+      label: day ? day.title : t("plan.nothingPlanned"),
       override: !!planned?.override,
     };
   };
   return (
     <section aria-labelledby="upcoming-heading">
       <h3 className="group-title" id="upcoming-heading">
-        Upcoming
+        {t("plan.upcoming")}
       </h3>
       <PlanCalendar
         today={today}
@@ -39,9 +40,7 @@ export default function PlanUpcoming({
         describe={describe}
         onPick={onPick}
       />
-      <p className="row-sub group-note">
-        Tap a day to change just that date. Past days cannot be changed.
-      </p>
+      <p className="row-sub group-note">{t("plan.upcomingNote")}</p>
     </section>
   );
 }
