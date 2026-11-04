@@ -239,7 +239,9 @@ export function suggestProgression(
     input.level === "beginner" ? MAX_STEP_PCT.beginner : MAX_STEP_PCT.other;
   const tooFast =
     needed > 0 &&
-    (needed > Math.max(gain * WARN_SLACK, gain + increment) ||
+    (needed >
+      Math.max(gain * WARN_SLACK, suggestedTargetKg - input.startKg + increment) +
+        1e-9 ||
       perStep > Math.min(MAX_STEP_KG, (input.startKg * maxPct) / 100) + 1e-9);
   let weeksNeeded: number | null = 1;
   if (needed > 0) {
