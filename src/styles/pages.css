@@ -1413,19 +1413,24 @@ details[open] > .session-summary > svg {
    the right enters from the right while the old page drifts left and fades; a
    tab to the left mirrors it. A sub-page pushes in from the right and Back
    slides it out to the right. Taps go straight through to the new page. The
-   bar is drawn from its live new state only, so it keeps still and its pill
-   slides as usual. With reduced motion the tokens make this a short fade. */
+   bar keeps still and its pill slides as usual. With reduced motion the
+   tokens make this a short fade. */
 ::view-transition {
   pointer-events: none;
   background-color: var(--gt-ground);
 }
-::view-transition-group(bottom-nav),
-::view-transition-new(bottom-nav) {
-  animation: none;
+/* The live new bar covers the old one, which stays underneath unanimated in
+   case a browser cannot draw the live image (Playwright's Linux WebKit draws
+   nothing there); the bar is solid while a slide runs, so nothing shows
+   through. */
+html[data-nav-dir] .bottom-nav {
+  background-color: var(--gt-surface);
 }
-::view-transition-old(bottom-nav) {
+::view-transition-group(bottom-nav),
+::view-transition-old(bottom-nav),
+::view-transition-new(bottom-nav) {
+  mix-blend-mode: normal;
   animation: none;
-  opacity: 0;
 }
 html[data-nav-dir]::view-transition-old(root),
 html[data-nav-dir]::view-transition-new(root) {
@@ -1436,7 +1441,7 @@ html[data-nav-dir]::view-transition-new(root) {
 }
 /* The old page fades out sooner, so the two never read as one. */
 html[data-nav-dir]::view-transition-old(root) {
-  animation-duration: calc(var(--gt-page-duration) * 0.7);
+  animation-duration: calc(var(--gt-page-duration) * 0.6);
 }
 html[data-nav-dir="right"]::view-transition-new(root),
 html[data-nav-dir="push"]::view-transition-new(root) {
