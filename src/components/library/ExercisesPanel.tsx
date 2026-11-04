@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
@@ -200,6 +201,16 @@ export default function ExercisesPanel() {
       setBusy(false);
     }
   };
+
+  // `?edit=<id>` (from the exercise page) opens that exercise's editor once.
+  const [params, setParams] = useSearchParams();
+  const editId = params.get("edit");
+  useEffect(() => {
+    if (!editId) return;
+    const target = all.find((e) => e.id === editId && e.custom);
+    setParams({ tab: "exercises" }, { replace: true });
+    if (target) openEditor(target);
+  }, [editId, all, setParams, openEditor]);
 
   const saved = !!edit && edit.id in state.records;
   return (

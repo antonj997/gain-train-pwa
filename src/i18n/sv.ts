@@ -696,6 +696,41 @@ export const sv = {
   "library.routines": "Rutiner",
   "library.exercises": "Övningar",
   "library.plan": "Schema",
+
+  // Exercise page
+  "exercise.eyebrow": "Övning",
+  "exercise.tabs": "Övningsdel",
+  "exercise.overview": "Översikt",
+  "exercise.history": "Historik",
+  "exercise.records": "Rekord",
+  "exercise.also": "även {categories}",
+  "exercise.hiddenChip": "Dold",
+  "exercise.favouriteNamed": "Favoritmarkera {name}",
+  "exercise.notFoundTitle": "Övningen hittades inte",
+  "exercise.notFoundText":
+    "Den kan ha tagits bort. Set du har loggat finns kvar i Historik.",
+  "exercise.backToLibrary": "Öppna Bibliotek",
+  "exercise.start": "Starta pass med den här övningen",
+  "exercise.neverTitle": "Inte loggad än",
+  "exercise.neverText":
+    "Logga ett set {name} så visas resultat, pass och rekord här.",
+  "exercise.openSession": "Öppna {name}, {date}",
+  "exercise.historyNote": "Alla avslutade pass med {name}, nyaste först.",
+  "exercise.openExercise": "Öppna {name}",
+  "records.e1rm": "Bästa uppsk. 1RM",
+  "records.heaviest": "Tyngsta vikt",
+  "records.mostReps": "Flest reps",
+  "records.setVolume": "Bästa setvolym",
+  "records.sessionVolume": "Bästa passvolym",
+  "records.repsAtWeight": "Flest reps per vikt",
+  "records.repsAt": "{weight} {unit}",
+  "records.reps": { one: "{count} rep", other: "{count} reps" },
+  "records.empty": "Rekord visas efter ditt första avbockade arbetsset.",
+  "records.note":
+    "Bara avbockade set; uppvärmning räknas aldrig. Uppskattad 1RM (Epley) använder viktset med högst 10 reps. Dropset räknas bara till tyngsta vikt och passvolym.",
+  "records.pr": "PR",
+  "records.prLabel": "Rekord: {kinds}",
+  "records.tile": "Rekord",
   "routines.saveFailed":
     "Kunde inte spara. Försök igen; ditt utkast finns kvar.",
   "routines.resumeFirst":

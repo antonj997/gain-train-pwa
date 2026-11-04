@@ -1,9 +1,7 @@
 import { type cardioProgressFor } from "@/data/analytics";
-import ListRow from "@/components/ui/ListRow";
 import { formatDuration, formatKm, totalsLabel } from "@/lib/cardio";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
-import { historyPath } from "@/lib/routes";
 import { t } from "@/i18n";
 
 type Props = {
@@ -12,7 +10,7 @@ type Props = {
   cutoffDate: string;
 };
 
-/** The sheet body for a cardio exercise: time and distance per session. */
+/** The exercise page's Overview for a cardio exercise: time and distance. */
 export default function CardioProgressDetail({ item, cutoffDate }: Props) {
   const latest = item.sessions.at(-1)!;
   const recent = item.sessions.filter((session) => session.date > cutoffDate);
@@ -50,20 +48,6 @@ export default function CardioProgressDetail({ item, cutoffDate }: Props) {
           </small>
         </div>
       </div>
-      <section>
-        <h3 className="group-title">{t("detail.recorded")}</h3>
-        <div className="list">
-          {[...item.sessions].reverse().map((session) => (
-            <ListRow
-              key={session.workoutId}
-              to={historyPath(session.workoutId)}
-              title={localizedDate(session.date)}
-              value={<strong>{totalsLabel(session)}</strong>}
-              chevron
-            />
-          ))}
-        </div>
-      </section>
       <p className="row-sub">{t("cardio.note", { name: item.name })}</p>
     </div>
   );
