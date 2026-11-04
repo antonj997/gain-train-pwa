@@ -99,7 +99,8 @@ test("a lift goal with several reps compares estimated one-rep maxes", () => {
   assert.ok(Math.abs(p.target - 116.667) < 0.01);
   assert.ok(Math.abs(p.current! - 105) < 0.01);
   assert.equal(p.met, false);
-  assert.equal(p.start, 0);
+  // Nothing before the goal: the bar starts at the first session after it.
+  assert.ok(Math.abs(p.start - 105) < 0.01);
   const done = goalProgress(
     goal,
     [workout("2026-10-21", [set(100, 5)])],

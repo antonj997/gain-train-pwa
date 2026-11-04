@@ -836,7 +836,7 @@ details[open] > .session-summary > svg {
   background-color: var(--gt-surface-2);
   color: var(--gt-ink-2);
 }
-/* Goals on Progress. */
+/* Progress → Goals. */
 .goal-list {
   display: flex;
   flex-direction: column;
@@ -869,6 +869,151 @@ details[open] > .session-summary > svg {
 }
 .goal-bar.is-done > span {
   background-color: var(--gt-done);
+}
+.goals-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+/* Stats → "Goals: 2 active · this week 2/3", one line that opens the Goals tab. */
+.goals-chip-link {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 44px;
+  padding: 0 var(--gt-space-3);
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  font: inherit;
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  text-align: left;
+}
+.goals-chip-link > svg:first-child {
+  flex: none;
+  color: var(--gt-accent);
+}
+.goals-chip-link > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.weekly-empty-title {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  color: var(--gt-accent);
+}
+.weekly-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.weekly-card .card-head {
+  align-items: flex-start;
+}
+.weekly-card .card-head .text-link {
+  margin: -10px -10px 0 0;
+}
+.weekly-now {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.weekly-now-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-1) var(--gt-space-2);
+}
+.weekly-now-head strong {
+  font-size: var(--gt-fs-4);
+}
+/* Twelve weeks of workouts against a dashed goal line; met weeks in the done colour. */
+.week-strip {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--gt-space-1);
+  height: 56px;
+  padding-top: 2px;
+  border-bottom: 1px solid var(--gt-line);
+}
+.week-strip-bar {
+  display: block;
+  min-height: 3px;
+  border-radius: 4px 4px 0 0;
+  background-color: var(--gt-ink-3);
+}
+.week-strip-bar.is-met {
+  background-color: var(--gt-done);
+}
+.week-strip-bar.is-current {
+  background-color: var(--gt-accent);
+}
+.week-strip-bar.is-untracked {
+  background-color: var(--gt-surface-2);
+}
+.week-strip-goal {
+  position: absolute;
+  right: 0;
+  left: 0;
+  border-top: 1.5px dashed var(--gt-ink-2);
+  pointer-events: none;
+}
+.week-strip-axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--gt-space-1);
+  font-size: var(--gt-fs-1);
+  color: var(--gt-ink-2);
+}
+.weekly-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+}
+/* Start → Now → Target, with the sparkline at the end. */
+.goal-values {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gt-space-3);
+}
+.goal-value {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--gt-fs-3);
+  overflow-wrap: anywhere;
+}
+.goal-value-label {
+  font-size: var(--gt-fs-1);
+  color: var(--gt-ink-2);
+}
+.goal-due.is-late {
+  color: var(--gt-danger-fg);
+  font-weight: 600;
+}
+.goals-reached .session-summary h2 {
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+}
+.goals-reached .list {
+  margin-top: var(--gt-space-2);
+}
+.goals-empty .btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gt-space-2);
 }
 .dot.planned:not(.today):not(.done) {
   box-shadow: inset 0 0 0 1.5px var(--gt-ink-3);

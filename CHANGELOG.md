@@ -1,5 +1,12 @@
 # Changelog
 
+## 4 November 2026 — a Goals section
+
+- Progress has a Stats | Goals switch (Statistik | Mål, `/progress?tab=goals`). Goals no longer sit above the stats; Stats instead starts with a one-line “Goals: 2 active · this week 2/3” link.
+- Goals tab: the weekly goal (this week with days left, hit rate over the last 4 and 12 finished weeks from the first workout, current and best streak, a 12-week strip, Edit), active goals by the nearest date (start → now → target, days left or overdue, pace against the six-week trend, a projected date, a sparkline), Reached (N) folded away, and an empty state.
+- A lift goal with nothing logged before it now starts its bar at the first session after it instead of at zero.
+- Code: `weeklyGoalStats()` in `src/lib/week-summary.ts`, `src/lib/goal-pace.ts` (trend, pace, projection, deadline) and `goalSeries()`/`goalInsight()` in `src/data/goals.ts`, all tested.
+
 ## 30 October 2026 — heaviest lift
 
 - Progress → an exercise has a Heaviest lift tile (Swedish “Tyngsta lyft”) beside Sessions · 30 days: the heaviest weight in any completed set at any reps, with its reps and date, e.g. “100 kg × 2 · 27 Oct 2026”. A tie on weight goes to the most reps, then the most recent. Drops count, warm-ups do not. Bodyweight with added weight shows “BW + 25 kg × 3”; assisted, bodyweight-only, timed and cardio exercises have no tile.
