@@ -343,7 +343,13 @@ export default function SetLine({
               )}
             </div>
           )}
-          <div className="set-field">
+          <div className={`set-field set-count${timed ? " is-timed" : ""}`}>
+            {/* A checked row reads like the result: "60 × 8", "BW × 10", "45 s". */}
+            {set.done && !timed && (
+              <span className="set-times" aria-hidden="true">
+                ×
+              </span>
+            )}
             <SetNumberInput
               aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}`}
               aria-invalid={
@@ -363,6 +369,11 @@ export default function SetLine({
               onLockedAttempt={() => setLockedAttempt(true)}
               onValueChange={(value, text) => updateNumber("reps", value, text)}
             />
+            {set.done && timed && set.reps !== null && (
+              <span className="set-marker set-seconds" aria-hidden="true">
+                s
+              </span>
+            )}
           </div>
         </>
       )}
