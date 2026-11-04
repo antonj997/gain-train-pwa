@@ -481,6 +481,7 @@ export const en = {
   "details.time": "Time",
   "details.noSets": "No checked sets",
   "details.edit": "Edit",
+  "details.repeat": "Repeat",
   "history.chooseMonthYear": "Choose month and year",
   "history.previousYear": "Previous year",
   "history.nextYear": "Next year",

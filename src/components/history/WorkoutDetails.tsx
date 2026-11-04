@@ -132,7 +132,7 @@ export default function WorkoutDetails({
           onClick={onRepeat}
         >
           <Repeat size={18} aria-hidden="true" />
-          {busy ? t("history.pleaseWait") : t("history.repeatWorkout")}
+          {busy ? t("history.pleaseWait") : t("details.repeat")}
         </button>
         <Link className="btn-secondary" to={workoutPath(id)}>
           <Pencil size={18} aria-hidden="true" />

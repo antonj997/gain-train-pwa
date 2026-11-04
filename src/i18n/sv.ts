@@ -482,6 +482,7 @@ export const sv = {
   "details.time": "Tid",
   "details.noSets": "Inga avbockade set",
   "details.edit": "Redigera",
+  "details.repeat": "Kör igen",
   "history.chooseMonthYear": "Välj månad och år",
   "history.previousYear": "Föregående år",
   "history.nextYear": "Nästa år",
