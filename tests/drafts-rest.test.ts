@@ -89,16 +89,19 @@ test("rest and haptics stay off for absent or malformed preferences", () => {
     restSeconds: 0,
     haptics: false,
     weeklyGoal: null,
+    weightUnit: "kg",
   });
   assert.deepEqual(normalizeTrainingPreferences("-10", "yes"), {
     restSeconds: 0,
     haptics: false,
     weeklyGoal: null,
+    weightUnit: "kg",
   });
   assert.deepEqual(normalizeTrainingPreferences("90", "true"), {
     restSeconds: 90,
     haptics: true,
     weeklyGoal: null,
+    weightUnit: "kg",
   });
 });
 

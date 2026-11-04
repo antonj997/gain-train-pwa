@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { newSet, type WorkoutSet } from "../src/data/model.ts";
+import { newSet, type Exercise, type WorkoutSet } from "../src/data/model.ts";
+import { appendSet } from "../src/lib/workout-editor.ts";
 import {
   allowedLoadKeys,
   applyExerciseCount,
@@ -74,8 +75,36 @@ test("the exercise measure is the most common measure, reps when unset or empty"
   );
 });
 
-test("a set that matches the exercise default has no marker", () => {
-  for (const key of KEYS) assert.equal(loadMarker(withKey(key), key), "none");
+test("a set that matches a kg or BW default has no marker; + and − always show", () => {
+  assert.equal(loadMarker(withKey("weight"), "weight"), "none");
+  assert.equal(loadMarker(withKey("bw"), "bw"), "none");
+  assert.equal(loadMarker(withKey("bwplus"), "bwplus"), "plus");
+  assert.equal(loadMarker(withKey("assisted"), "assisted"), "minus");
+});
+
+test("adding a set after a bodyweight + weight set keeps its + marker", () => {
+  // Set 1 plain bodyweight, set 2 changed to + weight: BW is the default and
+  // set 2 shows "+". The added set copies set 2, which makes + weight the most
+  // common load; neither + weight set may lose its marker.
+  const first = { ...withKey("bw"), reps: 10, done: true };
+  const second = { ...withKey("bwplus"), weight: 10, reps: 6 };
+  assert.equal(loadMarker(second, defaultLoadKey([first, second])), "plus");
+  const { sets } = appendSet({
+    id: "e",
+    exerciseId: "dip",
+    name: "Dip",
+    sets: [first, second],
+  } as Exercise);
+  assert.equal(loadKeyOf(sets[2]), "bwplus");
+  assert.equal(sets[2].weight, 10);
+  const key = defaultLoadKey(sets);
+  assert.equal(key, "bwplus");
+  assert.deepEqual(
+    sets.map((set) => loadMarker(set, key)),
+    ["bw", "plus", "plus"],
+  );
+  // An empty copy shows the marker too.
+  assert.equal(loadMarker({ ...sets[2], weight: null }, key), "plus");
 });
 
 test("a set that differs from the default shows its own key's marker", () => {

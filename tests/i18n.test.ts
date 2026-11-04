@@ -9,7 +9,6 @@ import {
 } from "../src/i18n/index.ts";
 import { en } from "../src/i18n/en.ts";
 import { sv } from "../src/i18n/sv.ts";
-import { HEADLINES, HEADLINES_SV, headlineFor } from "../src/lib/headlines.ts";
 import { localizedDate, weekdayNames } from "../src/lib/dates.ts";
 import { countLabel, durationLabel } from "../src/lib/labels.ts";
 
@@ -58,18 +57,6 @@ test("user data means a live record or a saved bodyweight", () => {
   assert.equal(hasUserData({ a: { kind: "library", deleted: false } }), false);
   for (const kind of ["workout", "routine", "exercise"])
     assert.equal(hasUserData({ a: { kind, deleted: false } }), true, kind);
-});
-
-test("Swedish headlines follow the same rules and size as the English ones", () => {
-  assert.equal(HEADLINES_SV.length, HEADLINES.length);
-  assert.equal(new Set(HEADLINES_SV).size, HEADLINES_SV.length);
-  for (const line of HEADLINES_SV) {
-    assert.ok(line.length < 40, line);
-    assert.ok(!line.includes("!"), line);
-  }
-  assert.ok(
-    HEADLINES_SV.includes(headlineFor(new Date(2026, 9, 28), HEADLINES_SV)),
-  );
 });
 
 test("dates and weekdays follow the chosen locale, Monday first", () => {

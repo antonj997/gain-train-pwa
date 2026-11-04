@@ -6,6 +6,7 @@ import {
   hasExtraWeight,
 } from "./set-load";
 import { t, type MessageKey } from "../i18n";
+import { getWeightUnit } from "./units";
 
 export type LoadKey = "weight" | "bw" | "bwplus" | "assisted";
 export type LoadMarker = "none" | "bw" | "plus" | "minus" | "kg";
@@ -55,10 +56,21 @@ const MARKERS: Record<LoadKey, LoadMarker> = {
   weight: "kg",
 };
 
+/**
+ * The marker a set's load field shows. "+" (bodyweight plus weight) and "−"
+ * (assisted) change what the number means, so they always show, even when the
+ * whole exercise uses that load: the marker must not vanish when an added set
+ * makes it the most common one. "BW" and "kg" only mark an exception.
+ */
 export function loadMarker(set: WorkoutSet, defaultKey: LoadKey): LoadMarker {
   const key = loadKeyOf(set);
+  if (key === "bwplus" || key === "assisted") return MARKERS[key];
   return key === defaultKey ? "none" : MARKERS[key];
 }
+
+/** Whether the exercise's default load shows a "+" or "−" in every field. */
+export const prefixedLoad = (key: LoadKey) =>
+  key === "bwplus" || key === "assisted";
 
 const HEADINGS = {
   weight: "load.headingKg",
@@ -67,9 +79,9 @@ const HEADINGS = {
   assisted: "load.headingAssist",
 } as const satisfies Record<LoadKey, MessageKey>;
 
-/** The load column's heading: "kg", "BW", "+kg" or "Assist" in English. */
+/** The load column's heading: "kg" (or "lb"), "BW", "+kg" or "Assist" in English. */
 export function loadHeading(key: LoadKey): string {
-  return t(HEADINGS[key]);
+  return t(HEADINGS[key], { unit: getWeightUnit() });
 }
 
 /** "Reps", "Sec", or "Reps/sec" when the sets mix both measures. */

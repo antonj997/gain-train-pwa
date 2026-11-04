@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { WorkoutSet } from "../data/model";
 import { capturePointer, releasePointer } from "./pointer-capture";
+import { isTap, type TapPoint } from "./touch";
 
 // Raw unfinished input belongs to local editor recovery, never saved records.
 export const setInputTextSchema = z.object({
@@ -77,6 +78,7 @@ type PointerInputEvent = {
   clientY: number;
   button: number;
   isPrimary: boolean;
+  timeStamp?: number;
   preventDefault: () => void;
 };
 
@@ -124,6 +126,8 @@ function inputCaretAtPoint(input: HTMLInputElement, clientX: number) {
  * Only gestures beginning on this input are captured. Native selection dragging
  * is prevented, so moving below the field cannot ask the browser to scroll the
  * document. Keyboard selection and ordinary scrolling outside the input remain native.
+ * A read-only (checked) field captures nothing: a drag that starts on it
+ * scrolls the page, and only a real tap reports the locked attempt.
  */
 export function createSetInputSelection(
   pointAt = inputCaretAtPoint,
@@ -136,20 +140,47 @@ export function createSetInputSelection(
     anchor: number;
   } | null = null;
   let suppressClick = false;
+  // A locked field's gesture: scrolling comes first, so it is only watched,
+  // never prevented, and the notice waits for a real tap (isTap).
+  let tap: (TapPoint & { pointerId: number; scrolled: boolean }) | null = null;
+  let lastPointerAt = -Infinity;
+  const onScroll = () => {
+    if (tap) tap.scrolled = true;
+  };
+  const watchScroll = (on: boolean) => {
+    if (typeof document === "undefined") return;
+    if (on) document.addEventListener("scroll", onScroll, true);
+    else document.removeEventListener("scroll", onScroll, true);
+  };
+  const endTap = () => {
+    if (tap) watchScroll(false);
+    tap = null;
+  };
+  const now = (event: { timeStamp?: number }) => event.timeStamp ?? Date.now();
   const release = () => {
     const active = gesture;
     gesture = null;
+    endTap();
     if (active) releasePointer(active.input, active.pointerId);
   };
   return {
     onPointerDown(event: PointerInputEvent) {
       if (!event.isPrimary || event.button !== 0 || gesture) return;
-      event.preventDefault();
       const input = event.currentTarget;
+      lastPointerAt = now(event);
       if (input.readOnly) {
-        onLockedAttempt();
+        endTap();
+        tap = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+          time: now(event),
+          scrolled: false,
+        };
+        watchScroll(true);
         return;
       }
+      event.preventDefault();
       input.focus({ preventScroll: true });
       input.select();
       suppressClick = true;
@@ -173,12 +204,35 @@ export function createSetInputSelection(
       );
     },
     onPointerUp(event: PointerInputEvent) {
+      lastPointerAt = now(event);
+      if (tap?.pointerId === event.pointerId) {
+        const start = tap;
+        endTap();
+        if (
+          isTap(
+            start,
+            { x: event.clientX, y: event.clientY, time: now(event) },
+            start.scrolled,
+          )
+        )
+          onLockedAttempt();
+        return;
+      }
       if (gesture?.pointerId !== event.pointerId) return;
       event.preventDefault();
       release();
     },
     onPointerCancel(event: PointerInputEvent) {
+      // The browser took the touch over to scroll.
+      if (tap?.pointerId === event.pointerId) endTap();
       if (gesture?.pointerId === event.pointerId) release();
+    },
+    /**
+     * Whether a focus belongs to a pointer that just went down or up; that
+     * pointer's tap decides on the notice, so focus only warns from a keyboard.
+     */
+    pointerFocus(timeStamp = Date.now()) {
+      return tap !== null || timeStamp - lastPointerAt < 1000;
     },
     onLostPointerCapture() {
       gesture = null;
@@ -189,8 +243,11 @@ export function createSetInputSelection(
       preventDefault: () => void;
     }) {
       event.preventDefault();
-      if (event.currentTarget.readOnly) onLockedAttempt();
-      else if (!suppressClick || event.detail === 0)
+      // A tap on a locked field already warned on pointerup; a click with no
+      // pointer (detail 0) comes from a keyboard or assistive technology.
+      if (event.currentTarget.readOnly) {
+        if (event.detail === 0) onLockedAttempt();
+      } else if (!suppressClick || event.detail === 0)
         event.currentTarget.select();
       suppressClick = false;
     },

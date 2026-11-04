@@ -62,6 +62,14 @@ body::before {
   justify-content: flex-start;
   margin-left: calc(-1 * var(--gt-space-2));
 }
+/* Train's title is the date alone: the gear centres on its first line, so it
+   stays level with the date even when a long date wraps. */
+.page-header-bar.align-first-line {
+  align-items: flex-start;
+}
+.page-header-bar.align-first-line > .icon-btn {
+  margin-top: calc((2px + var(--gt-fs-6) * 1.15 - 44px) / 2);
+}
 .page-header-text {
   flex: 1;
   min-width: 0;

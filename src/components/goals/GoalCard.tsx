@@ -6,9 +6,10 @@ import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import type { Deadline, Pace } from "@/lib/goal-pace";
 import { type MessageKey, formatDecimal } from "@/i18n";
+import { formatWeight, getWeightUnit, weightTotal } from "@/lib/units";
 import { useT } from "@/i18n/useT";
 
-const kg = (value: number) => `${formatDecimal(Number(value.toFixed(1)))} kg`;
+const kg = (value: number) => formatWeight(value, getWeightUnit(), 1);
 /** A signed weekly rate in the language: "+0.8", "−0,6". */
 const signed = (value: number) => {
   const rounded = Number(value.toFixed(1));
@@ -108,7 +109,9 @@ export default function GoalCard({
             pace.kind === "behind" ? "goals.behindDetail" : "goals.paceDetail",
             {
               needed: rate(kg(pace.needed)),
-              trend: rate(`${signed(perDay * 7)} kg`),
+              trend: rate(
+                `${signed(weightTotal(perDay * 7))} ${getWeightUnit()}`,
+              ),
             },
           )}
         </span>

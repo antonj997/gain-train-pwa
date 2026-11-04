@@ -5,6 +5,13 @@ import { isDrop, type SetBadgeInfo } from "@/data/drops";
 import { getSetIssues } from "@/lib/workout-editor";
 import { bodyWeightForSet } from "@/lib/set-editing";
 import { hasExtraWeight } from "@/lib/set-load";
+import {
+  formatWeightValue,
+  fromUnit,
+  getWeightUnit,
+  toUnit,
+  type WeightUnit,
+} from "@/lib/units";
 import type { LoadMarker } from "@/lib/load-keys";
 import {
   changeSetNumber,
@@ -17,13 +24,12 @@ import SetBadge from "@/components/workout/SetBadge";
 import "@/styles/workout.css";
 // The module translator, not a hook: the workout page remounts on a new
 // language, and tests render this row with a minimal hook host.
-import { formatDecimal, t } from "@/i18n";
+import { t } from "@/i18n";
 
 // What a screen reader hears after the set's name, by the kind of load.
 const LOAD_NAMES = {
-  plus: "set.loadPlus",
-  minus: "set.loadMinus",
-  kg: "set.loadKg",
+  kg: { plus: "set.loadPlus", minus: "set.loadMinus", kg: "set.loadKg" },
+  lb: { plus: "set.loadPlusLb", minus: "set.loadMinusLb", kg: "set.loadLb" },
 } as const;
 
 /**
@@ -40,6 +46,7 @@ export default function SetLine({
   previous,
   marker,
   bodyWeightKg = null,
+  weightUnit,
   next = false,
   editing = false,
   unlocked = false,
@@ -58,6 +65,11 @@ export default function SetLine({
   /** How this set's load differs from the exercise's default load. */
   marker: LoadMarker;
   bodyWeightKg?: number | null;
+  /**
+   * How weights show and are typed; stored in kg. Passed so a memoised row
+   * redraws when it changes; the module's unit is the default.
+   */
+  weightUnit?: WeightUnit;
   /** The next set to do: drawn with an accent. */
   next?: boolean;
   /** Its Set sheet is open. */
@@ -123,8 +135,23 @@ export default function SetLine({
     marker === "bw" || (set.load === "bodyweight" && !extraWeight);
   const displayedBodyWeight = bodyWeightForSet(set, bodyWeightKg);
   // The marker names what the field shows; with none, the set's own load does.
+  const unit = weightUnit ?? getWeightUnit();
+  // Pounds show to one decimal, so a typed "132.25" would come back as
+  // "132.3" mid-typing. The row remembers what was typed for the kg it stored.
+  const typedWeight = useRef<{
+    kg: number;
+    value: number;
+    unit: WeightUnit;
+  } | null>(null);
+  const typed = typedWeight.current;
+  const shownWeight =
+    set.weight === null
+      ? null
+      : typed && typed.kg === set.weight && typed.unit === unit
+        ? typed.value
+        : toUnit(set.weight, unit);
   const loadName = t(
-    LOAD_NAMES[
+    LOAD_NAMES[unit][
       marker === "plus" || marker === "minus" || marker === "kg"
         ? marker
         : extraWeight
@@ -288,7 +315,7 @@ export default function SetLine({
               <span aria-hidden="true">
                 {t("set.bwShort")}
                 {displayedBodyWeight !== null && (
-                  <small>{` ${formatDecimal(displayedBodyWeight)} kg`}</small>
+                  <small>{` ${formatWeightValue(displayedBodyWeight, unit)} ${unit}`}</small>
                 )}
               </span>
               <span className="sr-only">
@@ -296,7 +323,8 @@ export default function SetLine({
                   ? t("set.bwSr", { label })
                   : t("set.bwKgSr", {
                       label,
-                      kg: formatDecimal(displayedBodyWeight),
+                      kg: formatWeightValue(displayedBodyWeight, unit),
+                      unitName: t(unit === "lb" ? "set.loadLb" : "set.loadKg"),
                     })}
               </span>
             </span>
@@ -324,26 +352,37 @@ export default function SetLine({
                 min="0"
                 max="10000"
                 step="any"
-                placeholder={marker === "kg" ? undefined : "kg"}
-                value={set.weight}
+                placeholder={marker === "kg" ? undefined : unit}
+                // Shown and typed in the unit; stored in kg. An untouched
+                // field never writes, so its exact kg value stays.
+                value={shownWeight}
                 inputText={getSetInputText(set, "weight")}
                 readOnly={locked}
                 onLockedAttempt={() => setLockedAttempt(true)}
-                onValueChange={(value, text) =>
-                  updateNumber("weight", value, text)
-                }
+                onValueChange={(value, text) => {
+                  const kg = value === null ? null : fromUnit(value, unit);
+                  typedWeight.current =
+                    kg === null || value === null ? null : { kg, value, unit };
+                  updateNumber("weight", kg, text);
+                }}
               />
               {marker === "kg" && (
                 <span
                   className="set-marker set-marker-suffix"
                   aria-hidden="true"
                 >
-                  kg
+                  {unit}
                 </span>
               )}
             </div>
           )}
-          <div className="set-field">
+          <div className={`set-field set-count${timed ? " is-timed" : ""}`}>
+            {/* A checked row reads like the result: "60 × 8", "BW × 10", "45 s". */}
+            {set.done && !timed && (
+              <span className="set-times" aria-hidden="true">
+                ×
+              </span>
+            )}
             <SetNumberInput
               aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}`}
               aria-invalid={
@@ -363,6 +402,11 @@ export default function SetLine({
               onLockedAttempt={() => setLockedAttempt(true)}
               onValueChange={(value, text) => updateNumber("reps", value, text)}
             />
+            {set.done && timed && set.reps !== null && (
+              <span className="set-marker set-seconds" aria-hidden="true">
+                s
+              </span>
+            )}
           </div>
         </>
       )}

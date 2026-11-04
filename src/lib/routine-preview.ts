@@ -4,7 +4,8 @@ import { isDrop } from "../data/drops";
 import { hasExtraWeight } from "./set-load";
 import { cardioLabel, isCardioSet } from "./cardio";
 import { countLabel, durationLabel } from "./labels";
-import { formatDecimal, t } from "../i18n";
+import { t } from "../i18n";
+import { formatWeightValue, getWeightUnit } from "./units";
 
 /** Minutes rounded to the nearest 5, never below 5. */
 const roundToFive = (minutes: number) =>
@@ -60,11 +61,13 @@ export function plannedSummary(exercise: Exercise) {
     first.measure === "seconds"
       ? t("label.timesSec", { sets: main.length, n: first.reps })
       : `${main.length} × ${first.reps}`;
-  const kg = first.weight === null ? "" : formatDecimal(first.weight);
-  if (hasExtraWeight(first)) return `${reps} · ${t("label.bwPlus", { kg })}`;
+  const kg = first.weight === null ? "" : formatWeightValue(first.weight);
+  const unit = getWeightUnit();
+  if (hasExtraWeight(first))
+    return `${reps} · ${t("label.bwPlus", { kg, unit })}`;
   if (first.load === "bodyweight") return `${reps} · ${t("label.bw")}`;
   if (first.weight === null) return reps;
-  return `${reps} · ${first.load === "assisted" ? t("label.assistSuffix", { kg }) : `${kg} kg`}`;
+  return `${reps} · ${first.load === "assisted" ? t("label.assistSuffix", { kg, unit }) : `${kg} ${unit}`}`;
 }
 
 /** Warm-up, cool-down and drop sets of an exercise: "2 warm-up · 1 drop". */

@@ -1,0 +1,72 @@
+import { formatDecimal } from "../i18n";
+import { local, storageKeys } from "./storage";
+
+/**
+ * The unit weights are shown and typed in. Storage is always kilograms:
+ * pounds are only a way of showing a value and reading one typed in.
+ */
+export type WeightUnit = "kg" | "lb";
+
+/** One international avoirdupois pound, exactly. */
+export const KG_PER_LB = 0.45359237;
+
+export const parseWeightUnit = (value: unknown): WeightUnit =>
+  value === "lb" ? "lb" : "kg";
+
+// The unit every label is built in, like the i18n module's language: helpers
+// outside React read it here, and the training preferences change it.
+let current: WeightUnit = parseWeightUnit(
+  local.getItem(storageKeys.weightUnit),
+);
+export const getWeightUnit = () => current;
+export function setCurrentWeightUnit(unit: WeightUnit) {
+  current = unit;
+}
+
+const round = (value: number, decimals: number) => {
+  const scale = 10 ** decimals;
+  return Math.round(value * scale) / scale;
+};
+
+/**
+ * A stored kilogram value in the unit: kilograms as they are, pounds to one
+ * decimal (a trailing ".0" drops when formatted).
+ */
+export function toUnit(kg: number, unit: WeightUnit = current): number {
+  return unit === "lb" ? round(kg / KG_PER_LB, 1) : kg;
+}
+
+/**
+ * A value typed in the unit, as kilograms to store. Pounds keep three decimals
+ * (grams), so the stored value shows the same pounds again: no drift.
+ */
+export function fromUnit(value: number, unit: WeightUnit = current): number {
+  return unit === "lb" ? round(value * KG_PER_LB, 3) : value;
+}
+
+/**
+ * A weight's number in the unit and the language: "60", "132.3", "132,3".
+ * `kgDecimals` rounds a kilogram value too, for computed ones such as a goal's
+ * pace; pounds always show one decimal.
+ */
+export const formatWeightValue = (
+  kg: number,
+  unit: WeightUnit = current,
+  kgDecimals?: number,
+) =>
+  formatDecimal(
+    unit === "kg" && kgDecimals !== undefined
+      ? round(kg, kgDecimals)
+      : toUnit(kg, unit),
+  );
+
+/** A weight with its unit: "60 kg", "132.3 lb". */
+export const formatWeight = (
+  kg: number,
+  unit: WeightUnit = current,
+  kgDecimals?: number,
+) => `${formatWeightValue(kg, unit, kgDecimals)} ${unit}`;
+
+/** A total such as volume in the unit, unrounded: kg, or pounds. */
+export const weightTotal = (kg: number, unit: WeightUnit = current) =>
+  unit === "lb" ? kg / KG_PER_LB : kg;

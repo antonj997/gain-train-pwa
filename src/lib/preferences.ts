@@ -1,11 +1,18 @@
 import { t } from "../i18n";
 import { local, storageKeys, writeStored } from "./storage";
+import {
+  parseWeightUnit,
+  setCurrentWeightUnit,
+  type WeightUnit,
+} from "./units";
 export const TRAINING_PREFERENCES_EVENT = "gain-preferences-change";
 export type TrainingPreferences = {
   restSeconds: number;
   haptics: boolean;
   /** Workouts per week to aim for (1-14); null when off. */
   weeklyGoal: number | null;
+  /** How weights are shown and typed; they are stored in kg either way. */
+  weightUnit: WeightUnit;
 };
 export function parseWeeklyGoal(value: string | null): number | null {
   if (value === null || value.trim() === "") return null;
@@ -16,6 +23,7 @@ export function normalizeTrainingPreferences(
   rest: string | null,
   haptics: string | null,
   weeklyGoal: string | null = null,
+  weightUnit: string | null = null,
 ): TrainingPreferences {
   const value = Number(rest);
   return {
@@ -23,6 +31,7 @@ export function normalizeTrainingPreferences(
       Number.isInteger(value) && value >= 0 && value <= 600 ? value : 0,
     haptics: haptics === "true",
     weeklyGoal: parseWeeklyGoal(weeklyGoal),
+    weightUnit: parseWeightUnit(weightUnit),
   };
 }
 export function readTrainingPreferences(): TrainingPreferences {
@@ -30,6 +39,7 @@ export function readTrainingPreferences(): TrainingPreferences {
     local.getItem(storageKeys.restSeconds),
     local.getItem(storageKeys.haptics),
     local.getItem(storageKeys.weeklyGoal),
+    local.getItem(storageKeys.weightUnit),
   );
 }
 export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
@@ -40,6 +50,9 @@ export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
     storageKeys.weeklyGoal,
     next.weeklyGoal === null ? null : String(next.weeklyGoal),
   );
+  writeStored(storageKeys.weightUnit, next.weightUnit);
+  // Labels built outside React read the unit from its module, so it changes first.
+  setCurrentWeightUnit(next.weightUnit);
   window.dispatchEvent(new Event(TRAINING_PREFERENCES_EVENT));
 }
 /** Rest time as shown on the row: "Off", "0:30", "2:00". */

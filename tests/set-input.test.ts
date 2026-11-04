@@ -7,6 +7,7 @@ import {
   getSetInputText,
   isSetInputEditKey,
 } from "../src/lib/set-input";
+import { isTap } from "../src/lib/touch";
 import {
   changeSetLoad,
   changeSetMeasure,
@@ -98,7 +99,7 @@ test("another pointer cannot move a selection; cancel and disposal release captu
   assert.equal(host.captures.size, 0);
 });
 
-test("locked input gestures warn without focusing, selecting, or starting a drag", () => {
+test("a tap on a locked input warns without focusing, selecting, or starting a drag", () => {
   const host = input();
   host.field.readOnly = true;
   let warnings = 0;
@@ -106,11 +107,60 @@ test("locked input gestures warn without focusing, selecting, or starting a drag
     () => 0,
     () => warnings++,
   );
-  selection.onPointerDown(host.event(10, 20));
+  selection.onPointerDown({ ...host.event(10, 20), timeStamp: 1000 });
+  assert.equal(warnings, 0, "the notice waits for the tap to end");
+  assert.equal(host.prevented(), 0, "scrolling must stay possible");
+  assert.equal(selection.pointerFocus(1050), true);
+  selection.onPointerUp({ ...host.event(14, 24), timeStamp: 1150 });
   assert.equal(warnings, 1);
   assert.equal(host.selects(), 0);
   assert.equal(host.focus.length, 0);
   assert.equal(host.captures.size, 0);
+  assert.equal(host.prevented(), 0);
+  // The click that follows a tap does not warn twice; a keyboard click does.
+  const click = (detail: number) =>
+    selection.onClick({
+      currentTarget: host.field as unknown as HTMLInputElement,
+      detail,
+      preventDefault() {},
+    });
+  click(1);
+  assert.equal(warnings, 1);
+  click(0);
+  assert.equal(warnings, 2);
+  // Focus long after any pointer comes from the keyboard.
+  assert.equal(selection.pointerFocus(5000), false);
+});
+
+test("a drag that starts on a locked input scrolls instead of warning", () => {
+  const host = input();
+  host.field.readOnly = true;
+  let warnings = 0;
+  const selection = createSetInputSelection(
+    () => 0,
+    () => warnings++,
+  );
+  // Moved too far.
+  selection.onPointerDown({ ...host.event(10, 200), timeStamp: 0 });
+  selection.onPointerUp({ ...host.event(12, 120), timeStamp: 200 });
+  // Held too long.
+  selection.onPointerDown({ ...host.event(10, 200), timeStamp: 1000 });
+  selection.onPointerUp({ ...host.event(10, 200), timeStamp: 1800 });
+  // Taken over by the browser to scroll.
+  selection.onPointerDown({ ...host.event(10, 200), timeStamp: 3000 });
+  selection.onPointerCancel(host.event(10, 200));
+  selection.onPointerUp({ ...host.event(10, 200), timeStamp: 3100 });
+  assert.equal(warnings, 0);
+  assert.equal(host.prevented(), 0);
+});
+
+test("isTap allows 10 px and 500 ms, and never a scroll", () => {
+  const start = { x: 100, y: 100, time: 0 };
+  assert.equal(isTap(start, { x: 106, y: 108, time: 499 }), true);
+  assert.equal(isTap(start, { x: 100, y: 111, time: 100 }), false);
+  assert.equal(isTap(start, { x: 100, y: 100, time: 501 }), false);
+  assert.equal(isTap(start, { x: 100, y: 100, time: 100 }, true), false);
+  assert.equal(isTap(start, { x: 100, y: 100, time: -5 }), false);
 });
 
 test("decimal and comma entry remains numeric while malformed entries cannot become a valid saved value", () => {

@@ -43,6 +43,8 @@ export default function WorkoutTopBar({
   const bar = useRef<HTMLDivElement>(null);
   const { t } = useT();
   useToastClearance(bar, true);
+  // Finish is an outline until every set is checked, then it fills.
+  const allChecked = total > 0 && completed === total;
   const status = [
     timed ? (
       <span key="time">
@@ -108,7 +110,13 @@ export default function WorkoutTopBar({
       </div>
       <button
         type="button"
-        className="btn-primary"
+        className={
+          editing
+            ? "btn-primary"
+            : allChecked
+              ? "btn-primary finish-ready"
+              : "btn-secondary finish-pending"
+        }
         disabled={finishDisabled}
         onClick={onFinish}
       >

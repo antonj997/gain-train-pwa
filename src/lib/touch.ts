@@ -12,3 +12,23 @@ export function opensKeyboard(element: Element | null) {
     element.type,
   );
 }
+
+export type TapPoint = { x: number; y: number; time: number };
+
+/** How far (px) and how long (ms) a touch may go and still count as a tap. */
+export const TAP_SLOP = 10;
+export const TAP_TIME = 500;
+
+/**
+ * A real tap: lifted within TAP_SLOP px and TAP_TIME ms of where it went down,
+ * with no scroll in between. Anything else was a drag to scroll, which must
+ * never be answered with a notice.
+ */
+export function isTap(start: TapPoint, end: TapPoint, scrolled = false) {
+  return (
+    !scrolled &&
+    Math.hypot(end.x - start.x, end.y - start.y) <= TAP_SLOP &&
+    end.time - start.time >= 0 &&
+    end.time - start.time <= TAP_TIME
+  );
+}

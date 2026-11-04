@@ -19,10 +19,13 @@ import { newWorkout } from "@/data/start";
 import { today } from "@/data/model";
 import { activePlans, groupsOf, plannedFor, resolveCell } from "@/data/plans";
 import { workoutPath } from "@/lib/routes";
-import { headlineFor } from "@/lib/headlines";
 import { readTrainingPreferences } from "@/lib/preferences";
 import { autoWorkoutName } from "@/lib/workout-name";
 import { useT } from "@/i18n/useT";
+
+/** Swedish weekdays are lower case; as the page title the date starts upper case. */
+const capitalize = (text: string) =>
+  text.charAt(0).toLocaleUpperCase() + text.slice(1);
 
 export default function Home() {
   const { state } = useData();
@@ -47,7 +50,6 @@ export default function Home() {
   const { t, locale } = useT();
   const [params, setParams] = useSearchParams();
   const handledShortcut = useRef(false);
-  const [headline] = useState(() => headlineFor());
   const [goal] = useState(() => readTrainingPreferences().weeklyGoal);
   const start = (past = false, routine?: RoutineRecord) =>
     requestStart(newWorkout(Object.values(state.records), { routine, past }));
@@ -92,12 +94,14 @@ export default function Home() {
     <div className="page home-page">
       {confirmation}
       <PageHeader
-        eyebrow={new Date().toLocaleDateString(locale, {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        })}
-        title={headline}
+        title={capitalize(
+          new Date().toLocaleDateString(locale, {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          }),
+        )}
+        align="first-line"
         status
         action={
           <Link

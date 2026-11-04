@@ -54,6 +54,8 @@ export const storageKeys = {
   restSeconds: "gt-rest-seconds",
   haptics: "gt-haptics",
   weeklyGoal: "gt-weekly-goal",
+  /** "kg" or "lb"; weights are stored in kg either way. */
+  weightUnit: "gt-weight-unit",
   persistRequested: "gt-persist-requested",
   /** This device closed Train's "Sign in to sync" banner. */
   signInBannerDismissed: "gt-sign-in-banner-dismissed",

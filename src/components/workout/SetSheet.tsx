@@ -7,6 +7,7 @@ import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import { useT } from "@/i18n/useT";
 import { t, type MessageKey } from "@/i18n";
+import { getWeightUnit } from "@/lib/units";
 
 type BodyProps = {
   badge: SetBadgeInfo;
@@ -76,7 +77,7 @@ function SetSheetBody({
             value={set.section}
             options={SECTION_OPTIONS.map((option) => ({
               ...option,
-              label: t(option.label),
+              label: t(option.label, { unit: getWeightUnit() }),
               disabled: set.done,
             }))}
             onChange={onSection}

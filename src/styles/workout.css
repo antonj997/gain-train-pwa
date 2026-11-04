@@ -19,11 +19,22 @@
   align-items: center;
   column-gap: var(--gt-space-1);
 }
-.set-line.load-prefix {
+.set-line.load-prefix,
+.set-columns.load-prefix {
   --set-load-w: 68px;
 }
 .set-line.load-suffix {
   --set-load-w: 74px;
+}
+/* Pounds run a digit longer ("176.4"), so their load field is wider. */
+.ex-card[data-unit="lb"] :is(.set-line, .set-columns) {
+  --set-load-w: 62px;
+}
+.ex-card[data-unit="lb"] :is(.set-line, .set-columns).load-prefix {
+  --set-load-w: 76px;
+}
+.ex-card[data-unit="lb"] .set-line.load-suffix {
+  --set-load-w: 80px;
 }
 .set-line {
   position: relative;
@@ -201,11 +212,46 @@
   caret-color: var(--gt-accent);
   touch-action: none;
 }
+/* A checked field is read-only: a drag that starts on it scrolls the page. */
 .set-line .set-field input[readonly] {
   cursor: default;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
+/* A checked row reads as plain text: no field outline or fill, a muted "×"
+   in the gap between load and reps, and "s" after a hold's seconds. Both are
+   drawn over the existing columns, so nothing moves when a set is checked. */
 .set-line.is-done .set-field input {
+  border-color: transparent;
   background-color: transparent;
+}
+.set-times {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  translate: calc(-50% - var(--gt-space-1) / 2) 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
+  pointer-events: none;
+}
+@media (min-width: 400px) {
+  .set-times {
+    translate: calc(-50% - var(--gt-space-2) / 2) 0;
+  }
+}
+.set-line.is-done .set-count.is-timed input {
+  padding-right: var(--gt-space-2);
+}
+.set-seconds {
+  right: var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
 }
 .set-line.is-next .set-field input {
   border-color: var(--gt-accent);
@@ -337,11 +383,15 @@
   min-width: 0;
 }
 /* A routine's form leaves the same room under its last row. Its Save footer
-   then sticks that much lower, out of sight under the set's sheet. */
+   then sticks that much lower, out of sight under the set's sheet; with no set
+   sheet open it sits flush on the bottom edge. */
 .dialog-content.routine-dialog {
   padding-bottom: calc(
     var(--gt-space-4) + var(--sheet-space, 0px) + env(safe-area-inset-bottom)
   );
+}
+.dialog-content.dialog-full.routine-dialog:has(> .sheet-footer) {
+  padding-bottom: var(--sheet-space, 0px);
 }
 .dialog-content.routine-dialog .sheet-footer {
   bottom: calc(var(--sheet-space, 0px) * -1);
@@ -423,8 +473,43 @@
   position: absolute;
   inset: -8px 0;
 }
-.top-bar > .btn-primary {
+.top-bar > .btn-primary,
+.top-bar > .btn-secondary {
   flex: none;
+}
+/* Finish is an outline while any set is unchecked. Once every set is checked
+   it fills with a slow gradient of the accent hues; reduced motion keeps the
+   gradient still. */
+.top-bar > .finish-pending {
+  border-color: var(--gt-accent);
+  background-color: transparent;
+  color: var(--gt-accent);
+}
+@keyframes finish-shift {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+.top-bar > .finish-ready {
+  border-color: transparent;
+  background-image: linear-gradient(
+    110deg,
+    var(--gt-accent),
+    var(--gt-cool-fg),
+    var(--gt-done),
+    var(--gt-accent)
+  );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  animation: finish-shift 4s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .top-bar > .finish-ready {
+    animation: none;
+  }
 }
 
 /* Add exercise: a dashed button after the cards; alone it is a large one. */
@@ -577,6 +662,14 @@
 .sheet-menu-item:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+/* A choice sheet's current option: accent text and a check at the end. */
+.sheet-menu-item.is-current {
+  color: var(--gt-accent);
+}
+.sheet-menu-item svg.sheet-menu-check {
+  margin-left: auto;
+  color: var(--gt-accent);
 }
 .sheet-menu-hint {
   margin-left: auto;
