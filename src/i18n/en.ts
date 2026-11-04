@@ -268,7 +268,7 @@ export const en = {
   "exercise.colPrevious": "Previous",
   "exercise.addSet": "Add set",
   "exercise.workingSetsNote": "{sets} · last time {last}",
-  "exercise.changeExercise": "Change exercise",
+  "exercise.changeExercise": "Swap exercise",
   "exercise.loadAndCount": "Load and count",
   "exercise.reorderSets": "Reorder sets",
   "exercise.moveUp": "Move up",
@@ -355,9 +355,9 @@ export const en = {
   "set.movingAt":
     "Set at position {position} of {total}. Use arrow keys or drag to move, Space or Enter to drop.",
   "set.moveHandle": "Move {name} set {n}",
-  "change.changedTo": "Changed to {name}",
+  "change.changedTo": "Swapped to {name}",
   "change.undoFailed": "Could not undo the change.",
-  "change.title": "Change to {name}?",
+  "change.title": "Swap to {name}?",
   "change.cardioToStrength": {
     one: "Your {count} logged set doesn't fit a strength exercise and will be cleared.",
     other:

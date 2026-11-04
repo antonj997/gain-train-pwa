@@ -663,6 +663,16 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+/* The menu's main action, such as Swap exercise: accent text and icon, set off by a hairline. */
+.sheet-menu-item.is-lead {
+  margin-bottom: var(--gt-space-1);
+  border-bottom: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md) var(--gt-radius-md) 0 0;
+  color: var(--gt-accent);
+}
+.sheet-menu-item.is-lead svg {
+  color: var(--gt-accent);
+}
 /* A choice sheet's current option: accent text and a check at the end. */
 .sheet-menu-item.is-current {
   color: var(--gt-accent);

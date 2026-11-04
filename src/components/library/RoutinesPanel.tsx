@@ -501,6 +501,7 @@ export default function RoutinesPanel() {
       <ChangeExercisePicker
         mode="plan"
         exercise={changing}
+        defaults={categories}
         onClose={() => setChanging(null)}
         onChange={update}
       />

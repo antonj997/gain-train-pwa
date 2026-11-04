@@ -36,7 +36,7 @@ export type PickerOptions = {
   suggested?: string[];
   /** Choosing an exercise adds it at once and closes the picker. */
   single?: boolean;
-  /** Replaces the default heading, for example "Change exercise". */
+  /** Replaces the default heading, for example "Swap exercise". */
   title?: string;
   /** An exercise to leave out of the list, such as the one being replaced. */
   excludeId?: string;

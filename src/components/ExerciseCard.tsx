@@ -75,7 +75,7 @@ export type ExerciseCardProps = {
   onChange: (exercise: Exercise) => void;
   onMove: (exercise: Exercise, step: -1 | 1) => void;
   onRemove: (exercise: Exercise) => void;
-  /** Opens the shared "Change exercise" picker for this card. */
+  /** Opens the shared "Swap exercise" picker for this card. */
   onChangeExercise: (exercise: Exercise) => void;
   /** Called when a set is newly checked as done. */
   onSetDone?: () => void;

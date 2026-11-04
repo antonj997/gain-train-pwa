@@ -232,6 +232,7 @@ function Editor({
       ))}
       <ChangeExercisePicker
         exercise={changing}
+        defaults={defaults}
         onClose={() => setChanging(null)}
         onChange={update}
       />
