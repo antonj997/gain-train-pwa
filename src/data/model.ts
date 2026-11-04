@@ -47,6 +47,22 @@ export const workoutSchema = z.object({
   completedAt: z.number().finite().min(0).optional(),
   status: z.enum(["draft", "completed"]),
   exercises: z.array(exerciseSchema).max(100),
+  /**
+   * Set when the workout was started inside a plan's phase: the week, whether
+   * it was a deload week and the planned working weights it prefilled, by
+   * exercise id. The cards show it as "Plan week 3: 85 kg".
+   */
+  plan: z
+    .object({
+      planId: z.string().uuid(),
+      week: z.number().int().min(1).max(300),
+      weeks: z.number().int().min(1).max(300),
+      deload: z.boolean().optional(),
+      loads: z
+        .record(z.string().min(1).max(200), z.number().finite().min(0).max(10000))
+        .optional(),
+    })
+    .optional(),
 });
 export const routineSchema = z.object({
   schemaVersion,
@@ -80,6 +96,25 @@ const isoDay = z
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .refine(isIsoDay);
 
+export const levels = ["beginner", "intermediate", "experienced"] as const;
+/** One lift a plan raises: from startKg in week 1 to targetKg in its last normal week. */
+export const progressionSchema = z.object({
+  exerciseId: z.string().min(1).max(200),
+  name: z.string().trim().min(1).max(100),
+  /** The reps the planned weight is for. */
+  reps: z.number().int().min(1).max(100),
+  startKg: z.number().finite().positive().max(10000),
+  targetKg: z.number().finite().positive().max(10000),
+  /** The training level the suggestion was made for; the user can change it. */
+  level: z.enum(levels).catch("intermediate"),
+  /** Week number (1 = the phase's first week) to a weight the user typed over the line. */
+  overrides: z
+    .record(z.string().regex(/^\d{1,3}$/), z.number().finite().min(0).max(10000))
+    .optional(),
+  /** The lift goal made from this row with "Also add as a goal". */
+  goalId: z.string().uuid().optional(),
+});
+
 /** One day of a plan: a routine id, "rest", a day type or group (see part D), or nothing. */
 const planCell = z.string().min(1).max(100).nullable();
 export const planSchema = z
@@ -96,6 +131,21 @@ export const planSchema = z
     goalIds: z.array(z.string().uuid()).max(50),
     /** A paused plan is kept but plans nothing and blocks no other plan's dates. */
     paused: z.boolean().optional(),
+    /**
+     * Per cycle week: "deload" or "normal". Anything else, a missing entry or
+     * a list of another length (an older app changed the cycle) reads as
+     * normal; see weekKindsOf() in phase.ts.
+     */
+    weekKinds: z.array(z.string().max(20)).max(6).optional(),
+    /** How a deload week lightens routines: load cut and share of working sets kept. */
+    deload: z
+      .object({
+        loadPct: z.number().int().min(0).max(50),
+        setsPct: z.number().int().min(10).max(100),
+      })
+      .optional(),
+    /** Lifts to raise over the phase, week by week. See progression.ts. */
+    progression: z.array(progressionSchema).max(40).optional(),
   })
   .superRefine((plan, ctx) => {
     if (plan.endDate < plan.startDate)
@@ -152,6 +202,9 @@ export type Plan = z.infer<typeof planSchema>;
 export type Goal = z.infer<typeof goalSchema>;
 export type Library = z.infer<typeof librarySchema>;
 export type RoutineGroup = z.infer<typeof groupSchema>;
+export type ProgressionItem = z.infer<typeof progressionSchema>;
+export type Level = (typeof levels)[number];
+export type WorkoutPlanMark = NonNullable<Workout["plan"]>;
 export type Kind =
   "workout" | "routine" | "exercise" | "plan" | "goal" | "library";
 export type Payload =
