@@ -180,6 +180,11 @@ export default function PlanEditor({
             onChange={(e) => set({ name: e.target.value })}
           />
         </label>
+        {paused && (
+          <p className="plan-paused-note" role="status">
+            {t("plan.pausedNote")}
+          </p>
+        )}
         <PlanPeriodPicker
           startDate={draft.startDate}
           endDate={draft.endDate}
@@ -221,22 +226,19 @@ export default function PlanEditor({
           />
         )}
         {plan && (
-          <div className="plan-pause">
-            {paused && <p className="row-sub">{t("plan.pausedNote")}</p>}
-            <button
-              type="button"
-              className="btn-secondary btn-block"
-              disabled={busy || !draft.name.trim() || !validPeriod}
-              onClick={() => void togglePause()}
-            >
-              {paused ? (
-                <Play size={18} aria-hidden="true" />
-              ) : (
-                <Pause size={18} aria-hidden="true" />
-              )}
-              {paused ? t("plan.resume") : t("plan.pause")}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="btn-secondary btn-block"
+            disabled={busy || !draft.name.trim() || !validPeriod}
+            onClick={() => void togglePause()}
+          >
+            {paused ? (
+              <Play size={18} aria-hidden="true" />
+            ) : (
+              <Pause size={18} aria-hidden="true" />
+            )}
+            {paused ? t("plan.resume") : t("plan.pause")}
+          </button>
         )}
         {plan && (
           <button

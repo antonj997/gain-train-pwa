@@ -802,10 +802,15 @@ details[open] > .session-summary > svg {
 .plan-row.is-paused .row-value {
   font-style: italic;
 }
-.plan-pause {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gt-space-2);
+/* The plan editor says a paused plan is paused, near its name. */
+.plan-paused-note {
+  margin: 0;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
 }
 /* Two fields side by side, such as From and To. */
 .field-row {
