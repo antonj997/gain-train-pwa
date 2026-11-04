@@ -135,7 +135,7 @@ export default function ExerciseEditorSheet({
             />
           </label>
           <button
-            className="primary"
+            className="btn-primary"
             disabled={busy || !draft.data.name.trim()}
             onClick={onSave}
           >
@@ -163,7 +163,7 @@ export default function ExerciseEditorSheet({
             </button>
           )}
           <div className="button-row">
-            <button className="secondary" disabled={busy} onClick={onClose}>
+            <button className="btn-secondary" disabled={busy} onClick={onClose}>
               {t("routines.closeKeep")}
             </button>
             <button

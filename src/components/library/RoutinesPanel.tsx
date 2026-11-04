@@ -413,7 +413,7 @@ export default function RoutinesPanel() {
                 />
               ))}
               <button
-                className="secondary"
+                className="btn-secondary"
                 onClick={() => setPicker(true)}
                 disabled={busy}
               >
@@ -427,7 +427,7 @@ export default function RoutinesPanel() {
               )}
               <div className="button-row">
                 <button
-                  className="secondary"
+                  className="btn-secondary"
                   disabled={busy}
                   onClick={() => setOpen(false)}
                 >
@@ -452,7 +452,7 @@ export default function RoutinesPanel() {
                   </p>
                 )}
                 <button
-                  className="primary"
+                  className="btn-primary"
                   disabled={
                     busy ||
                     !edit.data.name.trim() ||

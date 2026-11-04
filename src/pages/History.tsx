@@ -180,7 +180,7 @@ export default function History() {
               : t("history.noneInPeriod")}
           </h2>
           <p>{t("history.emptyText")}</p>
-          <Link className="primary" to="/">
+          <Link className="btn-primary" to="/">
             {t("history.logWorkout")}
           </Link>
         </div>

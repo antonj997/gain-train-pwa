@@ -247,7 +247,7 @@ export default function ExercisePickerBody({
             </select>
           </label>
           <button
-            className="primary"
+            className="btn-primary"
             onClick={() => void create()}
             disabled={busy || !name.trim()}
           >
@@ -264,7 +264,7 @@ export default function ExercisePickerBody({
             </p>
           )}
           <button
-            className="secondary"
+            className="btn-secondary"
             disabled={busy}
             onClick={() => setCreating(false)}
           >
@@ -400,7 +400,7 @@ export default function ExercisePickerBody({
             </button>
             {!single && (
               <button
-                className="primary"
+                className="btn-primary"
                 disabled={!selected.length}
                 onClick={() => {
                   onAdd(all.filter((e) => selected.includes(e.id)));
