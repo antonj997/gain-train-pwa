@@ -1,5 +1,14 @@
 # Changelog
 
+## 4 November 2026 — the owner's notes, step 2: pause plans, set counts, swap, categories
+
+- Plans can be paused instead of deleted: a pause/play button on each row in Library → Plan and Pause plan / Resume plan in the editor. A paused plan reads “Paused” in muted text, plans nothing on Train and frees its dates for another plan; resuming into an overlap is refused with the overlap message. Delete is still there.
+- Workout cards say “3 working sets · last time 4” (Swedish “3 arbetsset · förra gången 4”) when the working sets differ from the last session; warm-ups, cool-downs and drops do not count.
+- Change exercise is now Swap exercise (Byt övning), first in the card's ⋯ menu with an ArrowLeftRight icon, in workouts and the routine editor. Sets stay; unchecked ones on the old exercise's starting load or count move to the new one's (Bench Press → Pull Up gives bodyweight sets with the same reps).
+- Exercises can train several categories. Compound lifts in the catalogue list their other categories (Deadlift: Back, also Legs and Glutes), and custom exercises pick them under “Also trains”. Filters, search and plan suggestions match any of them; the main category, ids and shared rows are unchanged.
+- No migration: the server trigger does not check extra fields on plans or custom exercises, and older app versions keep the new fields when they save. No schema bump.
+- Code: `planDay()`, `withPaused()`, `overlapMessage()` and paused-aware `plannedFor()`/`findOverlap()` in `src/data/plans.ts`; `workingSetChange()` in `src/data/workouts.ts`; `adaptSets()` behind `changeExercise()` in `src/lib/workout-editor.ts`; `alsoTrains` in `src/data/catalogue.ts`, `categoriesOf()`/`inCategory()` in `src/lib/exercise-search.ts` and `categoryText()` in `src/lib/catalogue-labels.ts`. All tested.
+
 ## 4 November 2026 — the owner's notes: Train date, kg/lb, checked rows
 
 - Train: the rotating headline is gone; today's date is the big title (in the chosen language) and the settings gear sits level with it.
