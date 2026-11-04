@@ -4,7 +4,8 @@ import { hasExtraWeight } from "../lib/set-load";
 import { isIsoDay, isoDate } from "../lib/dates";
 import { CARDIO_MAX, cardioLabel } from "../lib/cardio";
 import { normalizeDrops } from "./drops";
-import { formatDecimal, t } from "../i18n";
+import { t } from "../i18n";
+import { formatWeightValue, getWeightUnit } from "../lib/units";
 export const setSchema = z.object({
   id: z.string().uuid(),
   reps: z.number().int().min(0).max(10000).nullable(),
@@ -421,18 +422,19 @@ export function validate(kind: Kind, payload: unknown): Payload {
 }
 export const labelSet = (s: WorkoutSet) => {
   if (s.measure === "cardio") return cardioLabel(s);
-  const kg = s.weight === null ? "null" : formatDecimal(s.weight);
+  const kg = s.weight === null ? "null" : formatWeightValue(s.weight);
+  const unit = getWeightUnit();
   if (hasExtraWeight(s))
     return (
-      t("label.bwPlus", { kg }) +
+      t("label.bwPlus", { kg, unit }) +
       (s.measure === "seconds"
         ? ` · ${t("label.sec", { n: s.reps })}`
         : ` × ${s.reps}`)
     );
   if (s.measure === "seconds") return t("label.sec", { n: s.reps });
   if (s.load === "bodyweight") return t("label.bwReps", { n: s.reps });
-  if (s.load === "assisted") return t("label.assist", { kg, n: s.reps });
-  return t("label.weight", { kg, n: s.reps });
+  if (s.load === "assisted") return t("label.assist", { kg, unit, n: s.reps });
+  return t("label.weight", { kg, unit, n: s.reps });
 };
 export const repeatExercises = (items: Exercise[]) =>
   items.map((e) => ({

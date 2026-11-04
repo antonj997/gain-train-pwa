@@ -5,12 +5,18 @@ import {
   saveTrainingPreferences,
   type TrainingPreferences,
 } from "@/lib/preferences";
+import { setCurrentWeightUnit } from "@/lib/units";
 
 /** The training preferences on this device, kept current when another screen changes them. */
 export function useTrainingPreferences() {
   const [preferences, setPreferences] = useState(readTrainingPreferences);
   useEffect(() => {
-    const refresh = () => setPreferences(readTrainingPreferences());
+    const refresh = () => {
+      const next = readTrainingPreferences();
+      // Another tab may have changed the unit: labels read it from its module.
+      setCurrentWeightUnit(next.weightUnit);
+      setPreferences(next);
+    };
     window.addEventListener(TRAINING_PREFERENCES_EVENT, refresh);
     window.addEventListener("storage", refresh);
     return () => {

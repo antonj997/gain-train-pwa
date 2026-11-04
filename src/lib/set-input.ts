@@ -156,8 +156,7 @@ export function createSetInputSelection(
     if (tap) watchScroll(false);
     tap = null;
   };
-  const now = (event: { timeStamp?: number }) =>
-    event.timeStamp ?? Date.now();
+  const now = (event: { timeStamp?: number }) => event.timeStamp ?? Date.now();
   const release = () => {
     const active = gesture;
     gesture = null;

@@ -6,6 +6,7 @@ import {
   hasExtraWeight,
 } from "./set-load";
 import { t, type MessageKey } from "../i18n";
+import { getWeightUnit } from "./units";
 
 export type LoadKey = "weight" | "bw" | "bwplus" | "assisted";
 export type LoadMarker = "none" | "bw" | "plus" | "minus" | "kg";
@@ -78,9 +79,9 @@ const HEADINGS = {
   assisted: "load.headingAssist",
 } as const satisfies Record<LoadKey, MessageKey>;
 
-/** The load column's heading: "kg", "BW", "+kg" or "Assist" in English. */
+/** The load column's heading: "kg" (or "lb"), "BW", "+kg" or "Assist" in English. */
 export function loadHeading(key: LoadKey): string {
-  return t(HEADINGS[key]);
+  return t(HEADINGS[key], { unit: getWeightUnit() });
 }
 
 /** "Reps", "Sec", or "Reps/sec" when the sets mix both measures. */
