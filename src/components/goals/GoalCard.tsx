@@ -113,7 +113,7 @@ export default function GoalCard({
           )}
         </span>
       )}
-      {projected && (
+      {projected && insight.deadline.kind !== "overdue" && (
         <span className="row-sub">
           {t("goals.projected", {
             date: localizedDate(projected, {
