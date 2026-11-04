@@ -289,7 +289,8 @@ export const en = {
   "unit.title": "Weight unit",
   "unit.kg": "Kilograms (kg)",
   "unit.lb": "Pounds (lb)",
-  "unit.note": "Applies to every screen. Weights are saved in kg, so switching back is exact.",
+  "unit.note":
+    "Applies to every screen. Weights are saved in kg, so switching back is exact.",
   "set.optWeight": "Weight",
   "set.optBw": "BW",
   "set.optBwPlus": "BW + {unit}",

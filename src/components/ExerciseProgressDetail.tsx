@@ -21,6 +21,7 @@ import { localizedDate } from "@/lib/dates";
 import { chartDomain, chartSessions } from "@/lib/progressPresentation";
 import { historyPath } from "@/lib/routes";
 import { formatFixed, t } from "@/i18n";
+import { getWeightUnit, weightTotal } from "@/lib/units";
 
 type Props = {
   item: ReturnType<typeof progressFor>[number];
@@ -36,14 +37,25 @@ export default function ExerciseProgressDetail({
   cutoffDate,
   records,
 }: Props) {
-  const { latest, weighted, timed, comparable, valueOf, best } =
-    exerciseStats(item);
+  const {
+    latest,
+    weighted,
+    timed,
+    comparable,
+    valueOf: valueInKg,
+    best,
+  } = exerciseStats(item);
+  // Estimated strength is worked out in kg and shown in the chosen unit.
+  const weightUnit = getWeightUnit();
+  const valueOf = (point: Parameters<typeof valueInKg>[0]) =>
+    weighted ? weightTotal(valueInKg(point), weightUnit) : valueInKg(point);
   const unit = t(
     weighted
       ? "detail.unitKg"
       : timed
         ? "detail.unitSeconds"
         : "detail.unitReps",
+    { unit: weightUnit },
   );
   const metricLabel = t(
     weighted
@@ -51,11 +63,13 @@ export default function ExerciseProgressDetail({
       : timed
         ? "detail.metricSeconds"
         : "detail.metricReps",
+    { unit: weightUnit },
   );
   const previous = comparable.at(-2);
   const latestValue = valueOf(latest);
   const bestValue = valueOf(best);
-  const base = weighted ? baseline(comparable, cutoffDate) : null;
+  const baseKg = weighted ? baseline(comparable, cutoffDate) : null;
+  const base = baseKg === null ? null : weightTotal(baseKg, weightUnit);
   const sessions = chartSessions(item.points);
   const points = sessions
     .filter((point) => comparableSets(point.set, latest.set))
@@ -220,6 +234,7 @@ export default function ExerciseProgressDetail({
             {base !== null
               ? t("detail.baseline", {
                   change: `${latestValue - base >= 0 ? "+" : ""}${formatFixed(latestValue - base, 1)}`,
+                  unit: weightUnit,
                 })
               : t("detail.noBaseline")}
           </>

@@ -8,6 +8,7 @@ import {
   parseWeightUnit,
   toUnit,
   toUnitField,
+  weightTotal,
 } from "../src/lib/units.ts";
 import { normalizeTrainingPreferences } from "../src/lib/preferences.ts";
 import { setCurrentLanguage } from "../src/i18n/index.ts";
@@ -27,6 +28,11 @@ test("kilograms show as stored; pounds to one decimal", () => {
   assert.equal(formatWeight(60, "lb"), "132.3 lb");
   // A whole number of pounds drops the ".0".
   assert.equal(formatWeight(fromUnit(135, "lb"), "lb"), "135 lb");
+  // Computed values can round their kilograms; pounds keep one decimal.
+  assert.equal(formatWeight(82.3456, "kg", 1), "82.3 kg");
+  assert.equal(formatWeight(82.3456, "lb", 1), "181.5 lb");
+  assert.equal(weightTotal(1000, "kg"), 1000);
+  assert.ok(Math.abs(weightTotal(1000, "lb") - 2204.6226) < 0.001);
 });
 
 test("typed pounds store as kilograms and show the same pounds again", () => {

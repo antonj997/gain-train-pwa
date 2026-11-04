@@ -291,7 +291,8 @@ export const sv = {
   "unit.title": "Viktenhet",
   "unit.kg": "Kilo (kg)",
   "unit.lb": "Pund (lb)",
-  "unit.note": "Gäller på alla skärmar. Vikter sparas i kg, så det blir exakt när du byter tillbaka.",
+  "unit.note":
+    "Gäller på alla skärmar. Vikter sparas i kg, så det blir exakt när du byter tillbaka.",
   "set.optWeight": "Vikt",
   "set.optBw": "KV",
   "set.optBwPlus": "KV + {unit}",
@@ -572,7 +573,8 @@ export const sv = {
   "detail.chartLater": "Ditt diagram börjar efter ditt nästa jämförbara pass.",
   "detail.recorded": "Loggade pass",
   "detail.estimatedNote": "Uppskattad styrka använder arbetsset på 1–10 reps.",
-  "detail.baseline": "{change} {unit} mot utgångsläget för minst 30 dagar sedan.",
+  "detail.baseline":
+    "{change} {unit} mot utgångsläget för minst 30 dagar sedan.",
   "detail.noBaseline": "Inget jämförbart utgångsläge från 30 dagar sedan än.",
   "detail.timedNote":
     "Arbetssetens tid i sekunder med samma belastning som ditt senaste pass.",

@@ -14,6 +14,7 @@ import { durationLabel } from "@/lib/labels";
 import { formatKm } from "@/lib/cardio";
 import { useT } from "@/i18n/useT";
 import { formatFixed, t } from "@/i18n";
+import { getWeightUnit, weightTotal } from "@/lib/units";
 
 /** The change text with its unit, such as "↑ +1.2 t". Arrows only; messages stay as they are. */
 const withUnit = (change: string, unit: string) =>
@@ -47,8 +48,13 @@ function summaryFor({ records, progress, now, range }: Props) {
     now,
   );
   // Volume reads in tonnes once either period passes a tonne.
-  const tonnes = Math.max(current.volume, previous.volume) >= 1000;
+  // Volume is kg × reps; in pounds it is shown in lb, and thousands as "k lb".
+  const unit = getWeightUnit();
+  const volume = weightTotal(current.volume, unit);
+  const previousVolume = weightTotal(previous.volume, unit);
+  const tonnes = Math.max(volume, previousVolume) >= 1000;
   const scale = tonnes ? 1000 : 1;
+  const volumeUnit = tonnes ? (unit === "lb" ? "k lb" : "t") : unit;
   const tiles = [
     {
       label: t("progress.perWeek"),
@@ -68,16 +74,12 @@ function summaryFor({ records, progress, now, range }: Props) {
     {
       label: t("progress.volume"),
       value: tonnes
-        ? formatFixed(current.volume / scale, 1)
-        : String(Math.round(current.volume)),
-      unit: tonnes ? "t" : "kg",
+        ? formatFixed(volume / scale, 1)
+        : String(Math.round(volume)),
+      unit: volumeUnit,
       change: withUnit(
-        metricChange(
-          current.volume / scale,
-          previous.volume / scale,
-          tonnes ? 1 : 0,
-        ),
-        tonnes ? "t" : "kg",
+        metricChange(volume / scale, previousVolume / scale, tonnes ? 1 : 0),
+        volumeUnit,
       ),
     },
     {

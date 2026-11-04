@@ -98,7 +98,7 @@ type OpenSheet =
 const keepTogether = (label: string) =>
   label
     .replace(/(\S) \+ /, "$1 +\u00a0")
-    .replace(/(\d) kg/, "$1\u00a0kg")
+    .replace(/(\d) (kg|lb)/, "$1\u00a0$2")
     .replace(/× (\d)/, "×\u00a0$1");
 
 /** SetLine skips a render when nothing it shows changed; its callbacks are stable. */
@@ -344,9 +344,7 @@ function ExerciseCard({
             { value: "seconds", label: t("load.hold") },
           ]}
           hint={t("load.appliesUnchecked")}
-          onChoose={(measure) =>
-            changeSets(applyExerciseCount(sets, measure))
-          }
+          onChoose={(measure) => changeSets(applyExerciseCount(sets, measure))}
         />
       )}
       <ExerciseMenuSheet

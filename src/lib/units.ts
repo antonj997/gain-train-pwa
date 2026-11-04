@@ -55,10 +55,29 @@ export function toUnitField(kg: number, unit: WeightUnit = current): number {
   return fromUnit(typed, unit) === kg ? typed : round(kg / KG_PER_LB, 1);
 }
 
-/** A weight's number in the unit and the language: "60", "132.3", "132,3". */
-export const formatWeightValue = (kg: number, unit: WeightUnit = current) =>
-  formatDecimal(toUnit(kg, unit));
+/**
+ * A weight's number in the unit and the language: "60", "132.3", "132,3".
+ * `kgDecimals` rounds a kilogram value too, for computed ones such as a goal's
+ * pace; pounds always show one decimal.
+ */
+export const formatWeightValue = (
+  kg: number,
+  unit: WeightUnit = current,
+  kgDecimals?: number,
+) =>
+  formatDecimal(
+    unit === "kg" && kgDecimals !== undefined
+      ? round(kg, kgDecimals)
+      : toUnit(kg, unit),
+  );
 
 /** A weight with its unit: "60 kg", "132.3 lb". */
-export const formatWeight = (kg: number, unit: WeightUnit = current) =>
-  `${formatWeightValue(kg, unit)} ${unit}`;
+export const formatWeight = (
+  kg: number,
+  unit: WeightUnit = current,
+  kgDecimals?: number,
+) => `${formatWeightValue(kg, unit, kgDecimals)} ${unit}`;
+
+/** A total such as volume in the unit, unrounded: kg, or pounds. */
+export const weightTotal = (kg: number, unit: WeightUnit = current) =>
+  unit === "lb" ? kg / KG_PER_LB : kg;

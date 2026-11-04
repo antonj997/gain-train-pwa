@@ -4,6 +4,7 @@ import { isDrop } from "./drops";
 import { completedWorkouts } from "./selectors";
 import { isCardioSet } from "../lib/cardio";
 import { daysBetween, isoDate } from "../lib/dates";
+import { formatWeight, getWeightUnit } from "../lib/units";
 import {
   type Deadline,
   type GoalPoint,
@@ -13,7 +14,7 @@ import {
   projectedDate,
   trendPerDay,
 } from "../lib/goal-pace";
-import { formatDecimal, t } from "../i18n";
+import { t } from "../i18n";
 
 export type GoalItem = Goal & { id: string };
 
@@ -269,9 +270,9 @@ export function goalInsight(
   };
 }
 
-/** A goal's name for lists: "Bench Press 110 kg × 1" or "Bodyweight 80 kg". */
+/** A goal's name for lists: "Bench Press 110 kg × 1" or "Bodyweight 80 kg" (or lb). */
 export function goalTitle(goal: Goal) {
-  const kg = (value: number) => `${formatDecimal(Number(value.toFixed(2)))} kg`;
+  const kg = (value: number) => formatWeight(value, getWeightUnit(), 2);
   if (goal.kind === "bodyweight")
     return t("goals.titleBodyweight", { kg: kg(goal.targetKg) });
   const name = goal.exerciseName ?? t("goals.lift");
