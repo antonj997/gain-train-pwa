@@ -18,6 +18,7 @@ import {
 import { newWorkout } from "@/data/start";
 import { today } from "@/data/model";
 import { activePlans, groupsOf, plannedFor, resolveCell } from "@/data/plans";
+import { phaseWeek } from "@/data/phase";
 import { workoutPath } from "@/lib/routes";
 import { readTrainingPreferences } from "@/lib/preferences";
 import { autoWorkoutName } from "@/lib/workout-name";
@@ -75,6 +76,11 @@ export default function Home() {
       plans.length ? resolveCell(plannedFor(plans, date)?.cell, names) : null;
   }, [state.records]);
   const todayPlan = planned(day);
+  // "Week 3 of 12", and whether it is a deload week, for today's plan row.
+  const todayPhase = useMemo(() => {
+    const plan = plannedFor(activePlans(state.records), day)?.plan;
+    return plan ? phaseWeek(plan, day) : null;
+  }, [state.records, day]);
   // A day type or group with categories starts an empty workout and opens the
   // picker on those categories.
   const startWithSuggestions = () =>
@@ -148,6 +154,7 @@ export default function Home() {
         completed={completed}
         day={day}
         todayPlan={todayPlan}
+        todayPhase={todayPhase}
         starting={starting}
         onStart={(routine) => void start(false, routine)}
         onStartSuggestions={startWithSuggestions}

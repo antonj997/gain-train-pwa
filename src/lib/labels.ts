@@ -11,6 +11,8 @@ const NOUNS = {
   routine: "count.routine",
   session: "count.session",
   day: "count.day",
+  week: "count.week",
+  progression: "count.progression",
 } as const satisfies Record<string, MessageKey>;
 export type CountNoun = keyof typeof NOUNS;
 

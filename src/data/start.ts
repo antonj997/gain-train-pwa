@@ -9,6 +9,9 @@ import {
 } from "./model";
 import { previousResult } from "./workouts";
 import { completedWorkouts } from "./selectors";
+import { activePlans } from "./plans";
+import { applyPlanStart, planStartFor } from "./phase";
+import { equipmentLookup } from "./progression";
 import { autoWorkoutName } from "../lib/workout-name";
 
 export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
@@ -38,27 +41,59 @@ export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
 }
 
 /**
- * A new draft: blank, or from a routine with the last results suggested.
- * `past` logs an earlier session, so no timer starts.
+ * A routine's exercises with the plan of `date` applied: the phase's planned
+ * weights for progressed lifts and, in a deload week, fewer and lighter sets.
+ * Without an active plan, or when the plan changes nothing, the exercises as
+ * they are and no mark.
+ */
+export function withPlan(
+  exercises: Exercise[],
+  records: RecordDoc[],
+  date: string,
+): { exercises: Exercise[]; plan?: Workout["plan"] } {
+  const plan = activePlans(records).find(
+    (p) => !p.paused && p.startDate <= date && date <= p.endDate,
+  );
+  if (!plan) return { exercises };
+  const equipmentOf = equipmentLookup(records);
+  const start = planStartFor(plan, date, equipmentOf);
+  if (!start || (!start.deload && !start.loads.size)) return { exercises };
+  const applied = applyPlanStart(exercises, start, equipmentOf);
+  return applied.mark.deload || applied.mark.loads
+    ? { exercises: applied.exercises, plan: applied.mark }
+    : { exercises };
+}
+
+/**
+ * A new draft: blank, or from a routine with the last results suggested and,
+ * inside a plan's phase, the plan's weights. `past` logs an earlier session,
+ * so no timer starts and no plan applies (its date is chosen afterwards).
  */
 export function newWorkout(
   records: RecordDoc[],
   { routine, past = false }: { routine?: RoutineRecord; past?: boolean } = {},
   now = Date.now(),
 ): Workout {
+  const date = today();
+  const suggested = routine
+    ? suggestedExercises(routine.payload.exercises, records)
+    : [];
+  const planned =
+    routine && !past
+      ? withPlan(suggested, records, date)
+      : { exercises: suggested };
   return {
     routineId: routine?.id,
     name: autoWorkoutName(
       { name: "", exercises: [] },
       { routine: routine?.payload.name },
     ),
-    date: today(),
+    date,
     duration: null,
     startedAt: past ? null : now,
     createdAt: now,
     status: "draft",
-    exercises: routine
-      ? suggestedExercises(routine.payload.exercises, records)
-      : [],
+    exercises: planned.exercises,
+    ...(planned.plan ? { plan: planned.plan } : {}),
   };
 }

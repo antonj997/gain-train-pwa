@@ -15,8 +15,8 @@ import { categoryLabel } from "@/lib/catalogue-labels";
 type Routines = readonly { id: string; payload: { name: string } }[];
 
 /**
- * Chooses what a plan day holds: rest, a day type, a group, a routine or
- * nothing. A date can also fall back to the template (`useTemplate`).
+ * Chooses what a plan day holds: nothing, rest, a routine, a day type or a
+ * group, in that order (routines are the usual choice, groups the rare one). A date can also fall back to the template (`useTemplate`).
  */
 export default function CellSheet({
   open,
@@ -74,6 +74,14 @@ export default function CellSheet({
         {option(null, emptyLabel)}
         {option(REST, t("plan.rest"))}
       </div>
+      {routines.length > 0 && (
+        <section aria-label={t("plan.routines")}>
+          <h3 className="group-title">{t("plan.routines")}</h3>
+          <div className="list">
+            {routines.map((r) => option(r.id, r.payload.name))}
+          </div>
+        </section>
+      )}
       <section aria-label={t("plan.dayTypes")}>
         <h3 className="group-title">{t("plan.dayTypes")}</h3>
         <div className="list">
@@ -91,14 +99,6 @@ export default function CellSheet({
           <h3 className="group-title">{t("plan.groups")}</h3>
           <div className="list">
             {groups.map((g) => option(groupCell(g.id), g.name))}
-          </div>
-        </section>
-      )}
-      {routines.length > 0 && (
-        <section aria-label={t("plan.routines")}>
-          <h3 className="group-title">{t("plan.routines")}</h3>
-          <div className="list">
-            {routines.map((r) => option(r.id, r.payload.name))}
           </div>
         </section>
       )}

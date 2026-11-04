@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { ChevronRight, Pause, Play, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Pause, Play, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
@@ -19,6 +19,7 @@ import {
   withPaused,
 } from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
+import { phaseWeek, phaseWeeks, weekKindsOf } from "@/data/phase";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { t } from "@/i18n";
@@ -59,6 +60,30 @@ export default function PlanPanel() {
   const saveGroups = (next: RoutineGroup[]) =>
     saveLibrary({ ...libraryOf(state.records, account), groups: next });
 
+  // The phase in a line: dates, "week 3 of 12" (or its length), the cycle and progressions.
+  const summary = (p: PlanItem) => {
+    const at = !p.paused ? phaseWeek(p, today) : null;
+    const deloads = weekKindsOf(p).filter((k) => k === "deload").length;
+    return [
+      `${short(p.startDate)} – ${short(p.endDate)}`,
+      at
+        ? t("plan.weekOf", { week: at.week, weeks: at.weeks })
+        : countLabel(phaseWeeks(p), "week"),
+      p.cycleWeeks === 1
+        ? t("plan.repeatsWeekly")
+        : deloads
+          ? t("plan.cycleDeload", {
+              normal: p.cycleWeeks - deloads,
+              deload: deloads,
+            })
+          : t("plan.cycle", { count: p.cycleWeeks }),
+      p.progression?.length
+        ? countLabel(p.progression.length, "progression")
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  };
   const status = (p: PlanItem) =>
     p.paused
       ? t("plan.paused")
@@ -111,13 +136,7 @@ export default function PlanPanel() {
                 >
                   <span className="row-main">
                     <span className="row-title">{p.name}</span>
-                    <span className="row-sub">
-                      {`${short(p.startDate)} – ${short(p.endDate)} · ${
-                        p.cycleWeeks === 1
-                          ? t("plan.repeatsWeekly")
-                          : t("plan.cycle", { count: p.cycleWeeks })
-                      }`}
-                    </span>
+                    <span className="row-sub">{summary(p)}</span>
                   </span>
                   <span className="row-value">{status(p)}</span>
                   <ChevronRight className="chev" size={20} aria-hidden="true" />
@@ -153,42 +172,58 @@ export default function PlanPanel() {
           {t("plan.new")}
         </button>
       </section>
-      <section aria-labelledby="groups-heading">
-        <h2 className="group-title" id="groups-heading">
-          {t("plan.groups")}
-        </h2>
-        {groups.length > 0 && (
-          <div className="list">
-            {groups.map((g) => (
-              <ListRow
-                key={g.id}
-                title={g.name}
-                sub={[
-                  countLabel(g.routineIds.length, "routine"),
-                  g.categories.map(categoryLabel).join(", "),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-                chevron
-                onClick={() => edit({ kind: "group", group: g })}
-              />
-            ))}
-          </div>
-        )}
-        <button
-          type="button"
-          className="btn-dashed"
-          onClick={() => edit({ kind: "group", group: null })}
-        >
-          <Plus size={20} aria-hidden="true" />
-          {t("plan.newGroup")}
-        </button>
-        <p className="row-sub group-note">
-          {t("plan.groupNote", {
-            types: dayTypes.map(dayTypeLabel).join(", "),
-          })}
-        </p>
-      </section>
+      {/* Groups are for one plan day offering a choice of routines; deload
+          weeks and progression live in the plan itself, so groups sit here. */}
+      <details className="plan-advanced">
+        <summary>
+          <span className="row-main">
+            <span className="row-title">{t("plan.advanced")}</span>
+            <span className="row-sub">
+              {groups.length
+                ? `${t("plan.groups")} · ${groups.length}`
+                : t("plan.groups")}
+            </span>
+          </span>
+          <ChevronDown className="chev" size={20} aria-hidden="true" />
+        </summary>
+        <section aria-labelledby="groups-heading">
+          <h2 className="group-title" id="groups-heading">
+            {t("plan.groups")}
+          </h2>
+          <p className="row-sub">{t("plan.groupsExplain")}</p>
+          {groups.length > 0 && (
+            <div className="list">
+              {groups.map((g) => (
+                <ListRow
+                  key={g.id}
+                  title={g.name}
+                  sub={[
+                    countLabel(g.routineIds.length, "routine"),
+                    g.categories.map(categoryLabel).join(", "),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  chevron
+                  onClick={() => edit({ kind: "group", group: g })}
+                />
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            className="btn-dashed"
+            onClick={() => edit({ kind: "group", group: null })}
+          >
+            <Plus size={20} aria-hidden="true" />
+            {t("plan.newGroup")}
+          </button>
+          <p className="row-sub group-note">
+            {t("plan.groupNote", {
+              types: dayTypes.map(dayTypeLabel).join(", "),
+            })}
+          </p>
+        </section>
+      </details>
       {current?.kind === "plan" && (
         <PlanEditor
           key={session}

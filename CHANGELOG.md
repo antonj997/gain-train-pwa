@@ -1,5 +1,15 @@
 # Changelog
 
+## 4 November 2026 — the owner's notes, step 4: plans as training phases
+
+- A plan is now a training phase. The editor leads with the name, the period (a 4–26 week length, or an end date) and the cycle. Its subtitle reads “Phase · 12 weeks · 4 Nov – 24 Jan” (“Fas · 12 veckor …”). A new or re-dated phase is at most 26 weeks; older, longer plans still open and save as they were.
+- Deload weeks replace the idea of a deload group. Each cycle week is Normal or Deload, and the presets “3 + 1 deload”, “5 + 1 deload” and “No deload” set the cycle and copy week 1. A deload week trains the same routines, prefilled 10 % lighter with half the working sets; both numbers can be changed per plan.
+- Progression: “Increase lifts over the phase”. Add a lift, or all of a routine's weighted exercises at once. The start weight comes from your log, and the suggested weekly step and timeline depend on your level (detected, changeable), the body part, the equipment's step, high reps, deload weeks and the lift's own recent trend, with a weekly cap. A target that's faster than usual is warned about, with “Use suggested timeline”. A week-by-week table can be typed over, and “Also add as a goal” creates a lift goal due when the phase ends. The rates and their sources are in the design doc.
+- Starting a routine inside a phase prefills that week's planned weights, and a deload week starts with fewer, lighter sets. The cards show a muted “Plan week 3: 85 kg” or “Deload week”, and Train's plan row shows “Week 3 of 12 · Deload”. Plan rows show the dates, the week of the phase, the cycle and how many lifts progress.
+- Groups move under Advanced in Library → Plan, with a one-line explanation. The day picker lists routines first, then day types, then groups.
+- No migration: the server trigger allows extra plan and workout fields. No schema bump, and older apps keep the new fields.
+- Code: `src/lib/progression.ts` (`suggestProgression`, `plannedWeeks`, steps), `src/data/phase.ts` (phase weeks, week kinds, presets, `planStartFor`, `applyPlanStart`), `src/data/progression.ts` (`estimateStartLoad`, `detectLevel`, `recentTrend`), `withPlan()` in `src/data/start.ts`, and `src/lib/plan-note.ts`. Tested in `tests/progression.test.ts` and `tests/phase.test.ts`. Design: `docs/superpowers/specs/2026-11-04-phase-planning-design.md`.
+
 ## 4 November 2026 — the owner's notes, step 3: transitions and the icon bar
 
 - The bottom bar shows icons only; the current tab also shows its name in an accent-soft pill that slides to the tab you tap while the tabs make room. Restyled to the Quiet look: a translucent surface with a slight blur, a top hairline, no other borders. Every tab keeps a 44px target and its name for screen readers; Swedish fits at 360px.
