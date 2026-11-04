@@ -19,6 +19,7 @@ import {
   estimateStartLoad,
   newProgressionItem,
   progressable,
+  recentTrend,
 } from "../src/data/progression";
 
 const bench = { category: "Chest" };
@@ -393,5 +394,39 @@ test("only weighted lifts can be progressed", () => {
   assert.equal(
     progressable(ex([set(0, 30, { load: "bodyweight", measure: "seconds" })])),
     false,
+  );
+});
+
+test("a beginner's stalled lift gets its trend, not the beginner rate, but never below intermediate", () => {
+  const fresh = suggestProgression(
+    base({ level: "beginner", deloadWeeks: [] }),
+  );
+  const stalled = suggestProgression(
+    base({ level: "beginner", deloadWeeks: [], trendKgPerWeek: 0 }),
+  );
+  const intermediate = suggestProgression(base({ deloadWeeks: [] }));
+  assert.ok(stalled.kgPerWeek < fresh.kgPerWeek);
+  assert.ok(Math.abs(stalled.kgPerWeek - intermediate.kgPerWeek) < 1e-9);
+  // A trend faster than the beginner rate does not raise it.
+  const flying = suggestProgression(
+    base({ level: "beginner", deloadWeeks: [], trendKgPerWeek: 10 }),
+  );
+  assert.equal(flying.kgPerWeek, fresh.kgPerWeek);
+});
+
+test("the recent trend is the slope of each session's heaviest working set", () => {
+  const records = [
+    workout("2026-10-07", [set(70, 5)]),
+    workout("2026-10-14", [set(72.5, 5)]),
+    workout("2026-10-21", [set(75, 5)]),
+    workout("2026-10-28", [set(77.5, 5), set(100, 1, { section: "warmup" })]),
+  ];
+  assert.ok(
+    Math.abs(recentTrend(records, "builtin:bench-press", "2026-11-04")! - 2.5) <
+      1e-9,
+  );
+  assert.equal(
+    recentTrend(records.slice(0, 2), "builtin:bench-press", "2026-11-04"),
+    null,
   );
 });

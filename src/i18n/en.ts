@@ -1076,9 +1076,10 @@ export const en = {
     "From your log ({months} months, {sessions} workouts): {level}. Change it if you trained before.",
   "prog.suggestedTimeline": "Suggested timeline",
   "prog.suggestion":
-    "About +{kg} kg a training week ({pct} %) → {target} kg by week {weeks}.",
+    "About +{kg} kg a training week ({pct} % a week) → {target} kg by week {weeks}.",
   "prog.basis":
     "Based on: {level} · {body} · {equipment} (steps of {step} kg) · deload weeks: {deloads}",
+  "prog.trend": "your recent trend: {kg} kg a week",
   "prog.upperBody": "upper body",
   "prog.lowerBody": "lower body",
   "prog.class.barbell": "barbell",

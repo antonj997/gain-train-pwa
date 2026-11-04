@@ -11,6 +11,7 @@ import { isDrop } from "./drops";
 import { completedWorkouts, customExercises } from "./selectors";
 import { isCardioSet } from "../lib/cardio";
 import { daysBetween, shiftDate } from "../lib/dates";
+import { trendPerDay } from "../lib/goal-pace";
 import { hasExtraWeight } from "../lib/set-load";
 import {
   loadIncrement,
@@ -160,6 +161,29 @@ export function estimateStartLoad(
   return null;
 }
 
+/**
+ * The lift's recent trend in kg a week: the slope of each session's heaviest
+ * checked working set over the last six weeks (at least three sessions over
+ * two weeks). Null when the log is too thin.
+ */
+export function recentTrend(
+  records: Records,
+  exerciseId: string,
+  today: string,
+): number | null {
+  const points: { date: string; value: number }[] = [];
+  for (const w of completedWorkouts(list(records))) {
+    let best = 0;
+    for (const ex of w.payload.exercises)
+      if (ex.exerciseId === exerciseId)
+        for (const set of ex.sets)
+          if (countsForLoad(set)) best = Math.max(best, set.weight!);
+    if (best > 0) points.push({ date: w.payload.date, value: best });
+  }
+  const perDay = trendPerDay(points, today);
+  return perDay === null ? null : perDay * 7;
+}
+
 const mostCommon = (values: number[]) => {
   const counts = new Map<number, number>();
   for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
@@ -238,6 +262,7 @@ export function newProgressionItem(
           reps,
           level,
           equipment: info.equipment,
+          trendKgPerWeek: recentTrend(records, exercise.id, today),
           ...phase,
         }).suggestedTargetKg
       : 0;

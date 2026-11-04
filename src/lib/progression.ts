@@ -28,6 +28,9 @@
  *   Bell et al., "Deloading practices in strength and physique sports",
  *   Sports Medicine – Open 2023: most coaches cut volume about half and load
  *   about 10 %, every 4–6 weeks).
+ * - A beginner's rate never beats the lift's own recent trend from the log
+ *   (when there is one), though it never drops below the intermediate rate:
+ *   a stalled lift is no longer progressing like a beginner's.
  * - No week ever adds more than 5 kg, or more than 5 % of the load (7.5 % for
  *   beginners).
  */
@@ -134,6 +137,13 @@ export type ProgressionInput = {
    * working out how long a target takes. Defaults to repeating the phase.
    */
   cycle?: readonly boolean[];
+  /**
+   * The lift's own recent trend in kg a week, from the log; null or missing
+   * when the log is too thin to say. A beginner whose lift has stalled does
+   * not get the beginner rate: it falls to the trend, but not below the
+   * intermediate rate.
+   */
+  trendKgPerWeek?: number | null;
 };
 
 export type ProgressionSuggestion = {
@@ -163,17 +173,24 @@ function reasonableStep(
     lower,
     cls,
     reps,
+    trend,
   }: {
     level: Level;
     lower: boolean;
     cls: LoadClass;
     reps: number;
+    trend?: number | null;
   },
 ) {
   let gain: number;
   if (level === "beginner") {
     const taper = Math.max(0.5, 1 - step / (2 * BEGINNER_TAPER_WEEKS));
     gain = BEGINNER_KG[cls][lower ? 1 : 0] * taper;
+    if (typeof trend === "number" && Number.isFinite(trend))
+      gain = Math.min(
+        gain,
+        Math.max(trend, (kg * PCT_PER_WEEK.intermediate) / 100),
+      );
   } else gain = (kg * PCT_PER_WEEK[level]) / 100;
   if (reps > HIGH_REPS) gain *= HIGH_REP_FACTOR;
   const maxPct =
@@ -197,7 +214,13 @@ function* reasonableLoads(input: ProgressionInput) {
   const lower = isLowerBody(input.exercise);
   const cls = loadClass(input.equipment);
   const isDeload = deloadAt(input);
-  const params = { level: input.level, lower, cls, reps: input.reps };
+  const params = {
+    level: input.level,
+    lower,
+    cls,
+    reps: input.reps,
+    trend: input.trendKgPerWeek,
+  };
   let kg = input.startKg;
   let step = 0;
   yield { week: 1, kg };

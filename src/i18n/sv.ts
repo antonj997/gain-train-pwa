@@ -1084,9 +1084,10 @@ export const sv = {
     "Från din logg ({months} månader, {sessions} pass): {level}. Ändra om du har tränat tidigare.",
   "prog.suggestedTimeline": "Föreslagen tidsplan",
   "prog.suggestion":
-    "Ungefär +{kg} kg per träningsvecka ({pct} %) → {target} kg vecka {weeks}.",
+    "Ungefär +{kg} kg per träningsvecka ({pct} % per vecka) → {target} kg vecka {weeks}.",
   "prog.basis":
     "Utgår från: {level} · {body} · {equipment} (steg om {step} kg) · deload-veckor: {deloads}",
+  "prog.trend": "din senaste trend: {kg} kg per vecka",
   "prog.upperBody": "överkropp",
   "prog.lowerBody": "underkropp",
   "prog.class.barbell": "skivstång",

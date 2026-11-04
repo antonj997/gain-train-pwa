@@ -21,6 +21,7 @@ import {
   detectLevel,
   estimateStartLoad,
   exerciseInfo,
+  recentTrend,
 } from "@/data/progression";
 import {
   loadIncrement,
@@ -85,6 +86,10 @@ export default function ProgressionSheet({
     () => estimateStartLoad(state.records, item.exerciseId, item.reps, today),
     [state.records, item.exerciseId, item.reps, today],
   );
+  const trend = useMemo(
+    () => recentTrend(state.records, item.exerciseId, today),
+    [state.records, item.exerciseId, today],
+  );
   const weeks = phaseWeeks(plan);
   const deloads = deloadWeeks(plan);
   const increment = loadIncrement(info.equipment, item.startKg);
@@ -100,6 +105,7 @@ export default function ProgressionSheet({
         equipment: info.equipment,
         targetKg: item.targetKg > 0 ? item.targetKg : undefined,
         cycle: weekKindsOf(plan).map((k) => k === "deload"),
+        trendKgPerWeek: trend,
       })
     : null;
   const table =
@@ -300,8 +306,8 @@ export default function ProgressionSheet({
           <strong className="card-title">{t("prog.suggestedTimeline")}</strong>
           <p>
             {t("prog.suggestion", {
-              kg: kgText(Math.round(suggestion.kgPerWeek * 100) / 100),
-              pct: kgText(Math.round(suggestion.pctPerWeek * 100) / 100),
+              kg: kgText(Math.round(suggestion.kgPerWeek * 10) / 10),
+              pct: kgText(Math.round(suggestion.pctPerWeek * 10) / 10),
               target: kgText(suggestion.suggestedTargetKg),
               weeks,
             })}
@@ -318,6 +324,13 @@ export default function ProgressionSheet({
               step: kgText(suggestion.increment),
               deloads: deloads.length,
             })}
+            {trend !== null &&
+              " · " +
+                t("prog.trend", {
+                  kg:
+                    (trend >= 0 ? "+" : "") +
+                    kgText(Math.round(trend * 10) / 10),
+                })}
           </p>
           {suggestion.tooFast ? (
             <div className="prog-warning" role="alert">
