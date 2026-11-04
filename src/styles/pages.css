@@ -363,22 +363,103 @@ label.row {
   font-weight: 400;
 }
 
-/* Bottom navigation: four tabs. */
+/* Bottom navigation: four icon tabs. The current one also shows its name, in
+   an accent-soft pill that slides between the tabs while the tabs make room
+   (Layout.tsx sets --nav-index). The bar is a translucent surface with a
+   hairline on top; it has its own view-transition-name, so a page slide
+   passes under it. Swedish "Bibliotek" fits the pill at 360px. */
 .bottom-nav {
-  padding-inline: var(--gt-space-2);
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 20;
+  width: min(100%, 800px);
+  transform: translateX(-50%);
+  padding: 6px max(var(--gt-space-2), env(safe-area-inset-right))
+    calc(6px + env(safe-area-inset-bottom))
+    max(var(--gt-space-2), env(safe-area-inset-left));
+  border-top: 1px solid var(--gt-line);
   background-color: var(--gt-surface);
-  border-top-color: var(--gt-line);
+  view-transition-name: bottom-nav;
 }
-.bottom-nav a {
-  gap: 2px;
-  min-height: 44px;
-  padding: 4px 0;
-  font-size: var(--gt-fs-1);
-  color: var(--gt-ink-2);
+@supports (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .bottom-nav {
+    background-color: color-mix(in srgb, var(--gt-surface) 88%, transparent);
+    -webkit-backdrop-filter: saturate(1.6) blur(16px);
+    backdrop-filter: saturate(1.6) blur(16px);
+  }
 }
-.bottom-nav a.active {
+.bottom-nav-track {
+  /* How much wider the current tab is than the others. */
+  --nav-grow: 1.7;
+  position: relative;
+  display: flex;
+  max-width: 480px;
+  margin-inline: auto;
+}
+.nav-pill {
+  position: absolute;
+  inset-block: 4px;
+  left: 0;
+  width: calc(100% * var(--nav-grow) / (3 + var(--nav-grow)));
+  opacity: 0;
+  transform: translateX(calc(var(--nav-index, 0) * 100% / var(--nav-grow)));
+  transition:
+    transform var(--gt-slide),
+    opacity var(--gt-motion);
+  pointer-events: none;
+}
+.nav-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0 4px;
+  border-radius: 999px;
+  background-color: var(--gt-accent-soft);
+}
+.bottom-nav.has-active .nav-pill {
+  opacity: 1;
+}
+.nav-tab {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 48px;
+  color: var(--gt-ink-3);
+  text-decoration: none;
+  transition:
+    flex-grow var(--gt-slide),
+    color var(--gt-motion);
+}
+.nav-tab > svg {
+  flex: none;
+}
+.nav-tab.is-active {
+  flex-grow: var(--nav-grow);
   color: var(--gt-accent);
+}
+.nav-tab-label {
+  overflow: hidden;
+  max-width: 0;
+  margin-left: 0;
+  opacity: 0;
+  font-size: var(--gt-fs-2);
   font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    max-width var(--gt-slide),
+    margin-left var(--gt-slide),
+    opacity var(--gt-motion);
+}
+.nav-tab.is-active .nav-tab-label {
+  max-width: 7.5em;
+  margin-left: 6px;
+  opacity: 1;
 }
 
 /* Settings. */
@@ -1326,4 +1407,127 @@ details[open] > .session-summary > svg {
   max-height: calc(var(--viewport-height, 100dvh) - 140px);
   object-fit: contain;
   border-radius: var(--gt-radius-md);
+}
+
+/* Page slides (src/lib/view-transition.ts sets <html data-nav-dir>). A tab to
+   the right enters from the right while the old page drifts left and fades; a
+   tab to the left mirrors it. A sub-page pushes in from the right and Back
+   slides it out to the right. Taps go straight through to the new page. The
+   bar is drawn from its live new state only, so it keeps still and its pill
+   slides as usual. With reduced motion the tokens make this a short fade. */
+::view-transition {
+  pointer-events: none;
+  background-color: var(--gt-ground);
+}
+::view-transition-group(bottom-nav),
+::view-transition-new(bottom-nav) {
+  animation: none;
+}
+::view-transition-old(bottom-nav) {
+  animation: none;
+  opacity: 0;
+}
+html[data-nav-dir]::view-transition-old(root),
+html[data-nav-dir]::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation-duration: var(--gt-page-duration);
+  animation-timing-function: var(--gt-ease-out);
+  animation-fill-mode: both;
+}
+/* The old page fades out sooner, so the two never read as one. */
+html[data-nav-dir]::view-transition-old(root) {
+  animation-duration: calc(var(--gt-page-duration) * 0.7);
+}
+html[data-nav-dir="right"]::view-transition-new(root),
+html[data-nav-dir="push"]::view-transition-new(root) {
+  animation-name: gt-page-in-from-right;
+}
+html[data-nav-dir="right"]::view-transition-old(root),
+html[data-nav-dir="push"]::view-transition-old(root) {
+  animation-name: gt-page-drift-left;
+}
+html[data-nav-dir="left"]::view-transition-new(root) {
+  animation-name: gt-page-in-from-left;
+}
+html[data-nav-dir="left"]::view-transition-old(root) {
+  animation-name: gt-page-drift-right;
+}
+html[data-nav-dir="pop"]::view-transition-old(root) {
+  z-index: 1;
+  animation-name: gt-page-out-to-right;
+  animation-duration: var(--gt-page-duration);
+}
+html[data-nav-dir="pop"]::view-transition-new(root) {
+  animation-name: gt-page-drift-in-from-left;
+}
+@keyframes gt-page-in-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(var(--gt-page-shift));
+  }
+}
+@keyframes gt-page-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--gt-page-shift)));
+  }
+}
+@keyframes gt-page-drift-left {
+  to {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--gt-page-exit-shift)));
+  }
+}
+@keyframes gt-page-drift-right {
+  to {
+    opacity: 0;
+    transform: translateX(var(--gt-page-exit-shift));
+  }
+}
+@keyframes gt-page-out-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(var(--gt-page-shift));
+  }
+}
+@keyframes gt-page-drift-in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--gt-page-exit-shift)));
+  }
+}
+
+/* As a page arrives, its first eight cards and groups rise into place one
+   after another, 15ms apart (105ms in all); the header stays put. */
+@keyframes gt-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  main[data-entering] > .page > :not(.page-header):nth-child(-n + 9) {
+    animation: gt-rise 200ms var(--gt-ease-out) backwards;
+  }
+  main[data-entering] > .page > :nth-child(3) {
+    animation-delay: 15ms;
+  }
+  main[data-entering] > .page > :nth-child(4) {
+    animation-delay: 30ms;
+  }
+  main[data-entering] > .page > :nth-child(5) {
+    animation-delay: 45ms;
+  }
+  main[data-entering] > .page > :nth-child(6) {
+    animation-delay: 60ms;
+  }
+  main[data-entering] > .page > :nth-child(7) {
+    animation-delay: 75ms;
+  }
+  main[data-entering] > .page > :nth-child(8) {
+    animation-delay: 90ms;
+  }
+  main[data-entering] > .page > :nth-child(9) {
+    animation-delay: 105ms;
+  }
 }

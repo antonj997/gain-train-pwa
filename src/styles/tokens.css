@@ -49,6 +49,15 @@
   --gt-radius-xl: 22px;
 
   --gt-motion: 180ms ease-out;
+  /* Things that move: page slides, the tab pill, the segmented thumb and the
+     cards' stagger share one ease-out curve. A page enters from 32px to the
+     side while the old one drifts 12px the other way; reduced motion turns
+     the slides into a short fade. */
+  --gt-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --gt-page-duration: 260ms;
+  --gt-page-shift: 32px;
+  --gt-page-exit-shift: 12px;
+  --gt-slide: 260ms var(--gt-ease-out);
 
   /* The rest bar and the next-set chip are the only floating controls. The
      shadows are translucent neutrals, so they read the same in both themes. */
@@ -81,5 +90,9 @@
 @media (prefers-reduced-motion: reduce) {
   :root {
     --gt-motion: 0ms;
+    --gt-page-duration: 120ms;
+    --gt-page-shift: 0px;
+    --gt-page-exit-shift: 0px;
+    --gt-slide: 0ms;
   }
 }

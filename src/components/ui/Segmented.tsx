@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent } from "react";
+import { useRef, type CSSProperties, type KeyboardEvent } from "react";
 import { nextOptionIndex } from "@/lib/segmented-keys";
 
 type Option<T extends string> = {
@@ -38,8 +38,29 @@ export default function Segmented<T extends string>({
     onChange(options[next].value);
   };
 
+  // One thumb under the options slides to the selected one (styles/components.css).
+  const selected = options.findIndex((o) => o.value === value);
+  const thumb = {
+    "--seg-count": options.length,
+    "--seg-index": Math.max(0, selected),
+  } as CSSProperties;
+
   return (
-    <div className="segmented" role="radiogroup" aria-label={label}>
+    <div
+      className="segmented"
+      role="radiogroup"
+      aria-label={label}
+      style={thumb}
+    >
+      {selected >= 0 && (
+        <span
+          className={
+            "segmented-thumb" +
+            (options[selected].disabled ? " is-disabled" : "")
+          }
+          aria-hidden="true"
+        />
+      )}
       {options.map((option, index) => (
         <button
           key={option.value}

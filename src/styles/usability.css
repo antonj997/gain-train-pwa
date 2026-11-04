@@ -52,11 +52,16 @@ select,
 }
 /* Borderless controls use a text cue for keyboard focus. */
 .text-button:focus-visible,
-.back-link:focus-visible,
-.bottom-nav a:focus-visible {
+.back-link:focus-visible {
   outline: none;
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+/* A tab is an icon, so focus rings it instead of underlining a label. */
+.bottom-nav .nav-tab:focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -4px;
+  border-radius: 999px;
 }
 .icon-button:focus-visible {
   outline: none;
