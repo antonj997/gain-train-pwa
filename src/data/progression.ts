@@ -165,7 +165,11 @@ const mostCommon = (values: number[]) => {
   for (const v of values) counts.set(v, (counts.get(v) ?? 0) + 1);
   let best: number | null = null;
   for (const [v, n] of counts)
-    if (best === null || n > counts.get(best)! || (n === counts.get(best) && v < best))
+    if (
+      best === null ||
+      n > counts.get(best)! ||
+      (n === counts.get(best) && v < best)
+    )
       best = v;
   return best;
 };
@@ -180,7 +184,8 @@ export function defaultReps(
     sets
       .filter((s) => s.section === "working" && !isDrop(s) && (s.reps ?? 0) > 0)
       .map((s) => s.reps!);
-  const fromRoutine = routineExercise && mostCommon(working(routineExercise.sets));
+  const fromRoutine =
+    routineExercise && mostCommon(working(routineExercise.sets));
   if (fromRoutine) return fromRoutine;
   for (const w of completedWorkouts(list(records)))
     for (const ex of w.payload.exercises)
@@ -202,10 +207,7 @@ export function progressable(ex: Exercise) {
   );
 }
 
-type PhaseShape = Pick<
-  ProgressionInput,
-  "weeks" | "deloadWeeks" | "cycle"
->;
+type PhaseShape = Pick<ProgressionInput, "weeks" | "deloadWeeks" | "cycle">;
 
 /**
  * A new progression row with suggested values: reps from the routine or the

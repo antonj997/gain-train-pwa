@@ -59,7 +59,10 @@ export const workoutSchema = z.object({
       weeks: z.number().int().min(1).max(300),
       deload: z.boolean().optional(),
       loads: z
-        .record(z.string().min(1).max(200), z.number().finite().min(0).max(10000))
+        .record(
+          z.string().min(1).max(200),
+          z.number().finite().min(0).max(10000),
+        )
         .optional(),
     })
     .optional(),
@@ -109,7 +112,10 @@ export const progressionSchema = z.object({
   level: z.enum(levels).catch("intermediate"),
   /** Week number (1 = the phase's first week) to a weight the user typed over the line. */
   overrides: z
-    .record(z.string().regex(/^\d{1,3}$/), z.number().finite().min(0).max(10000))
+    .record(
+      z.string().regex(/^\d{1,3}$/),
+      z.number().finite().min(0).max(10000),
+    )
     .optional(),
   /** The lift goal made from this row with "Also add as a goal". */
   goalId: z.string().uuid().optional(),

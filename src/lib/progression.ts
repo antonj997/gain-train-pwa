@@ -37,11 +37,7 @@ export type { Level };
 
 /** How the load is carried, which sets its steps and its beginner rate. */
 export type LoadClass =
-  | "barbell"
-  | "dumbbell"
-  | "kettlebell"
-  | "machine"
-  | "bodyweight";
+  "barbell" | "dumbbell" | "kettlebell" | "machine" | "bodyweight";
 
 /** The catalogue's equipment as a load class; unknown or missing counts as a barbell. */
 export function loadClass(equipment: string | undefined | null): LoadClass {
@@ -162,7 +158,12 @@ export type ProgressionSuggestion = {
 function reasonableStep(
   kg: number,
   step: number,
-  { level, lower, cls, reps }: {
+  {
+    level,
+    lower,
+    cls,
+    reps,
+  }: {
     level: Level;
     lower: boolean;
     cls: LoadClass;
@@ -175,7 +176,8 @@ function reasonableStep(
     gain = BEGINNER_KG[cls][lower ? 1 : 0] * taper;
   } else gain = (kg * PCT_PER_WEEK[level]) / 100;
   if (reps > HIGH_REPS) gain *= HIGH_REP_FACTOR;
-  const maxPct = level === "beginner" ? MAX_STEP_PCT.beginner : MAX_STEP_PCT.other;
+  const maxPct =
+    level === "beginner" ? MAX_STEP_PCT.beginner : MAX_STEP_PCT.other;
   return Math.min(gain, MAX_STEP_KG, (kg * maxPct) / 100);
 }
 
@@ -240,7 +242,10 @@ export function suggestProgression(
   const tooFast =
     needed > 0 &&
     (needed >
-      Math.max(gain * WARN_SLACK, suggestedTargetKg - input.startKg + increment) +
+      Math.max(
+        gain * WARN_SLACK,
+        suggestedTargetKg - input.startKg + increment,
+      ) +
         1e-9 ||
       perStep > Math.min(MAX_STEP_KG, (input.startKg * maxPct) / 100) + 1e-9);
   let weeksNeeded: number | null = 1;
@@ -259,7 +264,8 @@ export function suggestProgression(
     loadClass: cls,
     increment,
     kgPerWeek: gain / trainingWeeks,
-    pctPerWeek: input.startKg > 0 ? (gain / trainingWeeks / input.startKg) * 100 : 0,
+    pctPerWeek:
+      input.startKg > 0 ? (gain / trainingWeeks / input.startKg) * 100 : 0,
     suggestedTargetKg,
     targetKg,
     tooFast,
@@ -340,8 +346,11 @@ export function plannedWeeks({
 }
 
 /** A target from a percentage increase over the start, on the increment. */
-export const targetFromPct = (startKg: number, pct: number, increment: number) =>
-  Math.max(increment, roundToStep(startKg * (1 + pct / 100), increment));
+export const targetFromPct = (
+  startKg: number,
+  pct: number,
+  increment: number,
+) => Math.max(increment, roundToStep(startKg * (1 + pct / 100), increment));
 
 /** The target as a percentage over the start, to one decimal. */
 export const pctFromTarget = (startKg: number, targetKg: number) =>

@@ -10,6 +10,7 @@ import {
 } from "@/data/phase";
 import { withCycle } from "@/data/plans";
 import { t } from "@/i18n";
+import { deloadText } from "@/lib/plan-note";
 
 const cycleOptions = [1, 2, 3, 4, 5, 6].map((n) => ({
   value: String(n),
@@ -22,21 +23,6 @@ const presets: { value: CyclePreset; key: Parameters<typeof t>[0] }[] = [
 ];
 const LOAD_OPTIONS = [0, 5, 10, 15, 20, 25, 30];
 const SETS_OPTIONS = [40, 50, 60, 75, 100];
-
-/** "10 % lighter, half the sets": the deload rule in words. */
-export function deloadText(deload: { loadPct: number; setsPct: number }) {
-  return t("plan.deloadRule", {
-    load: deload.loadPct
-      ? t("plan.deloadLighter", { pct: deload.loadPct })
-      : t("plan.deloadSameLoad"),
-    sets:
-      deload.setsPct === 50
-        ? t("plan.deloadHalfSets")
-        : deload.setsPct === 100
-          ? t("plan.deloadAllSets")
-          : t("plan.deloadSetsPct", { pct: deload.setsPct }),
-  });
-}
 
 /**
  * The cycle: how many weeks repeat, quick presets ("3 + 1 deload"), and how a
@@ -64,7 +50,9 @@ export default function PlanCycle({
         value={String(plan.cycleWeeks)}
         options={cycleOptions}
         onChange={(value) =>
-          onChange((p) => kindsForCycle(withCycle(p, Number(value)), Number(value)))
+          onChange((p) =>
+            kindsForCycle(withCycle(p, Number(value)), Number(value)),
+          )
         }
       />
       <div className="plan-presets" role="group" aria-label={t("plan.presets")}>

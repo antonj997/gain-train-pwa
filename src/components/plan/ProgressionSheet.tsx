@@ -11,8 +11,17 @@ import {
   type Plan,
   type ProgressionItem,
 } from "@/data/model";
-import { deloadWeeks, phaseWeeks, progressionWeeks, weekKindsOf } from "@/data/phase";
-import { detectLevel, estimateStartLoad, exerciseInfo } from "@/data/progression";
+import {
+  deloadWeeks,
+  phaseWeeks,
+  progressionWeeks,
+  weekKindsOf,
+} from "@/data/phase";
+import {
+  detectLevel,
+  estimateStartLoad,
+  exerciseInfo,
+} from "@/data/progression";
 import {
   loadIncrement,
   pctFromTarget,
@@ -21,17 +30,8 @@ import {
 } from "@/lib/progression";
 import { localizedDate } from "@/lib/dates";
 import { parseSetNumber } from "@/lib/set-input";
-import { formatDecimal, t } from "@/i18n";
-
-/** Kilograms as the plan editor shows them: "82.5", "82,5". Entry is in kg, like goals. */
-export const kgText = (kg: number) => formatDecimal(Math.round(kg * 100) / 100);
-
-const levelKey = {
-  beginner: "prog.levelBeginner",
-  intermediate: "prog.levelIntermediate",
-  experienced: "prog.levelExperienced",
-} as const;
-export const levelLabel = (level: Level) => t(levelKey[level]);
+import { t } from "@/i18n";
+import { kgText, levelLabel } from "@/lib/plan-note";
 
 type Mode = "pct" | "kg";
 
@@ -102,11 +102,16 @@ export default function ProgressionSheet({
         cycle: weekKindsOf(plan).map((k) => k === "deload"),
       })
     : null;
-  const table = hasStart && item.targetKg > 0 ? progressionWeeks(plan, item, info.equipment) : [];
+  const table =
+    hasStart && item.targetKg > 0
+      ? progressionWeeks(plan, item, info.equipment)
+      : [];
 
   const [mode, setMode] = useState<Mode>("pct");
   const [repsText, setRepsText] = useState(String(item.reps));
-  const [startText, setStartText] = useState(hasStart ? kgText(item.startKg) : "");
+  const [startText, setStartText] = useState(
+    hasStart ? kgText(item.startKg) : "",
+  );
   const [targetText, setTargetText] = useState(() =>
     item.targetKg > 0
       ? mode === "pct"
@@ -115,10 +120,17 @@ export default function ProgressionSheet({
       : "",
   );
   // The week cell being typed in, so its text is not reformatted mid-entry.
-  const [typing, setTyping] = useState<{ week: number; text: string } | null>(null);
+  const [typing, setTyping] = useState<{ week: number; text: string } | null>(
+    null,
+  );
 
-  const update = (change: Partial<ProgressionItem>) => onChange({ ...item, ...change });
-  const showTarget = (targetKg: number, as: Mode = mode, startKg = item.startKg) =>
+  const update = (change: Partial<ProgressionItem>) =>
+    onChange({ ...item, ...change });
+  const showTarget = (
+    targetKg: number,
+    as: Mode = mode,
+    startKg = item.startKg,
+  ) =>
     setTargetText(
       targetKg > 0
         ? as === "pct"
@@ -143,7 +155,10 @@ export default function ProgressionSheet({
     if (mode === "kg") showTarget(targetKg, "kg", startKg);
   };
 
-  const levelOptions = levels.map((value) => ({ value, label: levelLabel(value) }));
+  const levelOptions = levels.map((value) => ({
+    value,
+    label: levelLabel(value),
+  }));
   const typedReps = positive(repsText);
 
   return (
@@ -161,11 +176,16 @@ export default function ProgressionSheet({
             inputMode="numeric"
             autoComplete="off"
             value={repsText}
-            aria-invalid={typedReps === null || !Number.isInteger(typedReps) || typedReps > 100}
+            aria-invalid={
+              typedReps === null ||
+              !Number.isInteger(typedReps) ||
+              typedReps > 100
+            }
             onChange={(e) => {
               setRepsText(e.target.value);
               const reps = positive(e.target.value);
-              if (reps !== null && Number.isInteger(reps) && reps <= 100) update({ reps });
+              if (reps !== null && Number.isInteger(reps) && reps <= 100)
+                update({ reps });
             }}
           />
         </label>
@@ -201,7 +221,10 @@ export default function ProgressionSheet({
             {t(estimate.from === "set" ? "prog.fromSet" : "prog.fromE1rm", {
               kg: kgText(estimate.kg),
               set: `${kgText(estimate.setKg)} kg × ${estimate.setReps}`,
-              date: localizedDate(estimate.date, { day: "numeric", month: "short" }),
+              date: localizedDate(estimate.date, {
+                day: "numeric",
+                month: "short",
+              }),
             })}
             {estimate.kg !== item.startKg && (
               <>
@@ -247,8 +270,11 @@ export default function ProgressionSheet({
               if (value === null || !Number.isFinite(value)) return;
               if (mode === "pct") {
                 if (value > -50 && value <= 200)
-                  update({ targetKg: targetFromPct(item.startKg, value, increment) });
-              } else if (value > 0 && value <= 10000) update({ targetKg: value });
+                  update({
+                    targetKg: targetFromPct(item.startKg, value, increment),
+                  });
+              } else if (value > 0 && value <= 10000)
+                update({ targetKg: value });
             }}
           />
         </label>
@@ -284,7 +310,11 @@ export default function ProgressionSheet({
             {t("prog.basis", {
               level: levelLabel(item.level),
               body: t(suggestion.lower ? "prog.lowerBody" : "prog.upperBody"),
-              equipment: t(("prog.class." + suggestion.loadClass) as Parameters<typeof t>[0]),
+              equipment: t(
+                ("prog.class." + suggestion.loadClass) as Parameters<
+                  typeof t
+                >[0],
+              ),
               step: kgText(suggestion.increment),
               deloads: deloads.length,
             })}
@@ -302,10 +332,16 @@ export default function ProgressionSheet({
           {item.targetKg !== suggestion.suggestedTargetKg && (
             <button
               type="button"
-              className={suggestion.tooFast ? "btn-primary btn-sm" : "btn-secondary btn-sm"}
+              className={
+                suggestion.tooFast
+                  ? "btn-primary btn-sm"
+                  : "btn-secondary btn-sm"
+              }
               onClick={() => setTarget(suggestion.suggestedTargetKg)}
             >
-              {suggestion.tooFast ? t("prog.useTimeline") : t("prog.useSuggestion")}
+              {suggestion.tooFast
+                ? t("prog.useTimeline")
+                : t("prog.useSuggestion")}
             </button>
           )}
         </div>
@@ -320,12 +356,16 @@ export default function ProgressionSheet({
               <div
                 key={w.week}
                 className={
-                  "prog-week" + (w.deload ? " is-deload" : "") + (w.edited ? " is-edited" : "")
+                  "prog-week" +
+                  (w.deload ? " is-deload" : "") +
+                  (w.edited ? " is-edited" : "")
                 }
               >
                 <span className="prog-week-name">
                   {t("plan.weekN", { n: w.week })}
-                  {w.deload && <span className="prog-tag">{t("plan.deload")}</span>}
+                  {w.deload && (
+                    <span className="prog-tag">{t("plan.deload")}</span>
+                  )}
                 </span>
                 {w.edited && (
                   <button
@@ -354,8 +394,15 @@ export default function ProgressionSheet({
                   onChange={(e) => {
                     setTyping({ week: w.week, text: e.target.value });
                     const kg = parseSetNumber(e.target.value);
-                    if (kg !== null && Number.isFinite(kg) && kg >= 0 && kg <= 10000)
-                      update({ overrides: { ...item.overrides, [String(w.week)]: kg } });
+                    if (
+                      kg !== null &&
+                      Number.isFinite(kg) &&
+                      kg >= 0 &&
+                      kg <= 10000
+                    )
+                      update({
+                        overrides: { ...item.overrides, [String(w.week)]: kg },
+                      });
                   }}
                 />
                 <span className="prog-unit" aria-hidden="true">
@@ -379,12 +426,20 @@ export default function ProgressionSheet({
       ) : (
         <p className="row-sub">{t("prog.goalRepsNote")}</p>
       )}
-      <button type="button" className="btn-quiet prog-remove" onClick={onRemove}>
+      <button
+        type="button"
+        className="btn-quiet prog-remove"
+        onClick={onRemove}
+      >
         <Trash2 size={18} aria-hidden="true" />
         {t("prog.remove")}
       </button>
       <div className="sheet-footer">
-        <button type="button" className="btn-primary btn-block" onClick={onClose}>
+        <button
+          type="button"
+          className="btn-primary btn-block"
+          onClick={onClose}
+        >
           {t("common.done")}
         </button>
       </div>

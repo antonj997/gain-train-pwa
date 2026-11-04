@@ -159,7 +159,8 @@ export default function PlanEditor({
       let progression = trimProgression(next);
       if (progression)
         for (const [index, item] of progression.entries()) {
-          if (!goalFor.has(item.exerciseId) || goalTitleOf(item.goalId)) continue;
+          if (!goalFor.has(item.exerciseId) || goalTitleOf(item.goalId))
+            continue;
           const id = crypto.randomUUID();
           const goal: Goal = {
             kind: "lift",
@@ -238,8 +239,14 @@ export default function PlanEditor({
           validPeriod
             ? t("plan.phaseSubtitle", {
                 weeks: countLabel(weeks, "week"),
-                from: localizedDate(draft.startDate, { day: "numeric", month: "short" }),
-                to: localizedDate(draft.endDate, { day: "numeric", month: "short" }),
+                from: localizedDate(draft.startDate, {
+                  day: "numeric",
+                  month: "short",
+                }),
+                to: localizedDate(draft.endDate, {
+                  day: "numeric",
+                  month: "short",
+                }),
               })
             : t("plan.description")
         }
@@ -274,7 +281,9 @@ export default function PlanEditor({
           plan={draft}
           names={names}
           onPick={(week, day) => setTarget({ week, day })}
-          onWeekKind={(week, kind) => setDraft((d) => withWeekKind(d, week, kind))}
+          onWeekKind={(week, kind) =>
+            setDraft((d) => withWeekKind(d, week, kind))
+          }
           onCopyWeekOne={() => setDraft(withWeekOneCopied)}
         />
         {validPeriod && weeks <= MAX_PHASE_WEEKS && (

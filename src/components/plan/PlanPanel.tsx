@@ -186,43 +186,43 @@ export default function PlanPanel() {
           </span>
           <ChevronDown className="chev" size={20} aria-hidden="true" />
         </summary>
-      <section aria-labelledby="groups-heading">
-        <h2 className="group-title" id="groups-heading">
-          {t("plan.groups")}
-        </h2>
-        <p className="row-sub">{t("plan.groupsExplain")}</p>
-        {groups.length > 0 && (
-          <div className="list">
-            {groups.map((g) => (
-              <ListRow
-                key={g.id}
-                title={g.name}
-                sub={[
-                  countLabel(g.routineIds.length, "routine"),
-                  g.categories.map(categoryLabel).join(", "),
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-                chevron
-                onClick={() => edit({ kind: "group", group: g })}
-              />
-            ))}
-          </div>
-        )}
-        <button
-          type="button"
-          className="btn-dashed"
-          onClick={() => edit({ kind: "group", group: null })}
-        >
-          <Plus size={20} aria-hidden="true" />
-          {t("plan.newGroup")}
-        </button>
-        <p className="row-sub group-note">
-          {t("plan.groupNote", {
-            types: dayTypes.map(dayTypeLabel).join(", "),
-          })}
-        </p>
-      </section>
+        <section aria-labelledby="groups-heading">
+          <h2 className="group-title" id="groups-heading">
+            {t("plan.groups")}
+          </h2>
+          <p className="row-sub">{t("plan.groupsExplain")}</p>
+          {groups.length > 0 && (
+            <div className="list">
+              {groups.map((g) => (
+                <ListRow
+                  key={g.id}
+                  title={g.name}
+                  sub={[
+                    countLabel(g.routineIds.length, "routine"),
+                    g.categories.map(categoryLabel).join(", "),
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  chevron
+                  onClick={() => edit({ kind: "group", group: g })}
+                />
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            className="btn-dashed"
+            onClick={() => edit({ kind: "group", group: null })}
+          >
+            <Plus size={20} aria-hidden="true" />
+            {t("plan.newGroup")}
+          </button>
+          <p className="row-sub group-note">
+            {t("plan.groupNote", {
+              types: dayTypes.map(dayTypeLabel).join(", "),
+            })}
+          </p>
+        </section>
       </details>
       {current?.kind === "plan" && (
         <PlanEditor

@@ -109,7 +109,13 @@ test("the library lists the catalogue and own exercises with their flags", () =>
   };
   const all = libraryExercises(records, new Set(["builtin:bench-press"]));
   const bench = all.find((e) => e.id === "builtin:bench-press")!;
-  assert.deepEqual([bench.hidden, bench.custom, bench.favourite], [true, false, false]);
+  assert.deepEqual(
+    [bench.hidden, bench.custom, bench.favourite],
+    [true, false, false],
+  );
   const sled = all.find((e) => e.id === own)!;
-  assert.deepEqual([sled.custom, sled.favourite, sled.lastDate], [true, true, null]);
+  assert.deepEqual(
+    [sled.custom, sled.favourite, sled.lastDate],
+    [true, true, null],
+  );
 });

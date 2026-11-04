@@ -2,13 +2,28 @@ import { useMemo, useRef, useState } from "react";
 import { ListPlus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import ExercisePicker from "@/components/ExercisePicker";
-import ProgressionSheet, { kgText } from "@/components/plan/ProgressionSheet";
+import ProgressionSheet from "@/components/plan/ProgressionSheet";
+import { kgText } from "@/lib/plan-note";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
 import { useData } from "@/contexts/useData";
-import { type Exercise, type Plan, type ProgressionItem, today as todayDate } from "@/data/model";
-import { deloadWeeks, phaseWeeks, progressionWeeks, weekKindsOf } from "@/data/phase";
-import { exerciseInfo, newProgressionItem, progressable } from "@/data/progression";
+import {
+  type Exercise,
+  type Plan,
+  type ProgressionItem,
+  today as todayDate,
+} from "@/data/model";
+import {
+  deloadWeeks,
+  phaseWeeks,
+  progressionWeeks,
+  weekKindsOf,
+} from "@/data/phase";
+import {
+  exerciseInfo,
+  newProgressionItem,
+  progressable,
+} from "@/data/progression";
 import { routines as routineRecords } from "@/data/selectors";
 import { countLabel } from "@/lib/labels";
 import { t } from "@/i18n";
@@ -43,7 +58,10 @@ export default function PlanProgression({
     deloadWeeks: deloads,
     cycle: weekKindsOf(plan).map((k) => k === "deload"),
   };
-  const routines = useMemo(() => routineRecords(state.records), [state.records]);
+  const routines = useMemo(
+    () => routineRecords(state.records),
+    [state.records],
+  );
   const [picking, setPicking] = useState(false);
   const [choosingRoutine, setChoosingRoutine] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -81,7 +99,12 @@ export default function PlanProgression({
       </h3>
       <p className="row-sub">{t("prog.intro")}</p>
       {items.length > 0 && (
-        <div className="prog-table-wrap" role="region" aria-label={t("prog.tableLabel")} tabIndex={0}>
+        <div
+          className="prog-table-wrap"
+          role="region"
+          aria-label={t("prog.tableLabel")}
+          tabIndex={0}
+        >
           <table className="prog-table">
             <thead>
               <tr>
@@ -91,10 +114,14 @@ export default function PlanProgression({
                     key={w}
                     scope="col"
                     className={deloads.includes(w) ? "is-deload" : undefined}
-                    title={deloads.includes(w) ? t("plan.deloadWeek") : undefined}
+                    title={
+                      deloads.includes(w) ? t("plan.deloadWeek") : undefined
+                    }
                   >
                     {t("prog.weekShort", { n: w })}
-                    {deloads.includes(w) && <span className="prog-d">{t("prog.deloadShort")}</span>}
+                    {deloads.includes(w) && (
+                      <span className="prog-d">{t("prog.deloadShort")}</span>
+                    )}
                   </th>
                 ))}
               </tr>
@@ -134,7 +161,8 @@ export default function PlanProgression({
                         <td
                           key={c.week}
                           className={
-                            (c.deload ? "is-deload" : "") + (c.edited ? " is-edited" : "")
+                            (c.deload ? "is-deload" : "") +
+                            (c.edited ? " is-edited" : "")
                           }
                         >
                           <button
@@ -161,11 +189,17 @@ export default function PlanProgression({
       )}
       {items.length > 0 && (
         <p className="row-sub group-note">
-          {t("prog.tableNote", { lifts: countLabel(items.length, "progression") })}
+          {t("prog.tableNote", {
+            lifts: countLabel(items.length, "progression"),
+          })}
         </p>
       )}
       <div className="prog-add">
-        <button type="button" className="btn-dashed" onClick={() => setPicking(true)}>
+        <button
+          type="button"
+          className="btn-dashed"
+          onClick={() => setPicking(true)}
+        >
           <Plus size={20} aria-hidden="true" />
           {t("prog.addExercise")}
         </button>
@@ -205,9 +239,11 @@ export default function PlanProgression({
               sub={r.payload.exercises.map((e) => e.name).join(" · ")}
               onClick={() => {
                 const fresh = add(
-                  r.payload.exercises
-                    .filter(progressable)
-                    .map((e) => ({ id: e.exerciseId, name: e.name, routineExercise: e })),
+                  r.payload.exercises.filter(progressable).map((e) => ({
+                    id: e.exerciseId,
+                    name: e.name,
+                    routineExercise: e,
+                  })),
                 );
                 setChoosingRoutine(false);
                 toast(

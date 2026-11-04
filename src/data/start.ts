@@ -79,7 +79,9 @@ export function newWorkout(
     ? suggestedExercises(routine.payload.exercises, records)
     : [];
   const planned =
-    routine && !past ? withPlan(suggested, records, date) : { exercises: suggested };
+    routine && !past
+      ? withPlan(suggested, records, date)
+      : { exercises: suggested };
   return {
     routineId: routine?.id,
     name: autoWorkoutName(

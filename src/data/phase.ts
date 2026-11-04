@@ -42,9 +42,8 @@ export type WeekKind = "normal" | "deload";
 
 /** One kind per cycle week. Unknown values and missing weeks are normal. */
 export function weekKindsOf(plan: Pick<Plan, "cycleWeeks" | "weekKinds">) {
-  return Array.from(
-    { length: plan.cycleWeeks },
-    (_, i): WeekKind => (plan.weekKinds?.[i] === "deload" ? "deload" : "normal"),
+  return Array.from({ length: plan.cycleWeeks }, (_, i): WeekKind =>
+    plan.weekKinds?.[i] === "deload" ? "deload" : "normal",
   );
 }
 
@@ -59,16 +58,18 @@ export function isDeloadWeek(
   week: number,
 ) {
   const kinds = weekKindsOf(plan);
-  return kinds[(((week - 1) % kinds.length) + kinds.length) % kinds.length] ===
-    "deload";
+  return (
+    kinds[(((week - 1) % kinds.length) + kinds.length) % kinds.length] ===
+    "deload"
+  );
 }
 
 /** The phase's deload week numbers, 1-based. */
 export function deloadWeeks(
   plan: Pick<Plan, "cycleWeeks" | "weekKinds" | "startDate" | "endDate">,
 ) {
-  return Array.from({ length: phaseWeeks(plan) }, (_, i) => i + 1).filter(
-    (w) => isDeloadWeek(plan, w),
+  return Array.from({ length: phaseWeeks(plan) }, (_, i) => i + 1).filter((w) =>
+    isDeloadWeek(plan, w),
   );
 }
 
@@ -133,7 +134,9 @@ export function withWeekKind(plan: Plan, week: number, kind: WeekKind): Plan {
 /** The plan with week 1's days copied into the other cycle weeks. */
 export const withWeekOneCopied = (plan: Plan): Plan => ({
   ...plan,
-  template: plan.template.map((row, i) => (i === 0 ? row : [...plan.template[0]])),
+  template: plan.template.map((row, i) =>
+    i === 0 ? row : [...plan.template[0]],
+  ),
 });
 
 /** Cycle kinds kept in step with a new cycle length: new weeks are normal. */

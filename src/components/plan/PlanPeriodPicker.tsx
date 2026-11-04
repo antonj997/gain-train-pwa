@@ -4,12 +4,7 @@ import PlanCalendar from "@/components/PlanCalendar";
 import type { Plan } from "@/data/model";
 import { shiftDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
-import {
-  PHASE_LENGTHS,
-  endsOnWeek,
-  phaseEnd,
-  phaseWeeks,
-} from "@/data/phase";
+import { PHASE_LENGTHS, endsOnWeek, phaseEnd, phaseWeeks } from "@/data/phase";
 import { t } from "@/i18n";
 
 type Props = {

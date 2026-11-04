@@ -65,7 +65,10 @@ test("intermediates gain about 0.75 % a week, experienced about half that", () =
   assert.equal(mid.suggestedTargetKg, 85);
   assert.equal(mid.increment, 2.5);
   const old = suggestProgression(base({ level: "experienced" }));
-  assert.ok(old.pctPerWeek > 0.2 && old.pctPerWeek < 0.5, String(old.pctPerWeek));
+  assert.ok(
+    old.pctPerWeek > 0.2 && old.pctPerWeek < 0.5,
+    String(old.pctPerWeek),
+  );
   assert.equal(old.suggestedTargetKg, 82.5);
 });
 
@@ -74,7 +77,10 @@ test("beginners add 2.5 kg a week upper body and 5 kg lower body, tapering", () 
     base({ level: "beginner", deloadWeeks: [], weeks: 5, startKg: 60 }),
   );
   // Four steps at 2.5 kg slightly tapered.
-  assert.ok(upper.kgPerWeek > 2.2 && upper.kgPerWeek <= 2.5, String(upper.kgPerWeek));
+  assert.ok(
+    upper.kgPerWeek > 2.2 && upper.kgPerWeek <= 2.5,
+    String(upper.kgPerWeek),
+  );
   assert.equal(upper.suggestedTargetKg, 70);
   const lower = suggestProgression(
     base({
@@ -85,7 +91,10 @@ test("beginners add 2.5 kg a week upper body and 5 kg lower body, tapering", () 
       startKg: 100,
     }),
   );
-  assert.ok(lower.kgPerWeek > 4.4 && lower.kgPerWeek <= 5, String(lower.kgPerWeek));
+  assert.ok(
+    lower.kgPerWeek > 4.4 && lower.kgPerWeek <= 5,
+    String(lower.kgPerWeek),
+  );
   // Over a long phase the rate falls toward half.
   const long = suggestProgression(
     base({ level: "beginner", deloadWeeks: [], weeks: 26, startKg: 60 }),
@@ -106,7 +115,9 @@ test("dumbbells and high-rep work progress slower and round to their step", () =
   assert.equal(db.increment, 2);
   assert.ok(db.kgPerWeek < 1.01, String(db.kgPerWeek));
   assert.equal(db.suggestedTargetKg % 2, 0);
-  const fives = suggestProgression(base({ level: "beginner", deloadWeeks: [] }));
+  const fives = suggestProgression(
+    base({ level: "beginner", deloadWeeks: [] }),
+  );
   const fifteens = suggestProgression(
     base({ level: "beginner", deloadWeeks: [], reps: 15 }),
   );
@@ -133,9 +144,7 @@ test("deload weeks add nothing", () => {
   const some = suggestProgression(base());
   assert.ok(some.suggestedTargetKg <= all.suggestedTargetKg);
   // Every week a deload: nothing is gained.
-  const none = suggestProgression(
-    base({ weeks: 3, deloadWeeks: [2, 3] }),
-  );
+  const none = suggestProgression(base({ weeks: 3, deloadWeeks: [2, 3] }));
   assert.equal(none.suggestedTargetKg, 80);
 });
 
@@ -144,7 +153,10 @@ test("a target clearly faster than the rate warns, with a realistic timeline", (
   assert.equal(ok.tooFast, false);
   const fast = suggestProgression(base({ targetKg: 100 }));
   assert.equal(fast.tooFast, true);
-  assert.ok(fast.weeksNeeded !== null && fast.weeksNeeded > 12, String(fast.weeksNeeded));
+  assert.ok(
+    fast.weeksNeeded !== null && fast.weeksNeeded > 12,
+    String(fast.weeksNeeded),
+  );
   // One step past the suggestion is still fine.
   const step = suggestProgression(base({ targetKg: 87.5 }));
   assert.equal(step.tooFast, false);
@@ -153,7 +165,8 @@ test("a target clearly faster than the rate warns, with a realistic timeline", (
   assert.equal(suggestProgression(base({ targetKg: 75 })).weeksNeeded, 1);
   // Unreachable within two years.
   assert.equal(
-    suggestProgression(base({ level: "experienced", targetKg: 400 })).weeksNeeded,
+    suggestProgression(base({ level: "experienced", targetKg: 400 }))
+      .weeksNeeded,
     null,
   );
 });
@@ -164,9 +177,7 @@ test("the timeline continues the cycle past the phase", () => {
     base({ targetKg: 95, cycle: [false, false, false, true] }),
   );
   assert.equal(plain.weeksNeeded, withCycle.weeksNeeded);
-  const noDeloads = suggestProgression(
-    base({ targetKg: 95, cycle: [false] }),
-  );
+  const noDeloads = suggestProgression(base({ targetKg: 95, cycle: [false] }));
   assert.ok(noDeloads.weeksNeeded! < withCycle.weeksNeeded!);
 });
 
@@ -201,12 +212,27 @@ test("planned weeks rise evenly to the target, deloads hold lighter, typed weeks
   assert.equal(edited[2].kg, 87.5);
   // A single week lifts the start.
   assert.deepEqual(
-    plannedWeeks({ startKg: 60, targetKg: 70, weeks: 1, deloadWeeks: [], increment: 2.5 }).map((w) => w.kg),
+    plannedWeeks({
+      startKg: 60,
+      targetKg: 70,
+      weeks: 1,
+      deloadWeeks: [],
+      increment: 2.5,
+    }).map((w) => w.kg),
     [60],
   );
   // Going down works too and never passes the target.
-  const down = plannedWeeks({ startKg: 100, targetKg: 90, weeks: 5, deloadWeeks: [], increment: 2.5 });
-  assert.deepEqual(down.map((w) => w.kg), [100, 97.5, 95, 92.5, 90]);
+  const down = plannedWeeks({
+    startKg: 100,
+    targetKg: 90,
+    weeks: 5,
+    deloadWeeks: [],
+    increment: 2.5,
+  });
+  assert.deepEqual(
+    down.map((w) => w.kg),
+    [100, 97.5, 95, 92.5, 90],
+  );
 });
 
 test("percent targets land on the step and read back", () => {
@@ -218,7 +244,11 @@ test("percent targets land on the step and read back", () => {
 
 // --- history-based helpers ---
 
-const set = (weight: number, reps: number, extra: Partial<WorkoutSet> = {}): WorkoutSet => ({
+const set = (
+  weight: number,
+  reps: number,
+  extra: Partial<WorkoutSet> = {},
+): WorkoutSet => ({
   id: crypto.randomUUID(),
   reps,
   weight,
@@ -227,7 +257,11 @@ const set = (weight: number, reps: number, extra: Partial<WorkoutSet> = {}): Wor
   done: true,
   ...extra,
 });
-const workout = (date: string, sets: WorkoutSet[], exerciseId = "builtin:bench-press"): RecordDoc => ({
+const workout = (
+  date: string,
+  sets: WorkoutSet[],
+  exerciseId = "builtin:bench-press",
+): RecordDoc => ({
   id: crypto.randomUUID(),
   kind: "workout",
   revision: 1,
@@ -240,7 +274,9 @@ const workout = (date: string, sets: WorkoutSet[], exerciseId = "builtin:bench-p
     duration: null,
     startedAt: null,
     status: "completed",
-    exercises: [{ id: crypto.randomUUID(), exerciseId, name: "Bench Press", sets }],
+    exercises: [
+      { id: crypto.randomUUID(), exerciseId, name: "Bench Press", sets },
+    ],
   },
 });
 
@@ -248,10 +284,20 @@ test("the start load is the heaviest set at the reps in the last four weeks", ()
   const records = [
     workout("2026-10-01", [set(90, 5)]), // older than four weeks
     workout("2026-10-20", [set(80, 5), set(82.5, 5), set(85, 3)]),
-    workout("2026-10-28", [set(82.5, 6), set(100, 5, { section: "warmup" }), set(95, 5, { done: false })]),
+    workout("2026-10-28", [
+      set(82.5, 6),
+      set(100, 5, { section: "warmup" }),
+      set(95, 5, { done: false }),
+    ]),
   ];
   const at = estimateStartLoad(records, "builtin:bench-press", 5, "2026-11-04");
-  assert.deepEqual(at, { kg: 82.5, from: "set", setKg: 82.5, setReps: 6, date: "2026-10-28" });
+  assert.deepEqual(at, {
+    kg: 82.5,
+    from: "set",
+    setKg: 82.5,
+    setReps: 6,
+    date: "2026-10-28",
+  });
 });
 
 test("without a set at the reps, the e1RM converts to the reps, rounded down", () => {
@@ -262,20 +308,31 @@ test("without a set at the reps, the e1RM converts to the reps, rounded down", (
   assert.equal(at?.from, "e1rm");
   // Older history (up to twelve weeks) is used when the last four are empty.
   const old = [workout("2026-09-01", [set(70, 8)])];
-  assert.equal(estimateStartLoad(old, "builtin:bench-press", 8, "2026-11-04")?.kg, 70);
-  assert.equal(estimateStartLoad([], "builtin:bench-press", 8, "2026-11-04"), null);
+  assert.equal(
+    estimateStartLoad(old, "builtin:bench-press", 8, "2026-11-04")?.kg,
+    70,
+  );
+  assert.equal(
+    estimateStartLoad([], "builtin:bench-press", 8, "2026-11-04"),
+    null,
+  );
 });
 
 test("the level comes from months and sessions logged", () => {
   assert.equal(detectLevel([], "2026-11-04").level, "beginner");
   const year = Array.from({ length: 60 }, (_, i) =>
-    workout(new Date(Date.UTC(2025, 10, 1 + i * 6)).toISOString().slice(0, 10), [set(80, 5)]),
+    workout(
+      new Date(Date.UTC(2025, 10, 1 + i * 6)).toISOString().slice(0, 10),
+      [set(80, 5)],
+    ),
   );
   assert.equal(detectLevel(year, "2026-11-04").level, "intermediate");
   const short = year.slice(-10);
   assert.equal(detectLevel(short, "2026-11-04").level, "beginner");
   const long = Array.from({ length: 160 }, (_, i) =>
-    workout(new Date(Date.UTC(2024, 0, 1 + i * 5)).toISOString().slice(0, 10), [set(80, 5)]),
+    workout(new Date(Date.UTC(2024, 0, 1 + i * 5)).toISOString().slice(0, 10), [
+      set(80, 5),
+    ]),
   );
   assert.equal(detectLevel(long, "2026-11-04").level, "experienced");
 });
@@ -321,9 +378,20 @@ test("reps come from the routine, then the log; new rows fill in a suggestion", 
 });
 
 test("only weighted lifts can be progressed", () => {
-  const ex = (sets: WorkoutSet[]) => ({ id: "x", exerciseId: "e", name: "E", sets });
+  const ex = (sets: WorkoutSet[]) => ({
+    id: "x",
+    exerciseId: "e",
+    name: "E",
+    sets,
+  });
   assert.equal(progressable(ex([set(60, 8)])), true);
   assert.equal(progressable(ex([set(0, 10, { load: "bodyweight" })])), false);
-  assert.equal(progressable(ex([set(10, 8, { load: "bodyweight", extraWeight: true })])), true);
-  assert.equal(progressable(ex([set(0, 30, { load: "bodyweight", measure: "seconds" })])), false);
+  assert.equal(
+    progressable(ex([set(10, 8, { load: "bodyweight", extraWeight: true })])),
+    true,
+  );
+  assert.equal(
+    progressable(ex([set(0, 30, { load: "bodyweight", measure: "seconds" })])),
+    false,
+  );
 });
