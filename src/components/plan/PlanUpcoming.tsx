@@ -1,6 +1,6 @@
 import PlanCalendar, { type PlanDay } from "@/components/PlanCalendar";
 import type { Plan } from "@/data/model";
-import { plannedFor, resolveCell } from "@/data/plans";
+import { planDay, resolveCell } from "@/data/plans";
 import { t } from "@/i18n";
 
 type Names = Parameters<typeof resolveCell>[1];
@@ -20,12 +20,13 @@ export default function PlanUpcoming({
   const first = plan.startDate > today ? plan.startDate : today;
   if (first > plan.endDate) return null;
   const describe = (date: string): PlanDay => {
-    const planned = plannedFor([plan], date);
-    const day = resolveCell(planned?.cell, names);
+    // A paused plan still shows its days here, so it can be edited.
+    const planned = planDay(plan, date);
+    const day = resolveCell(planned.cell, names);
     return {
       kind: day ? (day.kind === "rest" ? "rest" : "planned") : null,
       label: day ? day.title : t("plan.nothingPlanned"),
-      override: !!planned?.override,
+      override: planned.override,
     };
   };
   return (

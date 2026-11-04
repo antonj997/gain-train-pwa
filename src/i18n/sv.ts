@@ -929,6 +929,15 @@ export const sv = {
   "plan.ended": "Avslutat",
   "plan.starts": "Startar {date}",
   "plan.active": "Aktivt",
+  "plan.paused": "Pausat",
+  "plan.pause": "Pausa schema",
+  "plan.resume": "Återuppta schema",
+  "plan.pauseNamed": "Pausa {name}",
+  "plan.resumeNamed": "Återuppta {name}",
+  "plan.pausedToast": "Schemat pausat",
+  "plan.resumedToast": "Schemat återupptaget",
+  "plan.pausedNote":
+    "Pausat: Träna visar inget från schemat, och ett annat schema kan använda dess datum.",
   "plan.intro":
     "Planera träningen om du vill: välj vad varje dag innehåller så visar Träna det. Inget ändras någonstans så länge du inte har ett schema.",
   "plan.plans": "Scheman",

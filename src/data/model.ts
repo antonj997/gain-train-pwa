@@ -63,6 +63,8 @@ export const customSchema = z.object({
   category: z.string().max(50),
   note: z.string().max(1000),
   favourite: z.boolean().default(false),
+  /** Extra categories it also trains, besides `category`. Not shared. */
+  categories: z.array(z.string().min(1).max(50)).max(20).optional(),
   /** Id of this exercise's row in shared_exercises while it is shared. */
   sharedId: z.string().uuid().optional(),
   /** Id of the shared row this exercise was copied from. It works without that row. */
@@ -92,6 +94,8 @@ export const planSchema = z
     /** ISO date to cell. A dated cell replaces the template for that day. */
     overrides: z.record(isoDay, planCell),
     goalIds: z.array(z.string().uuid()).max(50),
+    /** A paused plan is kept but plans nothing and blocks no other plan's dates. */
+    paused: z.boolean().optional(),
   })
   .superRefine((plan, ctx) => {
     if (plan.endDate < plan.startDate)

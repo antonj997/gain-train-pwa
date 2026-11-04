@@ -918,6 +918,15 @@ export const en = {
   "plan.ended": "Ended",
   "plan.starts": "Starts {date}",
   "plan.active": "Active",
+  "plan.paused": "Paused",
+  "plan.pause": "Pause plan",
+  "plan.resume": "Resume plan",
+  "plan.pauseNamed": "Pause {name}",
+  "plan.resumeNamed": "Resume {name}",
+  "plan.pausedToast": "Plan paused",
+  "plan.resumedToast": "Plan resumed",
+  "plan.pausedNote":
+    "Paused: Train shows nothing from this plan, and another plan can use its dates.",
   "plan.intro":
     "Plan your training if you like: pick what each day holds and Train shows it. Nothing changes anywhere while you have no plan.",
   "plan.plans": "Plans",

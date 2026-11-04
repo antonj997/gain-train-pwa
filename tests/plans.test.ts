@@ -13,10 +13,12 @@ import {
   groupCell,
   groupsOf,
   legacyPlanToPlan,
+  planDay,
   plannedFor,
   resolveCell,
   threeMonthsAfter,
   typeCell,
+  withPaused,
 } from "../src/data/plans";
 
 const row = (...cells: (string | null)[]) =>
@@ -124,6 +126,55 @@ test("findOverlap finds a shared day and ignores the plan being edited", () => {
     findOverlap([a], { startDate: "2026-11-05", endDate: "2026-11-06" }, "a"),
     null,
   );
+});
+
+test("a paused plan plans nothing, and the next active plan in its period answers", () => {
+  const paused = plan({ paused: true });
+  assert.equal(plannedFor([paused], "2026-11-04"), null);
+  assert.equal(plannedFor([paused], "2026-11-09"), null);
+  const other = plan({
+    name: "Other",
+    cycleWeeks: 1,
+    template: [row("x", "x", "x", "x", "x", "x", "x")],
+  });
+  assert.equal(plannedFor([paused, other], "2026-11-04")?.plan, other);
+  assert.equal(plannedFor([paused, other], "2026-11-04")?.cell, "x");
+  // The editor still reads a paused plan's own days.
+  assert.equal(planDay(paused, "2026-11-04").cell, "pull");
+  assert.deepEqual(
+    planDay(withOverride(paused, "2026-11-05", REST), "2026-11-05"),
+    { cell: REST, override: true },
+  );
+});
+
+test("a paused plan blocks no other plan, but resuming into an overlap is found", () => {
+  const a = {
+    id: "a",
+    startDate: "2026-11-01",
+    endDate: "2026-11-30",
+    paused: true,
+  };
+  const b = { id: "b", startDate: "2026-11-10", endDate: "2026-12-10" };
+  // b may use a's dates while a is paused.
+  assert.equal(findOverlap([a], b, "b"), null);
+  assert.equal(findOverlap([a, b], b, "b"), null);
+  // A paused plan being edited overlaps nothing either.
+  assert.equal(findOverlap([a, b], a, "a"), null);
+  // Resuming a checks with paused cleared, and b is in the way.
+  assert.equal(findOverlap([a, b], { ...a, paused: false }, "a"), b);
+  assert.equal(
+    findOverlap([a, b], { ...a, paused: false, endDate: "2026-11-09" }, "a"),
+    null,
+  );
+});
+
+test("withPaused sets the flag and resuming drops it", () => {
+  const paused = withPaused(plan(), true);
+  assert.equal(paused.paused, true);
+  assert.ok(planSchema.safeParse(paused).success);
+  const resumed = withPaused(paused, false);
+  assert.equal("paused" in resumed, false);
+  assert.deepEqual(resumed, plan());
 });
 
 const record = (id: string, kind: string, payload: unknown, deleted = false) =>
