@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Bug, ChevronLeft, Image as ImageIcon, Lightbulb } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import FacetChips from "@/components/FacetChips";
@@ -19,10 +19,10 @@ import {
   type StatusFilter,
 } from "@/lib/feedback";
 import { useT } from "@/i18n/useT";
+import { usePageBack } from "@/hooks/usePageTransitions";
 
 /** Settings → Admin: every report, filtered by status and kind, with a detail sheet. */
 export default function AdminReports() {
-  const navigate = useNavigate();
   const { t, locale } = useT();
   const { online } = useData();
   const { isAdmin } = useAdmin();
@@ -48,10 +48,7 @@ export default function AdminReports() {
   );
   const counts = useMemo(() => statusCounts(rows ?? []), [rows]);
   const report = rows?.find((r) => r.id === selected) ?? null;
-  const back = () => {
-    if (window.history.state?.idx > 0) navigate(-1);
-    else navigate("/settings");
-  };
+  const back = usePageBack("/settings");
   const header = (
     <PageHeader
       eyebrow={t("admin.eyebrow")}

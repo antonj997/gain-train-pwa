@@ -1,5 +1,13 @@
 # Changelog
 
+## 4 November 2026 — the owner's notes, step 3: transitions and the icon bar
+
+- The bottom bar shows icons only; the current tab also shows its name in an accent-soft pill that slides to the tab you tap while the tabs make room. Restyled to the Quiet look: a translucent surface with a slight blur, a top hairline, no other borders. Every tab keeps a 44px target and its name for screen readers; Swedish fits at 360px.
+- Switching tabs slides the new page in from that tab's side of the bar (a tab to the right enters from the right, the old page drifts left and fades), in 260ms with a 32px offset. Settings and Admin push in from the right and Back slides them out to the right. The bar stays still.
+- It uses view transitions where the browser has them (Safari 18, Chrome) and otherwise, and for back/forward, slides the new page in with the Web Animations API. A failing view transition falls back to navigating at once. Each tab still opens at the top.
+- Smaller touches: a page's first cards rise in with a short stagger, and the Segmented thumb slides between options. Reduced motion keeps only a quick fade.
+- Code: `src/lib/page-transition.ts` (tab order, route depth, slide direction, in-app link routes; tested), `src/lib/view-transition.ts`, `usePageTransitions()` and `usePageBack()` in `src/hooks/usePageTransitions.ts`, motion tokens `--gt-ease-out`, `--gt-page-*` and `--gt-slide` in `tokens.css`.
+
 ## 4 November 2026 — the owner's notes, step 2: pause plans, set counts, swap, categories
 
 - Plans can be paused instead of deleted: a pause/play button on each row in Library → Plan and Pause plan / Resume plan in the editor. A paused plan reads “Paused” in muted text, plans nothing on Train and frees its dates for another plan; resuming into an overlap is refused with the overlap message. Delete is still there.

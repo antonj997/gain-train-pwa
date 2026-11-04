@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/useAuth";
@@ -34,6 +33,7 @@ import {
   restLabel,
   saveTrainingPreferences,
 } from "@/lib/preferences";
+import { usePageBack } from "@/hooks/usePageTransitions";
 
 type SheetName =
   | "bodyweight"
@@ -51,7 +51,6 @@ export default function Settings() {
     { state, syncing, error } = useData(),
     { theme } = useTheme(),
     { bodyWeightKg } = useProfile(),
-    navigate = useNavigate(),
     { t, language } = useT(),
     displayName = useDisplayName(),
     admin = useAdmin({ withCount: true });
@@ -64,11 +63,8 @@ export default function Settings() {
     saveTrainingPreferences(patch);
     setPreferences(readTrainingPreferences());
   };
-  const back = () => {
-    // Settings opens from Train and from notices; go back there, or home on a fresh load.
-    if (window.history.state?.idx > 0) navigate(-1);
-    else navigate("/");
-  };
+  // Settings opens from Train and from notices; go back there, or home on a fresh load.
+  const back = usePageBack("/");
   const leave = async (failure: string) => {
     setAccountBusy(true);
     try {

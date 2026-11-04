@@ -188,11 +188,34 @@
 
 /* Segmented control: a radio group drawn as joined buttons (ui/Segmented.tsx). */
 .segmented {
+  position: relative;
+  isolation: isolate;
   display: flex;
   gap: var(--gt-space-1);
   padding: var(--gt-space-1);
   border-radius: var(--gt-radius-md);
   background-color: var(--gt-surface-2);
+}
+/* The selected option's fill is one thumb that slides between the equal-width
+   options (on transform only); Segmented.tsx sets --seg-count and --seg-index. */
+.segmented-thumb {
+  position: absolute;
+  z-index: -1;
+  top: var(--gt-space-1);
+  bottom: var(--gt-space-1);
+  left: var(--gt-space-1);
+  width: calc(
+    (100% - (var(--seg-count) + 1) * var(--gt-space-1)) / var(--seg-count)
+  );
+  border: 1px solid var(--gt-accent);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-accent-soft);
+  transform: translateX(calc(var(--seg-index) * (100% + var(--gt-space-1))));
+  transition: transform var(--gt-slide);
+  pointer-events: none;
+}
+.segmented-thumb.is-disabled {
+  opacity: 0.45;
 }
 .segmented button {
   flex: 1 1 0;
@@ -212,8 +235,6 @@
     border-color var(--gt-motion);
 }
 .segmented button[aria-checked="true"] {
-  border-color: var(--gt-accent);
-  background-color: var(--gt-accent-soft);
   color: var(--gt-accent);
 }
 .segmented button:disabled {
