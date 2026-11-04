@@ -13,7 +13,11 @@ import { cardioProgressFor, progressFor } from "@/data/analytics";
 import { exerciseRecords, exerciseSessions } from "@/data/exercise-records";
 import { favouriteChange } from "@/data/exercises";
 import { today } from "@/data/model";
-import { completedWorkouts, customDefaults } from "@/data/selectors";
+import {
+  completedWorkouts,
+  customCategories,
+  customDefaults,
+} from "@/data/selectors";
 import { newWorkout } from "@/data/start";
 import { lastSessions } from "@/data/workouts";
 import CardioProgressDetail from "@/components/CardioProgressDetail";
@@ -184,7 +188,11 @@ export default function ExercisePage() {
     );
     void workoutStart.start({
       ...withExercise,
-      name: autoWorkoutName({ name: "", exercises: withExercise.exercises }),
+      name: autoWorkoutName(
+        { name: "", exercises: withExercise.exercises },
+        {},
+        customCategories(state.records),
+      ),
     });
   };
 

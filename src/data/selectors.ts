@@ -68,6 +68,12 @@ export const customExercises = (records: Records) =>
       record.kind === "exercise" && !record.deleted,
   );
 
+/** Each custom exercise's main category, by id, for naming workouts. */
+export const customCategories = (records: Records) =>
+  new Map(
+    customExercises(records).map(({ id, payload }) => [id, payload.category]),
+  );
+
 /** Each custom exercise's saved defaults, by id, for sets added from scratch. */
 export const customDefaults = (records: Records) =>
   new Map(

@@ -19,7 +19,7 @@ import { loadKeyOf, withLoadKey } from "./load-keys";
 import { CARDIO_MAX, isCardioSet } from "./cardio";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
-import { autoWorkoutName } from "./workout-name";
+import { autoWorkoutName, type CategoryLookup } from "./workout-name";
 import { t } from "../i18n";
 
 export type SetIssues = Partial<
@@ -111,7 +111,11 @@ const canonical = (value: unknown, top = false): unknown =>
 export const workoutContentKey = (workout: Workout) =>
   JSON.stringify(canonical(workout, true));
 
-export function finishWorkout(workout: Workout, now = Date.now()): Workout {
+export function finishWorkout(
+  workout: Workout,
+  now = Date.now(),
+  custom?: CategoryLookup,
+): Workout {
   assertNotFuture(workout);
   if (
     workout.exercises.some((ex) =>
@@ -132,7 +136,7 @@ export function finishWorkout(workout: Workout, now = Date.now()): Workout {
     name:
       workout.status === "completed"
         ? workout.name
-        : autoWorkoutName({ ...workout, exercises }),
+        : autoWorkoutName({ ...workout, exercises }, {}, custom),
     status: "completed",
     completedAt:
       workout.status === "completed"

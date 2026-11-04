@@ -1,5 +1,9 @@
 # Changelog
 
+## 4 November 2026 — unnamed workouts are named after their categories
+
+- A workout nobody named, and that didn't come from a routine or plan day, is now named after the main categories it trained, most common first (“Back & Arms”, “Rygg & Armar”). Only each exercise's main category counts, so rows and pulldowns, which also train arms, keep a back day a back day. Ties go to more sets, then to the first.
+
 ## 4 November 2026 — the owner's notes, step 5: one exercise page, Progress and Library roles, a design pass
 
 - **One exercise page** (`/exercise/<id>`), opened from Library → Exercises (built-in rows too, which did nothing before), Progress's exercise list, Recent bests, History workout details and lift goal cards. The header has the name, the main category and the others muted, the equipment, a star and the Library ⋯ menu (Favourite, Edit and Share for your own, Hide); the row menu in Library still works. **Overview** is the former Progress exercise sheet (latest working set, best est. 1RM, change, sessions, Heaviest lift, chart; cardio shows time and distance). **History** lists every session newest first with its checked sets, each opening that workout. **Records**: best est. 1RM, heaviest weight, most reps, best set volume, best session volume and the most reps at each weight, each opening the workout with the set highlighted. “Start workout with this exercise” starts a workout with it, prefilled from last time.
