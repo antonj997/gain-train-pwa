@@ -14,6 +14,8 @@ type Props = {
   status?: boolean;
   /** Set to false where the notices would repeat what the page itself shows. */
   notices?: boolean;
+  /** "first-line" centres the action on the title's first line instead of its last. */
+  align?: "last-line" | "first-line";
 };
 
 /** The top bar every page shares: eyebrow, title and an optional action, with the notices below. */
@@ -24,6 +26,7 @@ export default function PageHeader({
   action,
   status,
   notices = true,
+  align = "last-line",
 }: Props) {
   const bar = useRef<HTMLDivElement>(null);
   useToastClearance(bar);
@@ -31,7 +34,11 @@ export default function PageHeader({
     <header className="page-header">
       <div
         ref={bar}
-        className={"page-header-bar" + (leading ? " has-leading" : "")}
+        className={
+          "page-header-bar" +
+          (leading ? " has-leading" : "") +
+          (align === "first-line" ? " align-first-line" : "")
+        }
       >
         {leading}
         <div className="page-header-text">

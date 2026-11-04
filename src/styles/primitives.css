@@ -84,9 +84,14 @@
   padding: 0 var(--gt-space-4) var(--gt-space-2);
   background-color: var(--gt-surface);
 }
-/* A long editor's Save stays in reach: a footer stuck to the sheet's bottom
-   edge. Its negative margin takes over the sheet's bottom padding, safe area
-   included; the sheet already sits above an on-screen keyboard. */
+/* A long editor's Save stays in reach: a footer pinned flush to the sheet's
+   bottom edge. A sticky box stops at the scroll container's padding, so a sheet
+   with a footer drops its bottom padding and the footer carries it instead,
+   safe area included: its solid surface covers everything down to the edge.
+   The sheet already sits above an on-screen keyboard. */
+.dialog-content.dialog-full:has(> .sheet-footer) {
+  padding-bottom: 0;
+}
 .dialog-full .sheet-footer {
   --sheet-bottom: calc(var(--gt-space-4) + env(safe-area-inset-bottom));
   position: sticky;
@@ -95,7 +100,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--gt-space-2);
-  margin: auto calc(var(--gt-space-4) * -1) calc(var(--sheet-bottom) * -1);
+  margin: auto calc(var(--gt-space-4) * -1) 0;
   padding: var(--gt-space-3) var(--gt-space-4) var(--sheet-bottom);
   border-top: 1px solid var(--gt-line);
   background-color: var(--gt-surface);
