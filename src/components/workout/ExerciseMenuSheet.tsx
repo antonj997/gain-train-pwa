@@ -1,8 +1,8 @@
 import {
   ArrowDown,
+  ArrowLeftRight,
   ArrowUp,
   ListOrdered,
-  Replace,
   SlidersHorizontal,
   Trash2,
 } from "lucide-react";
@@ -38,12 +38,13 @@ function ExerciseMenuSheetBody({
   const { t } = useT();
   return (
     <div className="sheet-menu">
+      {/* First and in accent: swapping keeps the sets, so it beats remove and add. */}
       <button
         type="button"
-        className="sheet-menu-item"
+        className="sheet-menu-item is-lead"
         onClick={onChangeExercise}
       >
-        <Replace size={18} aria-hidden="true" />
+        <ArrowLeftRight size={18} aria-hidden="true" />
         <span>{t("exercise.changeExercise")}</span>
       </button>
       {onLoadAndCount && (

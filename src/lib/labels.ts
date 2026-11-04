@@ -4,6 +4,7 @@ const NOUNS = {
   set: "count.set",
   "completed set": "count.completedSet",
   "unchecked set": "count.uncheckedSet",
+  "working set": "count.workingSet",
   workout: "count.workout",
   drop: "count.drop",
   exercise: "count.exercise",

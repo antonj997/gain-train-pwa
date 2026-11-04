@@ -3,9 +3,22 @@ import { categoryLabel, equipmentLabel } from "./catalogue-labels";
 export type Searchable = {
   name: string;
   category: string;
+  /** Other categories it also trains, besides `category`. */
+  categories?: readonly string[];
   equipment?: string;
   aliases?: readonly string[];
 };
+
+/** The main category first, then the others it also trains, each once. */
+export const categoriesOf = (
+  item: Pick<Searchable, "category" | "categories">,
+) => [...new Set([item.category, ...(item.categories ?? [])])];
+
+/** True when the exercise trains the category, as its main one or another. */
+export const inCategory = (
+  item: Pick<Searchable, "category" | "categories">,
+  category: string,
+) => categoriesOf(item).includes(category);
 
 /** Lower case, no accents (ä → a), punctuation as single spaces. */
 export function normalize(text: string) {
@@ -53,8 +66,7 @@ export function matchRank(item: Searchable, query: string): number | null {
   // English values and their labels in the chosen language ("Legs", "Ben").
   const other = normalize(
     [
-      item.category,
-      categoryLabel(item.category),
+      ...categoriesOf(item).flatMap((c) => [c, categoryLabel(c)]),
       item.equipment ?? "",
       item.equipment ? equipmentLabel(item.equipment) : "",
     ].join(" "),
@@ -97,10 +109,10 @@ export function searchExercises<T extends Searchable>(
 
 export type ExerciseFacets = { category?: string; equipment?: string };
 
-/** Keeps the items in the chosen category and with the chosen equipment. */
+/** Keeps the items that train the chosen category and use the chosen equipment. */
 export function matchesFacets(item: Searchable, facets: ExerciseFacets) {
   return (
-    (!facets.category || item.category === facets.category) &&
+    (!facets.category || inCategory(item, facets.category)) &&
     (!facets.equipment || item.equipment === facets.equipment)
   );
 }

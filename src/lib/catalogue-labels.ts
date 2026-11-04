@@ -33,3 +33,14 @@ export const categoryLabel = (category: string) =>
 /** An equipment type's name to show ("barbell", "skivstång"); an unknown one as stored. */
 export const equipmentLabel = (equipment: string) =>
   EQUIPMENT_KEYS[equipment] ? t(EQUIPMENT_KEYS[equipment]) : equipment;
+
+/**
+ * The main category, then the others it also trains: "Back · Legs, Glutes".
+ * The muted line it goes in keeps the main one first.
+ */
+export function categoryText(category: string, others: readonly string[] = []) {
+  const rest = others.filter((c) => c !== category).map(categoryLabel);
+  return rest.length
+    ? `${categoryLabel(category)} · ${rest.join(", ")}`
+    : categoryLabel(category);
+}

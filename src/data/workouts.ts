@@ -143,3 +143,24 @@ export function lastSessions(history: WorkoutRecord[]) {
         });
   return sessions;
 }
+
+/** Working sets: not warm-ups or cool-downs, and a set's drops are part of it. */
+export const workingSetCount = (sets: readonly WorkoutSet[]) =>
+  sets.filter((set) => set.section === "working" && !isDrop(set)).length;
+
+/**
+ * The card's working sets and last session's, when the two differ. Last time
+ * counts the sets that were checked and valid. Null when they match or there
+ * is no last session with a working set to compare with.
+ */
+export function workingSetChange(
+  sets: readonly WorkoutSet[],
+  last: LastSession | undefined,
+): { now: number; last: number } | null {
+  if (!last) return null;
+  const before = workingSetCount(
+    last.sets.filter((set) => set.done && validSet(set)),
+  );
+  const now = workingSetCount(sets);
+  return before > 0 && before !== now ? { now, last: before } : null;
+}

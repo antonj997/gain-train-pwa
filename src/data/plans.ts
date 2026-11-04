@@ -7,6 +7,7 @@ import {
 import {
   addMonths,
   daysBetween,
+  localizedDate,
   shiftDate,
   weekStart,
   weekdayIndex,
@@ -64,7 +65,7 @@ export function activePlans(
     );
 }
 
-type Period = Pick<Plan, "startDate" | "endDate">;
+type Period = Pick<Plan, "startDate" | "endDate"> & { paused?: boolean };
 type PlanLike = Period & Pick<Plan, "cycleWeeks" | "template" | "overrides">;
 
 /** The template's cell for a date, looping the cycle from the plan's first week. */
@@ -80,36 +81,70 @@ function templateCell(plan: PlanLike, date: string) {
 }
 
 /**
+ * One plan's cell for a date inside its period, paused or not: dated
+ * overrides first, then the looping template. The plan editor shows a paused
+ * plan's days with this.
+ */
+export function planDay(plan: PlanLike, date: string) {
+  if (date in plan.overrides)
+    return { cell: plan.overrides[date] ?? null, override: true };
+  return { cell: templateCell(plan, date), override: false };
+}
+
+/**
  * What the plans say about a date: the plan whose period holds it, the cell
  * (dated overrides first, then the looping template) and whether an override
  * set it. Null when no plan covers the date. A cell of null means a plan covers
- * the day but nothing is planned.
+ * the day but nothing is planned. Paused plans plan nothing.
  */
 export function plannedFor<T extends PlanLike>(
   plans: readonly T[],
   date: string,
 ): { plan: T; cell: string | null; override: boolean } | null {
-  const plan = plans.find((p) => p.startDate <= date && date <= p.endDate);
-  if (!plan) return null;
-  if (date in plan.overrides)
-    return { plan, cell: plan.overrides[date] ?? null, override: true };
-  return { plan, cell: templateCell(plan, date), override: false };
+  const plan = plans.find(
+    (p) => !p.paused && p.startDate <= date && date <= p.endDate,
+  );
+  return plan ? { plan, ...planDay(plan, date) } : null;
 }
 
-/** A plan whose period shares a day with `period`, ignoring the plan with id `ignoreId`. */
+/**
+ * A plan whose period shares a day with `period`, ignoring the plan with id
+ * `ignoreId`. Paused plans overlap nothing, so another plan can run in their
+ * period; resuming one checks this again with `paused` cleared.
+ */
 export function findOverlap<T extends Period & { id: string }>(
   plans: readonly T[],
   period: Period,
   ignoreId?: string,
 ): T | null {
+  if (period.paused) return null;
   return (
     plans.find(
       (p) =>
         p.id !== ignoreId &&
+        !p.paused &&
         p.startDate <= period.endDate &&
         period.startDate <= p.endDate,
     ) ?? null
   );
+}
+
+/** The message that refuses a period another plan already holds. */
+export const overlapMessage = (overlap: Plan) => {
+  const range = (date: string) =>
+    localizedDate(date, { day: "numeric", month: "short", year: "numeric" });
+  return t("plan.overlap", {
+    name: overlap.name,
+    from: range(overlap.startDate),
+    to: range(overlap.endDate),
+  });
+};
+
+/** The plan paused or resumed. A resumed plan drops the field rather than saving false. */
+export function withPaused<T extends Plan>(plan: T, paused: boolean): T {
+  const next = { ...plan, paused: true };
+  if (!paused) delete (next as Partial<Plan>).paused;
+  return next;
 }
 
 /** The routine groups saved in the library record, skipping any that are malformed. */

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { ChevronRight, Pause, Play, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import GroupEditor from "@/components/plan/GroupEditor";
@@ -12,7 +13,10 @@ import {
   activePlans,
   dayTypeLabel,
   dayTypes,
+  findOverlap,
   groupsOf,
+  overlapMessage,
+  withPaused,
 } from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
 import { localizedDate } from "@/lib/dates";
@@ -31,7 +35,7 @@ const short = (date: string) =>
 
 /** Library → Plan: plans, groups and what day types suggest. Everything here is optional. */
 export default function PlanPanel() {
-  const { state, saveLibrary } = useData();
+  const { state, save, saveLibrary } = useData();
   const { account } = useAuth();
   const today = todayDate();
   const plans = useMemo(() => activePlans(state.records), [state.records]);
@@ -56,11 +60,35 @@ export default function PlanPanel() {
     saveLibrary({ ...libraryOf(state.records, account), groups: next });
 
   const status = (p: PlanItem) =>
-    p.endDate < today
-      ? t("plan.ended")
-      : p.startDate > today
-        ? t("plan.starts", { date: short(p.startDate) })
-        : t("plan.active");
+    p.paused
+      ? t("plan.paused")
+      : p.endDate < today
+        ? t("plan.ended")
+        : p.startDate > today
+          ? t("plan.starts", { date: short(p.startDate) })
+          : t("plan.active");
+
+  // Pausing frees the plan's dates; resuming is refused while another plan holds them.
+  const [pausing, setPausing] = useState<string | null>(null);
+  const togglePause = async (p: PlanItem) => {
+    if (pausing) return;
+    const { id, ...plan } = p;
+    const next = withPaused(plan, !p.paused);
+    const blocking = p.paused ? findOverlap(plans, next, id) : null;
+    if (blocking) {
+      toast.error(overlapMessage(blocking));
+      return;
+    }
+    setPausing(id);
+    try {
+      await save(id, "plan", next);
+      toast.success(t(p.paused ? "plan.resumedToast" : "plan.pausedToast"));
+    } catch {
+      toast.error(t("plan.saveFailed"));
+    } finally {
+      setPausing(null);
+    }
+  };
 
   return (
     <div className="plan-panel">
@@ -72,18 +100,47 @@ export default function PlanPanel() {
         {plans.length > 0 && (
           <div className="list">
             {plans.map((p) => (
-              <ListRow
+              <div
                 key={p.id}
-                title={p.name}
-                sub={`${short(p.startDate)} – ${short(p.endDate)} · ${
-                  p.cycleWeeks === 1
-                    ? t("plan.repeatsWeekly")
-                    : t("plan.cycle", { count: p.cycleWeeks })
-                }`}
-                value={status(p)}
-                chevron
-                onClick={() => edit({ kind: "plan", plan: p })}
-              />
+                className={"plan-row" + (p.paused ? " is-paused" : "")}
+              >
+                <button
+                  type="button"
+                  className="row plan-row-open"
+                  onClick={() => edit({ kind: "plan", plan: p })}
+                >
+                  <span className="row-main">
+                    <span className="row-title">{p.name}</span>
+                    <span className="row-sub">
+                      {`${short(p.startDate)} – ${short(p.endDate)} · ${
+                        p.cycleWeeks === 1
+                          ? t("plan.repeatsWeekly")
+                          : t("plan.cycle", { count: p.cycleWeeks })
+                      }`}
+                    </span>
+                  </span>
+                  <span className="row-value">{status(p)}</span>
+                  <ChevronRight className="chev" size={20} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={t(
+                    p.paused ? "plan.resumeNamed" : "plan.pauseNamed",
+                    {
+                      name: p.name,
+                    },
+                  )}
+                  disabled={pausing !== null}
+                  onClick={() => void togglePause(p)}
+                >
+                  {p.paused ? (
+                    <Play size={20} aria-hidden="true" />
+                  ) : (
+                    <Pause size={20} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
             ))}
           </div>
         )}

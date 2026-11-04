@@ -28,6 +28,10 @@ export const en = {
     one: "{count} unchecked set",
     other: "{count} unchecked sets",
   },
+  "count.workingSet": {
+    one: "{count} working set",
+    other: "{count} working sets",
+  },
   "count.workout": { one: "{count} workout", other: "{count} workouts" },
   "count.drop": { one: "{count} drop", other: "{count} drops" },
   "count.exercise": { one: "{count} exercise", other: "{count} exercises" },
@@ -263,7 +267,8 @@ export const en = {
   "exercise.colDone": "Done",
   "exercise.colPrevious": "Previous",
   "exercise.addSet": "Add set",
-  "exercise.changeExercise": "Change exercise",
+  "exercise.workingSetsNote": "{sets} · last time {last}",
+  "exercise.changeExercise": "Swap exercise",
   "exercise.loadAndCount": "Load and count",
   "exercise.reorderSets": "Reorder sets",
   "exercise.moveUp": "Move up",
@@ -350,9 +355,9 @@ export const en = {
   "set.movingAt":
     "Set at position {position} of {total}. Use arrow keys or drag to move, Space or Enter to drop.",
   "set.moveHandle": "Move {name} set {n}",
-  "change.changedTo": "Changed to {name}",
+  "change.changedTo": "Swapped to {name}",
   "change.undoFailed": "Could not undo the change.",
-  "change.title": "Change to {name}?",
+  "change.title": "Swap to {name}?",
   "change.cardioToStrength": {
     one: "Your {count} logged set doesn't fit a strength exercise and will be cleared.",
     other:
@@ -867,6 +872,9 @@ export const en = {
   "editor.name": "Name",
   "editor.twin": "You already have an exercise called {name}.",
   "editor.note": "Note",
+  "editor.alsoTrains": "Also trains",
+  "editor.alsoTrainsHint":
+    "Category filters and plan suggestions find it under these too.",
   "editor.save": "Save exercise",
   "editor.storageUnavailable":
     "Storage is unavailable. Keep this form open until saved.",
@@ -918,6 +926,15 @@ export const en = {
   "plan.ended": "Ended",
   "plan.starts": "Starts {date}",
   "plan.active": "Active",
+  "plan.paused": "Paused",
+  "plan.pause": "Pause plan",
+  "plan.resume": "Resume plan",
+  "plan.pauseNamed": "Pause {name}",
+  "plan.resumeNamed": "Resume {name}",
+  "plan.pausedToast": "Plan paused",
+  "plan.resumedToast": "Plan resumed",
+  "plan.pausedNote":
+    "Paused: Train shows nothing from this plan, and another plan can use its dates.",
   "plan.intro":
     "Plan your training if you like: pick what each day holds and Train shows it. Nothing changes anywhere while you have no plan.",
   "plan.plans": "Plans",

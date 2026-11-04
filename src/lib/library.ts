@@ -10,13 +10,15 @@ import {
   type ExerciseFacets,
 } from "./exercise-search";
 import { currentLocale, t } from "../i18n";
-import { categoryLabel } from "./catalogue-labels";
+import { categoryText } from "./catalogue-labels";
 
 /** One row of the Library's exercise list: a built-in or the user's own. */
 export type LibraryExercise = {
   id: string;
   name: string;
   category: string;
+  /** Other categories it also trains. */
+  categories?: readonly string[];
   /** Built-in exercises only. */
   equipment?: string;
   aliases?: readonly string[];
@@ -160,10 +162,10 @@ export function lastUsedLabel(date: string, now: string) {
     : localizedDate(date, { weekday: "short", day: "numeric", month: "short" });
 }
 
-/** The muted line under an exercise: category, last date and best set. */
+/** The muted line under an exercise: categories, last date and best set. */
 export function exerciseSub(item: LibraryExercise, now: string) {
   return [
-    categoryLabel(item.category),
+    categoryText(item.category, item.categories),
     item.lastDate
       ? t("exercises.lastUsed", { when: lastUsedLabel(item.lastDate, now) })
       : t("exercises.neverLogged"),

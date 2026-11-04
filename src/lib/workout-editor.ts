@@ -14,7 +14,8 @@ import {
   type Workout,
   type WorkoutSet,
 } from "../data/model";
-import { hasExtraWeight } from "./set-load";
+import { changeSetMeasure, hasExtraWeight } from "./set-load";
+import { loadKeyOf, withLoadKey } from "./load-keys";
 import { CARDIO_MAX, isCardioSet } from "./cardio";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
@@ -258,16 +259,56 @@ export function loggedSetCount(exercise: Exercise): number {
 }
 
 /**
+ * Unchecked sets that use the old exercise's starting load or count switch to
+ * the new one's: Bench Press to Pull Up turns kg sets into bodyweight sets,
+ * keeping their reps. A set changed by hand (a weighted pull-up) and checked
+ * sets stay as they are. Values that no longer mean the same are cleared.
+ */
+function adaptSets(
+  sets: WorkoutSet[],
+  fromId: string,
+  from: ExerciseDefaults | undefined,
+  target: ExerciseTarget,
+): WorkoutSet[] {
+  const before = initialSet(fromId, from);
+  const after = initialSet(target.id, target);
+  const measure = (set: WorkoutSet): "reps" | "seconds" =>
+    set.measure === "seconds" ? "seconds" : "reps";
+  const oldMeasure = measure(before);
+  const newMeasure = measure(after);
+  const oldKey = loadKeyOf(before);
+  const newKey = loadKeyOf(after);
+  if (oldMeasure === newMeasure && oldKey === newKey) return sets;
+  return sets.map((set) => {
+    if (set.done) return set;
+    const keyed = loadKeyOf(set) === oldKey;
+    let next = set;
+    if (oldMeasure !== newMeasure && measure(set) === oldMeasure)
+      next = changeSetMeasure(next, newMeasure);
+    if (oldKey !== newKey && keyed && loadKeyOf(next) !== newKey)
+      next = withLoadKey(next, newKey);
+    return next;
+  });
+}
+
+/**
  * The card with another exercise, keeping its own id. The same kind of
- * exercise (strength or cardio) keeps every set as it is; another kind gets
- * the same number of fresh, empty, unchecked sets, and its drops are dropped.
+ * exercise (strength or cardio) keeps every set, adapting unchecked ones to
+ * the new exercise's load and count (see adaptSets); `from` holds the old
+ * exercise's custom defaults. Another kind gets the same number of fresh,
+ * empty, unchecked sets, and its drops are dropped.
  */
 export function changeExercise(
   exercise: Exercise,
   target: ExerciseTarget,
+  from?: ExerciseDefaults,
 ): Exercise {
   const base = { ...exercise, exerciseId: target.id, name: target.name };
-  if (!changeDiscardsSets(exercise, target)) return base;
+  if (!changeDiscardsSets(exercise, target))
+    return {
+      ...base,
+      sets: adaptSets(exercise.sets, exercise.exerciseId, from, target),
+    };
   const count = Math.max(1, exercise.sets.filter((set) => !isDrop(set)).length);
   return {
     ...base,

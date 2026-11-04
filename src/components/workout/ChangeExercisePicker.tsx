@@ -8,26 +8,30 @@ import {
   type ExerciseTarget,
 } from "@/lib/workout-editor";
 import { isCardioSet } from "@/lib/cardio";
+import type { ExerciseDefaults } from "@/data/workouts";
 import { toastWithUndo } from "@/lib/undo-toast";
 import ExercisePicker from "@/components/ExercisePicker";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { t } from "@/i18n";
 
 /**
- * "Change exercise" for a whole workout or routine: one picker shared by every
- * card instead of one per card. Changing to a strength exercise from cardio
- * (or back) asks first when logged sets would be cleared; Undo restores the
- * card as it was.
+ * "Swap exercise" for a whole workout or routine: one picker shared by every
+ * card instead of one per card. The sets stay, adapted to the new exercise's
+ * load and count. Swapping to a strength exercise from cardio (or back) asks
+ * first when logged sets would be cleared; Undo restores the card as it was.
  */
 export default function ChangeExercisePicker({
   exercise,
   mode = "log",
+  defaults,
   onClose,
   onChange,
 }: {
   /** The card being changed, or null while the picker is closed. */
   exercise: Exercise | null;
   mode?: "log" | "plan";
+  /** Custom exercises' saved defaults, by id, to know what the old one started with. */
+  defaults?: ReadonlyMap<string, ExerciseDefaults>;
   onClose: () => void;
   onChange: (exercise: Exercise) => void;
 }) {
@@ -45,7 +49,7 @@ export default function ChangeExercisePicker({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
   const apply = (from: Exercise, card: Exercise, target: ExerciseTarget) => {
-    onChange(changeExercise(card, target));
+    onChange(changeExercise(card, target, defaults?.get(card.exerciseId)));
     toastWithUndo(
       t("change.changedTo", { name: target.name }),
       async () => onChangeRef.current(from),

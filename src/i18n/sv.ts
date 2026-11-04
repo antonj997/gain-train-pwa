@@ -28,6 +28,7 @@ export const sv = {
     one: "{count} okryssat set",
     other: "{count} okryssade set",
   },
+  "count.workingSet": { one: "{count} arbetsset", other: "{count} arbetsset" },
   "count.workout": { one: "{count} pass", other: "{count} pass" },
   "count.drop": { one: "{count} drop", other: "{count} drop" },
   "count.exercise": { one: "{count} övning", other: "{count} övningar" },
@@ -265,6 +266,7 @@ export const sv = {
   "exercise.colDone": "Klar",
   "exercise.colPrevious": "Förra",
   "exercise.addSet": "Lägg till set",
+  "exercise.workingSetsNote": "{sets} · förra gången {last}",
   "exercise.changeExercise": "Byt övning",
   "exercise.loadAndCount": "Belastning och mått",
   "exercise.reorderSets": "Ändra ordning på set",
@@ -876,6 +878,9 @@ export const sv = {
   "editor.name": "Namn",
   "editor.twin": "Du har redan en övning som heter {name}.",
   "editor.note": "Anteckning",
+  "editor.alsoTrains": "Tränar även",
+  "editor.alsoTrainsHint":
+    "Kategorifilter och förslag i scheman hittar den även här.",
   "editor.save": "Spara övning",
   "editor.storageUnavailable":
     "Lagringen är inte tillgänglig. Låt formuläret vara öppet tills det är sparat.",
@@ -929,6 +934,15 @@ export const sv = {
   "plan.ended": "Avslutat",
   "plan.starts": "Startar {date}",
   "plan.active": "Aktivt",
+  "plan.paused": "Pausat",
+  "plan.pause": "Pausa schema",
+  "plan.resume": "Återuppta schema",
+  "plan.pauseNamed": "Pausa {name}",
+  "plan.resumeNamed": "Återuppta {name}",
+  "plan.pausedToast": "Schemat pausat",
+  "plan.resumedToast": "Schemat återupptaget",
+  "plan.pausedNote":
+    "Pausat: Träna visar inget från schemat, och ett annat schema kan använda dess datum.",
   "plan.intro":
     "Planera träningen om du vill: välj vad varje dag innehåller så visar Träna det. Inget ändras någonstans så länge du inte har ett schema.",
   "plan.plans": "Scheman",

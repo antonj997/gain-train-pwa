@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -18,10 +19,12 @@ import {
   defaultNewPlan,
   findOverlap,
   groupsOf,
-  plannedFor,
+  overlapMessage,
+  planDay,
   trimOverrides,
   withCycle,
   withOverride,
+  withPaused,
   withTemplateCell,
 } from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
@@ -36,9 +39,6 @@ const cycleOptions = [1, 2, 3, 4, 5, 6].map((n) => ({
 
 /** The cell being chosen: a template day, or one dated override. */
 type Target = { week: number; day: number } | { date: string };
-
-const range = (date: string) =>
-  localizedDate(date, { day: "numeric", month: "short", year: "numeric" });
 
 /** Creates or edits one plan in a full sheet. `plan` is null for a new one. */
 export default function PlanEditor({
@@ -84,11 +84,7 @@ export default function PlanEditor({
     : !validPeriod
       ? t("plan.needPeriod")
       : overlap
-        ? t("plan.overlap", {
-            name: overlap.name,
-            from: range(overlap.startDate),
-            to: range(overlap.endDate),
-          })
+        ? overlapMessage(overlap)
         : "";
 
   const choose = (cell: string | null | undefined) => {
@@ -126,27 +122,42 @@ export default function PlanEditor({
           : undefined;
   const templateCellForDate =
     target !== null && "date" in target
-      ? plannedFor([{ ...draft, overrides: {} }], target.date)?.cell
+      ? planDay({ ...draft, overrides: {} }, target.date).cell
       : null;
 
-  const submit = async () => {
-    if (busy || problem) return;
+  const store = async (next: Plan, message: string) => {
     setBusy(true);
     setError("");
     try {
       await save(plan?.id ?? crypto.randomUUID(), "plan", {
-        ...draft,
-        name: draft.name.trim(),
-        overrides: trimOverrides(draft),
-        goalIds: draft.goalIds.filter((id) => goals.some((g) => g.id === id)),
+        ...next,
+        name: next.name.trim(),
+        overrides: trimOverrides(next),
+        goalIds: next.goalIds.filter((id) => goals.some((g) => g.id === id)),
       });
-      toast.success(t("plan.saved"));
+      toast.success(message);
       onClose();
     } catch (cause) {
       setError(errorMessage(cause, t("plan.saveFailed")));
     } finally {
       setBusy(false);
     }
+  };
+  const submit = () => {
+    if (busy || problem) return;
+    return store(draft, t("plan.saved"));
+  };
+  // Pausing or resuming saves the plan at once, with the rest of the form.
+  const paused = !!draft.paused;
+  const togglePause = () => {
+    if (busy || !draft.name.trim() || !validPeriod) return;
+    const next = withPaused(draft, !paused);
+    const blocking = paused ? findOverlap(plans, next, plan?.id) : null;
+    if (blocking) {
+      setError(overlapMessage(blocking));
+      return;
+    }
+    return store(next, t(paused ? "plan.resumedToast" : "plan.pausedToast"));
   };
 
   return (
@@ -169,6 +180,11 @@ export default function PlanEditor({
             onChange={(e) => set({ name: e.target.value })}
           />
         </label>
+        {paused && (
+          <p className="plan-paused-note" role="status">
+            {t("plan.pausedNote")}
+          </p>
+        )}
         <PlanPeriodPicker
           startDate={draft.startDate}
           endDate={draft.endDate}
@@ -208,6 +224,21 @@ export default function PlanEditor({
             linkedIds={draft.goalIds}
             onChange={(goalIds) => set({ goalIds })}
           />
+        )}
+        {plan && (
+          <button
+            type="button"
+            className="btn-secondary btn-block"
+            disabled={busy || !draft.name.trim() || !validPeriod}
+            onClick={() => void togglePause()}
+          >
+            {paused ? (
+              <Play size={18} aria-hidden="true" />
+            ) : (
+              <Pause size={18} aria-hidden="true" />
+            )}
+            {paused ? t("plan.resume") : t("plan.pause")}
+          </button>
         )}
         {plan && (
           <button

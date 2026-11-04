@@ -779,6 +779,39 @@ details[open] > .session-summary > svg {
   flex-direction: column;
   gap: var(--gt-space-2);
 }
+/* A plan in the list: the row opens it, the button beside pauses or resumes it. */
+.plan-row {
+  display: flex;
+  align-items: center;
+  padding-right: var(--gt-space-2);
+  border-bottom: 1px solid var(--gt-line);
+}
+.plan-row:last-child {
+  border-bottom: 0;
+}
+.plan-row-open {
+  flex: 1;
+  min-width: 0;
+  border-bottom: 0;
+  padding-right: var(--gt-space-1);
+}
+/* Paused: the name steps back to muted ink; nothing from it shows on Train. */
+.plan-row.is-paused .row-title {
+  color: var(--gt-ink-2);
+}
+.plan-row.is-paused .row-value {
+  font-style: italic;
+}
+/* The plan editor says a paused plan is paused, near its name. */
+.plan-paused-note {
+  margin: 0;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
 /* Two fields side by side, such as From and To. */
 .field-row {
   display: grid;
