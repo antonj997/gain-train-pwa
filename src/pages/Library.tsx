@@ -8,12 +8,24 @@ import { useT } from "@/i18n/useT";
 
 type Tab = "routines" | "exercises" | "plan";
 const tabs = [
-  { value: "routines", label: "library.routines" },
-  { value: "exercises", label: "library.exercises" },
-  { value: "plan", label: "library.plan" },
+  {
+    value: "routines",
+    label: "library.routines",
+    help: "library.helpRoutines",
+  },
+  {
+    value: "exercises",
+    label: "library.exercises",
+    help: "library.helpExercises",
+  },
+  { value: "plan", label: "library.plan", help: "library.helpPlan" },
 ] as const;
 
-/** Library: routines, exercises and the optional plan, chosen with `?tab=`. */
+/**
+ * Library, the training setup: routines (the workouts you repeat), exercises
+ * (the catalogue plus your own) and the plan (phases), chosen with `?tab=`.
+ * One line under the switch says what the chosen section is for.
+ */
 export default function Library() {
   const [params, setParams] = useSearchParams();
   const { t } = useT();
@@ -31,6 +43,9 @@ export default function Library() {
           setParams(next === "routines" ? {} : { tab: next }, { replace: true })
         }
       />
+      <p className="row-sub section-note library-help">
+        {t(tabs.find((x) => x.value === tab)!.help)}
+      </p>
       {tab === "routines" && <RoutinesPanel />}
       {tab === "exercises" && <ExercisesPanel />}
       {tab === "plan" && <PlanPanel />}

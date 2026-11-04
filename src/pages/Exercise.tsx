@@ -1,6 +1,11 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ChevronLeft, MoreHorizontal, Play, Star } from "lucide-react";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
+import { MoreHorizontal, Play, Star } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
@@ -17,6 +22,7 @@ import ExerciseHistory from "@/components/exercise/ExerciseHistory";
 import ExerciseRecords from "@/components/exercise/ExerciseRecords";
 import LibraryExerciseMenu from "@/components/library/LibraryExerciseMenu";
 import PageHeader from "@/components/PageHeader";
+import BackButton from "@/components/ui/BackButton";
 import Segmented from "@/components/ui/Segmented";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
 import { usePageBack } from "@/hooks/usePageTransitions";
@@ -98,16 +104,7 @@ export default function ExercisePage() {
       eyebrow={t("exercise.eyebrow")}
       title={name ?? t("exercise.notFoundTitle")}
       notices={false}
-      leading={
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={t("common.back")}
-          onClick={back}
-        >
-          <ChevronLeft size={22} aria-hidden="true" />
-        </button>
-      }
+      leading={<BackButton onClick={back} />}
       action={
         exercise && (
           <div className="page-header-actions">
@@ -221,9 +218,7 @@ export default function ExercisePage() {
             <span className="stat-chip strong">{t("exercises.shared")}</span>
           )}
           {exercise.hidden && (
-            <span className="stat-chip muted">
-              {t("exercise.hiddenChip")}
-            </span>
+            <span className="stat-chip muted">{t("exercise.hiddenChip")}</span>
           )}
         </p>
       )}

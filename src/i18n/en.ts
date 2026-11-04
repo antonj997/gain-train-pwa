@@ -73,6 +73,7 @@ export const en = {
 
   // Settings
   "settings.title": "Settings",
+  "settings.eyebrow": "App and account",
   "settings.signedInSyncing": "Signed in · syncing…",
   "settings.signedInPending": "Signed in · {count} pending",
   "settings.signedInSynced": "Signed in · synced",
@@ -200,6 +201,7 @@ export const en = {
   "crash.copied": "Copied",
   "crash.copy": "Copy details",
   "notFound.title": "Page not found",
+  "notFound.eyebrow": "Gain Train",
   "notFound.text": "Return to your workout log to keep training.",
   "notFound.back": "Back to workouts",
   "undo.label": "Undo",
@@ -208,6 +210,9 @@ export const en = {
 
   // Workout
   "workout.notFound": "Workout not found",
+  "workout.notFoundText":
+    "It may have been deleted, or it is on another phone that has not synced yet.",
+  "workout.eyebrow": "Workout",
   "workout.backToWorkouts": "Back to workouts",
   "workout.newerTitle": "Update Gain Train to edit this workout",
   "workout.newerText":
@@ -690,11 +695,16 @@ export const en = {
 
   // Library: routines
   "library.title": "Library",
-  "library.eyebrow": "Your plans and exercises",
+  "library.eyebrow": "Your training setup",
   "library.section": "Library section",
   "library.routines": "Routines",
   "library.exercises": "Exercises",
   "library.plan": "Plan",
+  "library.helpRoutines": "The workouts you repeat. Start them from Train.",
+  "library.helpExercises":
+    "The built-in catalogue plus your own. Tap one for its history and records.",
+  "library.helpPlan":
+    "Training phases: which routine on which day, deload weeks and progression.",
 
   // Exercise page
   "exercise.eyebrow": "Exercise",
@@ -976,7 +986,7 @@ export const en = {
   "plan.pausedNote":
     "Paused: Train shows nothing from this plan, and another plan can use its dates.",
   "plan.intro":
-    "Plan a training phase if you like: what each day holds, deload weeks, and lifts to raise week by week. Train shows today's entry. Nothing changes anywhere while you have no plan.",
+    "Optional. Train shows today's entry; nothing changes anywhere while you have no plan.",
   "plan.plans": "Plans",
   "plan.repeatsWeekly": "repeats weekly",
   "plan.cycle": "{count}-week cycle",
@@ -1392,7 +1402,7 @@ export const en = {
   "auth.checkEmail":
     "Check your email to confirm your account, then sign in here.",
   "auth.failed": "Could not complete this request. Please try again.",
-  "auth.back": "Back",
+  "auth.eyebrow": "Account",
   "auth.titleUpdate": "Choose a new password",
   "auth.titleReset": "Reset your password",
   "auth.titleSignup": "Create an account",

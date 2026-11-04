@@ -143,10 +143,7 @@ export default function GoalCard({
         </span>
       )}
       {goal.kind === "lift" && goal.exerciseId && (
-        <Link
-          className="goal-exercise-link"
-          to={exercisePath(goal.exerciseId)}
-        >
+        <Link className="goal-exercise-link" to={exercisePath(goal.exerciseId)}>
           {goal.exerciseName ?? t("goals.lift")}
           <ChevronRight size={16} aria-hidden="true" />
         </Link>

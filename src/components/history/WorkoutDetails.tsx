@@ -3,10 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Pencil, Repeat, Trash2 } from "lucide-react";
 import DoneSetList from "@/components/DoneSetList";
 import { useData } from "@/contexts/useData";
-import {
-  workoutRecordHits,
-  type RecordKind,
-} from "@/data/exercise-records";
+import { workoutRecordHits, type RecordKind } from "@/data/exercise-records";
 import type { Workout } from "@/data/model";
 import { doneSetCount } from "@/data/selectors";
 import { summarize } from "@/data/summary";
@@ -101,20 +98,13 @@ export default function WorkoutDetails({
         {w.exercises.map((ex) => {
           const done = ex.sets.filter((s) => s.done);
           return (
-            <section
-              key={ex.id}
-              className="card ex-card"
-              aria-label={ex.name}
-            >
+            <section key={ex.id} className="card ex-card" aria-label={ex.name}>
               <Link className="ex-head-link" to={exercisePath(ex.exerciseId)}>
                 <span className="ex-titles">
                   <h3 className="ex-title">{ex.name}</h3>
                   <span className="ex-last">
                     {done.length
-                      ? countLabel(
-                          done.filter((s) => !s.drop).length,
-                          "set",
-                        )
+                      ? countLabel(done.filter((s) => !s.drop).length, "set")
                       : t("details.noSets")}
                   </span>
                 </span>
@@ -125,7 +115,11 @@ export default function WorkoutDetails({
                   {t("records.prLabel", { kinds: t("records.sessionVolume") })}
                 </p>
               )}
-              <DoneSetList sets={ex.sets} highlight={highlight} records={bySet} />
+              <DoneSetList
+                sets={ex.sets}
+                highlight={highlight}
+                records={bySet}
+              />
             </section>
           );
         })}

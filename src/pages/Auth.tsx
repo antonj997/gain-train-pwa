@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { errorMessage } from "@/lib/errors";
-import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
+import BackButton from "@/components/ui/BackButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
@@ -100,19 +101,28 @@ export default function Auth() {
     }
   };
   return (
-    <div className="auth-page stack">
-      <Link className="back-link" to="/" onClick={finishPasswordRecovery}>
-        <ArrowLeft size={18} /> {t("auth.back")}
-      </Link>
-      <h1>
-        {mode === "update"
-          ? t("auth.titleUpdate")
-          : mode === "reset"
-            ? t("auth.titleReset")
-            : mode === "signup"
-              ? t("auth.createAnAccount")
-              : t("auth.titleSignin")}
-      </h1>
+    <div className="page auth-page">
+      <PageHeader
+        eyebrow={t("auth.eyebrow")}
+        notices={false}
+        leading={
+          <BackButton
+            onClick={() => {
+              finishPasswordRecovery();
+              navigate("/");
+            }}
+          />
+        }
+        title={
+          mode === "update"
+            ? t("auth.titleUpdate")
+            : mode === "reset"
+              ? t("auth.titleReset")
+              : mode === "signup"
+                ? t("auth.createAnAccount")
+                : t("auth.titleSignin")
+        }
+      />
       <p>
         {mode === "update"
           ? t("auth.textUpdate")
@@ -179,7 +189,7 @@ export default function Auth() {
               {error}
             </p>
           )}
-          <button className="primary" disabled={busy}>
+          <button className="btn-primary" disabled={busy}>
             {busy
               ? t("auth.pleaseWait")
               : mode === "update"
@@ -205,7 +215,7 @@ export default function Auth() {
           disabled={busy}
           onClick={() => changeMode("reset")}
         >
-          Forgot password?
+          {t("auth.forgot")}
         </button>
       )}
       {supabase && mode !== "update" && (

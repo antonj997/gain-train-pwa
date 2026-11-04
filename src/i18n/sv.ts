@@ -70,6 +70,7 @@ export const sv = {
 
   // Settings
   "settings.title": "Inställningar",
+  "settings.eyebrow": "App och konto",
   "settings.signedInSyncing": "Inloggad · synkar…",
   "settings.signedInPending": "Inloggad · {count} väntar",
   "settings.signedInSynced": "Inloggad · synkad",
@@ -199,6 +200,7 @@ export const sv = {
   "crash.copied": "Kopierat",
   "crash.copy": "Kopiera detaljer",
   "notFound.title": "Sidan hittades inte",
+  "notFound.eyebrow": "Gain Train",
   "notFound.text": "Gå tillbaka till din träningslogg och fortsätt träna.",
   "notFound.back": "Tillbaka till passen",
   "undo.label": "Ångra",
@@ -207,6 +209,9 @@ export const sv = {
 
   // Workout
   "workout.notFound": "Passet hittades inte",
+  "workout.notFoundText":
+    "Det kan ha tagits bort, eller finns på en annan telefon som inte har synkat än.",
+  "workout.eyebrow": "Pass",
   "workout.backToWorkouts": "Tillbaka till passen",
   "workout.newerTitle": "Uppdatera Gain Train för att redigera passet",
   "workout.newerText":
@@ -691,11 +696,16 @@ export const sv = {
 
   // Library: routines
   "library.title": "Bibliotek",
-  "library.eyebrow": "Dina scheman och övningar",
+  "library.eyebrow": "Ditt träningsupplägg",
   "library.section": "Biblioteksdel",
   "library.routines": "Rutiner",
   "library.exercises": "Övningar",
   "library.plan": "Schema",
+  "library.helpRoutines": "Passen du upprepar. Starta dem från Träna.",
+  "library.helpExercises":
+    "Den inbyggda katalogen plus dina egna. Tryck på en för historik och rekord.",
+  "library.helpPlan":
+    "Träningsfaser: vilket pass vilken dag, deload-veckor och progression.",
 
   // Exercise page
   "exercise.eyebrow": "Övning",
@@ -984,7 +994,7 @@ export const sv = {
   "plan.pausedNote":
     "Pausat: Träna visar inget från schemat, och ett annat schema kan använda dess datum.",
   "plan.intro":
-    "Planera en träningsfas om du vill: vad varje dag innehåller, deload-veckor och lyft som ökar vecka för vecka. Träna visar dagens pass. Inget ändras någonstans så länge du inte har ett schema.",
+    "Valfritt. Träna visar dagens pass; inget ändras någonstans så länge du inte har ett schema.",
   "plan.plans": "Scheman",
   "plan.repeatsWeekly": "upprepas varje vecka",
   "plan.cycle": "{count}-veckorscykel",
@@ -1398,7 +1408,7 @@ export const sv = {
   "auth.checkEmail":
     "Kolla din e-post för att bekräfta kontot, och logga sedan in här.",
   "auth.failed": "Kunde inte slutföra begäran. Försök igen.",
-  "auth.back": "Tillbaka",
+  "auth.eyebrow": "Konto",
   "auth.titleUpdate": "Välj ett nytt lösenord",
   "auth.titleReset": "Återställ ditt lösenord",
   "auth.titleSignup": "Skapa ett konto",
