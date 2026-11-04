@@ -10,6 +10,7 @@ import {
   type ExerciseDefaults,
   type LastSession,
   previousResult,
+  workingSetChange,
 } from "@/data/workouts";
 import {
   addDrop,
@@ -38,6 +39,7 @@ import {
   withLoadKey,
 } from "@/lib/load-keys";
 import { localizedDate } from "@/lib/dates";
+import { countLabel } from "@/lib/labels";
 import { cardioTotals, isCardioSet, totalsLabel } from "@/lib/cardio";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import { useStableCallback } from "@/hooks/useStableCallback";
@@ -167,6 +169,7 @@ function ExerciseCard({
     (setId: string) => setSheet({ kind: "set", setId }),
     [],
   );
+  const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
     return result ? keepTogether(labelSet(result)) : undefined;
@@ -198,6 +201,14 @@ function ExerciseCard({
                     day: "numeric",
                     month: "short",
                   })}
+            </p>
+          )}
+          {setChange && (
+            <p className="ex-last ex-set-change">
+              {t("exercise.workingSetsNote", {
+                sets: countLabel(setChange.now, "working set"),
+                last: setChange.last,
+              })}
             </p>
           )}
         </div>

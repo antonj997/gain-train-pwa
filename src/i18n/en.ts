@@ -28,6 +28,10 @@ export const en = {
     one: "{count} unchecked set",
     other: "{count} unchecked sets",
   },
+  "count.workingSet": {
+    one: "{count} working set",
+    other: "{count} working sets",
+  },
   "count.workout": { one: "{count} workout", other: "{count} workouts" },
   "count.drop": { one: "{count} drop", other: "{count} drops" },
   "count.exercise": { one: "{count} exercise", other: "{count} exercises" },
@@ -263,6 +267,7 @@ export const en = {
   "exercise.colDone": "Done",
   "exercise.colPrevious": "Previous",
   "exercise.addSet": "Add set",
+  "exercise.workingSetsNote": "{sets} · last time {last}",
   "exercise.changeExercise": "Change exercise",
   "exercise.loadAndCount": "Load and count",
   "exercise.reorderSets": "Reorder sets",
