@@ -83,9 +83,6 @@ export default function GoalsPanel({
                       })
                     : t("goals.reached")
                 }
-                trailing={
-                  <span className="stat-chip done">{t("goals.reached")}</span>
-                }
                 chevron
                 onClick={() => onEdit(goal)}
               />
