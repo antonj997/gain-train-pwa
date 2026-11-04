@@ -1,5 +1,16 @@
 # Changelog
 
+## 4 November 2026 — the owner's notes: Train date, kg/lb, checked rows
+
+- Train: the rotating headline is gone; today's date is the big title (in the chosen language) and the settings gear sits level with it.
+- Plan and routine editors: the Save bar is pinned flush to the sheet's bottom edge with a solid surface, so nothing shows below it (a sticky footer stopped at the sheet's bottom padding).
+- Bodyweight + weight: adding a set no longer drops the “+” from the fields. The marker was relative to the most common load, which the added set changed; “+” and “−” now always show.
+- Column headings: kg opens Kilograms / Pounds and Reps opens Reps / Hold (seconds); Load and count stays in the ⋯ menu. New weight unit (Settings → Training too): stored in kg, shown and typed in lb, across set fields, Previous, History, Progress and goals. Bodyweight and goal entry stay in kg.
+- Finish is an outline until every set is checked, then fills with a slow animated gradient (static with reduced motion).
+- Checked rows read as plain text with a muted “×” between load and reps, or “s” after a hold.
+- A drag that starts on a checked value now scrolls; “Uncheck this set to edit its values.” only shows after a real tap.
+- Code: `src/lib/units.ts` (conversion and formatting), `isTap()` in `src/lib/touch.ts`, `ChoiceSheet`; `src/lib/headlines.ts` removed. Tests cover the units, the tap rule and the marker regression.
+
 ## 4 November 2026 — a Goals section
 
 - Progress has a Stats | Goals switch (Statistik | Mål, `/progress?tab=goals`). Goals no longer sit above the stats; Stats instead starts with a one-line “Goals: 2 active · this week 2/3” link.
