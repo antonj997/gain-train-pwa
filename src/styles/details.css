@@ -16,11 +16,13 @@
   align-items: center;
   gap: var(--gt-space-1) var(--gt-space-2);
   margin: calc(-1 * var(--gt-space-2)) 0 0;
+  padding: 0 var(--gt-space-1);
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
 }
 .exercise-meta > span:not(.stat-chip):not(:first-child)::before {
-  content: "· ";
+  content: "·";
+  margin-right: var(--gt-space-2);
 }
 .exercise-meta-main {
   color: var(--gt-ink);
@@ -260,4 +262,11 @@
     color-mix(in srgb, var(--gt-danger-fg) 30%, transparent);
   background-color: var(--gt-danger-bg);
   color: var(--gt-danger-fg);
+}
+/* A result inside a row's muted line or value reads at that line's size. */
+.row-sub .done-value,
+.row-value .done-value {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
 }

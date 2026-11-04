@@ -280,7 +280,6 @@ export default function ExercisesPanel() {
                 key={e.id}
                 exercise={e}
                 now={now}
-                onEdit={openEditor}
                 onUnhide={unhide}
                 onToggleFavourite={toggleFavourite}
                 onMenu={setMenu}

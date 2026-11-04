@@ -1,5 +1,5 @@
 import HistoryCalendar from "@/components/HistoryCalendar";
-import HistorySetList from "@/components/HistorySetList";
+import WorkoutDetails from "@/components/history/WorkoutDetails";
 import {
   createHistoryCalendar,
   filterBySelection,
@@ -8,7 +8,6 @@ import {
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { errorMessage } from "@/lib/errors";
-import { workoutPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
 import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -16,7 +15,7 @@ import { shiftDate, weekStart } from "@/lib/dates";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import { Repeat, Trash2, Pencil, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import { today } from "@/data/model";
@@ -192,37 +191,32 @@ export default function History() {
         title={w && workoutTitle(w.name)}
         description={
           w &&
-          localizedDate(w.date) +
-            (w.duration !== null ? " · " + durationLabel(w.duration) : "")
+          [
+            localizedDate(w.date, {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            }),
+            w.duration !== null ? durationLabel(w.duration) : null,
+            countLabel(doneSetCount(w), "set"),
+          ]
+            .filter(Boolean)
+            .join(" · ")
         }
         size="full"
+        className="details-dialog"
       >
-        {w?.exercises.map((ex) => (
-          <section key={ex.id}>
-            <h3 className="group-title">{ex.name}</h3>
-            <HistorySetList sets={ex.sets} />
-          </section>
-        ))}
-        <button
-          className="btn-primary"
-          disabled={busy || workoutStart.busy}
-          onClick={() => void repeat()}
-        >
-          <Repeat size={18} aria-hidden="true" />
-          {busy ? t("history.pleaseWait") : t("history.repeatWorkout")}
-        </button>
-        <Link className="btn-secondary" to={workoutPath(selected?.id ?? "")}>
-          <Pencil size={18} aria-hidden="true" />
-          {t("history.editWorkout")}
-        </Link>
-        <button
-          className="btn-danger"
-          disabled={busy}
-          onClick={() => setConfirmDelete(true)}
-        >
-          <Trash2 size={17} aria-hidden="true" />
-          {t("history.deleteWorkout")}
-        </button>
+        {selected && w && (
+          <WorkoutDetails
+            id={selected.id}
+            workout={w}
+            highlight={params.get("set")}
+            busy={busy || workoutStart.busy}
+            onRepeat={() => void repeat()}
+            onDelete={() => setConfirmDelete(true)}
+          />
+        )}
       </Sheet>
       <ConfirmDialog
         open={confirmDelete && !!selected}

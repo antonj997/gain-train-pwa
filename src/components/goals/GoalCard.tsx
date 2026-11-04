@@ -1,9 +1,12 @@
+import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import Sparkline from "@/components/Sparkline";
 import { goalTitle } from "@/data/goals";
 import { today } from "@/data/model";
 import type { GoalCardData } from "@/hooks/useGoals";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
+import { exercisePath } from "@/lib/routes";
 import type { Deadline, Pace } from "@/lib/goal-pace";
 import { type MessageKey, formatDecimal } from "@/i18n";
 import { formatWeight, getWeightUnit, weightTotal } from "@/lib/units";
@@ -24,7 +27,11 @@ const paceChip: Record<Pace["kind"], { key: MessageKey; tone: string }> = {
   unknown: { key: "goals.noTrend", tone: " muted" },
 };
 
-/** One open goal: title, pace, bar, start → now → target, time left and a sparkline. */
+/**
+ * One open goal: title, pace, bar, start → now → target, time left and a
+ * sparkline. The card opens the goal's editor; a lift goal's exercise name is
+ * a second link, to the exercise page.
+ */
 export default function GoalCard({
   card,
   onOpen,
@@ -49,9 +56,15 @@ export default function GoalCard({
   const chip = pace ? paceChip[pace.kind] : null;
   const values = insight.sinceStart.map((p) => p.value);
   return (
-    <button type="button" className="card goal-card" onClick={onOpen}>
+    <div className="card goal-card">
       <span className="card-head">
-        <strong className="card-title">{title}</strong>
+        <button
+          type="button"
+          className="card-title goal-card-open"
+          onClick={onOpen}
+        >
+          {title}
+        </button>
         {chip && <span className={"stat-chip" + chip.tone}>{t(chip.key)}</span>}
       </span>
       <span
@@ -129,6 +142,15 @@ export default function GoalCard({
           })}
         </span>
       )}
-    </button>
+      {goal.kind === "lift" && goal.exerciseId && (
+        <Link
+          className="goal-exercise-link"
+          to={exercisePath(goal.exerciseId)}
+        >
+          {goal.exerciseName ?? t("goals.lift")}
+          <ChevronRight size={16} aria-hidden="true" />
+        </Link>
+      )}
+    </div>
   );
 }

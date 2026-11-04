@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogCloseButton,
 } from "@/components/ui/dialog";
 import { t, type MessageKey } from "@/i18n";
 
@@ -366,15 +367,18 @@ export default function RoutinesPanel() {
         }}
       >
         <DialogContent size="full" className="routine-dialog">
-          <DialogHeader>
-            <DialogTitle>
-              {edit && state.records[edit.id]
-                ? t("routines.edit")
-                : t("routines.create")}
-            </DialogTitle>
-            <DialogDescription>
-              {t("routines.editorDescription")}
-            </DialogDescription>
+          <DialogHeader className="has-close">
+            <div className="dialog-header-text">
+              <DialogTitle>
+                {edit && state.records[edit.id]
+                  ? t("routines.edit")
+                  : t("routines.create")}
+              </DialogTitle>
+              <DialogDescription>
+                {t("routines.editorDescription")}
+              </DialogDescription>
+            </div>
+            <DialogCloseButton />
           </DialogHeader>
           {edit && (
             <>

@@ -233,9 +233,21 @@ export function workoutRecordHits(
       after.bestE1rm,
       value(after.bestE1rm) > value(before.bestE1rm),
     );
+    // Equal sets in one workout: the mark goes on the first, with the others.
+    const heaviest = after.heaviest && {
+      ...after.heaviest,
+      set:
+        sessions[index].sets.find(
+          (set) =>
+            set.section !== "warmup" &&
+            set.load === after.heaviest!.set.load &&
+            set.weight === after.heaviest!.set.weight &&
+            set.reps === after.heaviest!.set.reps,
+        ) ?? after.heaviest.set,
+    };
     mark(
       "heaviest",
-      after.heaviest,
+      heaviest,
       !before.heaviest ||
         (after.heaviest?.set.weight ?? 0) > (before.heaviest.set.weight ?? 0),
     );

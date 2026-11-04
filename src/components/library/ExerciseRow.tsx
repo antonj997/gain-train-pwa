@@ -1,20 +1,20 @@
 import { memo } from "react";
+import { Link } from "react-router-dom";
 import { MoreHorizontal, Star } from "lucide-react";
 import { exerciseSub, type LibraryExercise } from "@/lib/library";
+import { exercisePath } from "@/lib/routes";
 import { t } from "@/i18n";
 
-/** One exercise in the Library list: its name and details, star and menu, or Unhide. */
+/** One exercise in the Library list: its name and details (opening the exercise page), star and menu, or Unhide. */
 function ExerciseRow({
   exercise: e,
   now,
-  onEdit,
   onUnhide,
   onToggleFavourite,
   onMenu,
 }: {
   exercise: LibraryExercise;
   now: string;
-  onEdit: (exercise: LibraryExercise) => void;
   onUnhide: (exercise: LibraryExercise) => void;
   onToggleFavourite: (exercise: LibraryExercise) => void;
   onMenu: (exercise: LibraryExercise) => void;
@@ -33,18 +33,9 @@ function ExerciseRow({
   );
   return (
     <div className="row exercise-row">
-      {e.custom ? (
-        <button
-          type="button"
-          className="row-main row-open"
-          aria-label={t("exercises.editNamed", { name: e.name })}
-          onClick={() => onEdit(e)}
-        >
-          {text}
-        </button>
-      ) : (
-        <span className="row-main">{text}</span>
-      )}
+      <Link className="row-main row-open" to={exercisePath(e.id)}>
+        {text}
+      </Link>
       {e.hidden ? (
         <button
           type="button"

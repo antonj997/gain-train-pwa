@@ -10,16 +10,14 @@ import {
 } from "@/data/analytics";
 import { labelSet, today } from "@/data/model";
 import { historyPeriod } from "@/data/summary";
-import CardioProgressDetail from "@/components/CardioProgressDetail";
-import ExerciseProgressDetail from "@/components/ExerciseProgressDetail";
 import GoalsPanel from "@/components/goals/GoalsPanel";
 import PageHeader from "@/components/PageHeader";
 import ProgressSummary from "@/components/ProgressSummary";
 import Sparkline from "@/components/Sparkline";
 import ListRow from "@/components/ui/ListRow";
 import Segmented from "@/components/ui/Segmented";
-import Sheet from "@/components/ui/Sheet";
-import { daysAgo, localizedDate } from "@/lib/dates";
+import { localizedDate } from "@/lib/dates";
+import { exercisePath, historyPath } from "@/lib/routes";
 import { countLabel } from "@/lib/labels";
 import { totalsLabel } from "@/lib/cardio";
 import { useGoalEditor } from "@/hooks/useGoalEditor";
@@ -49,7 +47,6 @@ export default function Progress() {
     setParams(next === "goals" ? { tab: next } : {}, { replace: true });
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<Period>("4w");
-  const [openId, setOpenId] = useState<string | null>(null);
   const { t } = useT();
   const periodOptions: { value: Period; label: string }[] = periods.map(
     ({ value, label }) => ({ value, label: t(label) }),
@@ -101,8 +98,6 @@ export default function Progress() {
   const shown = rows.filter((row) =>
     row.name.toLocaleLowerCase().includes(query),
   );
-  const open = items.find((item) => item.id === openId);
-  const openCardio = cardioItems.find((item) => item.id === openId);
   const hasData = items.length > 0 || cardioItems.length > 0;
   const before = periods.find((p) => p.value === range)!.before;
   // "Goals: 2 active · this week 2/3", only once there is something to show.
@@ -198,17 +193,32 @@ export default function Progress() {
               <div className="best-grid">
                 {bests.map((best) => (
                   <div className="card best-card" key={best.exerciseId}>
-                    <span className="badge-new">{best.name}</span>
-                    <strong>{labelSet(best.set)}</strong>
-                    <time className="row-sub" dateTime={best.date}>
-                      {best.date === now
-                        ? t("common.todayCap")
-                        : localizedDate(best.date, {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                          })}
-                    </time>
+                    <Link
+                      className="best-card-exercise"
+                      to={exercisePath(best.exerciseId)}
+                    >
+                      {best.name}
+                    </Link>
+                    <Link
+                      className="best-card-open"
+                      to={historyPath(best.workoutId, best.set.id)}
+                      aria-label={t("progress.openBest", {
+                        name: best.name,
+                        set: labelSet(best.set),
+                      })}
+                    >
+                      <span className="badge-new">{t("history.newBest")}</span>
+                      <strong>{labelSet(best.set)}</strong>
+                      <time className="row-sub" dateTime={best.date}>
+                        {best.date === now
+                          ? t("common.todayCap")
+                          : localizedDate(best.date, {
+                              weekday: "short",
+                              day: "numeric",
+                              month: "short",
+                            })}
+                      </time>
+                    </Link>
                   </div>
                 ))}
               </div>
@@ -237,7 +247,7 @@ export default function Progress() {
                     sub={`${row.best} · ${countLabel(row.sessions, "session")}`}
                     trailing={<Sparkline values={row.trend} />}
                     chevron
-                    onClick={() => setOpenId(row.id)}
+                    to={exercisePath(row.id)}
                   />
                 ))}
               </div>
@@ -270,24 +280,6 @@ export default function Progress() {
           </Link>
         </div>
       )}
-      <Sheet
-        open={!!open || !!openCardio}
-        onClose={() => setOpenId(null)}
-        title={open?.name ?? openCardio?.name}
-        description={t("progress.sheetDescription")}
-        size="full"
-      >
-        {open && (
-          <ExerciseProgressDetail
-            item={open}
-            cutoffDate={daysAgo(30)}
-            records={records}
-          />
-        )}
-        {openCardio && (
-          <CardioProgressDetail item={openCardio} cutoffDate={daysAgo(30)} />
-        )}
-      </Sheet>
       {goalEditor.editor}
     </div>
   );

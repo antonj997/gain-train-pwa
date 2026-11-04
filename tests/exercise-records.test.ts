@@ -219,3 +219,17 @@ test("workout record hits: beats over earlier sessions, never the first", () => 
   assert.equal(workoutRecordHits([...records, later], better.id).length, 2);
   assert.deepEqual(workoutRecordHits(records, "missing"), []);
 });
+
+test("workout record hits: equal sets carry one mark, on the first", () => {
+  const first = workout([set({ weight: 100, reps: 5 })], "2026-10-01");
+  const sets = [set({ weight: 110 }), set({ weight: 110 }), set({ weight: 110 })];
+  const next = workout(sets, "2026-10-08");
+  const hits = workoutRecordHits([first, next], next.id);
+  assert.deepEqual(
+    hits.map((hit) => [hit.setId, hit.kinds]),
+    [
+      [sets[0].id, ["e1rm", "heaviest", "setVolume"]],
+      [null, ["sessionVolume"]],
+    ],
+  );
+});

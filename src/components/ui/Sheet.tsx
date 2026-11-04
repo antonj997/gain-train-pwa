@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 import {
   Dialog,
+  DialogCloseButton,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -26,7 +27,8 @@ type Props = {
 
 /**
  * A bottom sheet on phones and a centred panel from 640px up, built on the
- * shared Radix dialog. It closes on a tap outside, Escape and the handle.
+ * shared Radix dialog. It closes on a tap outside, Escape and the handle; a
+ * full sheet also has a Close (×) button in its sticky header.
  */
 export default function Sheet({
   open,
@@ -58,11 +60,14 @@ export default function Sheet({
           ? { "aria-describedby": undefined }
           : {})}
       >
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description !== undefined && (
-            <DialogDescription>{description}</DialogDescription>
-          )}
+        <DialogHeader className={size === "full" ? "has-close" : undefined}>
+          <div className="dialog-header-text">
+            <DialogTitle>{title}</DialogTitle>
+            {description !== undefined && (
+              <DialogDescription>{description}</DialogDescription>
+            )}
+          </div>
+          {size === "full" && <DialogCloseButton />}
         </DialogHeader>
         {children}
       </DialogContent>

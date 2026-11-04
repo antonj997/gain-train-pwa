@@ -775,6 +775,7 @@ details[open] > .session-summary > svg {
   color: inherit;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
 }
 .exercise-name {
@@ -1209,6 +1210,7 @@ details[open] > .session-summary > svg {
   gap: var(--gt-space-3);
 }
 .goal-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1216,9 +1218,46 @@ details[open] > .session-summary > svg {
   width: 100%;
   min-height: 44px;
   color: inherit;
-  font: inherit;
+  text-align: left;
+}
+/* The title is the card's button; its layer covers the whole card. */
+.goal-card-open {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gt-ink);
   text-align: left;
   cursor: pointer;
+}
+.goal-card-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.goal-card-open:focus-visible {
+  outline: none;
+}
+.goal-card:has(.goal-card-open:focus-visible) {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+/* A lift goal's exercise: its own link above the card's layer. */
+.goal-exercise-link {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 2px;
+  min-height: 44px;
+  margin: calc(-1 * var(--gt-space-2)) 0;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  text-decoration: none;
 }
 .goal-bar {
   display: block;

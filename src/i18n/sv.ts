@@ -473,9 +473,10 @@ export const sv = {
   "history.keepWorkout": "Behåll passet",
   "history.deleting": "Raderar…",
   "history.clearSelection": "Rensa val",
-  "history.warmup": "Uppvärmning",
-  "history.cooldown": "Nedvarvning",
-  "history.setN": "Set {n}",
+  "details.sets": "Set",
+  "details.time": "Tid",
+  "details.noSets": "Inga avbockade set",
+  "details.edit": "Redigera",
   "history.chooseMonthYear": "Välj månad och år",
   "history.previousYear": "Föregående år",
   "history.nextYear": "Nästa år",
@@ -535,7 +536,7 @@ export const sv = {
   "progress.emptyText":
     "Avsluta ett pass med ett arbetsset för att se ett exakt resultat. Ett till jämförbart pass ger dig en jämförelse.",
   "progress.startWorkout": "Starta ett pass",
-  "progress.sheetDescription": "Resultat, pass och diagram",
+  "progress.openBest": "{name} {set}: öppna passet",
   "progress.perWeek": "Pass / vecka",
   "progress.finishedWeeks": "{change} · avslutade veckor",
   "progress.workingSets": "Arbetsset",
@@ -578,7 +579,6 @@ export const sv = {
   "detail.chartNote":
     "{metric} · skalan börjar på noll. Pass samma dag visas i den ordning de loggades.",
   "detail.chartLater": "Ditt diagram börjar efter ditt nästa jämförbara pass.",
-  "detail.recorded": "Loggade pass",
   "detail.estimatedNote": "Uppskattad styrka använder arbetsset på 1–10 reps.",
   "detail.baseline":
     "{change} {unit} mot utgångsläget för minst 30 dagar sedan.",
