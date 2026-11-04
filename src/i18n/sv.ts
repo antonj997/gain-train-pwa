@@ -878,6 +878,9 @@ export const sv = {
   "editor.name": "Namn",
   "editor.twin": "Du har redan en övning som heter {name}.",
   "editor.note": "Anteckning",
+  "editor.alsoTrains": "Tränar även",
+  "editor.alsoTrainsHint":
+    "Kategorifilter och förslag i scheman hittar den även här.",
   "editor.save": "Spara övning",
   "editor.storageUnavailable":
     "Lagringen är inte tillgänglig. Låt formuläret vara öppet tills det är sparat.",

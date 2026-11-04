@@ -8,7 +8,7 @@ import { categoryLabel } from "@/lib/catalogue-labels";
 
 export type ExerciseDraft = { id: string; data: CustomExercise };
 
-/** The custom exercise form: name, category and note, kept as a draft until saved. */
+/** The custom exercise form: name, categories and note, kept as a draft until saved. */
 export default function ExerciseEditorSheet({
   open,
   draft,
@@ -41,6 +41,19 @@ export default function ExerciseEditorSheet({
 }) {
   const set = (change: Partial<CustomExercise>) =>
     draft && onChange({ ...draft, data: { ...draft.data, ...change } });
+  // Other categories it trains; none leaves the field out. The main one is never among them.
+  const others = (draft?.data.categories ?? []).filter(
+    (c) => c !== draft?.data.category,
+  );
+  const setOthers = (next: string[], category = draft?.data.category) => {
+    if (!draft || category === undefined) return;
+    const { categories: _old, ...data } = draft.data;
+    const kept = next.filter((c) => c !== category);
+    onChange({
+      ...draft,
+      data: { ...data, category, ...(kept.length ? { categories: kept } : {}) },
+    });
+  };
   // Two exercises can share a name; say so, since lists can't tell them apart.
   const twin = draft && sameNamedExercise(draft.data.name, exercises, draft.id);
   return (
@@ -73,7 +86,7 @@ export default function ExerciseEditorSheet({
             {t("facet.category")}
             <select
               value={draft.data.category}
-              onChange={(e) => set({ category: e.target.value })}
+              onChange={(e) => setOthers(others, e.target.value)}
             >
               {categories.map((c) => (
                 <option key={c} value={c}>
@@ -82,6 +95,37 @@ export default function ExerciseEditorSheet({
               ))}
             </select>
           </label>
+          <div className="plan-field">
+            <span className="group-title" id="exercise-also">
+              {t("editor.alsoTrains")}
+            </span>
+            <div
+              className="filters"
+              role="group"
+              aria-labelledby="exercise-also"
+            >
+              {categories
+                .filter((c) => c !== draft.data.category && c !== "Other")
+                .map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className="filter-chip"
+                    aria-pressed={others.includes(c)}
+                    onClick={() =>
+                      setOthers(
+                        others.includes(c)
+                          ? others.filter((x) => x !== c)
+                          : [...others, c],
+                      )
+                    }
+                  >
+                    {categoryLabel(c)}
+                  </button>
+                ))}
+            </div>
+            <p className="row-sub">{t("editor.alsoTrainsHint")}</p>
+          </div>
           <label>
             {t("editor.note")}
             <textarea

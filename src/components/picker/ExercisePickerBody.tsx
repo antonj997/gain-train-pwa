@@ -10,6 +10,7 @@ import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
 import FacetChips from "@/components/FacetChips";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
 import {
+  inCategory,
   matchesFacets,
   sameNamedExercise,
   searchExercises,
@@ -24,7 +25,11 @@ import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { coarsePointer } from "@/lib/touch";
 import { t, type MessageKey } from "@/i18n";
-import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
+import {
+  categoryLabel,
+  categoryText,
+  equipmentLabel,
+} from "@/lib/catalogue-labels";
 
 /** A chosen exercise; a custom one carries the defaults it was saved with. */
 export type PickedExercise = { id: string; name: string } & ExerciseDefaults;
@@ -125,7 +130,7 @@ export default function ExercisePickerBody({
                 equipment,
               }) &&
               (filter === "Suggested"
-                ? !!suggested?.includes(e.category)
+                ? !!suggested?.some((c) => inCategory(e, c))
                 : filter === "Recent"
                   ? recent.has(e.id)
                   : filter === "Favourites"
@@ -367,7 +372,7 @@ export default function ExercisePickerBody({
                     )}
                   </strong>
                   <small>
-                    {categoryLabel(e.category)}
+                    {categoryText(e.category, e.categories)}
                     {"equipment" in e && e.equipment
                       ? ` · ${equipmentLabel(e.equipment)}`
                       : ""}

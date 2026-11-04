@@ -872,6 +872,9 @@ export const en = {
   "editor.name": "Name",
   "editor.twin": "You already have an exercise called {name}.",
   "editor.note": "Note",
+  "editor.alsoTrains": "Also trains",
+  "editor.alsoTrainsHint":
+    "Category filters and plan suggestions find it under these too.",
   "editor.save": "Save exercise",
   "editor.storageUnavailable":
     "Storage is unavailable. Keep this form open until saved.",
