@@ -202,8 +202,11 @@
   caret-color: var(--gt-accent);
   touch-action: none;
 }
+/* A checked field is read-only: a drag that starts on it scrolls the page. */
 .set-line .set-field input[readonly] {
   cursor: default;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
 .set-line.is-done .set-field input {
   background-color: transparent;

@@ -71,8 +71,11 @@ export default function SetNumberInput({
       maxLength={32}
       value={draft.text}
       onFocus={(event) => {
-        if (props.readOnly) onLockedAttempt?.();
-        else event.currentTarget.select();
+        // A tap's own pointerup decides on the notice; this is keyboard focus.
+        if (props.readOnly) {
+          if (!selection.current.pointerFocus(event.timeStamp))
+            onLockedAttempt?.();
+        } else event.currentTarget.select();
       }}
       onKeyDown={(event) => {
         if (props.readOnly && isSetInputEditKey(event)) {
