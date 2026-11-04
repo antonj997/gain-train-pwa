@@ -431,8 +431,43 @@
   position: absolute;
   inset: -8px 0;
 }
-.top-bar > .btn-primary {
+.top-bar > .btn-primary,
+.top-bar > .btn-secondary {
   flex: none;
+}
+/* Finish is an outline while any set is unchecked. Once every set is checked
+   it fills with a slow gradient of the accent hues; reduced motion keeps the
+   gradient still. */
+.top-bar > .finish-pending {
+  border-color: var(--gt-accent);
+  background-color: transparent;
+  color: var(--gt-accent);
+}
+@keyframes finish-shift {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+.top-bar > .finish-ready {
+  border-color: transparent;
+  background-image: linear-gradient(
+    110deg,
+    var(--gt-accent),
+    var(--gt-cool-fg),
+    var(--gt-done),
+    var(--gt-accent)
+  );
+  background-size: 300% 100%;
+  background-position: 0% 50%;
+  animation: finish-shift 4s ease-in-out infinite alternate;
+}
+@media (prefers-reduced-motion: reduce) {
+  .top-bar > .finish-ready {
+    animation: none;
+  }
 }
 
 /* Add exercise: a dashed button after the cards; alone it is a large one. */
