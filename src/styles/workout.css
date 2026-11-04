@@ -26,6 +26,16 @@
 .set-line.load-suffix {
   --set-load-w: 74px;
 }
+/* Pounds run a digit longer ("176.4"), so their load field is wider. */
+.ex-card[data-unit="lb"] :is(.set-line, .set-columns) {
+  --set-load-w: 62px;
+}
+.ex-card[data-unit="lb"] :is(.set-line, .set-columns).load-prefix {
+  --set-load-w: 76px;
+}
+.ex-card[data-unit="lb"] .set-line.load-suffix {
+  --set-load-w: 80px;
+}
 .set-line {
   position: relative;
   row-gap: var(--gt-space-1);

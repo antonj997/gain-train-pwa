@@ -173,7 +173,11 @@ function ExerciseCard({
   };
 
   return (
-    <section className="card ex-card" aria-labelledby={headingId}>
+    <section
+      className="card ex-card"
+      aria-labelledby={headingId}
+      data-unit={weightUnit}
+    >
       <div className="ex-head">
         <div className="ex-titles">
           <h2 id={headingId} className="ex-title">

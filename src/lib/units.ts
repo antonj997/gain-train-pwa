@@ -45,17 +45,6 @@ export function fromUnit(value: number, unit: WeightUnit = current): number {
 }
 
 /**
- * The number a set field shows. Pounds typed with two decimals ("132.25") come
- * back as typed, so a field never rewrites what was just entered; any other
- * stored value shows to one decimal like a label.
- */
-export function toUnitField(kg: number, unit: WeightUnit = current): number {
-  if (unit === "kg") return kg;
-  const typed = round(kg / KG_PER_LB, 2);
-  return fromUnit(typed, unit) === kg ? typed : round(kg / KG_PER_LB, 1);
-}
-
-/**
  * A weight's number in the unit and the language: "60", "132.3", "132,3".
  * `kgDecimals` rounds a kilogram value too, for computed ones such as a goal's
  * pace; pounds always show one decimal.

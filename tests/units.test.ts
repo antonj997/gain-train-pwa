@@ -7,7 +7,6 @@ import {
   fromUnit,
   parseWeightUnit,
   toUnit,
-  toUnitField,
   weightTotal,
 } from "../src/lib/units.ts";
 import { normalizeTrainingPreferences } from "../src/lib/preferences.ts";
@@ -42,13 +41,6 @@ test("typed pounds store as kilograms and show the same pounds again", () => {
     const typed = Math.round(lb * 10) / 10;
     assert.equal(toUnit(fromUnit(typed, "lb"), "lb"), typed, String(typed));
   }
-});
-
-test("a set field shows typed pounds as typed, other values to one decimal", () => {
-  assert.equal(toUnitField(60, "kg"), 60);
-  assert.equal(toUnitField(60, "lb"), 132.3);
-  for (const typed of [132.25, 135, 0.5, 45.05, 999.99])
-    assert.equal(toUnitField(fromUnit(typed, "lb"), "lb"), typed);
 });
 
 test("the unit follows the language's decimal mark", () => {

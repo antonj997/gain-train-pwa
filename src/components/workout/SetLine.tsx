@@ -9,7 +9,7 @@ import {
   formatWeightValue,
   fromUnit,
   getWeightUnit,
-  toUnitField,
+  toUnit,
   type WeightUnit,
 } from "@/lib/units";
 import type { LoadMarker } from "@/lib/load-keys";
@@ -136,6 +136,20 @@ export default function SetLine({
   const displayedBodyWeight = bodyWeightForSet(set, bodyWeightKg);
   // The marker names what the field shows; with none, the set's own load does.
   const unit = weightUnit ?? getWeightUnit();
+  // Pounds show to one decimal, so a typed "132.25" would come back as
+  // "132.3" mid-typing. The row remembers what was typed for the kg it stored.
+  const typedWeight = useRef<{
+    kg: number;
+    value: number;
+    unit: WeightUnit;
+  } | null>(null);
+  const typed = typedWeight.current;
+  const shownWeight =
+    set.weight === null
+      ? null
+      : typed && typed.kg === set.weight && typed.unit === unit
+        ? typed.value
+        : toUnit(set.weight, unit);
   const loadName = t(
     LOAD_NAMES[unit][
       marker === "plus" || marker === "minus" || marker === "kg"
@@ -341,19 +355,16 @@ export default function SetLine({
                 placeholder={marker === "kg" ? undefined : unit}
                 // Shown and typed in the unit; stored in kg. An untouched
                 // field never writes, so its exact kg value stays.
-                value={
-                  set.weight === null ? null : toUnitField(set.weight, unit)
-                }
+                value={shownWeight}
                 inputText={getSetInputText(set, "weight")}
                 readOnly={locked}
                 onLockedAttempt={() => setLockedAttempt(true)}
-                onValueChange={(value, text) =>
-                  updateNumber(
-                    "weight",
-                    value === null ? null : fromUnit(value, unit),
-                    text,
-                  )
-                }
+                onValueChange={(value, text) => {
+                  const kg = value === null ? null : fromUnit(value, unit);
+                  typedWeight.current =
+                    kg === null || value === null ? null : { kg, value, unit };
+                  updateNumber("weight", kg, text);
+                }}
               />
               {marker === "kg" && (
                 <span
