@@ -46,6 +46,9 @@ import SetSheet from "@/components/workout/SetSheet";
 import LoadCountSheet from "@/components/workout/LoadCountSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
+import ChoiceSheet from "@/components/ui/ChoiceSheet";
+import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
+import type { WeightUnit } from "@/lib/units";
 import { useT } from "@/i18n/useT";
 
 export type ExerciseCardProps = {
@@ -80,6 +83,8 @@ export type ExerciseCardProps = {
 type OpenSheet =
   | { kind: "set"; setId: string }
   | { kind: "loadCount" }
+  | { kind: "unit" }
+  | { kind: "count" }
   | { kind: "menu" }
   | { kind: "reorder" }
   | null;
@@ -131,6 +136,8 @@ function ExerciseCard({
   const headingId = useId();
   const { t } = useT();
   const [sheet, setSheet] = useState<OpenSheet>(null);
+  // The unit is the device's; the kg heading switches it for every screen.
+  const [{ weightUnit }, setPreferences] = useTrainingPreferences();
   const setSheetRef = useRef<HTMLDivElement>(null);
   const openSetId = sheet?.kind === "set" ? sheet.setId : null;
   useKeepAboveSheet(openSetId, setSheetRef);
@@ -220,11 +227,14 @@ function ExerciseCard({
               {t("exercise.colPrevious")}
             </span>
           )}
+          {/* The headings pick the unit and the count; the rest of Load and
+              count is in the exercise's menu. */}
           <button
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
-            onClick={() => setSheet({ kind: "loadCount" })}
+            aria-label={`${loadHeading(defaultKey)}, ${t("unit.title")}`}
+            onClick={() => setSheet({ kind: "unit" })}
           >
             {loadHeading(defaultKey)}
             <ChevronDown size={14} aria-hidden="true" />
@@ -233,7 +243,8 @@ function ExerciseCard({
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
-            onClick={() => setSheet({ kind: "loadCount" })}
+            aria-label={`${countHeading(sets)}, ${t("load.count")}`}
+            onClick={() => setSheet({ kind: "count" })}
           >
             {countHeading(sets)}
             <ChevronDown size={14} aria-hidden="true" />
@@ -251,6 +262,7 @@ function ExerciseCard({
           previous={previousOf(i)}
           marker={loadMarker(s, defaultKey)}
           bodyWeightKg={mode === "log" ? bodyWeightKg : null}
+          weightUnit={weightUnit}
           next={nextSetId === s.id}
           editing={openSetId === s.id}
           unlocked={unlockChecked}
@@ -305,6 +317,36 @@ function ExerciseCard({
           onLoadKey={(key) => changeSets(applyExerciseLoad(sets, key))}
           onMeasure={(measure) => changeSets(applyExerciseCount(sets, measure))}
           onDone={close}
+        />
+      )}
+      {!cardio && (
+        <ChoiceSheet<WeightUnit>
+          open={sheet?.kind === "unit"}
+          onClose={close}
+          title={t("unit.title")}
+          value={weightUnit}
+          options={[
+            { value: "kg", label: t("unit.kg") },
+            { value: "lb", label: t("unit.lb") },
+          ]}
+          hint={t("unit.note")}
+          onChoose={(unit) => setPreferences({ weightUnit: unit })}
+        />
+      )}
+      {!cardio && (
+        <ChoiceSheet<"reps" | "seconds">
+          open={sheet?.kind === "count"}
+          onClose={close}
+          title={t("load.count")}
+          value={exerciseMeasure(sets)}
+          options={[
+            { value: "reps", label: t("load.reps") },
+            { value: "seconds", label: t("load.hold") },
+          ]}
+          hint={t("load.appliesUnchecked")}
+          onChoose={(measure) =>
+            changeSets(applyExerciseCount(sets, measure))
+          }
         />
       )}
       <ExerciseMenuSheet

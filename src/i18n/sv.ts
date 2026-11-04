@@ -61,7 +61,6 @@ export const sv = {
   "common.undo": "Ångra",
   "common.today": "i dag",
   "common.todayCap": "I dag",
-  "common.kg": "{value} kg",
 
   // Settings
   "settings.title": "Inställningar",
@@ -288,6 +287,11 @@ export const sv = {
   "load.headingReps": "Reps",
   "load.headingSec": "Sek",
   "load.headingRepsSec": "Reps/sek",
+  "load.hold": "Håll (sekunder)",
+  "unit.title": "Viktenhet",
+  "unit.kg": "Kilo (kg)",
+  "unit.lb": "Pund (lb)",
+  "unit.note": "Gäller på alla skärmar. Vikter sparas i kg, så det blir exakt när du byter tillbaka.",
   "set.optWeight": "Vikt",
   "set.optBw": "KV",
   "set.optBwPlus": "KV + {unit}",

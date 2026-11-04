@@ -61,7 +61,6 @@ export const en = {
   "common.undo": "Undo",
   "common.today": "today",
   "common.todayCap": "Today",
-  "common.kg": "{value} kg",
 
   // Settings
   "settings.title": "Settings",
@@ -286,6 +285,11 @@ export const en = {
   "load.headingReps": "Reps",
   "load.headingSec": "Sec",
   "load.headingRepsSec": "Reps/sec",
+  "load.hold": "Hold (seconds)",
+  "unit.title": "Weight unit",
+  "unit.kg": "Kilograms (kg)",
+  "unit.lb": "Pounds (lb)",
+  "unit.note": "Applies to every screen. Weights are saved in kg, so switching back is exact.",
   "set.optWeight": "Weight",
   "set.optBw": "BW",
   "set.optBwPlus": "BW + {unit}",

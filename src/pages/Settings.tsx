@@ -10,6 +10,8 @@ import PageHeader from "@/components/PageHeader";
 import ProfileForm from "@/components/ProfileForm";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
+import ChoiceSheet from "@/components/ui/ChoiceSheet";
+import { formatWeight, type WeightUnit } from "@/lib/units";
 import AccountSheet from "@/components/settings/AccountSheet";
 import DataSection from "@/components/settings/DataSection";
 import DeleteAccountSheet from "@/components/settings/DeleteAccountSheet";
@@ -24,7 +26,7 @@ import {
   ThemeSheet,
 } from "@/components/settings/PreferenceSheets";
 import SyncIssues from "@/components/settings/SyncIssues";
-import { LANGUAGE_NAMES, formatDecimal } from "@/i18n";
+import { LANGUAGE_NAMES } from "@/i18n";
 import { useT } from "@/i18n/useT";
 import { countLabel } from "@/lib/labels";
 import {
@@ -39,6 +41,7 @@ type SheetName =
   | "rest"
   | "theme"
   | "language"
+  | "unit"
   | "account"
   | "name"
   | "feedback";
@@ -142,7 +145,7 @@ export default function Settings() {
             value={
               bodyWeightKg === null
                 ? t("settings.notSet")
-                : t("common.kg", { value: formatDecimal(bodyWeightKg) })
+                : formatWeight(bodyWeightKg, preferences.weightUnit)
             }
             chevron
             onClick={() => setSheet("bodyweight")}
@@ -160,6 +163,12 @@ export default function Settings() {
             value={restLabel(preferences.restSeconds)}
             chevron
             onClick={() => setSheet("rest")}
+          />
+          <ListRow
+            title={t("unit.title")}
+            value={preferences.weightUnit}
+            chevron
+            onClick={() => setSheet("unit")}
           />
           <ListRow
             title={t("settings.theme")}
@@ -276,6 +285,18 @@ export default function Settings() {
         onClose={closeSheet}
         preferences={preferences}
         onChange={updatePreferences}
+      />
+      <ChoiceSheet<WeightUnit>
+        open={sheet === "unit"}
+        onClose={closeSheet}
+        title={t("unit.title")}
+        value={preferences.weightUnit}
+        options={[
+          { value: "kg", label: t("unit.kg") },
+          { value: "lb", label: t("unit.lb") },
+        ]}
+        hint={t("unit.note")}
+        onChoose={(weightUnit) => updatePreferences({ weightUnit })}
       />
       <ThemeSheet open={sheet === "theme"} onClose={closeSheet} />
       <LanguageSheet open={sheet === "language"} onClose={closeSheet} />

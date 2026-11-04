@@ -653,6 +653,14 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+/* A choice sheet's current option: accent text and a check at the end. */
+.sheet-menu-item.is-current {
+  color: var(--gt-accent);
+}
+.sheet-menu-item svg.sheet-menu-check {
+  margin-left: auto;
+  color: var(--gt-accent);
+}
 .sheet-menu-hint {
   margin-left: auto;
   color: var(--gt-ink-2);
