@@ -17,6 +17,8 @@ type Props = {
   completed: WorkoutRecord[];
   day: string;
   todayPlan: PlannedDay | null;
+  /** Where today sits in the plan's phase. */
+  todayPhase?: { week: number; weeks: number; deload: boolean } | null;
   starting: boolean;
   onStart: (routine: RoutineRecord) => void;
   /** Starts an empty workout with the picker on today's planned categories. */
@@ -28,6 +30,7 @@ export default function RoutinesSection({
   completed,
   day,
   todayPlan,
+  todayPhase,
   starting,
   onStart,
   onStartSuggestions,
@@ -89,7 +92,19 @@ export default function RoutinesSection({
       {todayPlan && (
         <div className="card plan-today">
           <span className="plan-today-text">
-            <span className="row-sub">{t("home.fromPlan")}</span>
+            <span className="row-sub">
+              {todayPhase
+                ? [
+                    t("plan.weekOf", {
+                      week: todayPhase.week,
+                      weeks: todayPhase.weeks,
+                    }),
+                    todayPhase.deload ? t("plan.deload") : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")
+                : t("home.fromPlan")}
+            </span>
             <strong className="card-title">
               {t("home.todayPlan", { title: todayPlan.title })}
             </strong>

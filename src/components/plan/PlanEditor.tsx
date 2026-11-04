@@ -4,14 +4,22 @@ import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CellSheet from "@/components/plan/CellSheet";
+import PlanCycle from "@/components/plan/PlanCycle";
 import PlanGoalLinks from "@/components/plan/PlanGoalLinks";
 import PlanPeriodPicker from "@/components/plan/PlanPeriodPicker";
+import PlanProgression from "@/components/plan/PlanProgression";
 import PlanTemplateGrid from "@/components/plan/PlanTemplateGrid";
 import PlanUpcoming from "@/components/plan/PlanUpcoming";
-import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
-import { activeGoals } from "@/data/goals";
-import { type Plan, today as todayDate } from "@/data/model";
+import { activeGoals, goalTitle } from "@/data/goals";
+import { type Goal, type Plan, today as todayDate } from "@/data/model";
+import {
+  MAX_PHASE_WEEKS,
+  phaseWeeks,
+  trimProgression,
+  withWeekKind,
+  withWeekOneCopied,
+} from "@/data/phase";
 import {
   type PlanItem,
   activePlans,
@@ -22,20 +30,15 @@ import {
   overlapMessage,
   planDay,
   trimOverrides,
-  withCycle,
   withOverride,
   withPaused,
   withTemplateCell,
 } from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
 import { localizedDate, weekdayNames } from "@/lib/dates";
+import { countLabel } from "@/lib/labels";
 import { errorMessage } from "@/lib/errors";
 import { t } from "@/i18n";
-
-const cycleOptions = [1, 2, 3, 4, 5, 6].map((n) => ({
-  value: String(n),
-  label: String(n),
-}));
 
 /** The cell being chosen: a template day, or one dated override. */
 type Target = { week: number; day: number } | { date: string };
@@ -72,20 +75,42 @@ export default function PlanEditor({
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  // Progression rows to make a lift goal from when the plan is saved.
+  const [goalFor, setGoalFor] = useState<ReadonlySet<string>>(new Set());
   const set = (change: Partial<Plan>) => setDraft((d) => ({ ...d, ...change }));
+  const goalTitleOf = (goalId: string | undefined) => {
+    const goal = goalId ? goals.find((g) => g.id === goalId) : undefined;
+    return goal ? goalTitle(goal) : null;
+  };
 
   const validPeriod =
     /^\d{4}-\d{2}-\d{2}$/.test(draft.startDate) &&
     /^\d{4}-\d{2}-\d{2}$/.test(draft.endDate) &&
     draft.startDate <= draft.endDate;
   const overlap = validPeriod ? findOverlap(plans, draft, plan?.id) : null;
+  const weeks = validPeriod ? phaseWeeks(draft) : 0;
+  // A phase is at most six months. A longer plan saved before phases existed
+  // can still be edited as long as its period stays and it has no progression.
+  const tooLong =
+    weeks > MAX_PHASE_WEEKS &&
+    (!plan ||
+      plan.startDate !== draft.startDate ||
+      plan.endDate !== draft.endDate ||
+      !!draft.progression?.length);
+  const unfinished = draft.progression?.find(
+    (i) => !(i.startKg > 0) || !(i.targetKg > 0),
+  );
   const problem = !draft.name.trim()
     ? t("plan.needName")
     : !validPeriod
       ? t("plan.needPeriod")
       : overlap
         ? overlapMessage(overlap)
-        : "";
+        : tooLong
+          ? t("plan.tooLong", { max: MAX_PHASE_WEEKS })
+          : unfinished
+            ? t("prog.needStart", { name: unfinished.name })
+            : "";
 
   const choose = (cell: string | null | undefined) => {
     if (!target) return;
@@ -129,12 +154,52 @@ export default function PlanEditor({
     setBusy(true);
     setError("");
     try {
-      await save(plan?.id ?? crypto.randomUUID(), "plan", {
+      // "Also add as a goal": a lift goal for each chosen row, due when the phase ends.
+      const made = new Set<string>();
+      let progression = trimProgression(next);
+      if (progression)
+        for (const [index, item] of progression.entries()) {
+          if (!goalFor.has(item.exerciseId) || goalTitleOf(item.goalId)) continue;
+          const id = crypto.randomUUID();
+          const goal: Goal = {
+            kind: "lift",
+            targetKg: item.targetKg,
+            exerciseId: item.exerciseId,
+            exerciseName: item.name,
+            reps: item.reps,
+            byDate: next.endDate,
+            createdAt: Date.now(),
+          };
+          await save(id, "goal", goal);
+          made.add(id);
+          progression = progression.map((p, i) =>
+            i === index ? { ...p, goalId: id } : p,
+          );
+          // A retry after a failed plan save reuses the goal.
+          setDraft((d) => ({
+            ...d,
+            progression: d.progression?.map((p) =>
+              p.exerciseId === item.exerciseId ? { ...p, goalId: id } : p,
+            ),
+          }));
+          setGoalFor((s) => {
+            const copy = new Set(s);
+            copy.delete(item.exerciseId);
+            return copy;
+          });
+        }
+      const goalIds = [
+        ...next.goalIds.filter((id) => goals.some((g) => g.id === id)),
+        ...made,
+      ];
+      const payload: Plan = {
         ...next,
         name: next.name.trim(),
         overrides: trimOverrides(next),
-        goalIds: next.goalIds.filter((id) => goals.some((g) => g.id === id)),
-      });
+        goalIds,
+      };
+      if (progression) payload.progression = progression;
+      await save(plan?.id ?? crypto.randomUUID(), "plan", payload);
       toast.success(message);
       onClose();
     } catch (cause) {
@@ -169,7 +234,15 @@ export default function PlanEditor({
           if (!busy) onClose();
         }}
         title={plan ? t("plan.edit") : t("plan.new")}
-        description={t("plan.description")}
+        description={
+          validPeriod
+            ? t("plan.phaseSubtitle", {
+                weeks: countLabel(weeks, "week"),
+                from: localizedDate(draft.startDate, { day: "numeric", month: "short" }),
+                to: localizedDate(draft.endDate, { day: "numeric", month: "short" }),
+              })
+            : t("plan.description")
+        }
       >
         <label>
           {t("plan.name")}
@@ -196,20 +269,30 @@ export default function PlanEditor({
             {problem}
           </p>
         )}
-        <div className="plan-field">
-          <span className="group-title">{t("plan.repeatsEvery")}</span>
-          <Segmented
-            label={t("plan.weeksInCycle")}
-            value={String(draft.cycleWeeks)}
-            options={cycleOptions}
-            onChange={(value) => setDraft((d) => withCycle(d, Number(value)))}
-          />
-        </div>
+        <PlanCycle plan={draft} onChange={setDraft} />
         <PlanTemplateGrid
           plan={draft}
           names={names}
           onPick={(week, day) => setTarget({ week, day })}
+          onWeekKind={(week, kind) => setDraft((d) => withWeekKind(d, week, kind))}
+          onCopyWeekOne={() => setDraft(withWeekOneCopied)}
         />
+        {validPeriod && weeks <= MAX_PHASE_WEEKS && (
+          <PlanProgression
+            plan={draft}
+            onChange={setDraft}
+            goalFor={goalFor}
+            onGoalFor={(exerciseId, on) =>
+              setGoalFor((s) => {
+                const copy = new Set(s);
+                if (on) copy.add(exerciseId);
+                else copy.delete(exerciseId);
+                return copy;
+              })
+            }
+            goalTitleOf={goalTitleOf}
+          />
+        )}
         {validPeriod && (
           <PlanUpcoming
             plan={draft}

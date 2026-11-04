@@ -70,6 +70,8 @@ export type ExerciseCardProps = {
   unlockChecked?: boolean;
   /** A custom exercise's saved defaults, for a set added from scratch. */
   defaults?: ExerciseDefaults;
+  /** What the plan set for this exercise: "Plan week 3: 85 kg" or "Deload week". */
+  planNote?: string;
   // Callbacks take the card's exercise, so a parent can pass one stable
   // function to every card and memoised cards skip unchanged renders.
   onChange: (exercise: Exercise) => void;
@@ -127,6 +129,7 @@ function ExerciseCard({
   nextSetId,
   unlockChecked = false,
   defaults,
+  planNote,
   onChange,
   onMove,
   onRemove,
@@ -202,6 +205,9 @@ function ExerciseCard({
                     month: "short",
                   })}
             </p>
+          )}
+          {planNote && mode === "log" && (
+            <p className="ex-last ex-plan-note">{planNote}</p>
           )}
           {setChange && (
             <p className="ex-last ex-set-change">

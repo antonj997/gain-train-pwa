@@ -34,6 +34,7 @@ import WorkoutTopBar from "@/components/workout/WorkoutTopBar";
 import "@/styles/workout.css";
 import { useT } from "@/i18n/useT";
 import { workoutTitle } from "@/lib/workout-name";
+import { planNote } from "@/lib/plan-note";
 
 export default function ActiveWorkout() {
   const { id } = useParams();
@@ -223,6 +224,7 @@ function Editor({
           }
           unlockChecked={editing}
           defaults={defaults.get(ex.exerciseId)}
+          planNote={planNote(w.plan, ex.exerciseId)}
           onChange={update}
           onMove={move}
           onRemove={requestRemove}

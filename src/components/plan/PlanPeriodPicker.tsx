@@ -3,6 +3,13 @@ import { X } from "lucide-react";
 import PlanCalendar from "@/components/PlanCalendar";
 import type { Plan } from "@/data/model";
 import { shiftDate } from "@/lib/dates";
+import { countLabel } from "@/lib/labels";
+import {
+  PHASE_LENGTHS,
+  endsOnWeek,
+  phaseEnd,
+  phaseWeeks,
+} from "@/data/phase";
 import { t } from "@/i18n";
 
 type Props = {
@@ -12,7 +19,11 @@ type Props = {
   onChange: (period: Partial<Pick<Plan, "startDate" | "endDate">>) => void;
 };
 
-/** The plan's period: From and To fields, and a calendar where two taps pick the first and last day. */
+/**
+ * The phase's period: From and To fields, a length in weeks (which sets To to
+ * the Sunday of the last week), and a calendar where two taps pick the first
+ * and last day.
+ */
 export default function PlanPeriodPicker({
   startDate,
   endDate,
@@ -30,6 +41,13 @@ export default function PlanPeriodPicker({
       setStep("start");
     }
   };
+  const valid = !!startDate && !!endDate && startDate <= endDate;
+  const weeks = valid ? phaseWeeks({ startDate, endDate }) : 0;
+  // A length names the period when it ends on the Sunday of a week the list has.
+  const lengthValue =
+    valid && endsOnWeek({ startDate, endDate }) && PHASE_LENGTHS.includes(weeks)
+      ? String(weeks)
+      : "";
   const range = startDate
     ? { start: startDate, end: endDate >= startDate ? endDate : startDate }
     : null;
@@ -54,6 +72,28 @@ export default function PlanPeriodPicker({
           />
         </label>
       </div>
+      <label>
+        {t("plan.length")}
+        <select
+          value={lengthValue}
+          disabled={!startDate}
+          onChange={(e) =>
+            e.target.value &&
+            onChange({ endDate: phaseEnd(startDate, Number(e.target.value)) })
+          }
+        >
+          {!lengthValue && (
+            <option value="">
+              {weeks ? t("plan.lengthCustom", { count: weeks }) : "—"}
+            </option>
+          )}
+          {PHASE_LENGTHS.map((n) => (
+            <option key={n} value={String(n)}>
+              {countLabel(n, "week")}
+            </option>
+          ))}
+        </select>
+      </label>
       <section aria-labelledby="period-heading">
         <div className="section-head">
           <h3 className="group-title" id="period-heading">
