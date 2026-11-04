@@ -34,6 +34,7 @@ import {
   exerciseMeasure,
   loadHeading,
   loadMarker,
+  prefixedLoad,
   withLoadKey,
 } from "@/lib/load-keys";
 import { localizedDate } from "@/lib/dates";
@@ -209,7 +210,10 @@ function ExerciseCard({
           {mode === "log" && <span>{t("exercise.colDone")}</span>}
         </div>
       ) : (
-        <div className="set-columns" data-mode={mode}>
+        <div
+          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}`}
+          data-mode={mode}
+        >
           <span>{t("exercise.colSet")}</span>
           {mode === "log" && (
             <span className="set-previous-heading">

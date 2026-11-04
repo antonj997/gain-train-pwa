@@ -19,7 +19,8 @@
   align-items: center;
   column-gap: var(--gt-space-1);
 }
-.set-line.load-prefix {
+.set-line.load-prefix,
+.set-columns.load-prefix {
   --set-load-w: 68px;
 }
 .set-line.load-suffix {
