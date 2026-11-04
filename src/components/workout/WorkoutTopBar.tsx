@@ -1,6 +1,8 @@
-import { Fragment, useRef } from "react";
+import { Fragment, useMemo, useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Workout } from "@/data/model";
+import { useData } from "@/contexts/useData";
+import { customCategories } from "@/data/selectors";
 import { useNow } from "@/hooks/useNow";
 import { useToastClearance } from "@/hooks/useToastClearance";
 import { localizedDate } from "@/lib/dates";
@@ -42,6 +44,11 @@ export default function WorkoutTopBar({
   const now = useNow(timed);
   const bar = useRef<HTMLDivElement>(null);
   const { t } = useT();
+  const { state } = useData();
+  const custom = useMemo(
+    () => customCategories(state.records),
+    [state.records],
+  );
   useToastClearance(bar, true);
   // Finish is an outline until every set is checked, then it fills.
   const allChecked = total > 0 && completed === total;
@@ -96,7 +103,7 @@ export default function WorkoutTopBar({
             {/* A running workout's unnamed title follows its exercises. */}
             {editing
               ? t("workout.editTitle", { name: workoutTitle(w.name) })
-              : workoutTitle(autoWorkoutName(w))}
+              : workoutTitle(autoWorkoutName(w, {}, custom))}
           </button>
         </h1>
         <p className="top-bar-status">

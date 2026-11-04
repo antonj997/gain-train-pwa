@@ -7,6 +7,7 @@ import { requestPersistenceOnce } from "@/lib/persistence";
 import { historyPath } from "@/lib/routes";
 import { toastWithUndo } from "@/lib/undo-toast";
 import { finishWorkout } from "@/lib/workout-editor";
+import { customCategories } from "@/data/selectors";
 import type { useRestTimer } from "@/hooks/useRestTimer";
 import type { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
 import { t } from "@/i18n";
@@ -20,7 +21,7 @@ export function useWorkoutActions(
   autosave: ReturnType<typeof useWorkoutAutosave>,
   rest: ReturnType<typeof useRestTimer>,
 ) {
-  const { save, deleteRecord, restoreWorkout } = useData();
+  const { state, save, deleteRecord, restoreWorkout } = useData();
   const navigate = useNavigate();
   const { workout: w, editing, setError } = autosave;
   const [busy, setBusy] = useState(false);
@@ -46,7 +47,11 @@ export function useWorkoutActions(
   const complete = (saveAsRoutine: boolean) =>
     runLocked(
       async () => {
-        const next = finishWorkout(w);
+        const next = finishWorkout(
+          w,
+          Date.now(),
+          customCategories(state.records),
+        );
         await autosave.saveNow(next);
         rest.skip();
         if (!editing) requestPersistenceOnce();
