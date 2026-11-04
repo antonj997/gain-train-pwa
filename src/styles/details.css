@@ -1,0 +1,272 @@
+/* The exercise page and a finished workout's details: read-only exercise
+   cards with checked rows, record chips and the details' summary tiles.
+   Loaded after pages.css. Colours come from tokens.css only. */
+
+/* Header actions beside the title, such as the star and ⋯ on an exercise. */
+.page-header-actions {
+  display: flex;
+  flex: none;
+  gap: var(--gt-space-1);
+}
+
+/* Under an exercise's title: the main category, then the others muted. */
+.exercise-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-1) var(--gt-space-2);
+  margin: calc(-1 * var(--gt-space-2)) 0 0;
+  padding: 0 var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.exercise-meta > span:not(.stat-chip):not(:first-child)::before {
+  content: "·";
+  margin-right: var(--gt-space-2);
+}
+.exercise-meta-main {
+  color: var(--gt-ink);
+  font-weight: 600;
+}
+.section-note {
+  margin: 0 var(--gt-space-1);
+}
+
+/* A checked set, read-only: the workout screen's badge and the result with a
+   muted ×, on one 44px line. */
+.done-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.done-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 44px;
+  padding: 0 var(--gt-space-1);
+  border-radius: var(--gt-radius-sm);
+}
+.done-row .set-badge {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+.done-row .set-badge-chip {
+  width: 30px;
+  height: 30px;
+  font-size: var(--gt-fs-2);
+}
+.done-value {
+  flex: 1;
+  min-width: 0;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.done-times {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
+}
+.done-row.is-drop .done-value {
+  font-size: var(--gt-fs-3);
+}
+/* A record link's set: the same accent ring as the row a Set sheet edits. */
+.done-row.is-highlighted {
+  background-color: var(--gt-accent-soft);
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+}
+.done-pr {
+  flex: none;
+}
+
+/* The exercise page's History: a card per session that opens the workout. */
+.session-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  padding: var(--gt-space-3) var(--gt-space-2) var(--gt-space-2);
+  color: var(--gt-ink);
+  text-decoration: none;
+  transition: background-color var(--gt-motion);
+}
+@media (hover: hover) {
+  .session-card:hover {
+    background-color: var(--gt-surface-2);
+  }
+}
+.session-card:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.session-card-head,
+.ex-head-link {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  padding: 0 var(--gt-space-1) 0 var(--gt-space-2);
+}
+.session-card-titles {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.session-card-title {
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.record-list .row-value strong {
+  color: var(--gt-ink);
+  font-weight: 600;
+}
+
+/* Recent bests: the card opens the workout; the exercise's name is its own link. */
+.best-card {
+  position: relative;
+}
+.best-card-open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  color: var(--gt-ink);
+  text-decoration: none;
+}
+.best-card-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.best-card-open:focus-visible {
+  outline: none;
+}
+.best-card:has(.best-card-open:focus-visible) {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.best-card-exercise {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 32px;
+  margin: calc(-1 * var(--gt-space-1)) 0;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+/* The 32px line keeps a 44px target. */
+.best-card-exercise::before {
+  content: "";
+  position: absolute;
+  inset: -6px -4px;
+}
+
+/* A finished workout's details (History). */
+.workout-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.detail-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gt-space-2);
+}
+.detail-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+}
+.detail-tile span {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+}
+.detail-tile strong {
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.detail-tile.has-records strong {
+  color: var(--gt-warm-fg);
+}
+@media (max-width: 370px) {
+  .detail-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.workout-details .ex-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  padding: var(--gt-space-2);
+}
+.ex-head-link {
+  min-height: 44px;
+  margin: 0;
+  border-radius: var(--gt-radius-sm);
+  color: var(--gt-ink);
+  text-decoration: none;
+}
+.ex-head-link .ex-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+@media (hover: hover) {
+  .ex-head-link:hover {
+    background-color: var(--gt-surface-2);
+  }
+}
+.ex-session-record {
+  margin: 0 var(--gt-space-2) var(--gt-space-1);
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+/* Repeat, Edit and Delete: one line in the sticky footer. */
+.dialog-full .sheet-footer.details-footer {
+  flex-direction: row;
+}
+.details-footer > .btn-primary {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.details-footer > .btn-secondary {
+  flex: none;
+}
+.details-footer > .icon-btn {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border: 1px solid
+    color-mix(in srgb, var(--gt-danger-fg) 30%, transparent);
+  background-color: var(--gt-danger-bg);
+  color: var(--gt-danger-fg);
+}
+/* A result inside a row's muted line or value reads at that line's size. */
+.row-sub .done-value,
+.row-value .done-value {
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+}

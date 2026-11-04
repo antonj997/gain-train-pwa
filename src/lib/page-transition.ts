@@ -5,7 +5,7 @@
  * - "right": a tab to the right of the current one. The new page enters from
  *   the right; the old one drifts left and fades.
  * - "left": the mirror image, for a tab to the left.
- * - "push": into a sub-page (Settings, Admin). The new page enters from the right.
+ * - "push": into a sub-page (Settings, Admin, an exercise). The new page enters from the right.
  * - "pop": back out of one. The old page slides away to the right.
  */
 export type NavDirection = "left" | "right" | "push" | "pop";
@@ -32,10 +32,19 @@ export function tabIndex(pathname: string): number {
   );
 }
 
-/** 0 for a tab, 1 for Settings, 2 for Admin; null for any other route (the workout, sign-in, not found). */
+/** Sub-pages with an id, such as /exercise/<id>, by their prefix. */
+const SUB_PAGE_PREFIXES: Record<string, number> = {
+  "/exercise/": 1,
+};
+
+/** 0 for a tab, 1 for Settings or an exercise, 2 for Admin; null for any other route (the workout, sign-in, not found). */
 export function routeDepth(pathname: string): number | null {
   const path = normalise(pathname);
   if (tabIndex(path) >= 0) return 0;
+  const prefix = Object.keys(SUB_PAGE_PREFIXES).find(
+    (start) => path.startsWith(start) && path.length > start.length,
+  );
+  if (prefix) return SUB_PAGE_PREFIXES[prefix];
   return SUB_PAGES[path] ?? null;
 }
 

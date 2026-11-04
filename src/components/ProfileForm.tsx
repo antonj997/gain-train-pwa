@@ -67,7 +67,7 @@ export default function ProfileForm() {
               setFieldError("");
             }}
           />
-          <button className="primary" type="submit" disabled={!editing}>
+          <button className="btn-primary" type="submit" disabled={!editing}>
             {t("profile.save")}
           </button>
         </div>

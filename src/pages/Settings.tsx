@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
 import { useTheme } from "@/contexts/useTheme";
 import PageHeader from "@/components/PageHeader";
+import BackButton from "@/components/ui/BackButton";
 import ProfileForm from "@/components/ProfileForm";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
@@ -90,18 +90,10 @@ export default function Settings() {
   return (
     <div className="page settings-page">
       <PageHeader
+        eyebrow={t("settings.eyebrow")}
         title={t("settings.title")}
         notices={false}
-        leading={
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={t("common.back")}
-            onClick={back}
-          >
-            <ChevronLeft size={22} aria-hidden="true" />
-          </button>
-        }
+        leading={<BackButton onClick={back} />}
       />
       {error && (
         <div className="banner banner-danger" role="alert">

@@ -2,8 +2,8 @@
    card, banner, segmented control and switch. Colours come from tokens.css only.
 
    Buttons are 48px tall; add .btn-sm for the 40px size. They work on <button>
-   and on links alike. The older .primary / .secondary classes still style the
-   screens that have not moved over yet. */
+   and on links alike. Every screen uses these; the older .primary and
+   .secondary classes are gone. */
 
 .btn-primary,
 .btn-secondary,

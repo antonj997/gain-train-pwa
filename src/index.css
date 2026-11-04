@@ -144,8 +144,6 @@ summary {
   flex-direction: column;
   gap: 24px;
 }
-.primary,
-.secondary,
 .icon-button,
 .text-button {
   display: inline-flex;
@@ -158,16 +156,6 @@ summary {
   font-size: 15px;
   font-weight: 650;
   transition: background 0.15s;
-}
-.primary {
-  background: var(--gt-accent);
-  color: var(--gt-on-accent);
-  border: 1px solid var(--gt-accent);
-}
-.secondary {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--ink);
 }
 .text-button {
   border: 0;
@@ -300,31 +288,40 @@ summary {
   font-size: 14px;
   color: var(--soft);
 }
+/* An empty state: a dashed card with an icon, a title, a line and an action. */
 .empty-card {
-  border: 1px dashed var(--line);
-  border-radius: 16px;
-  padding: 27px 22px;
+  border: 1px dashed var(--gt-line-strong);
+  border-radius: var(--gt-radius-lg);
+  padding: var(--gt-space-5);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 14px;
+  gap: var(--gt-space-3);
+}
+.empty-card h2 {
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
 }
 .empty-card p {
-  color: var(--soft);
-  font-size: 14px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-3);
+}
+.empty-card > svg {
+  color: var(--gt-ink-2);
 }
 .empty {
-  padding: 40px 20px;
+  padding: var(--gt-space-6) var(--gt-space-5);
+  color: var(--gt-ink-2);
   text-align: center;
 }
 .error-text {
-  color: var(--destructive);
-  font-size: 14px;
+  color: var(--gt-danger-fg);
+  font-size: var(--gt-fs-3);
 }
 .small-note {
-  font-size: 13px;
-  color: var(--soft);
-  line-height: 1.6;
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+  line-height: 1.5;
 }
 .picker-list {
   overflow-y: auto;
@@ -414,10 +411,6 @@ summary {
   }
 }
 @media (hover: hover) {
-  .primary:hover {
-    background: color-mix(in srgb, var(--gt-accent) 88%, var(--gt-ink));
-  }
-  .secondary:hover,
   .icon-button:hover {
     background: color-mix(in srgb, var(--primary) 7%, transparent);
   }

@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { capturePointer } from "@/lib/pointer-capture";
 import { coarsePointer, opensKeyboard } from "@/lib/touch";
 import { t } from "@/i18n";
@@ -210,4 +211,22 @@ const DialogDescription = React.forwardRef<
 ));
 DialogDescription.displayName = DialogPrimitive.Description.displayName;
 
-export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription };
+/** A visible Close (×) for a full sheet's header; the grab handle closes too. */
+const DialogCloseButton = () => (
+  <DialogPrimitive.Close
+    className="icon-btn dialog-close"
+    aria-label={t("dialog.close")}
+    title={t("dialog.close")}
+  >
+    <X size={20} aria-hidden="true" />
+  </DialogPrimitive.Close>
+);
+
+export {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogCloseButton,
+};

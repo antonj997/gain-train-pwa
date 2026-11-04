@@ -29,6 +29,8 @@ test("tabs are level 0, Settings 1, Admin 2, and other routes have no level", ()
   assert.equal(routeDepth("/settings"), 1);
   assert.equal(routeDepth("/settings/"), 1);
   assert.equal(routeDepth("/settings/admin"), 2);
+  assert.equal(routeDepth("/exercise/builtin%3Asquat"), 1);
+  assert.equal(routeDepth("/exercise/"), null);
   assert.equal(routeDepth("/workout/abc"), null);
   assert.equal(routeDepth("/auth"), null);
   assert.equal(routeDepth("/nowhere"), null);
@@ -47,6 +49,8 @@ test("sub-pages push in and Back pops out, at any depth", () => {
   assert.equal(pageTransition("/", "/settings"), "push");
   assert.equal(pageTransition("/history", "/settings"), "push");
   assert.equal(pageTransition("/settings", "/settings/admin"), "push");
+  assert.equal(pageTransition("/progress", "/exercise/abc"), "push");
+  assert.equal(pageTransition("/exercise/abc", "/history"), "pop");
   assert.equal(pageTransition("/settings/admin", "/settings"), "pop");
   assert.equal(pageTransition("/settings", "/"), "pop");
   assert.equal(pageTransition("/settings/admin", "/library"), "pop");

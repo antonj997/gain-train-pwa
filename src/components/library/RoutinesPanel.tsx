@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogCloseButton,
 } from "@/components/ui/dialog";
 import { t, type MessageKey } from "@/i18n";
 
@@ -366,15 +367,18 @@ export default function RoutinesPanel() {
         }}
       >
         <DialogContent size="full" className="routine-dialog">
-          <DialogHeader>
-            <DialogTitle>
-              {edit && state.records[edit.id]
-                ? t("routines.edit")
-                : t("routines.create")}
-            </DialogTitle>
-            <DialogDescription>
-              {t("routines.editorDescription")}
-            </DialogDescription>
+          <DialogHeader className="has-close">
+            <div className="dialog-header-text">
+              <DialogTitle>
+                {edit && state.records[edit.id]
+                  ? t("routines.edit")
+                  : t("routines.create")}
+              </DialogTitle>
+              <DialogDescription>
+                {t("routines.editorDescription")}
+              </DialogDescription>
+            </div>
+            <DialogCloseButton />
           </DialogHeader>
           {edit && (
             <>
@@ -409,7 +413,7 @@ export default function RoutinesPanel() {
                 />
               ))}
               <button
-                className="secondary"
+                className="btn-secondary"
                 onClick={() => setPicker(true)}
                 disabled={busy}
               >
@@ -423,7 +427,7 @@ export default function RoutinesPanel() {
               )}
               <div className="button-row">
                 <button
-                  className="secondary"
+                  className="btn-secondary"
                   disabled={busy}
                   onClick={() => setOpen(false)}
                 >
@@ -448,7 +452,7 @@ export default function RoutinesPanel() {
                   </p>
                 )}
                 <button
-                  className="primary"
+                  className="btn-primary"
                   disabled={
                     busy ||
                     !edit.data.name.trim() ||

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useData } from "@/contexts/useData";
@@ -21,6 +27,9 @@ import { useStableCallback } from "@/hooks/useStableCallback";
 import { useWorkoutActions } from "@/hooks/useWorkoutActions";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
 import ExercisePicker from "@/components/ExercisePicker";
+import PageHeader from "@/components/PageHeader";
+import BackButton from "@/components/ui/BackButton";
+import { usePageBack } from "@/hooks/usePageTransitions";
 import ExerciseCard from "@/components/ExerciseCard";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
@@ -44,18 +53,15 @@ export default function ActiveWorkout() {
   const doc = id ? state.records[id] : null;
   if (!doc || doc.deleted || doc.kind !== "workout")
     return (
-      <div className="empty">
-        <h1>{t("workout.notFound")}</h1>
-        <Link to="/">{t("workout.backToWorkouts")}</Link>
-      </div>
+      <WorkoutUnavailable title={t("workout.notFound")}>
+        <p>{t("workout.notFoundText")}</p>
+      </WorkoutUnavailable>
     );
   if (isFromNewerApp(doc.payload))
     return (
-      <div className="empty">
-        <h1>{t("workout.newerTitle")}</h1>
+      <WorkoutUnavailable title={t("workout.newerTitle")}>
         <p>{t("workout.newerText")}</p>
-        <Link to="/">{t("workout.backToWorkouts")}</Link>
-      </div>
+      </WorkoutUnavailable>
     );
   return (
     <Editor
@@ -64,6 +70,34 @@ export default function ActiveWorkout() {
       account={account}
       initial={doc.payload}
     />
+  );
+}
+
+/** A workout that cannot open here: the shared page header and a way back. */
+function WorkoutUnavailable({
+  title,
+  children,
+}: {
+  title: string;
+  children: ReactNode;
+}) {
+  const { t } = useT();
+  const back = usePageBack("/");
+  return (
+    <div className="page">
+      <PageHeader
+        eyebrow={t("workout.eyebrow")}
+        title={title}
+        notices={false}
+        leading={<BackButton onClick={back} />}
+      />
+      <div className="empty-card" role="status">
+        {children}
+        <Link to="/" className="btn-secondary">
+          {t("workout.backToWorkouts")}
+        </Link>
+      </div>
+    </div>
   );
 }
 

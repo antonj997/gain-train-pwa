@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bug, ChevronLeft, Image as ImageIcon, Lightbulb } from "lucide-react";
+import { Bug, Image as ImageIcon, Lightbulb } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import FacetChips from "@/components/FacetChips";
 import PageHeader from "@/components/PageHeader";
+import BackButton from "@/components/ui/BackButton";
 import ReportDetailSheet from "@/components/admin/ReportDetailSheet";
 import StatusChip from "@/components/admin/StatusChip";
 import ListRow from "@/components/ui/ListRow";
@@ -54,16 +55,7 @@ export default function AdminReports() {
       eyebrow={t("admin.eyebrow")}
       title={t("admin.title")}
       notices={false}
-      leading={
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={t("common.back")}
-          onClick={back}
-        >
-          <ChevronLeft size={22} aria-hidden="true" />
-        </button>
-      }
+      leading={<BackButton onClick={back} />}
     />
   );
 

@@ -70,6 +70,7 @@ export const sv = {
 
   // Settings
   "settings.title": "Inställningar",
+  "settings.eyebrow": "App och konto",
   "settings.signedInSyncing": "Inloggad · synkar…",
   "settings.signedInPending": "Inloggad · {count} väntar",
   "settings.signedInSynced": "Inloggad · synkad",
@@ -199,6 +200,7 @@ export const sv = {
   "crash.copied": "Kopierat",
   "crash.copy": "Kopiera detaljer",
   "notFound.title": "Sidan hittades inte",
+  "notFound.eyebrow": "Gain Train",
   "notFound.text": "Gå tillbaka till din träningslogg och fortsätt träna.",
   "notFound.back": "Tillbaka till passen",
   "undo.label": "Ångra",
@@ -207,6 +209,9 @@ export const sv = {
 
   // Workout
   "workout.notFound": "Passet hittades inte",
+  "workout.notFoundText":
+    "Det kan ha tagits bort, eller finns på en annan telefon som inte har synkat än.",
+  "workout.eyebrow": "Pass",
   "workout.backToWorkouts": "Tillbaka till passen",
   "workout.newerTitle": "Uppdatera Gain Train för att redigera passet",
   "workout.newerText":
@@ -473,9 +478,11 @@ export const sv = {
   "history.keepWorkout": "Behåll passet",
   "history.deleting": "Raderar…",
   "history.clearSelection": "Rensa val",
-  "history.warmup": "Uppvärmning",
-  "history.cooldown": "Nedvarvning",
-  "history.setN": "Set {n}",
+  "details.sets": "Set",
+  "details.time": "Tid",
+  "details.noSets": "Inga avbockade set",
+  "details.edit": "Redigera",
+  "details.repeat": "Kör igen",
   "history.chooseMonthYear": "Välj månad och år",
   "history.previousYear": "Föregående år",
   "history.nextYear": "Nästa år",
@@ -535,7 +542,7 @@ export const sv = {
   "progress.emptyText":
     "Avsluta ett pass med ett arbetsset för att se ett exakt resultat. Ett till jämförbart pass ger dig en jämförelse.",
   "progress.startWorkout": "Starta ett pass",
-  "progress.sheetDescription": "Resultat, pass och diagram",
+  "progress.openBest": "{name} {set}: öppna passet",
   "progress.perWeek": "Pass / vecka",
   "progress.finishedWeeks": "{change} · avslutade veckor",
   "progress.workingSets": "Arbetsset",
@@ -578,7 +585,6 @@ export const sv = {
   "detail.chartNote":
     "{metric} · skalan börjar på noll. Pass samma dag visas i den ordning de loggades.",
   "detail.chartLater": "Ditt diagram börjar efter ditt nästa jämförbara pass.",
-  "detail.recorded": "Loggade pass",
   "detail.estimatedNote": "Uppskattad styrka använder arbetsset på 1–10 reps.",
   "detail.baseline":
     "{change} {unit} mot utgångsläget för minst 30 dagar sedan.",
@@ -691,11 +697,51 @@ export const sv = {
 
   // Library: routines
   "library.title": "Bibliotek",
-  "library.eyebrow": "Dina scheman och övningar",
+  "library.eyebrow": "Ditt träningsupplägg",
   "library.section": "Biblioteksdel",
   "library.routines": "Rutiner",
   "library.exercises": "Övningar",
   "library.plan": "Schema",
+  "library.helpRoutines": "Passen du upprepar. Starta dem från Träna.",
+  "library.helpExercises":
+    "Den inbyggda katalogen plus dina egna. Tryck på en för historik och rekord.",
+  "library.helpPlan":
+    "Träningsfaser: vilket pass vilken dag, deload-veckor och progression.",
+
+  // Exercise page
+  "exercise.eyebrow": "Övning",
+  "exercise.tabs": "Övningsdel",
+  "exercise.overview": "Översikt",
+  "exercise.history": "Historik",
+  "exercise.records": "Rekord",
+  "exercise.also": "även {categories}",
+  "exercise.hiddenChip": "Dold",
+  "exercise.favouriteNamed": "Favoritmarkera {name}",
+  "exercise.notFoundTitle": "Övningen hittades inte",
+  "exercise.notFoundText":
+    "Den kan ha tagits bort. Set du har loggat finns kvar i Historik.",
+  "exercise.backToLibrary": "Öppna Bibliotek",
+  "exercise.start": "Starta pass med den här övningen",
+  "exercise.neverTitle": "Inte loggad än",
+  "exercise.neverText":
+    "Logga ett set {name} så visas resultat, pass och rekord här.",
+  "exercise.openSession": "Öppna {name}, {date}",
+  "exercise.historyNote": "Alla avslutade pass med {name}, nyaste först.",
+  "exercise.openExercise": "Öppna {name}",
+  "records.e1rm": "Bästa uppsk. 1RM",
+  "records.heaviest": "Tyngsta vikt",
+  "records.mostReps": "Flest reps",
+  "records.setVolume": "Bästa setvolym",
+  "records.sessionVolume": "Bästa passvolym",
+  "records.repsAtWeight": "Flest reps per vikt",
+  "records.repsAt": "{weight} {unit}",
+  "records.reps": { one: "{count} rep", other: "{count} reps" },
+  "records.empty": "Rekord visas efter ditt första avbockade arbetsset.",
+  "records.note":
+    "Bara avbockade set; uppvärmning räknas aldrig. Uppskattad 1RM (Epley) använder viktset med högst 10 reps. Dropset räknas bara till tyngsta vikt och passvolym.",
+  "records.pr": "PR",
+  "records.prLabel": "Rekord: {kinds}",
+  "records.tile": "Rekord",
   "routines.saveFailed":
     "Kunde inte spara. Försök igen; ditt utkast finns kvar.",
   "routines.resumeFirst":
@@ -949,7 +995,7 @@ export const sv = {
   "plan.pausedNote":
     "Pausat: Träna visar inget från schemat, och ett annat schema kan använda dess datum.",
   "plan.intro":
-    "Planera en träningsfas om du vill: vad varje dag innehåller, deload-veckor och lyft som ökar vecka för vecka. Träna visar dagens pass. Inget ändras någonstans så länge du inte har ett schema.",
+    "Valfritt. Träna visar dagens pass; inget ändras någonstans så länge du inte har ett schema.",
   "plan.plans": "Scheman",
   "plan.repeatsWeekly": "upprepas varje vecka",
   "plan.cycle": "{count}-veckorscykel",
@@ -1363,7 +1409,7 @@ export const sv = {
   "auth.checkEmail":
     "Kolla din e-post för att bekräfta kontot, och logga sedan in här.",
   "auth.failed": "Kunde inte slutföra begäran. Försök igen.",
-  "auth.back": "Tillbaka",
+  "auth.eyebrow": "Konto",
   "auth.titleUpdate": "Välj ett nytt lösenord",
   "auth.titleReset": "Återställ ditt lösenord",
   "auth.titleSignup": "Skapa ett konto",

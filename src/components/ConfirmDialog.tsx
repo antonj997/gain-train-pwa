@@ -32,13 +32,13 @@ export default function ConfirmDialog({
   children,
 }: Props) {
   const cancel = (
-    <button className="secondary" disabled={busy} onClick={onCancel}>
+    <button className="btn-secondary" disabled={busy} onClick={onCancel}>
       {cancelLabel}
     </button>
   );
   const confirm = (
     <button
-      className={tone === "danger" ? "secondary danger" : "primary"}
+      className={tone === "danger" ? "btn-danger" : "btn-primary"}
       disabled={busy || confirmDisabled}
       onClick={onConfirm}
     >

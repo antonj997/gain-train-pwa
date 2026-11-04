@@ -73,6 +73,7 @@ export const en = {
 
   // Settings
   "settings.title": "Settings",
+  "settings.eyebrow": "App and account",
   "settings.signedInSyncing": "Signed in · syncing…",
   "settings.signedInPending": "Signed in · {count} pending",
   "settings.signedInSynced": "Signed in · synced",
@@ -200,6 +201,7 @@ export const en = {
   "crash.copied": "Copied",
   "crash.copy": "Copy details",
   "notFound.title": "Page not found",
+  "notFound.eyebrow": "Gain Train",
   "notFound.text": "Return to your workout log to keep training.",
   "notFound.back": "Back to workouts",
   "undo.label": "Undo",
@@ -208,6 +210,9 @@ export const en = {
 
   // Workout
   "workout.notFound": "Workout not found",
+  "workout.notFoundText":
+    "It may have been deleted, or it is on another phone that has not synced yet.",
+  "workout.eyebrow": "Workout",
   "workout.backToWorkouts": "Back to workouts",
   "workout.newerTitle": "Update Gain Train to edit this workout",
   "workout.newerText":
@@ -472,9 +477,11 @@ export const en = {
   "history.keepWorkout": "Keep workout",
   "history.deleting": "Deleting…",
   "history.clearSelection": "Clear selection",
-  "history.warmup": "Warm-up",
-  "history.cooldown": "Cool-down",
-  "history.setN": "Set {n}",
+  "details.sets": "Sets",
+  "details.time": "Time",
+  "details.noSets": "No checked sets",
+  "details.edit": "Edit",
+  "details.repeat": "Repeat",
   "history.chooseMonthYear": "Choose month and year",
   "history.previousYear": "Previous year",
   "history.nextYear": "Next year",
@@ -533,7 +540,7 @@ export const en = {
   "progress.emptyText":
     "Finish a workout with a working set to see an exact result. Another comparable session gives you a comparison.",
   "progress.startWorkout": "Start a workout",
-  "progress.sheetDescription": "Results, sessions and chart",
+  "progress.openBest": "{name} {set}: open the workout",
   "progress.perWeek": "Workouts / week",
   "progress.finishedWeeks": "{change} · finished weeks",
   "progress.workingSets": "Working sets",
@@ -576,7 +583,6 @@ export const en = {
   "detail.chartNote":
     "{metric} · scale starts at zero. Same-day sessions use their recorded order.",
   "detail.chartLater": "Your chart starts after your next comparable session.",
-  "detail.recorded": "Recorded sessions",
   "detail.estimatedNote": "Estimated strength uses working sets of 1–10 reps.",
   "detail.baseline": "{change} {unit} vs the baseline at least 30 days ago.",
   "detail.noBaseline": "No comparable baseline from 30 days ago yet.",
@@ -690,11 +696,51 @@ export const en = {
 
   // Library: routines
   "library.title": "Library",
-  "library.eyebrow": "Your plans and exercises",
+  "library.eyebrow": "Your training setup",
   "library.section": "Library section",
   "library.routines": "Routines",
   "library.exercises": "Exercises",
   "library.plan": "Plan",
+  "library.helpRoutines": "The workouts you repeat. Start them from Train.",
+  "library.helpExercises":
+    "The built-in catalogue plus your own. Tap one for its history and records.",
+  "library.helpPlan":
+    "Training phases: which routine on which day, deload weeks and progression.",
+
+  // Exercise page
+  "exercise.eyebrow": "Exercise",
+  "exercise.tabs": "Exercise section",
+  "exercise.overview": "Overview",
+  "exercise.history": "History",
+  "exercise.records": "Records",
+  "exercise.also": "also {categories}",
+  "exercise.hiddenChip": "Hidden",
+  "exercise.favouriteNamed": "Favourite {name}",
+  "exercise.notFoundTitle": "Exercise not found",
+  "exercise.notFoundText":
+    "It may have been deleted. Any sets you logged are still in History.",
+  "exercise.backToLibrary": "Open Library",
+  "exercise.start": "Start workout with this exercise",
+  "exercise.neverTitle": "Not logged yet",
+  "exercise.neverText":
+    "Log a set of {name} and its results, sessions and records show up here.",
+  "exercise.openSession": "Open {name}, {date}",
+  "exercise.historyNote": "Every finished workout with {name}, newest first.",
+  "exercise.openExercise": "Open {name}",
+  "records.e1rm": "Best est. 1RM",
+  "records.heaviest": "Heaviest weight",
+  "records.mostReps": "Most reps",
+  "records.setVolume": "Best set volume",
+  "records.sessionVolume": "Best session volume",
+  "records.repsAtWeight": "Most reps at each weight",
+  "records.repsAt": "{weight} {unit}",
+  "records.reps": { one: "{count} rep", other: "{count} reps" },
+  "records.empty": "Records show up after your first checked working set.",
+  "records.note":
+    "Checked sets only; warm-ups never count. Estimated 1RM (Epley) uses weighted sets of up to 10 reps. Drops count towards the heaviest weight and session volume only.",
+  "records.pr": "PR",
+  "records.prLabel": "Record: {kinds}",
+  "records.tile": "Records",
   "routines.saveFailed": "Could not save. Retry; your draft is still here.",
   "routines.resumeFirst": "Resume or discard the existing routine draft first.",
   "routines.deleted": "Routine deleted",
@@ -941,7 +987,7 @@ export const en = {
   "plan.pausedNote":
     "Paused: Train shows nothing from this plan, and another plan can use its dates.",
   "plan.intro":
-    "Plan a training phase if you like: what each day holds, deload weeks, and lifts to raise week by week. Train shows today's entry. Nothing changes anywhere while you have no plan.",
+    "Optional. Train shows today's entry; nothing changes anywhere while you have no plan.",
   "plan.plans": "Plans",
   "plan.repeatsWeekly": "repeats weekly",
   "plan.cycle": "{count}-week cycle",
@@ -1357,7 +1403,7 @@ export const en = {
   "auth.checkEmail":
     "Check your email to confirm your account, then sign in here.",
   "auth.failed": "Could not complete this request. Please try again.",
-  "auth.back": "Back",
+  "auth.eyebrow": "Account",
   "auth.titleUpdate": "Choose a new password",
   "auth.titleReset": "Reset your password",
   "auth.titleSignup": "Create an account",

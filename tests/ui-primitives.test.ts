@@ -285,13 +285,13 @@ test("ConfirmDialog renders through Sheet with its title, description and ordere
   assert.match(danger, /data-backdrop="dim"/);
   // Removals put the safe choice first.
   assert.ok(danger.indexOf(">Keep<") < danger.indexOf(">Delete<"));
-  assert.match(danger, /class="secondary danger"[^>]*>Delete</);
+  assert.match(danger, /class="btn-danger"[^>]*>Delete</);
 
   const primary = renderToStaticMarkup(
     createElement(ConfirmDialog, { ...props, tone: "primary" }),
   );
   assert.ok(primary.indexOf(">Delete<") < primary.indexOf(">Keep<"));
-  assert.match(primary, /class="primary"[^>]*>Delete</);
+  assert.match(primary, /class="btn-primary"[^>]*>Delete</);
 
   const busy = renderToStaticMarkup(
     createElement(ConfirmDialog, { ...props, busy: true }),

@@ -16,10 +16,8 @@ import {
 } from "@/data/analytics";
 import { labelSet, type RecordDoc } from "@/data/model";
 import { metricChange } from "@/data/summary";
-import ListRow from "@/components/ui/ListRow";
 import { localizedDate } from "@/lib/dates";
 import { chartDomain, chartSessions } from "@/lib/progressPresentation";
-import { historyPath } from "@/lib/routes";
 import { formatFixed, t } from "@/i18n";
 import { getWeightUnit, weightTotal } from "@/lib/units";
 
@@ -31,7 +29,7 @@ type Props = {
   records: RecordDoc[];
 };
 
-/** The sheet body for one exercise: latest and best results, sessions and the chart. */
+/** The exercise page's Overview: latest and best results, sessions and the chart. */
 export default function ExerciseProgressDetail({
   item,
   cutoffDate,
@@ -213,20 +211,6 @@ export default function ExerciseProgressDetail({
       ) : (
         <p className="row-sub">{t("detail.chartLater")}</p>
       )}
-      <section>
-        <h3 className="group-title">{t("detail.recorded")}</h3>
-        <div className="list">
-          {[...sessions].reverse().map((point) => (
-            <ListRow
-              key={point.workoutId}
-              to={historyPath(point.workoutId)}
-              title={point.fullLabel}
-              value={<strong>{labelSet(point.set)}</strong>}
-              chevron
-            />
-          ))}
-        </div>
-      </section>
       <p className="row-sub">
         {weighted ? (
           <>
