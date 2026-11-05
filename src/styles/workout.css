@@ -142,8 +142,8 @@
 
 /* A cardio row: badge, the fields the exercise shows (CardioFieldsSheet) and
    done. No Previous column. The fields sit in their own grid, whose columns
-   come from cardioGridColumns(): up to four on one line, more over two lines
-   (under 380px, four take two lines of two).
+   come from cardioGridColumns(): up to four on one line (two lines of two
+   under 380px), more in lines of three.
    Time is the widest; every column is at least 44px, so each field is a full
    touch target at 360px. The header row uses the same grid, so its labels sit
    over their fields. The type is one step smaller than a strength field, but

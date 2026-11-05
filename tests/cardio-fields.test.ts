@@ -264,9 +264,9 @@ test("up to four fields share one line; more wrap to a second", () => {
     cardioGridColumns(n, narrow).split(" minmax").length;
   assert.deepEqual(
     [1, 2, 3, 4, 5, 6, 7].map((n) => columns(n)),
-    [1, 2, 3, 4, 3, 3, 4],
+    [1, 2, 3, 4, 3, 3, 3],
   );
-  // Under 380px four fields take two lines of two, seven three lines of three.
+  // Under 380px four fields take two lines of two.
   assert.deepEqual(
     [1, 2, 3, 4, 5, 6, 7].map((n) => columns(n, true)),
     [1, 2, 3, 2, 3, 3, 3],

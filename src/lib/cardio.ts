@@ -354,23 +354,16 @@ export function totalsLabel(
 export const CARDIO_FIELDS_PER_LINE = 4;
 
 /**
- * The columns of a cardio row's fields: up to four on one line, five or six
- * as two lines of three, seven as four over three. `narrow` is for screens
- * under 380px, where four fields become two lines of two (and seven three
- * lines of three) so a five-digit value still fits. Time, the first, is the
- * widest; every column is at least 44px, a full touch target.
+ * The columns of a cardio row's fields: up to four on one line, more in lines
+ * of three (five or six on two lines, seven on three). `narrow` is for
+ * screens under 380px, where four fields become two lines of two. So a
+ * five-digit value (12500 m) or an hour-long time always fits. Time, the
+ * first, is the widest; every column is at least 44px, a full touch target.
  */
 export function cardioGridColumns(count: number, narrow = false) {
   const n = Math.max(1, count);
-  const perLine = narrow
-    ? n <= 3
-      ? n
-      : n <= 6
-        ? Math.ceil(n / 2)
-        : 3
-    : n <= CARDIO_FIELDS_PER_LINE
-      ? n
-      : Math.ceil(n / 2);
+  const perLine =
+    n <= 3 ? n : n === CARDIO_FIELDS_PER_LINE ? (narrow ? 2 : n) : 3;
   return [
     "minmax(56px, 1.3fr)",
     ...Array<string>(perLine - 1).fill("minmax(44px, 1fr)"),
