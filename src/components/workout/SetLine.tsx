@@ -338,10 +338,7 @@ export default function SetLine({
         </span>
       )}
       {cardio ? (
-        <div
-          className="cardio-fields"
-          style={cardioGridStyle(shownMetrics.length)}
-        >
+        <div className="cardio-fields" style={cardioGridStyle(shownMetrics)}>
           {shownMetrics.map((metric) => {
             if (metric === "pace") {
               const pace = formatPace(

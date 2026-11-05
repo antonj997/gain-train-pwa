@@ -270,7 +270,7 @@ function ExerciseCard({
           <span>{t("exercise.colSet")}</span>
           <span
             className="cardio-fields"
-            style={cardioGridStyle(cardioFields.fields.length)}
+            style={cardioGridStyle(cardioFields.fields)}
           >
             {cardioFields.fields.map((metric) => (
               <span key={metric}>{heading(metric)}</span>

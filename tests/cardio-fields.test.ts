@@ -259,9 +259,10 @@ test("totals add time, distance and calories and average heart rate by time", ()
   assert.equal(totalsLabel({ durationSec: 60, distanceM: 0 }), "1:00");
 });
 
-test("up to four fields share one line; more wrap to a second", () => {
+test("up to four fields share one line; more go in lines of three", () => {
+  const all = [...CARDIO_METRICS];
   const columns = (n: number, narrow = false) =>
-    cardioGridColumns(n, narrow).split(" minmax").length;
+    cardioGridColumns(all.slice(0, n), narrow).split(" minmax").length;
   assert.deepEqual(
     [1, 2, 3, 4, 5, 6, 7].map((n) => columns(n)),
     [1, 2, 3, 4, 3, 3, 3],
@@ -271,9 +272,11 @@ test("up to four fields share one line; more wrap to a second", () => {
     [1, 2, 3, 4, 5, 6, 7].map((n) => columns(n, true)),
     [1, 2, 3, 2, 3, 3, 3],
   );
-  assert.match(
-    cardioGridColumns(3),
-    /^minmax\(56px, 1\.3fr\) minmax\(44px, 1fr\)/,
+  // Time and distance get the most room; the rest at least 44px.
+  assert.equal(
+    cardioGridColumns(["time", "distance", "level", "heartRate"]),
+    "minmax(56px, 1.3fr) minmax(52px, 1.2fr) minmax(44px, 1fr) minmax(44px, 1fr)",
   );
-  assert.equal(cardioGridColumns(0), "minmax(56px, 1.3fr)");
+  assert.equal(cardioGridColumns([]), "minmax(44px, 1fr)");
+  assert.equal(cardioGridColumns(["time"]), "minmax(56px, 1.3fr)");
 });

@@ -353,26 +353,38 @@ export function totalsLabel(
 /** Most fields a cardio row fits on one line; more wrap to a second. */
 export const CARDIO_FIELDS_PER_LINE = 4;
 
+// A column's share and least width, by the field on the first line: time and
+// distance hold the longest values ("1:30:00", "12500").
+const COLUMN: Partial<Record<CardioMetric, string>> = {
+  time: "minmax(56px, 1.3fr)",
+  distance: "minmax(52px, 1.2fr)",
+};
+const OTHER_COLUMN = "minmax(44px, 1fr)";
+
 /**
- * The columns of a cardio row's fields: up to four on one line, more in lines
- * of three (five or six on two lines, seven on three). `narrow` is for
- * screens under 380px, where four fields become two lines of two. So a
- * five-digit value (12500 m) or an hour-long time always fits. Time, the
- * first, is the widest; every column is at least 44px, a full touch target.
+ * The columns of a cardio row's fields, in their order: up to four on one
+ * line, more in lines of three (five or six on two lines, seven on three).
+ * `narrow` is for screens under 380px, where four fields become two lines of
+ * two. So a five-digit value (12500 m) or an hour-long time always fits.
+ * Time and distance get more room; every column is at least 44px, a full
+ * touch target.
  */
-export function cardioGridColumns(count: number, narrow = false) {
-  const n = Math.max(1, count);
+export function cardioGridColumns(
+  metrics: readonly CardioMetric[],
+  narrow = false,
+) {
+  const n = Math.max(1, metrics.length);
   const perLine =
     n <= 3 ? n : n === CARDIO_FIELDS_PER_LINE ? (narrow ? 2 : n) : 3;
-  return [
-    "minmax(56px, 1.3fr)",
-    ...Array<string>(perLine - 1).fill("minmax(44px, 1fr)"),
-  ].join(" ");
+  return Array.from(
+    { length: perLine },
+    (_, i) => COLUMN[metrics[i]] ?? OTHER_COLUMN,
+  ).join(" ");
 }
 
 /** The style a cardio fields grid takes: its columns, and its columns on narrow screens. */
-export const cardioGridStyle = (count: number) =>
+export const cardioGridStyle = (metrics: readonly CardioMetric[]) =>
   ({
-    "--cardio-cols": cardioGridColumns(count),
-    "--cardio-cols-narrow": cardioGridColumns(count, true),
+    "--cardio-cols": cardioGridColumns(metrics),
+    "--cardio-cols-narrow": cardioGridColumns(metrics, true),
   }) as Record<string, string>;
