@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import Switch from "@/components/ui/Switch";
@@ -32,7 +33,7 @@ export default function CardioFieldsSheet({
   open,
   onClose,
   name,
-  value,
+  value: saved,
   onChange,
 }: {
   open: boolean;
@@ -42,6 +43,19 @@ export default function CardioFieldsSheet({
   onChange: (fields: CardioFields) => void;
 }) {
   const { t } = useT();
+  // The sheet's own copy while open: saving takes a moment, and quick taps
+  // must build on each other rather than on the last saved choice.
+  const [shown, setShown] = useState(saved);
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setShown(saved);
+  }
+  const value = shown;
+  const change = (next: CardioFields) => {
+    setShown(next);
+    onChange(next);
+  };
   const hint = (metric: CardioMetric) =>
     metric === "time"
       ? t("cardio.timeAlways")
@@ -68,7 +82,7 @@ export default function CardioFieldsSheet({
               hint={hint(metric)}
               checked={value.fields.includes(metric)}
               disabled={metric === "time"}
-              onChange={(on) => onChange(withMetric(value, metric, on))}
+              onChange={(on) => change(withMetric(value, metric, on))}
             />
             {metric === "distance" && value.fields.includes("distance") && (
               <div className="sheet-field cardio-unit">
@@ -83,7 +97,7 @@ export default function CardioFieldsSheet({
                     label: unit,
                   }))}
                   onChange={(distanceUnit) =>
-                    onChange({ ...value, distanceUnit })
+                    change({ ...value, distanceUnit })
                   }
                 />
               </div>
