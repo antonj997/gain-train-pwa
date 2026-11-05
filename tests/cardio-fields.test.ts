@@ -260,15 +260,20 @@ test("totals add time, distance and calories and average heart rate by time", ()
 });
 
 test("up to four fields share one line; more wrap to a second", () => {
-  const columns = (n: number) => cardioGridColumns(n).split(" minmax").length;
-  assert.equal(columns(1), 1);
-  assert.equal(columns(3), 3);
-  assert.equal(columns(4), 4);
-  assert.equal(columns(5), 3);
-  assert.equal(columns(6), 3);
-  assert.equal(columns(7), 4);
+  const columns = (n: number, narrow = false) =>
+    cardioGridColumns(n, narrow).split(" minmax").length;
+  assert.deepEqual(
+    [1, 2, 3, 4, 5, 6, 7].map((n) => columns(n)),
+    [1, 2, 3, 4, 3, 3, 4],
+  );
+  // Under 380px four fields take two lines of two, seven three lines of three.
+  assert.deepEqual(
+    [1, 2, 3, 4, 5, 6, 7].map((n) => columns(n, true)),
+    [1, 2, 3, 2, 3, 3, 3],
+  );
   assert.match(
     cardioGridColumns(3),
     /^minmax\(56px, 1\.3fr\) minmax\(44px, 1fr\)/,
   );
+  assert.equal(cardioGridColumns(0), "minmax(56px, 1.3fr)");
 });

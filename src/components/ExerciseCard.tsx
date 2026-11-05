@@ -43,7 +43,7 @@ import { countLabel } from "@/lib/labels";
 import {
   type CardioFields,
   type CardioMetric,
-  cardioGridColumns,
+  cardioGridStyle,
   cardioTotals,
   defaultCardioFields,
   isCardioSet,
@@ -269,11 +269,7 @@ function ExerciseCard({
           <span>{t("exercise.colSet")}</span>
           <span
             className="cardio-fields"
-            style={{
-              gridTemplateColumns: cardioGridColumns(
-                cardioFields.fields.length,
-              ),
-            }}
+            style={cardioGridStyle(cardioFields.fields.length)}
           >
             {cardioFields.fields.map((metric) => (
               <span key={metric}>{heading(metric)}</span>

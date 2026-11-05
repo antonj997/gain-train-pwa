@@ -354,15 +354,32 @@ export function totalsLabel(
 export const CARDIO_FIELDS_PER_LINE = 4;
 
 /**
- * The columns of a cardio row's fields: up to four on one line, more split
- * over two lines. Time, the first, is the widest; every column is at least
- * 44px, so each field stays a full touch target at 360px.
+ * The columns of a cardio row's fields: up to four on one line, five or six
+ * as two lines of three, seven as four over three. `narrow` is for screens
+ * under 380px, where four fields become two lines of two (and seven three
+ * lines of three) so a five-digit value still fits. Time, the first, is the
+ * widest; every column is at least 44px, a full touch target.
  */
-export function cardioGridColumns(count: number) {
-  const perLine =
-    count <= CARDIO_FIELDS_PER_LINE ? Math.max(1, count) : Math.ceil(count / 2);
+export function cardioGridColumns(count: number, narrow = false) {
+  const n = Math.max(1, count);
+  const perLine = narrow
+    ? n <= 3
+      ? n
+      : n <= 6
+        ? Math.ceil(n / 2)
+        : 3
+    : n <= CARDIO_FIELDS_PER_LINE
+      ? n
+      : Math.ceil(n / 2);
   return [
     "minmax(56px, 1.3fr)",
-    ...Array(perLine - 1).fill("minmax(44px, 1fr)"),
+    ...Array<string>(perLine - 1).fill("minmax(44px, 1fr)"),
   ].join(" ");
 }
+
+/** The style a cardio fields grid takes: its columns, and its columns on narrow screens. */
+export const cardioGridStyle = (count: number) =>
+  ({
+    "--cardio-cols": cardioGridColumns(count),
+    "--cardio-cols-narrow": cardioGridColumns(count, true),
+  }) as Record<string, string>;

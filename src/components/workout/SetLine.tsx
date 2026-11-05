@@ -22,7 +22,7 @@ import {
   type CardioFields,
   type CardioKey,
   type CardioMetric,
-  cardioGridColumns,
+  cardioGridStyle,
   formatDistance,
   formatDuration,
   formatPace,
@@ -340,9 +340,7 @@ export default function SetLine({
       {cardio ? (
         <div
           className="cardio-fields"
-          style={{
-            gridTemplateColumns: cardioGridColumns(shownMetrics.length),
-          }}
+          style={cardioGridStyle(shownMetrics.length)}
         >
           {shownMetrics.map((metric) => {
             if (metric === "pace") {
