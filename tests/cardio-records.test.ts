@@ -163,7 +163,7 @@ test("merged libraries keep both sides' fields; the account's own wins", () => {
   assert.ok(libraryOf(records, account).cardioFields!["builtin:ski-erg"]);
 });
 
-test("shared routines pass planned incline and heart rate through", () => {
+test("shared routines keep a cardio set's shape but not its incline or heart rate", () => {
   const routine: model.Routine = {
     name: "Hill walk",
     exercises: [
@@ -177,11 +177,16 @@ test("shared routines pass planned incline and heart rate through", () => {
   };
   const payload = buildSharedPayload(routine, {});
   const shared = payload.exercises[0].sets[0];
-  assert.equal(shared.inclinePct, 8);
-  assert.equal(shared.heartRate, 130);
-  const back = parseSharedSet(shared, crypto.randomUUID())!;
-  assert.equal(back.inclinePct, 8);
-  assert.equal(back.heartRate, 130);
+  assert.equal(shared.measure, "cardio");
+  assert.equal(shared.inclinePct, null);
+  assert.equal(shared.heartRate, null);
+  const back = parseSharedSet(
+    { ...shared, inclinePct: 8, heartRate: 130 },
+    crypto.randomUUID(),
+  )!;
+  assert.equal(back.measure, "cardio");
+  assert.equal(back.inclinePct, null);
+  assert.equal(back.heartRate, null);
 });
 
 async function cardioRow(fields: unknown, set: model.WorkoutSet) {

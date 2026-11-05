@@ -10,7 +10,10 @@ import { t } from "@/i18n";
 
 const PREVIEW_NAMES = 3;
 
-/** Library → Routines → Shared: routines people shared, each with Add. */
+/**
+ * Library → Routines → Shared: routines people shared. Tapping one opens its
+ * preview; someone else's also has Add right on the row.
+ */
 export default function SharedRoutineList({
   canShare,
   ready,
@@ -21,6 +24,7 @@ export default function SharedRoutineList({
   adding,
   onRetry,
   onAdd,
+  onPreview,
 }: {
   /** Signed in, so shared routines can be read. */
   canShare: boolean;
@@ -36,6 +40,7 @@ export default function SharedRoutineList({
   adding: string;
   onRetry: () => void;
   onAdd: (id: string) => void;
+  onPreview: (id: string) => void;
 }) {
   if (!ready)
     return (
@@ -83,7 +88,12 @@ export default function SharedRoutineList({
         const isAdded = added.has(row.id);
         return (
           <div className="row exercise-row shared-routine-row" key={row.id}>
-            <span className="row-main">
+            <button
+              type="button"
+              className="row-main row-open"
+              aria-label={t("routine.preview", { name: row.name })}
+              onClick={() => onPreview(row.id)}
+            >
               <span className="row-title exercise-name">
                 {row.name}
                 {row.mine && (
@@ -98,7 +108,7 @@ export default function SharedRoutineList({
                 {preview && ` · ${preview}`}
               </span>
               {row.note && <span className="row-sub">{row.note}</span>}
-            </span>
+            </button>
             {!row.mine &&
               (isAdded ? (
                 <span className="row-value">{t("sharedRoutines.added")}</span>

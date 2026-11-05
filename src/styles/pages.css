@@ -1482,6 +1482,27 @@ details[open] > .session-summary > svg {
   gap: var(--gt-space-2);
 }
 
+/* The preview of a shared routine: categories, then the exercises, with
+   Add or Edit and Stop sharing in the sticky footer. */
+.shared-preview-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-2);
+}
+.shared-preview-headline {
+  color: var(--gt-ink);
+}
+.shared-preview-line {
+  font-size: var(--gt-fs-1);
+}
+.dialog-full .sheet-footer.shared-preview-footer {
+  flex-direction: row;
+}
+.shared-preview-footer > button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* Shown instead of a blank screen when the app hits an unexpected error. */
 .crash-screen {
   max-width: 560px;

@@ -946,7 +946,25 @@ export const sv = {
   "sharedRoutines.limitTotal":
     "Du kan dela upp till 100 rutiner. Sluta dela några först.",
   "sharedRoutines.menuNote":
-    "Alla som är inloggade kan lägga till en kopia, med ditt namn om du har angett ett i Inställningar. När du sparar ändringar uppdateras den delade kopian.",
+    "Alla som är inloggade kan lägga till en kopia, med ditt namn om du har angett ett i Inställningar. Bara övningarna och seten delas, inte dina vikter eller reps. När du sparar ändringar uppdateras den delade kopian.",
+  "sharedPreview.weight": "Vikt",
+  "sharedPreview.bodyweight": "Kroppsvikt",
+  "sharedPreview.bodyweightPlus": "Kroppsvikt + vikt",
+  "sharedPreview.assisted": "Assisterad",
+  "sharedPreview.reps": "reps",
+  "sharedPreview.repsHold": "reps + håll",
+  "sharedPreview.seconds": "sekunder",
+  "sharedPreview.cardio": "Kondition",
+  "sharedPreview.newExercise": "Ny övning",
+  "sharedPreview.byYou": "Delad av dig",
+  "sharedPreview.empty":
+    "Seten kommer utan vikter och reps. Din egen historik fyller i dem när du startar.",
+  "sharedPreview.add": "Lägg till i mina rutiner",
+  "sharedPreview.alreadyAdded": "Finns bland dina rutiner",
+  "sharedPreview.stopTitle": "Sluta dela {name}?",
+  "sharedPreview.stopText":
+    "Den tas bort från det delade biblioteket. Din rutin finns kvar, och kopior som andra har lagt till påverkas inte.",
+  "sharedPreview.keepSharing": "Fortsätt dela",
   "routines.view": "Visa rutiner",
   "routines.viewMine": "Mina",
   "routines.viewShared": "Delade",

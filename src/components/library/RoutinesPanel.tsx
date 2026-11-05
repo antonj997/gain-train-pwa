@@ -31,6 +31,8 @@ import RoutinePlan from "@/components/RoutinePlan";
 import { useCardioFields } from "@/hooks/useCardioFields";
 import { useRepHold } from "@/hooks/useRepHold";
 import SharedRoutineList from "@/components/library/SharedRoutineList";
+import SharedRoutinePreviewSheet from "@/components/library/SharedRoutinePreview";
+import { routineAverageMinutes } from "@/lib/routine-preview";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
 import { unpublishRoutine } from "@/data/shared-routines";
 import { toast } from "sonner";
@@ -70,6 +72,7 @@ export default function RoutinesPanel() {
   const [removing, setRemoving] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
   const [view, setView] = useState<View>("mine");
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const shared = useSharedRoutines({
     browsing: view === "shared",
     // An open draft of the routine follows its shared id.
@@ -112,6 +115,14 @@ export default function RoutinesPanel() {
     return dates;
   }, [state.records]);
   const menuRoutine = records.find((r) => r.id === menu);
+  // The shared row being previewed and, for the user's own, its routine here.
+  const previewRow =
+    view === "shared"
+      ? (shared.rows.find((r) => r.id === previewId) ?? null)
+      : null;
+  const previewOwn = previewRow?.mine
+    ? records.find((r) => r.payload.sharedId === previewRow.id)
+    : undefined;
   const update = (exercise: Exercise) => {
     if (edit)
       setEdit({
@@ -248,8 +259,41 @@ export default function RoutinesPanel() {
           adding={shared.adding}
           onRetry={shared.retry}
           onAdd={(id) => void shared.add(id)}
+          onPreview={setPreviewId}
         />
       )}
+      <SharedRoutinePreviewSheet
+        row={previewRow}
+        records={state.records}
+        minutes={
+          previewOwn
+            ? routineAverageMinutes(previewOwn.id, state.records)
+            : null
+        }
+        added={!!previewRow && shared.added.has(previewRow.id)}
+        adding={!!previewRow && shared.adding === previewRow.id}
+        busy={
+          busy ||
+          shared.sharing ||
+          (!!shared.adding && shared.adding !== previewRow?.id)
+        }
+        canEdit={!!previewOwn}
+        onClose={() => setPreviewId(null)}
+        onAdd={async () => {
+          if (previewRow && (await shared.add(previewRow.id)))
+            setPreviewId(null);
+        }}
+        onEdit={() => {
+          if (!previewOwn) return;
+          setPreviewId(null);
+          setView("mine");
+          startEdit(previewOwn.id, previewOwn.payload);
+        }}
+        onStopSharing={async () => {
+          if (previewRow && (await shared.unshare(previewRow.id)))
+            setPreviewId(null);
+        }}
+      />
       {view === "mine" &&
         records.map((r) => {
           const done = lastDone.get(r.id);

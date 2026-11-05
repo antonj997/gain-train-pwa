@@ -94,6 +94,30 @@ export function useSharedRoutines({
     onSharedId(id, sharedId);
   };
 
+  /** Removes a routine from the shared library. Resolves true when done. */
+  const stopSharing = async (id: string) => {
+    const payload = routinePayload(id);
+    if (!payload?.sharedId || sharing) return false;
+    setSharing(true);
+    try {
+      await unpublishRoutine(payload.sharedId);
+    } catch {
+      toast.error(t("shared.stopFailed", { name: payload.name }));
+      setSharing(false);
+      return false;
+    }
+    try {
+      await setSharedId(id, null);
+      toast(t("shared.stopped", { name: payload.name }));
+      return true;
+    } catch {
+      toast.error(t("shared.phoneFailed"));
+      return false;
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return {
     canShare,
     ready,
@@ -106,14 +130,17 @@ export function useSharedRoutines({
     retry: () => void load(true),
     adding,
     sharing,
-    /** Copies a shared routine, and the sharer's own exercises it uses, into the user's. */
+    /**
+     * Copies a shared routine, and the sharer's own exercises it uses, into
+     * the user's, with every set empty. Resolves true when it was added.
+     */
     add: async (id: string) => {
       const row = shared.rows.find((r) => r.id === id);
-      if (!row || row.mine || adding) return;
+      if (!row || row.mine || adding) return false;
       const copy = importSharedRoutine(row, state.records);
       if (!copy) {
         toast.error(t("sharedRoutines.unusable", { name: row.name }));
-        return;
+        return false;
       }
       setAdding(row.id);
       try {
@@ -122,8 +149,10 @@ export function useSharedRoutines({
           await save(exercise.id, "exercise", exercise.payload);
         await save(crypto.randomUUID(), "routine", copy.routine);
         toast(t("sharedRoutines.addedToast", { name: copy.routine.name }));
+        return true;
       } catch {
         toast.error(t("shared.addFailed", { name: row.name }));
+        return false;
       } finally {
         setAdding("");
       }
@@ -150,28 +179,39 @@ export function useSharedRoutines({
         setSharing(false);
       }
     },
-    /** Removes a routine from the shared library. Resolves true when done. */
-    stopSharing: async (id: string) => {
-      const payload = routinePayload(id);
-      if (!payload?.sharedId || sharing) return false;
-      setSharing(true);
-      try {
-        await unpublishRoutine(payload.sharedId);
-      } catch {
-        toast.error(t("shared.stopFailed", { name: payload.name }));
-        setSharing(false);
-        return false;
+    stopSharing,
+    /**
+     * Stops sharing one of the user's rows from the shared list: through the
+     * routine it was shared from, or directly when that routine is gone.
+     * Resolves true when done; the row leaves the list.
+     */
+    unshare: async (sharedId: string) => {
+      const row = shared.rows.find((r) => r.id === sharedId);
+      if (!row?.mine || sharing) return false;
+      const local = Object.values(state.records).find(
+        (r) =>
+          r.kind === "routine" && !r.deleted && r.payload.sharedId === sharedId,
+      );
+      let done = false;
+      if (local) done = await stopSharing(local.id);
+      else {
+        setSharing(true);
+        try {
+          await unpublishRoutine(sharedId);
+          toast(t("shared.stopped", { name: row.name }));
+          done = true;
+        } catch {
+          toast.error(t("shared.stopFailed", { name: row.name }));
+        } finally {
+          setSharing(false);
+        }
       }
-      try {
-        await setSharedId(id, null);
-        toast(t("shared.stopped", { name: payload.name }));
-        return true;
-      } catch {
-        toast.error(t("shared.phoneFailed"));
-        return false;
-      } finally {
-        setSharing(false);
-      }
+      if (done)
+        setShared((s) => ({
+          ...s,
+          rows: s.rows.filter((r) => r.id !== sharedId),
+        }));
+      return done;
     },
     /** Keeps the published copy in step after the routine is saved. */
     syncEdit: async (before: Routine | null, after: Routine) => {
