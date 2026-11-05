@@ -3,6 +3,7 @@ import { hasSetInputText } from "../lib/set-input";
 import { hasExtraWeight } from "../lib/set-load";
 import { isIsoDay, isoDate } from "../lib/dates";
 import { CARDIO_MAX, cardioLabel } from "../lib/cardio";
+import { HOLD_MAX, holdLabel } from "../lib/rep-hold";
 import { normalizeDrops } from "./drops";
 import { t } from "../i18n";
 import { formatWeightValue, getWeightUnit } from "../lib/units";
@@ -23,6 +24,11 @@ export const setSchema = z.object({
   inclinePct: z.number().finite().min(0).max(CARDIO_MAX.inclinePct).nullish(),
   /** Average heart rate in beats per minute. */
   heartRate: z.number().finite().min(0).max(CARDIO_MAX.heartRate).nullish(),
+  /**
+   * Reps sets only: seconds each rep is held ("6 reps with a 2 s hold"). Shown
+   * while the exercise's count is "Reps + hold" (see rep-hold.ts).
+   */
+  holdSec: z.number().int().min(0).max(HOLD_MAX).nullish(),
   section: z.enum(["working", "warmup", "winddown"]),
   done: z.boolean(),
   /** Continues the set above at a lower weight. See drops.ts. */
@@ -38,9 +44,10 @@ export const exerciseSchema = z.object({
 // when a release changes what existing fields mean; older apps then open those
 // records read-only instead of saving over them.
 // 2: cardio sets (measure "cardio" with durationSec, distanceM, level, calories).
-// Not bumped for inclinePct and heartRate on cardio sets, or the library's
-// cardioFields: they are new optional fields that older apps keep as they are
-// (keepUnknownFields) and nothing existing changed meaning.
+// Not bumped for inclinePct and heartRate on cardio sets, holdSec on reps sets,
+// or the library's cardioFields and repHold: they are new optional fields that
+// older apps keep as they are (keepUnknownFields) and nothing existing changed
+// meaning.
 export const SCHEMA_VERSION = 2;
 const schemaVersion = z.number().int().positive().optional();
 export const workoutSchema = z.object({
@@ -220,6 +227,11 @@ export const librarySchema = z.object({
     .record(z.string().min(1).max(200), cardioFieldsSchema)
     .refine((value) => Object.keys(value).length <= MAX_CARDIO_SETTINGS)
     .optional(),
+  /** Ids of exercises whose count is "Reps + hold": each set has a hold field. */
+  repHold: z
+    .array(z.string().min(1).max(200))
+    .max(MAX_CARDIO_SETTINGS)
+    .optional(),
 });
 
 export type Workout = z.infer<typeof workoutSchema>;
@@ -329,6 +341,8 @@ export const newSet = (prior?: WorkoutSet): WorkoutSet => ({
   section: prior?.section ?? "working",
   done: false,
   ...(prior?.drop ? { drop: true } : {}),
+  // The hold is part of how the set is done, like its reps.
+  ...(typeof prior?.holdSec === "number" ? { holdSec: prior.holdSec } : {}),
 });
 const inRange = (value: number | null | undefined, max: number) =>
   value === null ||
@@ -351,10 +365,15 @@ function validCardioSet(s: WorkoutSet) {
     inRange(s.heartRate, CARDIO_MAX.heartRate)
   );
 }
+const validHold = (s: WorkoutSet) =>
+  s.holdSec === null ||
+  s.holdSec === undefined ||
+  (Number.isInteger(s.holdSec) && s.holdSec >= 0 && s.holdSec <= HOLD_MAX);
 export function validSet(s: WorkoutSet) {
   if (s.measure === "cardio") return validCardioSet(s);
   return (
     !hasSetInputText(s) &&
+    validHold(s) &&
     s.reps !== null &&
     s.reps > 0 &&
     Number.isInteger(s.reps) &&
@@ -441,7 +460,9 @@ export function validate(kind: Kind, payload: unknown): Payload {
       calories: t("val.calories"),
       inclinePct: t("val.inclinePct"),
       heartRate: t("val.heartRate"),
+      holdSec: t("val.holdSec"),
       cardioFields: t("val.cardioFields"),
+      repHold: t("val.repHold"),
       load: t("val.load"),
       section: t("val.section"),
       exercises: t("val.exercises"),
@@ -511,8 +532,17 @@ export function validate(kind: Kind, payload: unknown): Payload {
   }
   return p;
 }
-export const labelSet = (s: WorkoutSet) => {
+/**
+ * A set as text: "60 kg × 6", "BW × 10", "45 sec". A reps set with a hold
+ * adds it, "60 kg × 6 · 2 s", unless `withHold` is false: records and
+ * estimated maxes are weight × reps, and their labels leave the hold out.
+ */
+export const labelSet = (s: WorkoutSet, withHold = true): string => {
   if (s.measure === "cardio") return cardioLabel(s);
+  const hold = withHold ? holdLabel(s) : "";
+  return hold ? `${labelLift(s)} · ${hold}` : labelLift(s);
+};
+const labelLift = (s: WorkoutSet) => {
   const kg = s.weight === null ? "null" : formatWeightValue(s.weight);
   const unit = getWeightUnit();
   if (hasExtraWeight(s))

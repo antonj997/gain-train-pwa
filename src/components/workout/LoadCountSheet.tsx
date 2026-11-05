@@ -1,18 +1,21 @@
 import type { LoadKey } from "@/lib/load-keys";
+import type { CountChoice } from "@/lib/rep-hold";
 import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import Switch from "@/components/ui/Switch";
 import { useT } from "@/i18n/useT";
 
-type Measure = "reps" | "seconds";
 type Load = "weight" | "bodyweight" | "assisted";
 
 type BodyProps = {
   /** The exercise's default load. */
   loadKey: LoadKey;
-  measure: Measure;
+  /** Reps, reps with a hold field, or seconds. */
+  count: CountChoice;
+  /** "Reps + hold" is offered. */
+  canHold?: boolean;
   onLoadKey: (key: LoadKey) => void;
-  onMeasure: (measure: Measure) => void;
+  onCount: (count: CountChoice) => void;
   onDone: () => void;
 };
 
@@ -22,12 +25,13 @@ const loadOf = (key: LoadKey): Load =>
 /** The Load and count sheet's content below its title. */
 function LoadCountSheetBody({
   loadKey,
-  measure,
+  count,
+  canHold = false,
   onLoadKey,
-  onMeasure,
+  onCount,
   onDone,
 }: BodyProps) {
-  const timed = measure === "seconds";
+  const timed = count === "seconds";
   const load = loadOf(loadKey);
   const { t } = useT();
   return (
@@ -71,14 +75,17 @@ function LoadCountSheetBody({
         <span className="sheet-label" aria-hidden="true">
           {t("load.count")}
         </span>
-        <Segmented<Measure>
+        <Segmented<CountChoice>
           label={t("load.count")}
-          value={measure}
+          value={count}
           options={[
             { value: "reps", label: t("load.reps") },
+            ...(canHold
+              ? [{ value: "repsHold" as const, label: t("load.repsHold") }]
+              : []),
             { value: "seconds", label: t("load.seconds") },
           ]}
-          onChange={onMeasure}
+          onChange={onCount}
         />
       </div>
       <p className="sheet-hint">{t("load.appliesUnchecked")}</p>

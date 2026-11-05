@@ -50,6 +50,11 @@ import {
   paceUnit,
   totalsLabel,
 } from "@/lib/cardio";
+import {
+  type CountChoice,
+  countChoice,
+  withoutHiddenHolds,
+} from "@/lib/rep-hold";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
@@ -98,6 +103,10 @@ export type ExerciseCardProps = {
   cardioFields?: CardioFields;
   /** Saves the fields chosen with "Fields…" for this exercise. */
   onCardioFields?: (exerciseId: string, fields: CardioFields) => void;
+  /** The exercise counts "Reps + hold" (useRepHold): sets show a hold field. */
+  repHold?: boolean;
+  /** Saves the count's hold choice for this exercise. Without it, "Reps + hold" is not offered. */
+  onRepHold?: (exerciseId: string, on: boolean) => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
@@ -121,7 +130,8 @@ const keepTogether = (label: string) =>
   label
     .replace(/(\S) \+ /, "$1 +\u00a0")
     .replace(/(\d) (kg|lb)/, "$1\u00a0$2")
-    .replace(/× (\d)/, "×\u00a0$1");
+    .replace(/× (\d)/, "×\u00a0$1")
+    .replace(/· (\d+) s$/, "·\u00a0$1\u00a0s");
 
 /** SetLine skips a render when nothing it shows changed; its callbacks are stable. */
 const SetLineMemo = memo(SetLine, (a, b) => {
@@ -155,6 +165,8 @@ function ExerciseCard({
   onSetDone,
   cardioFields: chosenFields,
   onCardioFields,
+  repHold = false,
+  onRepHold,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
@@ -173,6 +185,8 @@ function ExerciseCard({
   const shown = shownIndex >= 0 ? sets[shownIndex] : undefined;
 
   const cardio = sets.some(isCardioSet);
+  // An exercise timed in seconds has no hold to show.
+  const hold = repHold && !cardio && exerciseMeasure(sets) === "reps";
   const cardioFields = chosenFields ?? defaultCardioFields(ex.exerciseId);
   const unit = cardioFields.distanceUnit;
   const heading = (metric: CardioMetric) =>
@@ -197,8 +211,10 @@ function ExerciseCard({
     changeSets(sets.map((s) => (s.id === next.id ? next : s))),
   );
   const toggleDone = useStableCallback((setId: string) => {
-    const next = toggleGroupCompletion(sets, setId, bodyWeightKg);
+    let next = toggleGroupCompletion(sets, setId, bodyWeightKg);
     if (next === sets) return;
+    // A hidden hold is not logged: the set is saved as its row reads.
+    if (!hold) next = withoutHiddenHolds(sets, next);
     changeSets(next);
     const was = sets.find((s) => s.id === setId);
     const now = next.find((s) => s.id === setId);
@@ -209,6 +225,13 @@ function ExerciseCard({
     [],
   );
   const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
+  // "Reps + hold" changes the count to reps and is remembered for the exercise.
+  const chooseCount = (choice: CountChoice) => {
+    changeSets(
+      applyExerciseCount(sets, choice === "seconds" ? "seconds" : "reps"),
+    );
+    onRepHold?.(ex.exerciseId, choice === "repsHold");
+  };
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
     return result ? keepTogether(labelSet(result)) : undefined;
@@ -280,7 +303,7 @@ function ExerciseCard({
         </div>
       ) : (
         <div
-          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}`}
+          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}${hold ? " has-hold" : ""}`}
           data-mode={mode}
         >
           <span>{t("exercise.colSet")}</span>
@@ -305,10 +328,10 @@ function ExerciseCard({
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
-            aria-label={`${countHeading(sets)}, ${t("load.count")}`}
+            aria-label={`${countHeading(sets, hold)}, ${t("load.count")}`}
             onClick={() => setSheet({ kind: "count" })}
           >
-            {countHeading(sets)}
+            {countHeading(sets, hold)}
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           {mode === "log" && <span>{t("exercise.colDone")}</span>}
@@ -318,6 +341,7 @@ function ExerciseCard({
         <SetLineMemo
           key={s.id}
           set={s}
+          hold={hold}
           mode={mode}
           name={ex.name}
           badge={setBadge(sets, i)}
@@ -376,9 +400,10 @@ function ExerciseCard({
           open={sheet?.kind === "loadCount"}
           onClose={close}
           loadKey={defaultKey}
-          measure={exerciseMeasure(sets)}
+          count={countChoice(exerciseMeasure(sets), hold)}
+          canHold={!!onRepHold}
           onLoadKey={(key) => changeSets(applyExerciseLoad(sets, key))}
-          onMeasure={(measure) => changeSets(applyExerciseCount(sets, measure))}
+          onCount={chooseCount}
           onDone={close}
         />
       )}
@@ -397,17 +422,20 @@ function ExerciseCard({
         />
       )}
       {!cardio && (
-        <ChoiceSheet<"reps" | "seconds">
+        <ChoiceSheet<CountChoice>
           open={sheet?.kind === "count"}
           onClose={close}
           title={t("load.count")}
-          value={exerciseMeasure(sets)}
+          value={countChoice(exerciseMeasure(sets), hold)}
           options={[
             { value: "reps", label: t("load.reps") },
+            ...(onRepHold
+              ? [{ value: "repsHold" as const, label: t("load.repsHold") }]
+              : []),
             { value: "seconds", label: t("load.hold") },
           ]}
           hint={t("load.appliesUnchecked")}
-          onChoose={(measure) => changeSets(applyExerciseCount(sets, measure))}
+          onChoose={chooseCount}
         />
       )}
       <ExerciseMenuSheet
@@ -417,7 +445,7 @@ function ExerciseCard({
         hint={
           cardio
             ? undefined
-            : `${loadHeading(defaultKey)} · ${countHeading(sets).toLocaleLowerCase()}`
+            : `${loadHeading(defaultKey)} · ${countHeading(sets, hold).toLocaleLowerCase()}`
         }
         canMoveUp={!isFirst}
         canMoveDown={!isLast}

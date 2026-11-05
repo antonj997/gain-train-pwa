@@ -140,7 +140,7 @@ export default function ExerciseProgressDetail({
           <div className="card tile">
             <span className="row-sub">{t("detail.heaviest")}</span>
             <strong className="tile-value tile-value-text">
-              {labelSet(heaviest.set)}
+              {labelSet(heaviest.set, false)}
             </strong>
             <time className="row-sub" dateTime={heaviest.date}>
               {localizedDate(heaviest.date)}
@@ -150,7 +150,7 @@ export default function ExerciseProgressDetail({
       </div>
       <p className="row-sub">
         {t("detail.bestResult", { date: localizedDate(best.date) })}{" "}
-        <strong>{labelSet(best.set)}</strong>
+        <strong>{labelSet(best.set, false)}</strong>
       </p>
       {points.length > 1 ? (
         <>

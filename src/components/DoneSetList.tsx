@@ -9,22 +9,29 @@ import { t } from "@/i18n";
 export function DoneSetValue({
   set,
   distanceUnit,
+  withHold = true,
 }: {
   set: WorkoutSet;
   /** A cardio set's distance unit, the one its exercise is typed in. */
   distanceUnit?: DistanceUnit;
+  /** False for a record, which is weight × reps without the set's hold. */
+  withHold?: boolean;
 }) {
+  // "60 kg × 6 · 2 s": the × and the hold's · are muted.
   const parts = (
-    isCardioSet(set) ? cardioLabel(set, distanceUnit) : labelSet(set)
-  ).split(" × ");
+    isCardioSet(set) ? cardioLabel(set, distanceUnit) : labelSet(set, withHold)
+  ).split(/( × | · )/);
   return (
     <span className="done-value">
-      {parts.map((part, i) => (
-        <span key={i}>
-          {i > 0 && <span className="done-times"> × </span>}
-          {part}
-        </span>
-      ))}
+      {parts.map((part, i) =>
+        i % 2 ? (
+          <span key={i} className="done-times">
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        ),
+      )}
     </span>
   );
 }

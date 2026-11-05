@@ -24,6 +24,7 @@ import { historyPath } from "@/lib/routes";
 import { usePreviousResults } from "@/hooks/usePreviousResults";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { useCardioFields } from "@/hooks/useCardioFields";
+import { useRepHold } from "@/hooks/useRepHold";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import { useWorkoutActions } from "@/hooks/useWorkoutActions";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
@@ -158,6 +159,7 @@ function Editor({
   );
 
   const cardioFields = useCardioFields();
+  const repHold = useRepHold();
   const add = (items: ExerciseTarget[]) =>
     change(addExercises(w, items, previous));
   // One identity each for the editor's lifetime, so memoised cards only
@@ -268,6 +270,8 @@ function Editor({
           onSetDone={setDone}
           cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
           onCardioFields={cardioFields.setFields}
+          repHold={repHold.holdFor(ex.exerciseId)}
+          onRepHold={repHold.setHold}
         />
       ))}
       <ChangeExercisePicker

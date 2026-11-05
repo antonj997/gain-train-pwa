@@ -315,6 +315,29 @@
   text-align: right;
 }
 
+/* "Reps + hold": a compact hold field (seconds per rep, "s" inside) sits next
+   to reps in the count column, which widens for both. Previous gives up the
+   room and wraps; at 360px with a "+" or lb marker it still keeps ~30px. A
+   checked row reads "6 · 2 s", the "·" drawn in the gap like the "×". */
+:is(.set-line, .set-columns).has-hold {
+  --set-count-w: 84px;
+}
+.set-count-hold {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--gt-space-1);
+  min-width: 0;
+}
+.set-line .set-hold input {
+  padding-right: var(--gt-space-2);
+}
+.set-line .set-hold input:placeholder-shown {
+  padding-right: 0;
+}
+.set-line .set-hold .set-times {
+  translate: calc(-50% - var(--gt-space-1) / 2) 0;
+}
+
 /* Plain bodyweight is text, not a field. */
 .set-bodyweight {
   display: grid;

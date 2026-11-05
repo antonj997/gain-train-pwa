@@ -84,11 +84,15 @@ export function loadHeading(key: LoadKey): string {
   return t(HEADINGS[key], { unit: getWeightUnit() });
 }
 
-/** "Reps", "Sec", or "Reps/sec" when the sets mix both measures. */
-export function countHeading(sets: WorkoutSet[]): string {
+/**
+ * "Reps", "Sec", or "Reps/sec" when the sets mix both measures; "Reps · hold"
+ * for reps with the hold field (`hold`, see rep-hold.ts).
+ */
+export function countHeading(sets: WorkoutSet[], hold = false): string {
   const measures = new Set(sets.map(measureOf));
   if (measures.size > 1) return t("load.headingRepsSec");
-  return t(measures.has("seconds") ? "load.headingSec" : "load.headingReps");
+  if (measures.has("seconds")) return t("load.headingSec");
+  return t(hold ? "load.headingRepsHold" : "load.headingReps");
 }
 
 /** Sets every unchecked set to the key, overwriting per-set exceptions. */

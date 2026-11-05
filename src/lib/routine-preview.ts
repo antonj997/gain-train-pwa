@@ -1,4 +1,5 @@
 import type { Exercise, RecordDoc } from "../data/model";
+import { holdLabel, holdOf } from "./rep-hold";
 import { completedWorkouts } from "../data/selectors";
 import { isDrop } from "../data/drops";
 import { hasExtraWeight } from "./set-load";
@@ -37,7 +38,8 @@ export function routineMeta(exercises: number, minutes: number | null) {
 }
 
 /**
- * A planned exercise in a few words: "3 × 8 · 80 kg", "4 sets" or "20:00".
+ * A planned exercise in a few words: "3 × 8 · 80 kg", "3 × 6 · 2 s · 60 kg"
+ * with a hold, "4 sets" or "20:00".
  * Warm-ups, cool-downs and drops are not part of it; see `exerciseExtras`.
  */
 export function plannedSummary(exercise: Exercise) {
@@ -53,14 +55,16 @@ export function plannedSummary(exercise: Exercise) {
       s.weight === first.weight &&
       s.load === first.load &&
       s.measure === first.measure &&
-      s.extraWeight === first.extraWeight,
+      s.extraWeight === first.extraWeight &&
+      holdOf(s) === holdOf(first),
   );
   if (!same || isCardioSet(first) || first.reps === null)
     return countLabel(main.length, "set");
   const reps =
     first.measure === "seconds"
       ? t("label.timesSec", { sets: main.length, n: first.reps })
-      : `${main.length} × ${first.reps}`;
+      : `${main.length} × ${first.reps}` +
+        (holdOf(first) ? ` · ${holdLabel(first)}` : "");
   const kg = first.weight === null ? "" : formatWeightValue(first.weight);
   const unit = getWeightUnit();
   if (hasExtraWeight(first))

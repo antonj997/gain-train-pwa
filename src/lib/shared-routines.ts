@@ -28,6 +28,7 @@ export type SharedSet = Partial<
     | "calories"
     | "inclinePct"
     | "heartRate"
+    | "holdSec"
   >
 >;
 
@@ -101,6 +102,7 @@ const SET_FIELDS = [
   "calories",
   "inclinePct",
   "heartRate",
+  "holdSec",
 ] as const satisfies readonly (keyof SharedSet)[];
 
 const sharedSet = (set: WorkoutSet): SharedSet => {

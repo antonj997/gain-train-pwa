@@ -59,7 +59,7 @@ export function libraryExercises(
   const bests = new Map(
     progressFor(Object.values(records)).map((item) => [
       item.id,
-      labelSet(exerciseStats(item).best.set),
+      labelSet(exerciseStats(item).best.set, false),
     ]),
   );
   const extra = (id: string) => ({
