@@ -315,6 +315,33 @@
   text-align: right;
 }
 
+/* "Reps + hold": a compact hold field (seconds per rep, "s" inside) sits next
+   to reps in the count column, which widens for both. Previous gives up the
+   room and wraps; at 360px with a "+" or lb marker it still keeps ~30px. A
+   checked row reads "6 · 2 s", the "·" drawn in the gap like the "×". */
+:is(.set-line, .set-columns).has-hold {
+  --set-count-w: 84px;
+}
+.set-columns.has-hold .set-heading-btn {
+  gap: 0;
+  white-space: nowrap;
+}
+.set-count-hold {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--gt-space-1);
+  min-width: 0;
+}
+.set-line .set-hold input {
+  padding-right: var(--gt-space-2);
+}
+.set-line .set-hold input:placeholder-shown {
+  padding-right: 0;
+}
+.set-line .set-hold .set-times {
+  translate: calc(-50% - var(--gt-space-1) / 2) 0;
+}
+
 /* Plain bodyweight is text, not a field. */
 .set-bodyweight {
   display: grid;
@@ -857,4 +884,31 @@
 }
 .cardio-unit {
   padding-bottom: var(--gt-space-2);
+}
+
+/* Reorder exercises: handle, name and set count, then ↑ and ↓. The exercise
+   whose menu opened the sheet has the accent ring of an edited row. */
+.reorder-exercise .reorder-row {
+  gap: var(--gt-space-1);
+}
+.reorder-exercise-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding-inline: var(--gt-space-1);
+}
+.reorder-exercise-name {
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.reorder-exercise.is-current {
+  border-radius: var(--gt-radius-sm);
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+  background-color: var(--gt-accent-soft);
+}
+.reorder-exercise .icon-btn:disabled {
+  opacity: 0.35;
 }

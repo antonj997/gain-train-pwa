@@ -1,6 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { setCurrentLanguage } from "../src/i18n";
 import {
+  categoryGroups,
+  favouriteGroups,
   filterExercises,
   groupExercises,
   exerciseSub,
@@ -117,5 +120,84 @@ test("the library lists the catalogue and own exercises with their flags", () =>
   assert.deepEqual(
     [sled.custom, sled.favourite, sled.lastDate],
     [true, true, null],
+  );
+});
+
+test("favourites lead the unfiltered list, ahead of Recently used and A–Z", () => {
+  const items = [
+    item("Squat", { lastDate: "2026-10-20", favourite: true }),
+    item("Bench Press", { lastDate: "2026-10-28" }),
+    item("Arnold Press", { favourite: true }),
+    item("Curl"),
+  ];
+  const groups = groupExercises(filterExercises(items, "", "all"));
+  assert.deepEqual(
+    groups.map((g) => [g.title, g.items.map((e) => e.name)]),
+    [
+      ["Favourites", ["Arnold Press", "Squat"]],
+      ["Recently used", ["Bench Press"]],
+      ["A–Z", ["Curl"]],
+    ],
+  );
+});
+
+test("a category lists its favourites, its own exercises, then those that also train it", () => {
+  const items = [
+    item("Squat", { category: "Legs", lastDate: "2026-10-20" }),
+    item("Lunge", { category: "Legs", favourite: true }),
+    item("Snatch", { category: "Full body", categories: ["Legs", "Back"] }),
+    item("Trap Bar Deadlift", {
+      category: "Back",
+      categories: ["Legs"],
+      favourite: true,
+    }),
+    item("Thruster", { category: "Full body", categories: ["Legs"] }),
+    item("Leg Press", { category: "Legs" }),
+    item("Bench Press"),
+  ];
+  const shown = filterExercises(items, "", "all", { category: "Legs" });
+  const groups = groupExercises(shown, "all", false, "Legs");
+  assert.deepEqual(
+    groups.map((g) => [g.title, g.items.map((e) => e.name)]),
+    [
+      ["Favourites", ["Lunge"]],
+      ["Legs", ["Leg Press", "Squat"]],
+      ["Also trains Legs", ["Snatch", "Thruster", "Trap Bar Deadlift"]],
+    ],
+  );
+  setCurrentLanguage("sv");
+  assert.deepEqual(
+    categoryGroups(shown, "Legs").map((g) => g.title),
+    ["Favoriter", "Ben", "Tränar även Ben"],
+  );
+  setCurrentLanguage("en");
+  // No favourites, no Favourites group.
+  assert.deepEqual(
+    categoryGroups(
+      shown.map((e) => ({ ...e, favourite: false })),
+      "Legs",
+    ).map((g) => g.title),
+    ["Legs", "Also trains Legs"],
+  );
+});
+
+test("searching ranks favourites first among equally good matches", () => {
+  const items = [
+    item("Bench Press"),
+    item("Incline Bench Press", { favourite: true }),
+    item("Close-Grip Bench Press", { favourite: true }),
+    item("Bench"),
+  ];
+  assert.deepEqual(
+    filterExercises(items, "bench", "all").map((e) => e.name),
+    ["Bench", "Bench Press", "Close-Grip Bench Press", "Incline Bench Press"],
+  );
+  assert.deepEqual(
+    filterExercises(items, "press", "all").map((e) => e.name),
+    ["Close-Grip Bench Press", "Incline Bench Press", "Bench Press"],
+  );
+  assert.deepEqual(
+    favouriteGroups([item("B"), item("A")], []).map((g) => g.title),
+    ["A–Z"],
   );
 });

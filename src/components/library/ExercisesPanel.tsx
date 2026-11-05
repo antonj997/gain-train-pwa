@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import { favouriteChange } from "@/data/exercises";
 import { today } from "@/data/model";
 import { unpublishExercise } from "@/data/shared";
 import FacetChips from "@/components/FacetChips";
+import { CollapsibleFilters, FilterToggle } from "@/components/SearchFilters";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ExerciseRow from "@/components/library/ExerciseRow";
 import ExerciseEditorSheet from "@/components/library/ExerciseEditorSheet";
@@ -50,6 +51,9 @@ export default function ExercisesPanel() {
   const edit = draft.value;
   const setEdit = draft.replace;
   const [search, setSearch] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersId = useId();
   const [filter, setFilter] = useState<Filter>("all");
   const [category, setCategory] = useState("");
   const [equipment, setEquipment] = useState("");
@@ -62,6 +66,10 @@ export default function ExercisesPanel() {
     null,
   );
   const now = today();
+  // While searching the chip rows fold away; "Filter" brings them back.
+  const compact = (searchFocused || !!search.trim()) && !filtersOpen;
+  const activeFilters =
+    Number(filter !== "all") + Number(!!category) + Number(!!equipment);
   const shared = useSharedExercises({
     browsing: filter === "shared",
     // An open draft of the exercise follows its shared id.
@@ -86,6 +94,7 @@ export default function ExercisesPanel() {
             filterExercises(all, search, filter, { category, equipment }),
             filter,
             !!search.trim(),
+            category,
           ),
     [all, search, filter, category, equipment],
   );
@@ -215,49 +224,65 @@ export default function ExercisesPanel() {
   const saved = !!edit && edit.id in state.records;
   return (
     <div className="col-12">
-      <label className="search-field">
-        <Search size={20} aria-hidden="true" />
-        <input
-          type="search"
-          placeholder={t("exercises.search")}
-          aria-label={t("exercises.search")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </label>
-      <div
-        className="facet-chips"
-        role="group"
-        aria-label={t("exercises.show")}
-      >
-        {filters.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            className="filter-chip"
-            aria-pressed={filter === f.value}
-            onClick={() => setFilter(f.value)}
-          >
-            {t(f.label)}
-          </button>
-        ))}
+      <div className="search-row">
+        <label className="search-field">
+          <Search size={20} aria-hidden="true" />
+          <input
+            type="search"
+            placeholder={t("exercises.search")}
+            aria-label={t("exercises.search")}
+            value={search}
+            onFocus={() => {
+              setSearchFocused(true);
+              setFiltersOpen(false);
+            }}
+            onBlur={() => setSearchFocused(false)}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </label>
+        {compact && (
+          <FilterToggle
+            count={activeFilters}
+            controls={filtersId}
+            onClick={() => setFiltersOpen(true)}
+          />
+        )}
       </div>
-      <FacetChips
-        name={t("facet.category")}
-        allLabel={t("facet.allCategories")}
-        format={categoryLabel}
-        options={categories}
-        value={category}
-        onChange={setCategory}
-      />
-      <FacetChips
-        name={t("facet.equipment")}
-        allLabel={t("facet.allEquipment")}
-        format={equipmentLabel}
-        options={equipmentTypes}
-        value={equipment}
-        onChange={setEquipment}
-      />
+      <CollapsibleFilters id={filtersId} collapsed={compact}>
+        <div
+          className="facet-chips"
+          role="group"
+          aria-label={t("exercises.show")}
+        >
+          {filters.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              className="filter-chip"
+              aria-pressed={filter === f.value}
+              onClick={() => setFilter(f.value)}
+            >
+              {t(f.label)}
+            </button>
+          ))}
+        </div>
+        <FacetChips
+          name={t("facet.category")}
+          allLabel={t("facet.allCategories")}
+          format={categoryLabel}
+          options={categories}
+          value={category}
+          onChange={setCategory}
+        />
+        <FacetChips
+          name={t("facet.equipment")}
+          allLabel={t("facet.allEquipment")}
+          format={equipmentLabel}
+          options={equipmentTypes}
+          value={equipment}
+          onChange={setEquipment}
+        />
+      </CollapsibleFilters>
       {filter === "shared" && (
         <SharedExerciseList
           canShare={shared.canShare}
@@ -281,7 +306,6 @@ export default function ExercisesPanel() {
                 exercise={e}
                 now={now}
                 onUnhide={unhide}
-                onToggleFavourite={toggleFavourite}
                 onMenu={setMenu}
               />
             ))}

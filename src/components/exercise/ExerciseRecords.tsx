@@ -39,7 +39,8 @@ export default function ExerciseRecords({ records }: { records: Records }) {
       value: formatWeight(bestE1rm.value, unit, 1),
       sub: (
         <>
-          <DoneSetValue set={bestE1rm.set} /> · {dateOf(bestE1rm.date)}
+          <DoneSetValue set={bestE1rm.set} withHold={false} /> ·{" "}
+          {dateOf(bestE1rm.date)}
         </>
       ),
       to: historyPath(bestE1rm.workoutId, bestE1rm.set.id),
@@ -48,7 +49,7 @@ export default function ExerciseRecords({ records }: { records: Records }) {
     rows.push({
       key: "heaviest",
       title: t("records.heaviest"),
-      value: <DoneSetValue set={heaviest.set} />,
+      value: <DoneSetValue set={heaviest.set} withHold={false} />,
       sub: dateOf(heaviest.date),
       to: historyPath(heaviest.workoutId, heaviest.set.id),
     });
@@ -56,7 +57,7 @@ export default function ExerciseRecords({ records }: { records: Records }) {
     rows.push({
       key: "reps",
       title: t("records.mostReps"),
-      value: <DoneSetValue set={mostReps.set} />,
+      value: <DoneSetValue set={mostReps.set} withHold={false} />,
       sub: dateOf(mostReps.date),
       to: historyPath(mostReps.workoutId, mostReps.set.id),
     });
@@ -67,7 +68,7 @@ export default function ExerciseRecords({ records }: { records: Records }) {
       value: volume(bestSetVolume.value),
       sub: (
         <>
-          <DoneSetValue set={bestSetVolume.set} /> ·{" "}
+          <DoneSetValue set={bestSetVolume.set} withHold={false} /> ·{" "}
           {dateOf(bestSetVolume.date)}
         </>
       ),

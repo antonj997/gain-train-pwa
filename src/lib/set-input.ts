@@ -13,6 +13,7 @@ export const setInputTextSchema = z.object({
   calories: z.string().max(32).optional(),
   inclinePct: z.string().max(32).optional(),
   heartRate: z.string().max(32).optional(),
+  holdSec: z.string().max(32).optional(),
 });
 export type InputField = keyof z.infer<typeof setInputTextSchema>;
 type EditableSet = WorkoutSet & {
@@ -34,6 +35,7 @@ export function hasSetInputText(set: WorkoutSet) {
       "calories",
       "inclinePct",
       "heartRate",
+      "holdSec",
     ] as const
   ).some((field) => getSetInputText(set, field) !== undefined);
 }

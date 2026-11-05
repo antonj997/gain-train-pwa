@@ -74,7 +74,7 @@ export default function Progress() {
           id: item.id,
           name: item.name,
           sessions: item.points.filter(inPeriod).length,
-          best: t("progress.best", { set: labelSet(stats.best.set) }),
+          best: t("progress.best", { set: labelSet(stats.best.set, false) }),
           trend: stats.comparable.slice(-8).map(stats.valueOf),
         };
       }),
@@ -208,11 +208,11 @@ export default function Progress() {
                       to={historyPath(best.workoutId, best.set.id)}
                       aria-label={t("progress.openBest", {
                         name: best.name,
-                        set: labelSet(best.set),
+                        set: labelSet(best.set, false),
                       })}
                     >
                       <span className="badge-new">{t("history.newBest")}</span>
-                      <strong>{labelSet(best.set)}</strong>
+                      <strong>{labelSet(best.set, false)}</strong>
                       <time className="row-sub" dateTime={best.date}>
                         {best.date === now
                           ? t("common.todayCap")

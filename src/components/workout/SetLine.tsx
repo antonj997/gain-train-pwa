@@ -30,6 +30,7 @@ import {
   parseDistance,
   parseDuration,
 } from "@/lib/cardio";
+import { HOLD_MAX } from "@/lib/rep-hold";
 import SetNumberInput from "@/components/SetNumberInput";
 import SetBadge from "@/components/workout/SetBadge";
 import "@/styles/workout.css";
@@ -131,6 +132,7 @@ export default function SetLine({
   weightUnit,
   next = false,
   cardioFields = ALL_CARDIO_FIELDS,
+  hold = false,
   editing = false,
   unlocked = false,
   canCheck,
@@ -160,6 +162,11 @@ export default function SetLine({
    * that is not shown stays saved; History lists it.
    */
   cardioFields?: CardioFields;
+  /**
+   * The exercise counts "Reps + hold": a reps set shows a hold field (seconds
+   * per rep) next to its reps. Without it a set's hold stays saved, unseen.
+   */
+  hold?: boolean;
   /** Its Set sheet is open. */
   editing?: boolean;
   /**
@@ -218,6 +225,7 @@ export default function SetLine({
   const label = `${name} ${badge.name}`;
   const timed = set.measure === "seconds";
   const cardio = set.measure === "cardio";
+  const holdField = hold && !timed && !cardio;
   const extraWeight = hasExtraWeight(set);
   const plainBodyweight =
     marker === "bw" || (set.load === "bodyweight" && !extraWeight);
@@ -300,6 +308,7 @@ export default function SetLine({
       "load-prefix",
     !plainBodyweight && marker === "kg" && "load-suffix",
     cardio && "is-cardio",
+    hold && !cardio && "has-hold",
     set.done && "is-done",
     drop && "is-drop",
     next && "is-next",
@@ -308,6 +317,74 @@ export default function SetLine({
   ]
     .filter(Boolean)
     .join(" ");
+  const countField = (
+    <div className={`set-field set-count${timed ? " is-timed" : ""}`}>
+      {/* A checked row reads like the result: "60 × 8", "BW × 10", "45 s". */}
+      {set.done && !timed && (
+        <span className="set-times" aria-hidden="true">
+          ×
+        </span>
+      )}
+      <SetNumberInput
+        aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}`}
+        aria-invalid={
+          !!issues.reps &&
+          (set.reps !== null || getSetInputText(set, "reps") !== undefined)
+        }
+        aria-describedby={describedBy("reps")}
+        inputMode="numeric"
+        min="1"
+        max="10000"
+        step="1"
+        placeholder={timed ? t("set.phSec") : t("set.phReps")}
+        value={set.reps}
+        inputText={getSetInputText(set, "reps")}
+        readOnly={locked}
+        onLockedAttempt={() => setLockedAttempt(true)}
+        onValueChange={(value, text) => updateNumber("reps", value, text)}
+      />
+      {set.done && timed && set.reps !== null && (
+        <span className="set-marker set-seconds" aria-hidden="true">
+          s
+        </span>
+      )}
+    </div>
+  );
+  const holdInput = (
+    <div className="set-field set-hold">
+      {/* Checked: "60 × 6 · 2 s", the "·" drawn in the gap. */}
+      {set.done && set.holdSec != null && (
+        <span className="set-times" aria-hidden="true">
+          ·
+        </span>
+      )}
+      <SetNumberInput
+        aria-label={`${label} ${t("set.fieldHold")}`}
+        aria-invalid={
+          !!issues.holdSec &&
+          ((set.holdSec ?? null) !== null ||
+            getSetInputText(set, "holdSec") !== undefined)
+        }
+        aria-describedby={describedBy("holdSec")}
+        inputMode="numeric"
+        pattern="[0-9]*"
+        min="0"
+        max={String(HOLD_MAX)}
+        step="1"
+        placeholder={set.done ? undefined : t("set.phHold")}
+        value={set.holdSec ?? null}
+        inputText={getSetInputText(set, "holdSec")}
+        readOnly={locked}
+        onLockedAttempt={() => setLockedAttempt(true)}
+        onValueChange={(value, text) => updateNumber("holdSec", value, text)}
+      />
+      {set.holdSec != null && (
+        <span className="set-marker set-seconds" aria-hidden="true">
+          s
+        </span>
+      )}
+    </div>
+  );
   return (
     <div
       ref={row}
@@ -465,38 +542,14 @@ export default function SetLine({
               )}
             </div>
           )}
-          <div className={`set-field set-count${timed ? " is-timed" : ""}`}>
-            {/* A checked row reads like the result: "60 × 8", "BW × 10", "45 s". */}
-            {set.done && !timed && (
-              <span className="set-times" aria-hidden="true">
-                ×
-              </span>
-            )}
-            <SetNumberInput
-              aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}`}
-              aria-invalid={
-                !!issues.reps &&
-                (set.reps !== null ||
-                  getSetInputText(set, "reps") !== undefined)
-              }
-              aria-describedby={describedBy("reps")}
-              inputMode="numeric"
-              min="1"
-              max="10000"
-              step="1"
-              placeholder={timed ? t("set.phSec") : t("set.phReps")}
-              value={set.reps}
-              inputText={getSetInputText(set, "reps")}
-              readOnly={locked}
-              onLockedAttempt={() => setLockedAttempt(true)}
-              onValueChange={(value, text) => updateNumber("reps", value, text)}
-            />
-            {set.done && timed && set.reps !== null && (
-              <span className="set-marker set-seconds" aria-hidden="true">
-                s
-              </span>
-            )}
-          </div>
+          {holdField ? (
+            <div className="set-count-hold">
+              {countField}
+              {holdInput}
+            </div>
+          ) : (
+            countField
+          )}
         </>
       )}
       {mode === "log" && !drop ? (

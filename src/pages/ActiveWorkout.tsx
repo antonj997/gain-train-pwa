@@ -24,6 +24,7 @@ import { historyPath } from "@/lib/routes";
 import { usePreviousResults } from "@/hooks/usePreviousResults";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { useCardioFields } from "@/hooks/useCardioFields";
+import { useRepHold } from "@/hooks/useRepHold";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import { useWorkoutActions } from "@/hooks/useWorkoutActions";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
@@ -34,6 +35,9 @@ import { usePageBack } from "@/hooks/usePageTransitions";
 import ExerciseCard from "@/components/ExerciseCard";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
+import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
+import { reorderByIds } from "@/lib/exercise-order";
+import { toastWithUndo } from "@/lib/undo-toast";
 import EditSaveDialog from "@/components/workout/EditSaveDialog";
 import FinishSheet from "@/components/workout/FinishSheet";
 import NextSetChip from "@/components/workout/NextSetChip";
@@ -158,6 +162,7 @@ function Editor({
   );
 
   const cardioFields = useCardioFields();
+  const repHold = useRepHold();
   const add = (items: ExerciseTarget[]) =>
     change(addExercises(w, items, previous));
   // One identity each for the editor's lifetime, so memoised cards only
@@ -177,22 +182,30 @@ function Editor({
     }));
     setRemoveExercise(null);
   };
-  const move = useCallback(
-    (ex: Exercise, step: number) =>
-      changeWith((current) => {
-        const index = current.exercises.findIndex((e) => e.id === ex.id);
-        const target = index + step;
-        if (index < 0 || target < 0 || target >= current.exercises.length)
-          return current;
-        const exercises = [...current.exercises];
-        [exercises[index], exercises[target]] = [
-          exercises[target],
-          exercises[index],
-        ];
-        return { ...current, exercises };
-      }),
-    [changeWith],
-  );
+  // Reorder exercises: the card whose menu opened it stays marked while the
+  // sheet slides out.
+  const [reorderOpen, setReorderOpen] = useState(false);
+  const [reorderFrom, setReorderFrom] = useState<string | null>(null);
+  const openReorder = useStableCallback((ex: Exercise) => {
+    setReorderFrom(ex.id);
+    setReorderOpen(true);
+  });
+  const saveOrder = (ids: string[]) => {
+    const before = w.exercises.map((e) => e.id);
+    changeWith((current) => ({
+      ...current,
+      exercises: reorderByIds(current.exercises, ids),
+    }));
+    toastWithUndo(
+      t("exercise.reordered"),
+      async () =>
+        changeWith((current) => ({
+          ...current,
+          exercises: reorderByIds(current.exercises, before),
+        })),
+      t("exercise.reorderUndoFailed"),
+    );
+  };
   const requestRemove = useStableCallback((ex: Exercise) =>
     hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex),
   );
@@ -246,12 +259,10 @@ function Editor({
         onKeepMine={autosave.keepMine}
         onRetry={() => change(w)}
       />
-      {w.exercises.map((ex, ei) => (
+      {w.exercises.map((ex) => (
         <ExerciseCard
           key={ex.id}
           exercise={ex}
-          isFirst={ei === 0}
-          isLast={ei === w.exercises.length - 1}
           lastSession={previous.get(ex.exerciseId)}
           bodyWeightKg={bodyWeightKg}
           // Only the card holding the next set needs to know which it is.
@@ -262,14 +273,23 @@ function Editor({
           defaults={defaults.get(ex.exerciseId)}
           planNote={planNote(w.plan, ex.exerciseId)}
           onChange={update}
-          onMove={move}
+          onReorderExercises={w.exercises.length > 1 ? openReorder : undefined}
           onRemove={requestRemove}
           onChangeExercise={setChanging}
           onSetDone={setDone}
           cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
           onCardioFields={cardioFields.setFields}
+          repHold={repHold.holdFor(ex.exerciseId)}
+          onRepHold={repHold.setHold}
         />
       ))}
+      <ReorderExercisesSheet
+        open={reorderOpen}
+        exercises={w.exercises}
+        currentId={reorderFrom}
+        onSave={saveOrder}
+        onClose={() => setReorderOpen(false)}
+      />
       <ChangeExercisePicker
         exercise={changing}
         defaults={defaults}

@@ -98,6 +98,10 @@ export default function ReorderSetsSheet({
           );
         }}
       </SortableSetList>
+      {/* Each move saves at once; Done just closes, like Reorder exercises. */}
+      <button type="button" className="btn-primary" onClick={onClose}>
+        {t("common.done")}
+      </button>
     </Sheet>
   );
 }

@@ -1,4 +1,9 @@
-import type { CustomExercise, Library, RecordDoc } from "./model";
+import {
+  MAX_CARDIO_SETTINGS,
+  type CustomExercise,
+  type Library,
+  type RecordDoc,
+} from "./model";
 import type { CardioFields } from "../lib/cardio";
 import { customExercises } from "./selectors";
 
@@ -108,10 +113,16 @@ export function mergeLibraries(base: Library, extra: Library): Library {
   for (const group of extra.groups ?? [])
     if (!groups.some((g) => g.id === group.id)) groups.push(group);
   const cardio = { ...extra.cardioFields, ...base.cardioFields };
+  const repHold = [
+    ...new Set([...(base.repHold ?? []), ...(extra.repHold ?? [])]),
+  ];
   return {
     ...extra,
     ...base,
     ...(Object.keys(cardio).length ? { cardioFields: cardio } : {}),
+    ...(base.repHold || repHold.length
+      ? { repHold: repHold.slice(0, MAX_CARDIO_SETTINGS) }
+      : {}),
     hiddenExerciseIds: [
       ...new Set([...base.hiddenExerciseIds, ...extra.hiddenExerciseIds]),
     ].slice(0, MAX_HIDDEN),

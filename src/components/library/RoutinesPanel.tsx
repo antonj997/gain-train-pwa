@@ -8,6 +8,8 @@ import {
 import { today } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
 import { toastWithUndo } from "@/lib/undo-toast";
+import { reorderByIds } from "@/lib/exercise-order";
+import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -27,6 +29,7 @@ import { countLabel } from "@/lib/labels";
 import { lastUsedLabel } from "@/lib/library";
 import RoutinePlan from "@/components/RoutinePlan";
 import { useCardioFields } from "@/hooks/useCardioFields";
+import { useRepHold } from "@/hooks/useRepHold";
 import SharedRoutineList from "@/components/library/SharedRoutineList";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
 import { unpublishRoutine } from "@/data/shared-routines";
@@ -52,6 +55,7 @@ export default function RoutinesPanel() {
   const { state, save, deleteRecord } = useData();
   const { account } = useAuth();
   const cardioFields = useCardioFields();
+  const repHold = useRepHold();
   const workoutStart = useStartWorkout();
   const draft = useRetainedDraft(
     draftKey(account, "routine"),
@@ -120,17 +124,30 @@ export default function RoutinesPanel() {
         },
       });
   };
-  const moveExercise = (id: string, direction: -1 | 1) => {
-    if (!edit) return;
-    const exercises = [...edit.data.exercises];
-    const index = exercises.findIndex((ex) => ex.id === id);
-    const target = index + direction;
-    if (index < 0 || target < 0 || target >= exercises.length) return;
-    [exercises[index], exercises[target]] = [
-      exercises[target],
-      exercises[index],
-    ];
-    setEdit({ ...edit, data: { ...edit.data, exercises } });
+  // Reorder exercises, from a planned exercise's menu.
+  const [reorderOpen, setReorderOpen] = useState(false);
+  const [reorderFrom, setReorderFrom] = useState<string | null>(null);
+  const latestEdit = useRef(edit);
+  latestEdit.current = edit;
+  const reorderTo = (ids: string[]) => {
+    const current = latestEdit.current;
+    if (!current) return;
+    setEdit({
+      ...current,
+      data: {
+        ...current.data,
+        exercises: reorderByIds(current.data.exercises, ids),
+      },
+    });
+  };
+  const saveOrder = (ids: string[]) => {
+    const before = edit?.data.exercises.map((ex) => ex.id) ?? [];
+    reorderTo(ids);
+    toastWithUndo(
+      t("exercise.reordered"),
+      async () => reorderTo(before),
+      t("exercise.reorderUndoFailed"),
+    );
   };
   const run = async (action: () => Promise<void>) => {
     if (lock.current) return;
@@ -397,15 +414,20 @@ export default function RoutinesPanel() {
                   }
                 />
               </label>
-              {edit.data.exercises.map((ex, index) => (
+              {edit.data.exercises.map((ex) => (
                 <RoutinePlan
                   key={ex.id}
                   exercise={ex}
-                  isFirst={index === 0}
-                  isLast={index === edit.data.exercises.length - 1}
                   defaults={categories.get(ex.exerciseId)}
                   onChange={update}
-                  onMove={(exercise, step) => moveExercise(exercise.id, step)}
+                  onReorderExercises={
+                    edit.data.exercises.length > 1
+                      ? (exercise) => {
+                          setReorderFrom(exercise.id);
+                          setReorderOpen(true);
+                        }
+                      : undefined
+                  }
                   onRemove={(exercise) =>
                     hasLoggedExercise(exercise)
                       ? setRemoving(exercise)
@@ -414,6 +436,8 @@ export default function RoutinesPanel() {
                   onChangeExercise={setChanging}
                   cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
                   onCardioFields={cardioFields.setFields}
+                  repHold={repHold.holdFor(ex.exerciseId)}
+                  onRepHold={repHold.setHold}
                 />
               ))}
               <button
@@ -505,6 +529,13 @@ export default function RoutinesPanel() {
               },
             });
         }}
+      />
+      <ReorderExercisesSheet
+        open={reorderOpen && !!edit}
+        exercises={edit?.data.exercises ?? []}
+        currentId={reorderFrom}
+        onSave={saveOrder}
+        onClose={() => setReorderOpen(false)}
       />
       <ChangeExercisePicker
         mode="plan"

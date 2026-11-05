@@ -29,7 +29,6 @@ import {
 } from "@/lib/workout-editor";
 import {
   applyExerciseCount,
-  applyExerciseLoad,
   countHeading,
   defaultLoadKey,
   exerciseMeasure,
@@ -50,11 +49,15 @@ import {
   paceUnit,
   totalsLabel,
 } from "@/lib/cardio";
+import {
+  type CountChoice,
+  countChoice,
+  withoutHiddenHolds,
+} from "@/lib/rep-hold";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
 import SetSheet from "@/components/workout/SetSheet";
-import LoadCountSheet from "@/components/workout/LoadCountSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 import CardioFieldsSheet from "@/components/workout/CardioFieldsSheet";
@@ -65,8 +68,6 @@ import { useT } from "@/i18n/useT";
 
 export type ExerciseCardProps = {
   exercise: Exercise;
-  isFirst: boolean;
-  isLast: boolean;
   /**
    * "plan" is a routine's exercise: no previous results, checks, rest or next
    * set, and its sets are never checked.
@@ -85,7 +86,11 @@ export type ExerciseCardProps = {
   // Callbacks take the card's exercise, so a parent can pass one stable
   // function to every card and memoised cards skip unchanged renders.
   onChange: (exercise: Exercise) => void;
-  onMove: (exercise: Exercise, step: -1 | 1) => void;
+  /**
+   * Opens Reorder exercises from this card's menu. Left out while there is
+   * only one exercise.
+   */
+  onReorderExercises?: (exercise: Exercise) => void;
   onRemove: (exercise: Exercise) => void;
   /** Opens the shared "Swap exercise" picker for this card. */
   onChangeExercise: (exercise: Exercise) => void;
@@ -98,12 +103,15 @@ export type ExerciseCardProps = {
   cardioFields?: CardioFields;
   /** Saves the fields chosen with "Fields…" for this exercise. */
   onCardioFields?: (exerciseId: string, fields: CardioFields) => void;
+  /** The exercise counts "Reps + hold" (useRepHold): sets show a hold field. */
+  repHold?: boolean;
+  /** Saves the count's hold choice for this exercise. Without it, "Reps + hold" is not offered. */
+  onRepHold?: (exerciseId: string, on: boolean) => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
 type OpenSheet =
   | { kind: "set"; setId: string }
-  | { kind: "loadCount" }
   | { kind: "unit" }
   | { kind: "count" }
   | { kind: "menu" }
@@ -115,13 +123,16 @@ type OpenSheet =
 /**
  * Previous wraps in the narrow column, so tie the words that belong together
  * ("12.5 kg", "× 8") with no-break spaces: "BW + 12.5 kg" / "× 12" rather than
- * "BW + 12.5" / "kg × 12".
+ * "BW + 12.5" / "kg × 12". With a hold the column is narrower (down to about
+ * 44px at 360px in lb), so the number and its unit may part there: "275.6" /
+ * "lb × 5" / "· 2 s" rather than breaking inside "lb".
  */
-const keepTogether = (label: string) =>
+const keepTogether = (label: string, narrow = false) =>
   label
     .replace(/(\S) \+ /, "$1 +\u00a0")
-    .replace(/(\d) (kg|lb)/, "$1\u00a0$2")
-    .replace(/× (\d)/, "×\u00a0$1");
+    .replace(/(\d) (kg|lb)/, narrow ? "$1 $2" : "$1\u00a0$2")
+    .replace(/× (\d)/, "×\u00a0$1")
+    .replace(/· (\d+) s$/, "·\u00a0$1\u00a0s");
 
 /** SetLine skips a render when nothing it shows changed; its callbacks are stable. */
 const SetLineMemo = memo(SetLine, (a, b) => {
@@ -139,8 +150,6 @@ const SetLineMemo = memo(SetLine, (a, b) => {
 
 function ExerciseCard({
   exercise: planned,
-  isFirst,
-  isLast,
   mode = "log",
   lastSession,
   bodyWeightKg = null,
@@ -149,12 +158,14 @@ function ExerciseCard({
   defaults,
   planNote,
   onChange,
-  onMove,
+  onReorderExercises,
   onRemove,
   onChangeExercise,
   onSetDone,
   cardioFields: chosenFields,
   onCardioFields,
+  repHold = false,
+  onRepHold,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
@@ -173,6 +184,8 @@ function ExerciseCard({
   const shown = shownIndex >= 0 ? sets[shownIndex] : undefined;
 
   const cardio = sets.some(isCardioSet);
+  // An exercise timed in seconds has no hold to show.
+  const hold = repHold && !cardio && exerciseMeasure(sets) === "reps";
   const cardioFields = chosenFields ?? defaultCardioFields(ex.exerciseId);
   const unit = cardioFields.distanceUnit;
   const heading = (metric: CardioMetric) =>
@@ -197,8 +210,10 @@ function ExerciseCard({
     changeSets(sets.map((s) => (s.id === next.id ? next : s))),
   );
   const toggleDone = useStableCallback((setId: string) => {
-    const next = toggleGroupCompletion(sets, setId, bodyWeightKg);
+    let next = toggleGroupCompletion(sets, setId, bodyWeightKg);
     if (next === sets) return;
+    // A hidden hold is not logged: the set is saved as its row reads.
+    if (!hold) next = withoutHiddenHolds(sets, next);
     changeSets(next);
     const was = sets.find((s) => s.id === setId);
     const now = next.find((s) => s.id === setId);
@@ -209,9 +224,16 @@ function ExerciseCard({
     [],
   );
   const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
+  // "Reps + hold" changes the count to reps and is remembered for the exercise.
+  const chooseCount = (choice: CountChoice) => {
+    changeSets(
+      applyExerciseCount(sets, choice === "seconds" ? "seconds" : "reps"),
+    );
+    onRepHold?.(ex.exerciseId, choice === "repsHold");
+  };
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
-    return result ? keepTogether(labelSet(result)) : undefined;
+    return result ? keepTogether(labelSet(result), hold) : undefined;
   };
 
   return (
@@ -280,7 +302,7 @@ function ExerciseCard({
         </div>
       ) : (
         <div
-          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}`}
+          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}${hold ? " has-hold" : ""}`}
           data-mode={mode}
         >
           <span>{t("exercise.colSet")}</span>
@@ -305,10 +327,10 @@ function ExerciseCard({
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
-            aria-label={`${countHeading(sets)}, ${t("load.count")}`}
+            aria-label={`${countHeading(sets, hold)}, ${t("load.count")}`}
             onClick={() => setSheet({ kind: "count" })}
           >
-            {countHeading(sets)}
+            {countHeading(sets, hold)}
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           {mode === "log" && <span>{t("exercise.colDone")}</span>}
@@ -318,6 +340,7 @@ function ExerciseCard({
         <SetLineMemo
           key={s.id}
           set={s}
+          hold={hold}
           mode={mode}
           name={ex.name}
           badge={setBadge(sets, i)}
@@ -372,17 +395,6 @@ function ExerciseCard({
         />
       )}
       {!cardio && (
-        <LoadCountSheet
-          open={sheet?.kind === "loadCount"}
-          onClose={close}
-          loadKey={defaultKey}
-          measure={exerciseMeasure(sets)}
-          onLoadKey={(key) => changeSets(applyExerciseLoad(sets, key))}
-          onMeasure={(measure) => changeSets(applyExerciseCount(sets, measure))}
-          onDone={close}
-        />
-      )}
-      {!cardio && (
         <ChoiceSheet<WeightUnit>
           open={sheet?.kind === "unit"}
           onClose={close}
@@ -397,33 +409,26 @@ function ExerciseCard({
         />
       )}
       {!cardio && (
-        <ChoiceSheet<"reps" | "seconds">
+        <ChoiceSheet<CountChoice>
           open={sheet?.kind === "count"}
           onClose={close}
           title={t("load.count")}
-          value={exerciseMeasure(sets)}
+          value={countChoice(exerciseMeasure(sets), hold)}
           options={[
             { value: "reps", label: t("load.reps") },
+            ...(onRepHold
+              ? [{ value: "repsHold" as const, label: t("load.repsHold") }]
+              : []),
             { value: "seconds", label: t("load.hold") },
           ]}
           hint={t("load.appliesUnchecked")}
-          onChoose={(measure) => changeSets(applyExerciseCount(sets, measure))}
+          onChoose={chooseCount}
         />
       )}
       <ExerciseMenuSheet
         open={sheet?.kind === "menu"}
         onClose={close}
         name={ex.name}
-        hint={
-          cardio
-            ? undefined
-            : `${loadHeading(defaultKey)} · ${countHeading(sets).toLocaleLowerCase()}`
-        }
-        canMoveUp={!isFirst}
-        canMoveDown={!isLast}
-        onLoadAndCount={
-          cardio ? undefined : () => setSheet({ kind: "loadCount" })
-        }
         fieldsHint={
           cardio ? cardioFields.fields.map(heading).join(" · ") : undefined
         }
@@ -437,8 +442,14 @@ function ExerciseCard({
           onChangeExercise(planned);
         }}
         onReorder={() => setSheet({ kind: "reorder" })}
-        onMoveUp={() => onMove(planned, -1)}
-        onMoveDown={() => onMove(planned, 1)}
+        onReorderExercises={
+          onReorderExercises
+            ? () => {
+                close();
+                onReorderExercises(planned);
+              }
+            : undefined
+        }
         onRemove={() => {
           close();
           onRemove(planned);

@@ -17,6 +17,7 @@ import {
 import { changeSetMeasure, hasExtraWeight } from "./set-load";
 import { loadKeyOf, withLoadKey } from "./load-keys";
 import { CARDIO_MAX, isCardioSet } from "./cardio";
+import { HOLD_MAX } from "./rep-hold";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
 import { autoWorkoutName, type CategoryLookup } from "./workout-name";
@@ -31,7 +32,8 @@ export type SetIssues = Partial<
     | "level"
     | "calories"
     | "inclinePct"
-    | "heartRate",
+    | "heartRate"
+    | "holdSec",
     string
   >
 >;
@@ -97,9 +99,19 @@ export function getSetIssues(set: WorkoutSet): SetIssues {
     )
       issues.weight = t("issue.weightRange");
   }
+  const hold = set.holdSec;
+  if (
+    !timed &&
+    hold !== null &&
+    hold !== undefined &&
+    (!Number.isInteger(hold) || hold < 0 || hold > HOLD_MAX)
+  )
+    issues.holdSec = t("issue.holdRange");
   if (getSetInputText(set, "reps") !== undefined) issues.reps = repsRange;
   if (getSetInputText(set, "weight") !== undefined)
     issues.weight = t("issue.weightRange");
+  if (!timed && getSetInputText(set, "holdSec") !== undefined)
+    issues.holdSec = t("issue.holdRange");
   return issues;
 }
 
