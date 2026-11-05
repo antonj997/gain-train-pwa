@@ -1819,3 +1819,11 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
     animation-delay: 105ms;
   }
 }
+
+/* A favourite's star beside its name: a mark, not a button. */
+.fav-star {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--gt-warm-fg);
+}

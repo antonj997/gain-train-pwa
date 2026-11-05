@@ -175,3 +175,12 @@ select,
 .sync-rejections small {
   color: var(--soft);
 }
+
+/* The picker's groups: Favourites, then a category and "Also trains…", or
+   Recently used and A–Z. */
+.picker-list .picker-group-title {
+  margin: var(--gt-space-4) var(--gt-space-2) var(--gt-space-1);
+}
+.picker-list .picker-group-title:first-child {
+  margin-top: var(--gt-space-1);
+}

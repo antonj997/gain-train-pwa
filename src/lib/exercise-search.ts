@@ -89,21 +89,30 @@ export function matchRank(item: Searchable, query: string): number | null {
 }
 
 /**
- * The items that match the query, best first. Items of equal rank keep their
- * order. An empty query keeps every item in its order.
+ * The items that match the query, best first. Among equal matches favourites
+ * (`favourite`) come first; otherwise items keep their order. An empty query
+ * keeps every item in its order.
  */
 export function searchExercises<T extends Searchable>(
   items: readonly T[],
   query: string,
+  favourite: (item: T) => boolean = () => false,
 ): T[] {
   if (!normalize(query)) return [...items];
   return items
-    .map((item, index) => ({ item, index, rank: matchRank(item, query) }))
-    .filter(
-      (hit): hit is { item: T; index: number; rank: number } =>
-        hit.rank !== null,
+    .map((item, index) => ({
+      item,
+      index,
+      rank: matchRank(item, query),
+      favourite: favourite(item),
+    }))
+    .filter((hit): hit is typeof hit & { rank: number } => hit.rank !== null)
+    .sort(
+      (a, b) =>
+        a.rank - b.rank ||
+        Number(b.favourite) - Number(a.favourite) ||
+        a.index - b.index,
     )
-    .sort((a, b) => a.rank - b.rank || a.index - b.index)
     .map((hit) => hit.item);
 }
 

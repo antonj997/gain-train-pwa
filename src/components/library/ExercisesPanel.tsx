@@ -86,6 +86,7 @@ export default function ExercisesPanel() {
             filterExercises(all, search, filter, { category, equipment }),
             filter,
             !!search.trim(),
+            category,
           ),
     [all, search, filter, category, equipment],
   );
@@ -281,7 +282,6 @@ export default function ExercisesPanel() {
                 exercise={e}
                 now={now}
                 onUnhide={unhide}
-                onToggleFavourite={toggleFavourite}
                 onMenu={setMenu}
               />
             ))}
