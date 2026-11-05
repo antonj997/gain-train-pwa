@@ -946,7 +946,7 @@ export const sv = {
   "sharedRoutines.limitTotal":
     "Du kan dela upp till 100 rutiner. Sluta dela några först.",
   "sharedRoutines.menuNote":
-    "Alla som är inloggade kan lägga till en kopia, med ditt namn om du har angett ett i Inställningar. När du sparar ändringar uppdateras den delade kopian.",
+    "Alla som är inloggade kan lägga till en kopia, med ditt namn om du har angett ett i Inställningar. Bara övningarna och seten delas, inte dina vikter eller reps. När du sparar ändringar uppdateras den delade kopian.",
   "routines.view": "Visa rutiner",
   "routines.viewMine": "Mina",
   "routines.viewShared": "Delade",

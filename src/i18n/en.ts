@@ -939,7 +939,7 @@ export const en = {
   "sharedRoutines.limitTotal":
     "You can share up to 100 routines. Stop sharing some first.",
   "sharedRoutines.menuNote":
-    "Anyone signed in can add a copy, with your name if you set one in Settings. Saving changes updates the shared copy.",
+    "Anyone signed in can add a copy, with your name if you set one in Settings. Only the exercises and sets are shared, not your weights or reps. Saving changes updates the shared copy.",
   "routines.view": "Show routines",
   "routines.viewMine": "Mine",
   "routines.viewShared": "Shared",

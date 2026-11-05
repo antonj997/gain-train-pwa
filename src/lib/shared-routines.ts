@@ -11,26 +11,27 @@ import {
 
 type Records = Record<string, RecordDoc>;
 
-/** A planned set as shared: the values without ids or done state. */
+/**
+ * A planned set as shared: its structure only. The section, drop, load and
+ * measure travel; every value is null (reps and weight) or left out, so the
+ * recipient's own history fills in the numbers. `holdSec: null` marks a set
+ * counted as reps + hold.
+ */
 export type SharedSet = Partial<
   Pick<
     WorkoutSet,
-    | "reps"
-    | "weight"
-    | "load"
-    | "measure"
-    | "extraWeight"
-    | "section"
-    | "drop"
-    | "durationSec"
-    | "distanceM"
-    | "level"
-    | "calories"
-    | "inclinePct"
-    | "heartRate"
-    | "holdSec"
+    "load" | "measure" | "extraWeight" | "section" | "drop" | "holdSec"
   >
->;
+> & {
+  reps?: null;
+  weight?: null;
+  durationSec?: null;
+  distanceM?: null;
+  level?: null;
+  calories?: null;
+  inclinePct?: null;
+  heartRate?: null;
+};
 
 /** What the recipient needs to recreate one of the sharer's own exercises. */
 export type SharedCustom = {
@@ -86,30 +87,63 @@ export class SharedRoutineError extends Error {
   }
 }
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === "object" && !Array.isArray(value);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const BUILTIN = /^builtin:[a-z0-9-]{1,190}$/;
-const SET_FIELDS = [
-  "reps",
-  "weight",
+/** What a set is: copied as it is. */
+const STRUCTURE_FIELDS = [
   "load",
   "measure",
   "extraWeight",
   "section",
   "drop",
+] as const satisfies readonly (keyof WorkoutSet)[];
+/** The numbers someone entered: never shared. Mirrored by the cleanup SQL. */
+export const SHARED_VALUE_FIELDS = [
+  "reps",
+  "weight",
+  "holdSec",
   "durationSec",
   "distanceM",
   "level",
   "calories",
   "inclinePct",
   "heartRate",
-  "holdSec",
-] as const satisfies readonly (keyof SharedSet)[];
+] as const satisfies readonly (keyof WorkoutSet)[];
+const SET_FIELDS = [...STRUCTURE_FIELDS, ...SHARED_VALUE_FIELDS] as const;
 
-const sharedSet = (set: WorkoutSet): SharedSet => {
-  const out: Record<string, unknown> = {};
-  for (const key of SET_FIELDS) if (set[key] !== undefined) out[key] = set[key];
+/**
+ * A set with its personal values taken out: the structure stays, reps and
+ * weight are null, and any other value it had (hold, cardio fields) is null.
+ * Ids, done state, bodyweight, typed text and unknown fields are dropped.
+ */
+export function toSharedSet(set: unknown): SharedSet {
+  if (!isObject(set)) return {};
+  const out: Record<string, unknown> = { reps: null, weight: null };
+  for (const key of STRUCTURE_FIELDS)
+    if (set[key] !== undefined) out[key] = set[key];
+  for (const key of SHARED_VALUE_FIELDS)
+    if (key in set && set[key] !== undefined) out[key] = null;
   return out as SharedSet;
-};
+}
+
+/** Every set of an exercise without personal values. See `toSharedSet`. */
+export const toSharedSets = (sets: readonly unknown[]): SharedSet[] =>
+  sets.map(toSharedSet);
+
+/** A shared payload with every set stripped of personal values. */
+export function stripSharedRoutine(
+  payload: SharedRoutinePayload,
+): SharedRoutinePayload {
+  return {
+    ...payload,
+    exercises: payload.exercises.map((ex) => ({
+      ...ex,
+      sets: toSharedSets(ex.sets),
+    })),
+  };
+}
 
 const customOf = (exercise: CustomExercise): SharedCustom => {
   const sharedFrom = exercise.sharedId ?? exercise.sharedFrom;
@@ -126,7 +160,8 @@ const customOf = (exercise: CustomExercise): SharedCustom => {
 };
 
 /**
- * What a routine publishes: each exercise with its planned sets. Built-in
+ * What a routine publishes: each exercise with the structure of its planned
+ * sets, never the weights, reps or other values in them. Built-in
  * exercises go by their stable id; the user's own carry their definition so
  * the recipient can recreate them. Throws a SharedRoutineError when the
  * routine is beyond what the server accepts.
@@ -139,7 +174,7 @@ export function buildSharedPayload(
   if (routine.exercises.length > SHARED_ROUTINE_LIMITS.exercises)
     throw new SharedRoutineError("tooMany");
   const exercises = routine.exercises.map((ex): SharedRoutineExercise => {
-    const sets = ex.sets.map(sharedSet);
+    const sets = toSharedSets(ex.sets);
     const name = ex.name.trim();
     if (catalogueById.has(ex.exerciseId))
       return { name, builtin: ex.exerciseId, sets };
@@ -185,8 +220,6 @@ export function sharedRoutineChanged(
   }
 }
 
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  !!value && typeof value === "object" && !Array.isArray(value);
 const clip = (text: unknown, max: number) =>
   typeof text === "string" ? text.trim().slice(0, max) : "";
 const LOADS = ["weight", "bodyweight", "assisted"] as const;
@@ -222,13 +255,16 @@ function parseCustom(value: unknown): SharedCustom | null {
 }
 
 /**
- * A planned set from a shared one, or null when it cannot be one. Values the
- * routine editor could not save are dropped instead of failing the whole add.
+ * A planned set from a shared one, or null when it cannot be one. It arrives
+ * empty: any values a routine published before sharing stopped carrying them
+ * are stripped (see `toSharedSet`). Fields the routine editor could not save
+ * are dropped instead of failing the whole add.
  */
 export function parseSharedSet(value: unknown, id: string): WorkoutSet | null {
   if (!isObject(value)) return null;
+  const stripped: Record<string, unknown> = toSharedSet(value);
   const raw: Record<string, unknown> = { id, done: false };
-  for (const key of SET_FIELDS) if (key in value) raw[key] = value[key];
+  for (const key of SET_FIELDS) if (key in stripped) raw[key] = stripped[key];
   raw.reps ??= null;
   raw.weight ??= null;
   raw.load ??= "weight";
@@ -236,16 +272,11 @@ export function parseSharedSet(value: unknown, id: string): WorkoutSet | null {
   const parsed = setSchema.safeParse(raw);
   if (!parsed.success) return null;
   const set = parsed.data;
-  if (set.measure === "cardio") {
-    set.reps = null;
-    set.weight = null;
-    delete set.extraWeight;
-  } else {
+  if (set.measure === "cardio") delete set.extraWeight;
+  else {
     if (set.extraWeight && set.load !== "bodyweight") delete set.extraWeight;
     if (set.measure === "seconds" && set.load !== "bodyweight")
       set.measure = "reps";
-    if (set.extraWeight && set.weight !== null && set.weight <= 0)
-      set.weight = null;
   }
   return set;
 }
@@ -272,7 +303,10 @@ export function parseSharedPayload(payload: unknown): SharedRoutineExercise[] {
         name ||
         (builtin ? (catalogueById.get(builtin)?.name ?? "") : custom!.name),
       ...(builtin ? { builtin } : { custom: custom! }),
-      sets: sets as SharedSet[],
+      // Old rows may still hold values: they never reach the app.
+      sets: sets.map((set) =>
+        isObject(set) ? toSharedSet(set) : set,
+      ) as SharedSet[],
     });
   }
   return exercises.filter((ex) => ex.name);
@@ -289,6 +323,33 @@ export const customKey = (name: string, category: string) =>
   name.trim().replace(/\s+/g, " ").toLocaleLowerCase() +
   "\u0000" +
   category.trim().toLocaleLowerCase();
+
+type OwnCustom = Pick<
+  CustomExercise,
+  "name" | "category" | "sharedFrom" | "sharedId"
+> & {
+  id: string;
+};
+
+/**
+ * The user's exercise a shared custom one becomes when added: one copied from
+ * the same shared exercise, else one with the same name and category.
+ */
+export function matchingCustom<T extends OwnCustom>(
+  custom: SharedCustom,
+  pool: readonly T[],
+): T | undefined {
+  const key = customKey(custom.name, custom.category);
+  return (
+    (custom.sharedFrom &&
+      pool.find(
+        (e) =>
+          e.sharedFrom === custom.sharedFrom ||
+          e.sharedId === custom.sharedFrom,
+      )) ||
+    pool.find((e) => customKey(e.name, e.category) === key)
+  );
+}
 
 /** What adding a shared routine saves: new custom exercises first, then the routine. */
 export type SharedRoutineImport = {
@@ -313,16 +374,8 @@ export function importSharedRoutine(
   const own = ownExercises(records);
   const created: SharedRoutineImport["exercises"] = [];
   const findCustom = (custom: SharedCustom) => {
-    const key = customKey(custom.name, custom.category);
     const pool = [...created.map((c) => ({ id: c.id, ...c.payload })), ...own];
-    const match =
-      (custom.sharedFrom &&
-        pool.find(
-          (e) =>
-            e.sharedFrom === custom.sharedFrom ||
-            e.sharedId === custom.sharedFrom,
-        )) ||
-      pool.find((e) => customKey(e.name, e.category) === key);
+    const match = matchingCustom(custom, pool);
     if (match) return match.id;
     const id = newId();
     created.push({
