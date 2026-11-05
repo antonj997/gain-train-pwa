@@ -235,6 +235,7 @@ function ExerciseCard({
                         (set) => isCardioSet(set) && set.done && validSet(set),
                       ),
                     ),
+                    unit,
                   )
                 : localizedDate(lastSession.date, {
                     day: "numeric",
