@@ -32,10 +32,10 @@ test("a shared exercise's sets read by structure: a headline and a line per type
   assert.deepEqual(sharedSetsSummary(sets), {
     headline: "5 sets · 1 warm-up · 1 cool-down · 1 drop",
     lines: [
-      "Warm-up · 1 set · Weight · reps",
-      "Working · 2 sets · Weight · reps · 1 drop",
-      "Working · 1 set · Bodyweight · reps + hold",
-      "Cool-down · 1 set · Bodyweight · seconds",
+      "Warm-up · 1 × Weight · reps",
+      "2 × Weight · reps · 1 drop",
+      "1 × Bodyweight · reps + hold",
+      "Cool-down · 1 × Bodyweight · seconds",
     ],
   });
   assert.deepEqual(sharedSetsSummary([]), { headline: "No sets", lines: [] });
@@ -57,8 +57,8 @@ test("the summary reads in Swedish", () => {
     ]);
     assert.equal(headline, "3 set · 1 uppvärmning");
     assert.deepEqual(lines, [
-      "Uppvärmning · 1 set · Vikt · reps",
-      "Arbetsset · 2 set · Vikt · reps",
+      "Uppvärmning · 1 × Vikt · reps",
+      "2 × Vikt · reps",
     ]);
   } finally {
     setCurrentLanguage("en");

@@ -1489,8 +1489,11 @@ details[open] > .session-summary > svg {
   flex-wrap: wrap;
   gap: var(--gt-space-2);
 }
-.shared-preview .preview-item {
-  align-items: flex-start;
+.shared-preview-headline {
+  color: var(--gt-ink);
+}
+.shared-preview-line {
+  font-size: var(--gt-fs-1);
 }
 .dialog-full .sheet-footer.shared-preview-footer {
   flex-direction: row;

@@ -46,8 +46,8 @@ export function setKindLabel(set: WorkoutSet) {
 /**
  * The sets of a shared exercise by structure alone, as there are no values:
  * a headline ("3 sets · 1 warm-up · 1 drop") and a line per set type, warm-up
- * first ("Working · 2 sets · Weight · reps · 1 drop"). A drop counts with
- * the set it continues.
+ * first: "Warm-up · 1 × Weight · reps", "2 × Weight · reps · 1 drop". A
+ * drop counts with the set it continues.
  */
 export function sharedSetsSummary(sets: readonly WorkoutSet[]) {
   const real = sets.filter((s) => !isDrop(s));
@@ -81,9 +81,8 @@ export function sharedSetsSummary(sets: readonly WorkoutSet[]) {
       .filter(([key]) => key.startsWith(`${section}\u0000`))
       .map(([key, group]) =>
         [
-          t(label),
-          countLabel(group.sets, "set"),
-          key.slice(section.length + 1),
+          section !== "working" && t(label),
+          `${group.sets} × ${key.slice(section.length + 1)}`,
           group.drops && countLabel(group.drops, "drop"),
         ]
           .filter(Boolean)

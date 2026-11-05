@@ -99,13 +99,15 @@ export default function SharedRoutinePreviewSheet({
                         </span>
                       )}
                     </span>
+                    <span className="row-sub shared-preview-headline">
+                      {exercise.headline}
+                    </span>
                     {exercise.lines.map((line) => (
-                      <span className="row-sub" key={line}>
+                      <span className="row-sub shared-preview-line" key={line}>
                         {line}
                       </span>
                     ))}
                   </span>
-                  <span className="row-value">{exercise.headline}</span>
                 </li>
               ))}
             </ul>

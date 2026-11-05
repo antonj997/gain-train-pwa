@@ -1,5 +1,12 @@
 # Changelog
 
+## 5 November 2026 — shared routines carry no weights or reps; preview before adding
+
+- **A shared routine is empty of personal values.** Publishing (and updating the copy when the owner saves the routine) sends each set's structure only: section, drop, load, extra weight, measure and whether it counts reps + hold. Reps and weight are null; the hold, time, distance, level, calories, incline and heart rate are null or left out; done state, bodyweight and typed text never travel. Adding strips every set again, so routines published earlier with values also arrive empty. The added routine's editor shows empty fields, and starting it prefills from your own history as a new routine does. The routine ⋯ sheet's note says weights and reps are not shared. Changing only weights or reps no longer updates the shared copy.
+- **Preview before adding.** In Library → Routines → Shared, tapping a routine opens a full sheet with its name, “by <name>”, note, main categories, exercise and set counts, and each exercise with its sets by structure (“3 set · 1 uppvärmning · 1 drop”, then “Uppvärmning · 1 × Vikt · reps”, “2 × Vikt · reps · 1 drop”); exercises you don't have yet are marked “Ny övning”. The sticky footer has “Lägg till i mina rutiner” for someone else's routine, or Redigera (opens your routine's editor) and Sluta dela (with a confirm) for your own. The Add button on the row still works.
+- Existing rows can be cleaned on the server with a one-off SQL update that nulls the same keys (not part of the migrations; the app strips old rows on add either way).
+- Code: `toSharedSet`, `toSharedSets`, `stripSharedRoutine`, `SHARED_VALUE_FIELDS` and `matchingCustom` in `src/lib/shared-routines.ts`; `sharedSetsSummary` and `sharedRoutinePreview` in `src/lib/shared-routine-preview.ts`; `src/components/library/SharedRoutinePreview.tsx`; `useSharedRoutines().unshare`. Tested in `tests/shared-routines.test.ts`, `tests/shared-routine-preview.test.ts` and `tests/cardio-records.test.ts`.
+
 ## 5 November 2026 — PRs are heaviest weight or best set volume; an arrow for a better set
 
 - **A PR is now one of two records per exercise**, over every earlier finished workout: the heaviest weight (the heaviest-lift rule: drops count, warm-ups do not) or the best set volume (weight × reps of one working set). The first session never counts, and neither does a lift with nothing of its kind earlier to beat. Best est. 1RM, most reps and best session volume are no longer PRs; they stay in the exercise page's Records tab.
