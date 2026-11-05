@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import DoneSetList from "@/components/DoneSetList";
 import type { ExerciseSession } from "@/data/exercise-records";
+import { improvedSetIds } from "@/data/set-improvement";
 import type { DistanceUnit } from "@/lib/cardio";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
@@ -11,7 +12,8 @@ import { t } from "@/i18n";
 
 /**
  * The exercise page's History: one card per finished workout, newest first,
- * with the date, the workout's name and its checked sets. A card opens that
+ * with the date, the workout's name and its checked sets. A set that beat the
+ * same set the session before has a small up arrow. A card opens that
  * workout's details in History.
  */
 export default function ExerciseHistory({
@@ -29,7 +31,7 @@ export default function ExerciseHistory({
       <p className="row-sub section-note">
         {t("exercise.historyNote", { name })}
       </p>
-      {sessions.map((session) => {
+      {sessions.map((session, index) => {
         const date = localizedDate(session.date, {
           weekday: "short",
           day: "numeric",
@@ -56,7 +58,11 @@ export default function ExerciseHistory({
               </span>
               <ChevronRight className="chev" size={20} aria-hidden="true" />
             </span>
-            <DoneSetList sets={session.sets} distanceUnit={distanceUnit} />
+            <DoneSetList
+              sets={session.sets}
+              improved={improvedSetIds(session.sets, sessions[index + 1]?.sets)}
+              distanceUnit={distanceUnit}
+            />
           </Link>
         );
       })}

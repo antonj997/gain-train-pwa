@@ -12,11 +12,8 @@ import {
   validSet,
   validate,
 } from "../src/data/model";
-import {
-  bestEvents,
-  cardioProgressFor,
-  progressFor,
-} from "../src/data/analytics";
+import { cardioProgressFor, progressFor } from "../src/data/analytics";
+import { prEvents } from "../src/data/exercise-records";
 import { summarize } from "../src/data/summary";
 import { catalogueById } from "../src/data/catalogue";
 import { initialSet } from "../src/data/workouts";
@@ -235,7 +232,7 @@ test("cardio is not a strength best, new best or volume", () => {
     ["builtin:bench-press"],
   );
   assert.deepEqual(
-    bestEvents(progressFor(records)).filter(
+    prEvents(records).filter(
       (event) => event.exerciseId === "builtin:treadmill",
     ),
     [],

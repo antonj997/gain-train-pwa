@@ -82,8 +82,19 @@
   outline: 2px solid var(--gt-accent);
   outline-offset: -2px;
 }
+.done-row .done-value {
+  flex: 0 1 auto;
+}
+/* Beat the same set last time: a small muted-green arrow after the result. */
+.set-up {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  color: var(--gt-done);
+}
 .done-pr {
   flex: none;
+  margin-left: auto;
 }
 
 /* The exercise page's History: a card per session that opens the workout. */
@@ -237,7 +248,7 @@
     background-color: var(--gt-surface-2);
   }
 }
-.ex-session-record {
+.ex-record-line {
   margin: 0 var(--gt-space-2) var(--gt-space-1);
   color: var(--gt-warm-fg);
   font-size: var(--gt-fs-2);

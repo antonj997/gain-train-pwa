@@ -37,6 +37,7 @@ import {
   prefixedLoad,
   withLoadKey,
 } from "@/lib/load-keys";
+import { improvedSetIds } from "@/data/set-improvement";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import {
@@ -231,6 +232,11 @@ function ExerciseCard({
     );
     onRepHold?.(ex.exerciseId, choice === "repsHold");
   };
+  // Checked sets that beat the same set last time get a small up arrow.
+  const improved =
+    mode === "log" && !cardio
+      ? improvedSetIds(sets, lastSession?.sets)
+      : undefined;
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
     return result ? keepTogether(labelSet(result), hold) : undefined;
@@ -345,6 +351,7 @@ function ExerciseCard({
           name={ex.name}
           badge={setBadge(sets, i)}
           previous={previousOf(i)}
+          improved={improved?.has(s.id) ?? false}
           marker={loadMarker(s, defaultKey)}
           bodyWeightKg={mode === "log" ? bodyWeightKg : null}
           weightUnit={weightUnit}

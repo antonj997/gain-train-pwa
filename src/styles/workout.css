@@ -127,6 +127,10 @@
   text-wrap: balance;
   overflow-wrap: break-word;
 }
+/* A checked set that beat the same set last time: the arrow after Previous. */
+.set-line .set-previous .set-up {
+  vertical-align: -2px;
+}
 @media (max-width: 359px) {
   .set-line,
   .set-columns {

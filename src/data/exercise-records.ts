@@ -186,83 +186,132 @@ export function exerciseRecords(
   return recordsOf(exerciseSessions(records, exerciseId).reverse());
 }
 
-export type RecordKind =
-  "e1rm" | "heaviest" | "reps" | "setVolume" | "sessionVolume";
-
-/** The records a set (or, for session volume, the exercise) set in one workout. */
-export type WorkoutRecordHit = {
-  exerciseId: string;
-  kinds: RecordKind[];
-  /** The set that holds the record; null for session volume. */
-  setId: string | null;
-};
+/** The two records that make a PR: the heaviest weight and the best set volume. */
+export type PrKind = "heaviest" | "setVolume";
 
 /**
- * The records a finished workout set: for each exercise in it, the records
- * that it beat over every earlier session. An exercise's first session is a
- * starting point, not a record, as for Recent bests. A later workout that
- * beat it again does not take the mark away: it was a record when it was set.
+ * A PR: an exercise that beat its heaviest weight or its best set volume over
+ * every earlier finished workout. One per exercise per workout.
  */
-export function workoutRecordHits(
+export type ExercisePr = {
+  exerciseId: string;
+  /** The exercise's name in its latest session. */
+  name: string;
+  workoutId: string;
+  date: string;
+  /** Heaviest weight first. */
+  kinds: PrKind[];
+  /** The set that carries the PR chip: the heaviest set when both records fall on different sets. */
+  set: WorkoutSet;
+};
+
+type Heaviest = { set: WorkoutSet; workoutId: string };
+
+/** heaviestOf()'s order: more weight, then more reps; a tie goes to the later set. */
+const heavierOrSame = (set: WorkoutSet, than: WorkoutSet) =>
+  (set.weight ?? 0) > (than.weight ?? 0) ||
+  ((set.weight ?? 0) === (than.weight ?? 0) &&
+    (set.reps ?? 0) >= (than.reps ?? 0));
+
+/**
+ * Every PR in the finished workouts, oldest first. For each exercise, a
+ * workout is a PR when it lifted more weight than any earlier set of the same
+ * kind (heaviestOf's rule: drops count, warm-ups do not), or did a working set
+ * with more weight × reps than any earlier one. Something earlier to beat is
+ * needed, so an exercise's first session is never a PR. A later workout that
+ * beat it again does not take it away: it was a record when it was set.
+ * Best e1RM, most reps and session volume are records (recordsOf), not PRs.
+ */
+export function prEvents(
+  records: Record<string, RecordDoc> | readonly RecordDoc[],
+): ExercisePr[] {
+  type Running = {
+    name: string;
+    heaviest: { weight?: Heaviest; extra?: Heaviest };
+    latestKind: "weight" | "extra" | null;
+    setVolume: number;
+  };
+  const running = new Map<string, Running>();
+  const events: ExercisePr[] = [];
+  for (const record of completedWorkouts(records).reverse()) {
+    const byExercise = new Map<string, { name: string; sets: WorkoutSet[] }>();
+    for (const exercise of record.payload.exercises) {
+      const sets = exercise.sets.filter((set) => set.done && validSet(set));
+      if (!sets.length) continue;
+      const group = byExercise.get(exercise.exerciseId);
+      if (group) group.sets.push(...sets);
+      else byExercise.set(exercise.exerciseId, { name: exercise.name, sets });
+    }
+    for (const [exerciseId, { name, sets }] of byExercise) {
+      const state: Running = running.get(exerciseId) ?? {
+        name,
+        heaviest: {},
+        latestKind: null,
+        setVolume: 0,
+      };
+      running.set(exerciseId, state);
+      state.name = name;
+      const before = { ...state.heaviest };
+      let topVolume: { set: WorkoutSet; value: number } | null = null;
+      for (const set of sets) {
+        const kind = set.section === "warmup" ? null : liftedLoad(set);
+        if (kind) {
+          const best = state.heaviest[kind];
+          if (!best || heavierOrSame(set, best.set))
+            state.heaviest[kind] = { set, workoutId: record.id };
+          state.latestKind = kind;
+        }
+        if (workingSet(set) && weighted(set)) {
+          const value = set.weight! * set.reps!;
+          if (value > (topVolume?.value ?? 0)) topVolume = { set, value };
+        }
+      }
+      const kind = state.latestKind;
+      const after = kind ? state.heaviest[kind] : undefined;
+      const beaten = kind ? before[kind] : undefined;
+      // Equal sets in one workout: the chip goes on the first of them.
+      const heaviestSet =
+        after &&
+        beaten &&
+        after.workoutId === record.id &&
+        (after.set.weight ?? 0) > (beaten.set.weight ?? 0)
+          ? sets.find(
+              (set) =>
+                set.section !== "warmup" &&
+                liftedLoad(set) === kind &&
+                set.weight === after.set.weight &&
+                set.reps === after.set.reps,
+            )
+          : undefined;
+      const volumeSet =
+        topVolume && state.setVolume > 0 && topVolume.value > state.setVolume
+          ? topVolume.set
+          : undefined;
+      if (topVolume)
+        state.setVolume = Math.max(state.setVolume, topVolume.value);
+      const kinds: PrKind[] = [];
+      if (heaviestSet) kinds.push("heaviest");
+      if (volumeSet) kinds.push("setVolume");
+      if (kinds.length)
+        events.push({
+          exerciseId,
+          name,
+          workoutId: record.id,
+          date: record.payload.date,
+          kinds,
+          set: (heaviestSet ?? volumeSet)!,
+        });
+    }
+  }
+  // Each event names the exercise as it is called now.
+  for (const event of events) event.name = running.get(event.exerciseId)!.name;
+  return events;
+}
+
+/** The PRs a finished workout set, one per exercise, in the workout's order. */
+export function workoutPrs(
   records: Record<string, RecordDoc> | readonly RecordDoc[],
   workoutId: string,
-): WorkoutRecordHit[] {
-  const record = completedWorkouts(records).find((r) => r.id === workoutId);
-  if (!record) return [];
-  const ids = [...new Set(record.payload.exercises.map((e) => e.exerciseId))];
-  const hits: WorkoutRecordHit[] = [];
-  for (const exerciseId of ids) {
-    const sessions = exerciseSessions(records, exerciseId);
-    const index = sessions.findIndex((s) => s.workoutId === workoutId);
-    if (index < 0 || index === sessions.length - 1) continue;
-    const earlier = sessions.slice(index + 1).reverse();
-    const before = recordsOf(earlier);
-    const after = recordsOf([...earlier, sessions[index]]);
-    const bySet = new Map<string, RecordKind[]>();
-    const mark = (kind: RecordKind, hit: RecordSet | null, beaten: boolean) => {
-      if (!hit || hit.workoutId !== workoutId || !beaten) return;
-      bySet.set(hit.set.id, [...(bySet.get(hit.set.id) ?? []), kind]);
-    };
-    const value = (r: { value: number } | null) => r?.value ?? 0;
-    mark(
-      "e1rm",
-      after.bestE1rm,
-      value(after.bestE1rm) > value(before.bestE1rm),
-    );
-    // Equal sets in one workout: the mark goes on the first, with the others.
-    const heaviest = after.heaviest && {
-      ...after.heaviest,
-      set:
-        sessions[index].sets.find(
-          (set) =>
-            set.section !== "warmup" &&
-            set.load === after.heaviest!.set.load &&
-            set.weight === after.heaviest!.set.weight &&
-            set.reps === after.heaviest!.set.reps,
-        ) ?? after.heaviest.set,
-    };
-    mark(
-      "heaviest",
-      heaviest,
-      !before.heaviest ||
-        (after.heaviest?.set.weight ?? 0) > (before.heaviest.set.weight ?? 0),
-    );
-    mark(
-      "reps",
-      after.mostReps,
-      (after.mostReps?.set.reps ?? 0) > (before.mostReps?.set.reps ?? 0),
-    );
-    mark(
-      "setVolume",
-      after.bestSetVolume,
-      value(after.bestSetVolume) > value(before.bestSetVolume),
-    );
-    for (const [setId, kinds] of bySet) hits.push({ exerciseId, kinds, setId });
-    if (
-      after.bestSessionVolume?.workoutId === workoutId &&
-      value(after.bestSessionVolume) > value(before.bestSessionVolume)
-    )
-      hits.push({ exerciseId, kinds: ["sessionVolume"], setId: null });
-  }
-  return hits;
+): ExercisePr[] {
+  return prEvents(records).filter((event) => event.workoutId === workoutId);
 }

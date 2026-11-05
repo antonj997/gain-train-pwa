@@ -1,22 +1,16 @@
-import type { RecordKind } from "../data/exercise-records";
+import type { PrKind } from "../data/exercise-records";
 import { t, type MessageKey } from "../i18n";
 
-const KIND_LABEL: Record<Exclude<RecordKind, "sessionVolume">, MessageKey> = {
-  e1rm: "records.e1rm",
+const KIND_LABEL: Record<PrKind, MessageKey> = {
   heaviest: "records.heaviest",
-  reps: "records.mostReps",
   setVolume: "records.setVolume",
 };
 
-/** "Record: Best est. 1RM, Heaviest weight". */
-export function recordKindsLabel(kinds: readonly RecordKind[]) {
-  return t("records.prLabel", {
-    kinds: kinds
-      .map((kind) =>
-        kind === "sessionVolume"
-          ? t("records.sessionVolume")
-          : t(KIND_LABEL[kind]),
-      )
-      .join(", "),
-  });
+/** The records a PR set, heaviest first: "Heaviest weight · Best set volume". */
+export const prKindsText = (kinds: readonly PrKind[]) =>
+  kinds.map((kind) => t(KIND_LABEL[kind])).join(" · ");
+
+/** "Record: Heaviest weight · Best set volume". */
+export function recordKindsLabel(kinds: readonly PrKind[]) {
+  return t("records.prLabel", { kinds: prKindsText(kinds) });
 }
