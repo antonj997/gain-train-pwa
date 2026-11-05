@@ -29,6 +29,7 @@ import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
 import Segmented from "@/components/ui/Segmented";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
+import { useCardioFields } from "@/hooks/useCardioFields";
 import { usePageBack } from "@/hooks/usePageTransitions";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { useSharedExercises } from "@/hooks/useSharedExercises";
@@ -66,6 +67,7 @@ export default function ExercisePage() {
   const tab: Tab =
     requested === "history" || requested === "records" ? requested : "overview";
   const { hidden, setHidden } = useHiddenExercises();
+  const { fieldsFor } = useCardioFields();
   const [menu, setMenu] = useState<LibraryExercise | null>(null);
   const workoutStart = useStartWorkout();
   const draft = useRetainedDraft(
@@ -257,10 +259,18 @@ export default function ExercisePage() {
         />
       )}
       {logged && tab === "overview" && !strength && cardio && (
-        <CardioProgressDetail item={cardio} cutoffDate={daysAgo(30)} />
+        <CardioProgressDetail
+          item={cardio}
+          cutoffDate={daysAgo(30)}
+          distanceUnit={fieldsFor(id).distanceUnit}
+        />
       )}
       {logged && tab === "history" && (
-        <ExerciseHistory name={name} sessions={sessions} />
+        <ExerciseHistory
+          name={name}
+          sessions={sessions}
+          distanceUnit={fieldsFor(id).distanceUnit}
+        />
       )}
       {logged && tab === "records" && <ExerciseRecords records={best} />}
       {(tab === "overview" || !logged) && (

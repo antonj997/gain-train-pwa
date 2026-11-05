@@ -20,6 +20,7 @@ import { localizedDate } from "@/lib/dates";
 import { exercisePath, historyPath } from "@/lib/routes";
 import { countLabel } from "@/lib/labels";
 import { totalsLabel } from "@/lib/cardio";
+import { useCardioFields } from "@/hooks/useCardioFields";
 import { useGoalEditor } from "@/hooks/useGoalEditor";
 import { useGoals } from "@/hooks/useGoals";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
@@ -60,6 +61,7 @@ export default function Progress() {
   const items = useMemo(() => progressFor(records), [records]);
   const period = historyPeriod(range, now);
   const cardioItems = useMemo(() => cardioProgressFor(records), [records]);
+  const { fieldsFor } = useCardioFields();
   // Strength and cardio exercises share one list, most trained first. A strength
   // row shows its best set; a cardio row shows its latest time and distance.
   const rows = useMemo(() => {
@@ -82,14 +84,16 @@ export default function Progress() {
           id: item.id,
           name: item.name,
           sessions: item.sessions.filter(inPeriod).length,
-          best: t("progress.latest", { value: totalsLabel(latest) }),
+          best: t("progress.latest", {
+            value: totalsLabel(latest, fieldsFor(item.id).distanceUnit),
+          }),
           trend: item.sessions.slice(-8).map((x) => x.durationSec),
         };
       }),
     ]
       .filter((row) => row.sessions > 0)
       .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name));
-  }, [items, cardioItems, period.start, period.end, t]);
+  }, [items, cardioItems, period.start, period.end, t, fieldsFor]);
   const bests = useMemo(
     () => recentBests(items, period.start, period.end),
     [items, period.start, period.end],

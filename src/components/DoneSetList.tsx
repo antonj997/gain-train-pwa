@@ -1,12 +1,22 @@
 import { setBadge } from "@/data/drops";
 import { labelSet, type WorkoutSet } from "@/data/model";
+import { cardioLabel, isCardioSet, type DistanceUnit } from "@/lib/cardio";
 import type { RecordKind } from "@/data/exercise-records";
 import { recordKindsLabel } from "@/lib/record-labels";
 import { t } from "@/i18n";
 
 /** A set's result as the workout screen's checked row reads it: "82.5 kg × 5", the × muted. */
-export function DoneSetValue({ set }: { set: WorkoutSet }) {
-  const parts = labelSet(set).split(" × ");
+export function DoneSetValue({
+  set,
+  distanceUnit,
+}: {
+  set: WorkoutSet;
+  /** A cardio set's distance unit, the one its exercise is typed in. */
+  distanceUnit?: DistanceUnit;
+}) {
+  const parts = (
+    isCardioSet(set) ? cardioLabel(set, distanceUnit) : labelSet(set)
+  ).split(" × ");
   return (
     <span className="done-value">
       {parts.map((part, i) => (
@@ -26,6 +36,8 @@ type Props = {
   highlight?: string | null;
   /** Records each set set in this workout, by set id. */
   records?: ReadonlyMap<string, readonly RecordKind[]>;
+  /** Cardio: the unit the exercise's distance shows in. Every value a set holds is listed. */
+  distanceUnit?: DistanceUnit;
 };
 
 /**
@@ -33,7 +45,12 @@ type Props = {
  * checked-row style: the set's badge (number, W, C or ↓ for a drop), then the
  * result with a muted ×. A record set carries a PR chip.
  */
-export default function DoneSetList({ sets, highlight, records }: Props) {
+export default function DoneSetList({
+  sets,
+  highlight,
+  records,
+  distanceUnit,
+}: Props) {
   const done = sets.filter((s) => s.done);
   return (
     <ol className="done-list">
@@ -57,7 +74,7 @@ export default function DoneSetList({ sets, highlight, records }: Props) {
               </span>
               <span className="sr-only">{badge.name}</span>
             </span>
-            <DoneSetValue set={set} />
+            <DoneSetValue set={set} distanceUnit={distanceUnit} />
             {kinds?.length ? (
               <span
                 className="stat-chip warm done-pr"

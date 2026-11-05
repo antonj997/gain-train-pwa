@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import DoneSetList from "@/components/DoneSetList";
 import type { ExerciseSession } from "@/data/exercise-records";
+import type { DistanceUnit } from "@/lib/cardio";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { historyPath } from "@/lib/routes";
@@ -16,9 +17,12 @@ import { t } from "@/i18n";
 export default function ExerciseHistory({
   name,
   sessions,
+  distanceUnit,
 }: {
   name: string;
   sessions: readonly ExerciseSession[];
+  /** A cardio exercise's distance unit. */
+  distanceUnit?: DistanceUnit;
 }) {
   return (
     <section className="col-12" aria-label={t("exercise.history")}>
@@ -52,7 +56,7 @@ export default function ExerciseHistory({
               </span>
               <ChevronRight className="chev" size={20} aria-hidden="true" />
             </span>
-            <DoneSetList sets={session.sets} />
+            <DoneSetList sets={session.sets} distanceUnit={distanceUnit} />
           </Link>
         );
       })}

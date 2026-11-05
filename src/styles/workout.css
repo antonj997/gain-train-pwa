@@ -140,39 +140,59 @@
   }
 }
 
-/* A cardio row: badge, time, distance, level, kcal and done. No Previous
-   column. Every field is at least 44px wide from 360px up, so the gap between
-   columns is 2px on phones (the usual gap again from 400px); the time field
-   takes the most room. The type is one step smaller than a strength field,
-   but never under 16px: iOS Safari zooms into a smaller field on focus.
-   Below 360px the fields shrink rather than scroll sideways. */
+/* A cardio row: badge, the fields the exercise shows (CardioFieldsSheet) and
+   done. No Previous column. The fields sit in their own grid, whose columns
+   come from cardioGridColumns(): up to four on one line (two lines of two
+   under 380px), more in lines of three.
+   Time is the widest; every column is at least 44px, so each field is a full
+   touch target at 360px. The header row uses the same grid, so its labels sit
+   over their fields. The type is one step smaller than a strength field, but
+   never under 16px: iOS Safari zooms into a smaller field on focus. */
 .set-line.is-cardio,
 .set-columns[data-kind="cardio"] {
-  column-gap: 2px;
-  grid-template-columns:
-    44px minmax(0, 1.3fr) minmax(0, 1.1fr) minmax(0, 0.9fr)
-    minmax(0, 1fr) 44px;
-}
-@media (min-width: 360px) {
-  .set-line.is-cardio,
-  .set-columns[data-kind="cardio"] {
-    grid-template-columns:
-      44px minmax(52px, 1.3fr) minmax(46px, 1.1fr) minmax(44px, 0.9fr)
-      minmax(44px, 1fr) 44px;
-  }
-}
-@media (min-width: 400px) {
-  .set-line.is-cardio,
-  .set-columns[data-kind="cardio"] {
-    column-gap: var(--gt-space-2);
-  }
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
 }
 .set-line.is-cardio[data-mode="plan"],
 .set-columns[data-kind="cardio"][data-mode="plan"] {
-  grid-template-columns: 44px repeat(4, minmax(0, 1fr));
+  grid-template-columns: 44px minmax(0, 1fr);
+}
+.cardio-fields {
+  display: grid;
+  grid-template-columns: var(--cardio-cols);
+  align-items: center;
+  gap: var(--gt-space-1);
+  min-width: 0;
+}
+/* Under 380px four fields take two lines of two (cardioGridColumns). */
+@media (max-width: 379px) {
+  .cardio-fields {
+    grid-template-columns: var(--cardio-cols-narrow);
+  }
+}
+@media (min-width: 400px) {
+  .cardio-fields {
+    column-gap: var(--gt-space-2);
+  }
+}
+.set-columns .cardio-fields > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .set-line.is-cardio .set-field input {
   font-size: 16px;
+}
+/* Pace is worked out, not typed: plain text in a field's place. */
+.set-pace {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--gt-ink-2);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.set-line.is-done .set-pace {
+  color: var(--gt-ink);
 }
 
 /* Load and count fields. A marker sits inside the load field. */
@@ -193,9 +213,18 @@
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   text-align: center;
+  box-sizing: border-box;
   transition:
     background-color var(--gt-motion),
     border-color var(--gt-motion);
+}
+/* The focus ring sits inside the field, so neighbouring fields never cover
+   or clip it, however tight the row. */
+.set-line .set-field input:focus,
+.set-line .set-field input:focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+  border-color: var(--gt-accent);
 }
 .set-line .set-field input::placeholder {
   color: var(--gt-ink-2);
@@ -814,4 +843,18 @@
 .ex-add-set {
   width: 100%;
   margin-top: var(--gt-space-1);
+}
+
+/* "Fields…" of a cardio exercise: one switch per field; the distance unit
+   sits under Distance while it is on. */
+.cardio-field-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+}
+.cardio-field-option + .cardio-field-option {
+  border-top: 1px solid var(--gt-line);
+}
+.cardio-unit {
+  padding-bottom: var(--gt-space-2);
 }

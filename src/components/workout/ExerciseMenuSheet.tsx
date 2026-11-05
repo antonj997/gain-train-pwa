@@ -2,6 +2,7 @@ import {
   ArrowDown,
   ArrowLeftRight,
   ArrowUp,
+  Columns3,
   ListOrdered,
   SlidersHorizontal,
   Trash2,
@@ -16,6 +17,9 @@ type BodyProps = {
   canMoveDown: boolean;
   /** Left out for cardio, which has no load or count to change. */
   onLoadAndCount?: () => void;
+  /** Cardio only: opens "Fields…"; `fieldsHint` lists the fields shown. */
+  onFields?: () => void;
+  fieldsHint?: string;
   onChangeExercise: () => void;
   onReorder: () => void;
   onMoveUp: () => void;
@@ -29,6 +33,8 @@ function ExerciseMenuSheetBody({
   canMoveUp,
   canMoveDown,
   onLoadAndCount,
+  onFields,
+  fieldsHint,
   onChangeExercise,
   onReorder,
   onMoveUp,
@@ -56,6 +62,13 @@ function ExerciseMenuSheetBody({
           <SlidersHorizontal size={18} aria-hidden="true" />
           <span>{t("exercise.loadAndCount")}</span>
           <span className="sheet-menu-hint">{hint}</span>
+        </button>
+      )}
+      {onFields && (
+        <button type="button" className="sheet-menu-item" onClick={onFields}>
+          <Columns3 size={18} aria-hidden="true" />
+          <span>{t("exercise.fields")}</span>
+          <span className="sheet-menu-hint">{fieldsHint}</span>
         </button>
       )}
       <button type="button" className="sheet-menu-item" onClick={onReorder}>

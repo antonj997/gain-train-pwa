@@ -45,9 +45,14 @@ export function hasLoggedExercise(ex: Exercise) {
       set.done ||
       set.reps !== null ||
       set.weight !== null ||
-      [set.durationSec, set.distanceM, set.level, set.calories].some(
-        (value) => value !== null && value !== undefined,
-      ),
+      [
+        set.durationSec,
+        set.distanceM,
+        set.level,
+        set.calories,
+        set.inclinePct,
+        set.heartRate,
+      ].some((value) => value !== null && value !== undefined),
   );
 }
 

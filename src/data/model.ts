@@ -19,6 +19,10 @@ export const setSchema = z.object({
   distanceM: z.number().finite().min(0).max(CARDIO_MAX.distanceM).nullish(),
   level: z.number().finite().min(0).max(CARDIO_MAX.level).nullish(),
   calories: z.number().finite().min(0).max(CARDIO_MAX.calories).nullish(),
+  /** Treadmill incline in percent. */
+  inclinePct: z.number().finite().min(0).max(CARDIO_MAX.inclinePct).nullish(),
+  /** Average heart rate in beats per minute. */
+  heartRate: z.number().finite().min(0).max(CARDIO_MAX.heartRate).nullish(),
   section: z.enum(["working", "warmup", "winddown"]),
   done: z.boolean(),
   /** Continues the set above at a lower weight. See drops.ts. */
@@ -34,6 +38,9 @@ export const exerciseSchema = z.object({
 // when a release changes what existing fields mean; older apps then open those
 // records read-only instead of saving over them.
 // 2: cardio sets (measure "cardio" with durationSec, distanceM, level, calories).
+// Not bumped for inclinePct and heartRate on cardio sets, or the library's
+// cardioFields: they are new optional fields that older apps keep as they are
+// (keepUnknownFields) and nothing existing changed meaning.
 export const SCHEMA_VERSION = 2;
 const schemaVersion = z.number().int().positive().optional();
 export const workoutSchema = z.object({
@@ -192,11 +199,27 @@ export const groupSchema = z.object({
   categories: z.array(z.string().min(1).max(50)).max(20),
 });
 
+/**
+ * The fields a cardio exercise shows and its distance unit. Names are kept as
+ * text, so a field a newer app adds does not make the library invalid; the
+ * app reads them with cardioFieldsOf().
+ */
+export const cardioFieldsSchema = z.object({
+  fields: z.array(z.string().min(1).max(20)).max(20),
+  distanceUnit: z.string().max(10).optional(),
+});
+export const MAX_CARDIO_SETTINGS = 2000;
+
 /** The user's synced exercise settings and routine groups. One record per account. */
 export const librarySchema = z.object({
   schemaVersion,
   hiddenExerciseIds: z.array(z.string().min(1).max(200)).max(5000),
   groups: z.array(groupSchema).max(50).optional(),
+  /** Per exercise id, built-in or custom: the cardio fields chosen with "Fields…". */
+  cardioFields: z
+    .record(z.string().min(1).max(200), cardioFieldsSchema)
+    .refine((value) => Object.keys(value).length <= MAX_CARDIO_SETTINGS)
+    .optional(),
 });
 
 export type Workout = z.infer<typeof workoutSchema>;
@@ -323,7 +346,9 @@ function validCardioSet(s: WorkoutSet) {
     s.durationSec <= CARDIO_MAX.durationSec &&
     inRange(s.distanceM, CARDIO_MAX.distanceM) &&
     inRange(s.level, CARDIO_MAX.level) &&
-    inRange(s.calories, CARDIO_MAX.calories)
+    inRange(s.calories, CARDIO_MAX.calories) &&
+    inRange(s.inclinePct, CARDIO_MAX.inclinePct) &&
+    inRange(s.heartRate, CARDIO_MAX.heartRate)
   );
 }
 export function validSet(s: WorkoutSet) {
@@ -414,6 +439,9 @@ export function validate(kind: Kind, payload: unknown): Payload {
       distanceM: t("val.distanceM"),
       level: t("val.level"),
       calories: t("val.calories"),
+      inclinePct: t("val.inclinePct"),
+      heartRate: t("val.heartRate"),
+      cardioFields: t("val.cardioFields"),
       load: t("val.load"),
       section: t("val.section"),
       exercises: t("val.exercises"),
