@@ -95,14 +95,6 @@ export function countHeading(sets: WorkoutSet[], hold = false): string {
   return t(hold ? "load.headingRepsHold" : "load.headingReps");
 }
 
-/** Sets every unchecked set to the key, overwriting per-set exceptions. */
-export function applyExerciseLoad(
-  sets: WorkoutSet[],
-  key: LoadKey,
-): WorkoutSet[] {
-  return sets.map((set) => withLoadKey(set, key));
-}
-
 /** Sets every unchecked set to the measure; seconds makes them bodyweight. */
 export function applyExerciseCount(
   sets: WorkoutSet[],

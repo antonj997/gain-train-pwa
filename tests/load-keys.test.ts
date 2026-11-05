@@ -5,7 +5,6 @@ import { appendSet } from "../src/lib/workout-editor.ts";
 import {
   allowedLoadKeys,
   applyExerciseCount,
-  applyExerciseLoad,
   countHeading,
   defaultLoadKey,
   exerciseMeasure,
@@ -162,29 +161,6 @@ test("changing the key clears the weight, keeping the key does not", () => {
 test("withLoadKey leaves a checked set unchanged", () => {
   const done = { ...newSet(), weight: 60, reps: 5, done: true };
   for (const key of KEYS) assert.equal(withLoadKey(done, key), done);
-});
-
-test("applying a load changes unchecked sets and overwrites their exceptions", () => {
-  const checked = { ...withKey("assisted"), weight: 20, reps: 8, done: true };
-  const exception = { ...withKey("bwplus"), weight: 10, reps: 6 };
-  const matching = { ...newSet(), weight: 80, reps: 5 };
-  const result = applyExerciseLoad([checked, exception, matching], "weight");
-  assert.equal(result[0], checked);
-  assert.equal(loadKeyOf(result[1]), "weight");
-  assert.equal(result[1].weight, null);
-  assert.equal(result[1].reps, 6);
-  assert.equal(result[2], matching);
-  assert.deepEqual(result.map(loadKeyOf), ["assisted", "weight", "weight"]);
-});
-
-test("applying a load keeps drop and section on the sets it changes", () => {
-  const drop = { ...newSet(), drop: true as const };
-  const warmup = { ...newSet(), section: "warmup" as const };
-  const [a, b] = applyExerciseLoad([drop, warmup], "bw");
-  assert.equal(a.drop, true);
-  assert.equal(b.section, "warmup");
-  assert.equal(loadKeyOf(a), "bw");
-  assert.equal(loadKeyOf(b), "bw");
 });
 
 test("applying seconds makes unchecked sets bodyweight and leaves checked sets", () => {

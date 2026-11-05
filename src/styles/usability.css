@@ -211,3 +211,8 @@ select,
   border-bottom: 0;
   color: var(--gt-accent);
 }
+/* Folded while searching: out of the layout, still read as the sheet's name. */
+.picker-dialog .picker-header.sr-only {
+  position: absolute;
+  padding: 0;
+}

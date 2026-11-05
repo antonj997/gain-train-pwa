@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from "react";
 import { GripVertical } from "lucide-react";
-import { type WorkoutSet } from "@/data/model";
 import { capturePointer, releasePointer } from "@/lib/pointer-capture";
 import {
   createSetReorderController,
@@ -51,20 +50,26 @@ function nearestScrollContainer(element: HTMLElement) {
   return (document.scrollingElement ?? document.documentElement) as HTMLElement;
 }
 
-/** Movement is local until drop, so draft saving runs once per move. */
-export default function SortableSetList({
+/**
+ * Movement is local until drop, so draft saving runs once per move. Sorts
+ * sets in the Reorder sets sheet and exercises in Reorder exercises.
+ */
+export default function SortableSetList<T extends { id: string }>({
   sets,
   name,
+  handleLabel,
   onReorder,
   onMovingChange,
   children,
 }: {
-  sets: WorkoutSet[];
+  sets: T[];
   name: string;
-  onReorder: (sets: WorkoutSet[]) => void;
+  /** The handle's name for the row at `index`; "Move Squat set 2" by default. */
+  handleLabel?: (item: T, index: number) => string;
+  onReorder: (sets: T[]) => void;
   /** Called with true when a keyboard or pointer move starts, false when it ends. */
   onMovingChange?: (moving: boolean) => void;
-  children: (set: WorkoutSet, index: number, handle: ReactNode) => ReactNode;
+  children: (set: T, index: number, handle: ReactNode) => ReactNode;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<Drag | null>(null);
@@ -264,7 +269,11 @@ export default function SortableSetList({
             <button
               type="button"
               className="set-drag-handle"
-              aria-label={t("set.moveHandle", { name, n: index + 1 })}
+              aria-label={
+                handleLabel
+                  ? handleLabel(set, index)
+                  : t("set.moveHandle", { name, n: index + 1 })
+              }
               aria-describedby={instructionsId}
               aria-pressed={order?.id === set.id}
               onPointerDown={(event) => {
