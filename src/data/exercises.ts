@@ -1,4 +1,5 @@
 import type { CustomExercise, Library, RecordDoc } from "./model";
+import type { CardioFields } from "../lib/cardio";
 import { customExercises } from "./selectors";
 
 type Records = Record<string, RecordDoc>;
@@ -106,9 +107,11 @@ export function mergeLibraries(base: Library, extra: Library): Library {
   const groups = [...(base.groups ?? [])];
   for (const group of extra.groups ?? [])
     if (!groups.some((g) => g.id === group.id)) groups.push(group);
+  const cardio = { ...extra.cardioFields, ...base.cardioFields };
   return {
     ...extra,
     ...base,
+    ...(Object.keys(cardio).length ? { cardioFields: cardio } : {}),
     hiddenExerciseIds: [
       ...new Set([...base.hiddenExerciseIds, ...extra.hiddenExerciseIds]),
     ].slice(0, MAX_HIDDEN),
@@ -135,6 +138,31 @@ export function libraryOf(records: Records, account: string): Library {
     if (r.kind === "library" && !r.deleted && r.id !== own)
       library = mergeLibraries(library, r.payload);
   return library;
+}
+
+/**
+ * The cardio fields the user chose, by exercise id. The account's library
+ * wins over any other library record (see libraryOf).
+ */
+export const savedCardioFields = (records: Records, account: string) =>
+  libraryOf(records, account).cardioFields ?? {};
+
+/** The library with one exercise's cardio fields saved. */
+export function withCardioFields(
+  library: Library,
+  exerciseId: string,
+  fields: CardioFields,
+): Library {
+  return {
+    ...library,
+    cardioFields: {
+      ...library.cardioFields,
+      [exerciseId]: {
+        fields: [...fields.fields],
+        distanceUnit: fields.distanceUnit,
+      },
+    },
+  };
 }
 
 /** Ids of exercises the user hid from their catalogue, built-in or their own. */

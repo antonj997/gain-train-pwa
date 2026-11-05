@@ -24,7 +24,14 @@ import { t } from "../i18n";
 
 export type SetIssues = Partial<
   Record<
-    "weight" | "reps" | "durationSec" | "distanceM" | "level" | "calories",
+    | "weight"
+    | "reps"
+    | "durationSec"
+    | "distanceM"
+    | "level"
+    | "calories"
+    | "inclinePct"
+    | "heartRate",
     string
   >
 >;
@@ -44,6 +51,10 @@ function getCardioIssues(set: WorkoutSet): SetIssues {
   if (bad(set.level, CARDIO_MAX.level)) issues.level = t("issue.level");
   if (bad(set.calories, CARDIO_MAX.calories))
     issues.calories = t("issue.calories");
+  if (bad(set.inclinePct, CARDIO_MAX.inclinePct))
+    issues.inclinePct = t("issue.incline");
+  if (bad(set.heartRate, CARDIO_MAX.heartRate))
+    issues.heartRate = t("issue.heartRate");
   // Text that is not a number yet ("20:", "3.") is not a value either.
   if (getSetInputText(set, "durationSec") !== undefined)
     issues.durationSec = t("issue.timeFormat");
@@ -53,6 +64,10 @@ function getCardioIssues(set: WorkoutSet): SetIssues {
     issues.level = t("issue.level");
   if (getSetInputText(set, "calories") !== undefined)
     issues.calories = t("issue.calories");
+  if (getSetInputText(set, "inclinePct") !== undefined)
+    issues.inclinePct = t("issue.incline");
+  if (getSetInputText(set, "heartRate") !== undefined)
+    issues.heartRate = t("issue.heartRate");
   return issues;
 }
 

@@ -81,14 +81,18 @@ const doc = (payload: Workout): RecordDoc => ({
   payload,
 });
 
-test("time is typed as mm:ss, h:mm:ss or minutes and shown as mm:ss", () => {
+test("time reads its digits from the right and is shown as mm:ss", () => {
   assert.equal(parseDuration("20:00"), 1200);
   assert.equal(parseDuration("0:45"), 45);
   assert.equal(parseDuration("1:05:00"), 3900);
-  assert.equal(parseDuration("20"), 1200);
+  // Bare digits are timer digits: 20 is 20 seconds, 0400 is four minutes.
+  assert.equal(parseDuration("20"), 20);
+  assert.equal(parseDuration("0400"), 240);
+  assert.equal(parseDuration("0:90"), 90);
   assert.equal(parseDuration(" "), null);
-  for (const unfinished of ["20:", "20:5", "20:75", "a", "1.5"])
-    assert.ok(Number.isNaN(parseDuration(unfinished)), unfinished);
+  assert.equal(parseDuration("0:00"), null);
+  for (const invalid of ["a", "1.5", "-4", "1234567"])
+    assert.ok(Number.isNaN(parseDuration(invalid)), invalid);
   assert.equal(formatDuration(1200), "20:00");
   assert.equal(formatDuration(65), "1:05");
   assert.equal(formatDuration(3900), "1:05:00");
@@ -274,6 +278,8 @@ test("cardio progress lists time and distance per session", () => {
     durationSec: 2400,
     distanceM: 6400,
     calories: 5,
+    heartRate: null,
+    inclinePct: null,
   });
 });
 

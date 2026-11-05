@@ -187,11 +187,7 @@ export function exerciseRecords(
 }
 
 export type RecordKind =
-  | "e1rm"
-  | "heaviest"
-  | "reps"
-  | "setVolume"
-  | "sessionVolume";
+  "e1rm" | "heaviest" | "reps" | "setVolume" | "sessionVolume";
 
 /** The records a set (or, for session volume, the exercise) set in one workout. */
 export type WorkoutRecordHit = {
@@ -261,8 +257,7 @@ export function workoutRecordHits(
       after.bestSetVolume,
       value(after.bestSetVolume) > value(before.bestSetVolume),
     );
-    for (const [setId, kinds] of bySet)
-      hits.push({ exerciseId, kinds, setId });
+    for (const [setId, kinds] of bySet) hits.push({ exerciseId, kinds, setId });
     if (
       after.bestSessionVolume?.workoutId === workoutId &&
       value(after.bestSessionVolume) > value(before.bestSessionVolume)

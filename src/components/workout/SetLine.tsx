@@ -18,7 +18,18 @@ import {
   getSetInputText,
   type InputField,
 } from "@/lib/set-input";
-import { formatDuration, formatKm, parseDuration, parseKm } from "@/lib/cardio";
+import {
+  type CardioFields,
+  type CardioKey,
+  type CardioMetric,
+  cardioGridColumns,
+  formatDistance,
+  formatDuration,
+  formatPace,
+  paceUnit,
+  parseDistance,
+  parseDuration,
+} from "@/lib/cardio";
 import SetNumberInput from "@/components/SetNumberInput";
 import SetBadge from "@/components/workout/SetBadge";
 import "@/styles/workout.css";
@@ -31,6 +42,77 @@ const LOAD_NAMES = {
   kg: { plus: "set.loadPlus", minus: "set.loadMinus", kg: "set.loadKg" },
   lb: { plus: "set.loadPlusLb", minus: "set.loadMinusLb", kg: "set.loadLb" },
 } as const;
+
+// What a row shows when the card passes no choice: the original four fields.
+const ALL_CARDIO_FIELDS: CardioFields = {
+  fields: ["time", "distance", "level", "calories"],
+  distanceUnit: "km",
+};
+
+type CardioInput = {
+  metric: Exclude<CardioMetric, "pace">;
+  field: CardioKey;
+  name: string;
+  placeholder: string;
+  inputMode: "numeric" | "decimal";
+  timer?: boolean;
+  parse?: (text: string) => number | null;
+  format?: (value: number | null) => string;
+};
+
+/** The typed fields a cardio row can show, in their column order. */
+function cardioInputs({ distanceUnit: unit }: CardioFields): CardioInput[] {
+  return [
+    {
+      metric: "time",
+      field: "durationSec",
+      name: t("set.fieldTime"),
+      placeholder: t("set.phTime"),
+      // The number pad; the colons come by themselves (timerEntry).
+      inputMode: "numeric",
+      timer: true,
+      parse: parseDuration,
+      format: formatDuration,
+    },
+    {
+      metric: "distance",
+      field: "distanceM",
+      name: t(`set.fieldDistance_${unit}`),
+      placeholder: unit,
+      inputMode: unit === "m" ? "numeric" : "decimal",
+      parse: (text) => parseDistance(text, unit),
+      format: (value) => formatDistance(value, unit),
+    },
+    {
+      metric: "level",
+      field: "level",
+      name: t("set.fieldLevel"),
+      placeholder: t("set.phLevel"),
+      inputMode: "numeric",
+    },
+    {
+      metric: "incline",
+      field: "inclinePct",
+      name: t("set.fieldIncline"),
+      placeholder: "%",
+      inputMode: "decimal",
+    },
+    {
+      metric: "calories",
+      field: "calories",
+      name: t("set.fieldCalories"),
+      placeholder: "kcal",
+      inputMode: "numeric",
+    },
+    {
+      metric: "heartRate",
+      field: "heartRate",
+      name: t("set.fieldHeartRate"),
+      placeholder: "bpm",
+      inputMode: "numeric",
+    },
+  ];
+}
 
 /**
  * One set as a single line: badge, previous result, load, count and done.
@@ -48,6 +130,7 @@ export default function SetLine({
   bodyWeightKg = null,
   weightUnit,
   next = false,
+  cardioFields = ALL_CARDIO_FIELDS,
   editing = false,
   unlocked = false,
   canCheck,
@@ -72,6 +155,11 @@ export default function SetLine({
   weightUnit?: WeightUnit;
   /** The next set to do: drawn with an accent. */
   next?: boolean;
+  /**
+   * The fields a cardio set shows and its distance unit. A value in a field
+   * that is not shown stays saved; History lists it.
+   */
+  cardioFields?: CardioFields;
   /** Its Set sheet is open. */
   editing?: boolean;
   /**
@@ -201,40 +289,8 @@ export default function SetLine({
     onChange(changeSetNumber(set, field, value, unfinishedText, unlocked));
   };
 
-  const cardioFields = [
-    {
-      field: "durationSec",
-      name: t("set.fieldTime"),
-      placeholder: t("set.phTime"),
-      inputMode: "text",
-      parse: parseDuration,
-      format: formatDuration,
-    },
-    {
-      field: "distanceM",
-      name: t("set.fieldDistance"),
-      placeholder: "km",
-      inputMode: "decimal",
-      parse: parseKm,
-      format: formatKm,
-    },
-    {
-      field: "level",
-      name: t("set.fieldLevel"),
-      placeholder: t("set.phLevel"),
-      inputMode: "numeric",
-      parse: undefined,
-      format: undefined,
-    },
-    {
-      field: "calories",
-      name: t("set.fieldCalories"),
-      placeholder: "kcal",
-      inputMode: "numeric",
-      parse: undefined,
-      format: undefined,
-    },
-  ] as const;
+  const shownMetrics = cardio ? cardioFields.fields : [];
+  const inputs = cardio ? cardioInputs(cardioFields) : [];
 
   const classes = [
     "set-line",
@@ -282,32 +338,62 @@ export default function SetLine({
         </span>
       )}
       {cardio ? (
-        <>
-          {cardioFields.map(({ field, ...props }) => (
-            <div className="set-field" key={field}>
-              <SetNumberInput
-                aria-label={`${label} ${props.name}`}
-                aria-invalid={
-                  !!issues[field] &&
-                  ((set[field] ?? null) !== null ||
-                    getSetInputText(set, field) !== undefined)
-                }
-                aria-describedby={describedBy(field)}
-                inputMode={props.inputMode}
-                placeholder={props.placeholder}
-                value={set[field] ?? null}
-                inputText={getSetInputText(set, field)}
-                parse={props.parse}
-                format={props.format}
-                readOnly={locked}
-                onLockedAttempt={() => setLockedAttempt(true)}
-                onValueChange={(value, text) =>
-                  updateNumber(field, value, text)
-                }
-              />
-            </div>
-          ))}
-        </>
+        <div
+          className="cardio-fields"
+          style={{
+            gridTemplateColumns: cardioGridColumns(shownMetrics.length),
+          }}
+        >
+          {shownMetrics.map((metric) => {
+            if (metric === "pace") {
+              const pace = formatPace(
+                set.durationSec,
+                set.distanceM,
+                cardioFields.distanceUnit,
+              );
+              return (
+                <div className="set-field set-pace" key={metric}>
+                  <span aria-hidden="true">{pace || "–"}</span>
+                  <span className="sr-only">
+                    {`${label} ${t("set.fieldPace")}: ${
+                      pace
+                        ? `${pace} ${paceUnit(cardioFields.distanceUnit)}`
+                        : t("set.noPace")
+                    }`}
+                  </span>
+                </div>
+              );
+            }
+            const props = inputs.find((input) => input.metric === metric)!;
+            const { field } = props;
+            return (
+              <div className="set-field" key={metric}>
+                <SetNumberInput
+                  aria-label={`${label} ${props.name}`}
+                  aria-invalid={
+                    !!issues[field] &&
+                    ((set[field] ?? null) !== null ||
+                      getSetInputText(set, field) !== undefined)
+                  }
+                  aria-describedby={describedBy(field)}
+                  inputMode={props.inputMode}
+                  pattern={props.inputMode === "numeric" ? "[0-9]*" : undefined}
+                  entry={props.timer ? "timer" : "number"}
+                  placeholder={props.placeholder}
+                  value={set[field] ?? null}
+                  inputText={getSetInputText(set, field)}
+                  parse={props.parse}
+                  format={props.format}
+                  readOnly={locked}
+                  onLockedAttempt={() => setLockedAttempt(true)}
+                  onValueChange={(value, text) =>
+                    updateNumber(field, value, text)
+                  }
+                />
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <>
           {plainBodyweight ? (

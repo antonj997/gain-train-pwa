@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type InputHTMLAttributes } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type InputHTMLAttributes,
+} from "react";
+import { timerEntry } from "../lib/cardio";
 import {
   createSetInputSelection,
   parseSetNumber,
@@ -18,6 +25,11 @@ type Props = Omit<
   parse?: (text: string) => number | null;
   /** The text shown for a value. Defaults to the number itself. */
   format?: (value: number | null) => string;
+  /**
+   * "timer": digits fill from the right like a timer and the colons come by
+   * themselves ("400" shows 4:00); see timerEntry() in lib/cardio.ts.
+   */
+  entry?: "number" | "timer";
 };
 
 // Shown with the language's decimal mark; typing accepts both "," and ".".
@@ -32,9 +44,13 @@ export default function SetNumberInput({
   onBlur,
   parse = parseSetNumber,
   format = plainText,
+  entry = "number",
   className = "",
   ...props
 }: Props) {
+  const input = useRef<HTMLInputElement>(null);
+  // A timer field keeps the caret after its last digit, where the next one goes.
+  const caretToEnd = useRef(false);
   const textFor = (v: number | null) =>
     v === null || !Number.isFinite(v) ? "" : format(v);
   const [draft, setDraft] = useState({
@@ -53,9 +69,18 @@ export default function SetNumberInput({
     const current = selection.current;
     return () => current.dispose();
   }, []);
+  useLayoutEffect(() => {
+    const element = input.current;
+    if (!caretToEnd.current || !element) return;
+    caretToEnd.current = false;
+    if (element.ownerDocument.activeElement !== element) return;
+    const end = element.value.length;
+    element.setSelectionRange(end, end);
+  }, [draft.text]);
   return (
     <input
       {...props}
+      ref={input}
       onPointerDown={selection.current.onPointerDown}
       onPointerMove={selection.current.onPointerMove}
       onPointerUp={selection.current.onPointerUp}
@@ -96,7 +121,17 @@ export default function SetNumberInput({
           onLockedAttempt?.();
           return;
         }
-        const text = event.target.value;
+        let text = event.target.value;
+        if (entry === "timer") {
+          const shown = timerEntry(text, draft.text);
+          if (shown === null) {
+            // Refused: put back what was shown.
+            setDraft({ ...draft });
+            return;
+          }
+          text = shown;
+          caretToEnd.current = true;
+        }
         const parsed = parse(text);
         const unfinished =
           typeof parsed === "number" && !Number.isFinite(parsed);
