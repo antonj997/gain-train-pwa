@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Pencil, Repeat, Trash2 } from "lucide-react";
 import DoneSetList from "@/components/DoneSetList";
 import { useData } from "@/contexts/useData";
+import { useCardioFields } from "@/hooks/useCardioFields";
 import { workoutRecordHits, type RecordKind } from "@/data/exercise-records";
 import type { Workout } from "@/data/model";
 import { doneSetCount } from "@/data/selectors";
@@ -46,6 +47,7 @@ export default function WorkoutDetails({
   onDelete,
 }: Props) {
   const { state } = useData();
+  const { fieldsFor } = useCardioFields();
   const body = useRef<HTMLDivElement>(null);
   const hits = useMemo(
     () => workoutRecordHits(state.records, id),
@@ -119,6 +121,7 @@ export default function WorkoutDetails({
                 sets={ex.sets}
                 highlight={highlight}
                 records={bySet}
+                distanceUnit={fieldsFor(ex.exerciseId).distanceUnit}
               />
             </section>
           );

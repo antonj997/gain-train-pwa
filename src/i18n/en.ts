@@ -626,7 +626,8 @@ export const en = {
   "cardio.levelHint": "The machine's level or resistance",
   "cardio.heartRateHint": "Average, in bpm",
   "cardio.distanceUnit": "Distance unit",
-  "cardio.fieldsNote": "Saved for {name} for next time. Values you already entered stay saved, and History shows them.",
+  "cardio.fieldsNote":
+    "Saved for {name} for next time. Values you already entered stay saved, and History shows them.",
   "cardio.fieldsFailed": "Could not save the fields. Try again.",
   "cardio.note":
     "Cardio is not part of strength bests or volume. A session adds up the checked cardio sets of {name} in one workout.",

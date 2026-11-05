@@ -40,7 +40,16 @@ import {
 } from "@/lib/load-keys";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
-import { cardioTotals, isCardioSet, totalsLabel } from "@/lib/cardio";
+import {
+  type CardioFields,
+  type CardioMetric,
+  cardioGridColumns,
+  cardioTotals,
+  defaultCardioFields,
+  isCardioSet,
+  paceUnit,
+  totalsLabel,
+} from "@/lib/cardio";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
@@ -48,6 +57,7 @@ import SetSheet from "@/components/workout/SetSheet";
 import LoadCountSheet from "@/components/workout/LoadCountSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
+import CardioFieldsSheet from "@/components/workout/CardioFieldsSheet";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import type { WeightUnit } from "@/lib/units";
@@ -81,6 +91,13 @@ export type ExerciseCardProps = {
   onChangeExercise: (exercise: Exercise) => void;
   /** Called when a set is newly checked as done. */
   onSetDone?: () => void;
+  /**
+   * A cardio exercise's chosen fields (useCardioFields). Without them the
+   * exercise's defaults show and "Fields…" is not offered.
+   */
+  cardioFields?: CardioFields;
+  /** Saves the fields chosen with "Fields…" for this exercise. */
+  onCardioFields?: (exerciseId: string, fields: CardioFields) => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
@@ -91,6 +108,7 @@ type OpenSheet =
   | { kind: "count" }
   | { kind: "menu" }
   | { kind: "reorder" }
+  | { kind: "fields" }
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
@@ -135,6 +153,8 @@ function ExerciseCard({
   onRemove,
   onChangeExercise,
   onSetDone,
+  cardioFields: chosenFields,
+  onCardioFields,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
@@ -153,6 +173,22 @@ function ExerciseCard({
   const shown = shownIndex >= 0 ? sets[shownIndex] : undefined;
 
   const cardio = sets.some(isCardioSet);
+  const cardioFields = chosenFields ?? defaultCardioFields(ex.exerciseId);
+  const unit = cardioFields.distanceUnit;
+  const heading = (metric: CardioMetric) =>
+    metric === "time"
+      ? t("exercise.colTime")
+      : metric === "distance"
+        ? unit
+        : metric === "pace"
+          ? paceUnit(unit)
+          : metric === "level"
+            ? t("exercise.colLevel")
+            : metric === "incline"
+              ? t("exercise.colIncline")
+              : metric === "calories"
+                ? "kcal"
+                : t("exercise.colHeartRate");
   const defaultKey = defaultLoadKey(sets);
   const close = useCallback(() => setSheet(null), []);
   const changeSets = (next: WorkoutSet[]) => onChange({ ...ex, sets: next });
@@ -231,10 +267,18 @@ function ExerciseCard({
       {cardio ? (
         <div className="set-columns" data-mode={mode} data-kind="cardio">
           <span>{t("exercise.colSet")}</span>
-          <span>{t("exercise.colTime")}</span>
-          <span>km</span>
-          <span>{t("exercise.colLevel")}</span>
-          <span>kcal</span>
+          <span
+            className="cardio-fields"
+            style={{
+              gridTemplateColumns: cardioGridColumns(
+                cardioFields.fields.length,
+              ),
+            }}
+          >
+            {cardioFields.fields.map((metric) => (
+              <span key={metric}>{heading(metric)}</span>
+            ))}
+          </span>
           {mode === "log" && <span>{t("exercise.colDone")}</span>}
         </div>
       ) : (
@@ -284,6 +328,7 @@ function ExerciseCard({
           marker={loadMarker(s, defaultKey)}
           bodyWeightKg={mode === "log" ? bodyWeightKg : null}
           weightUnit={weightUnit}
+          cardioFields={cardio ? cardioFields : undefined}
           next={nextSetId === s.id}
           editing={openSetId === s.id}
           unlocked={unlockChecked}
@@ -382,6 +427,14 @@ function ExerciseCard({
         onLoadAndCount={
           cardio ? undefined : () => setSheet({ kind: "loadCount" })
         }
+        fieldsHint={
+          cardio ? cardioFields.fields.map(heading).join(" · ") : undefined
+        }
+        onFields={
+          cardio && onCardioFields
+            ? () => setSheet({ kind: "fields" })
+            : undefined
+        }
         onChangeExercise={() => {
           close();
           onChangeExercise(planned);
@@ -394,6 +447,15 @@ function ExerciseCard({
           onRemove(planned);
         }}
       />
+      {cardio && onCardioFields && (
+        <CardioFieldsSheet
+          open={sheet?.kind === "fields"}
+          onClose={close}
+          name={ex.name}
+          value={cardioFields}
+          onChange={(fields) => onCardioFields(ex.exerciseId, fields)}
+        />
+      )}
       <ReorderSetsSheet
         open={sheet?.kind === "reorder"}
         exercise={ex}

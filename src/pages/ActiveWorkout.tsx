@@ -23,6 +23,7 @@ import { trainingHaptic } from "@/lib/preferences";
 import { historyPath } from "@/lib/routes";
 import { usePreviousResults } from "@/hooks/usePreviousResults";
 import { useRestTimer } from "@/hooks/useRestTimer";
+import { useCardioFields } from "@/hooks/useCardioFields";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import { useWorkoutActions } from "@/hooks/useWorkoutActions";
 import { useWorkoutAutosave } from "@/hooks/useWorkoutAutosave";
@@ -156,6 +157,7 @@ function Editor({
     w.date,
   );
 
+  const cardioFields = useCardioFields();
   const add = (items: ExerciseTarget[]) =>
     change(addExercises(w, items, previous));
   // One identity each for the editor's lifetime, so memoised cards only
@@ -264,6 +266,8 @@ function Editor({
           onRemove={requestRemove}
           onChangeExercise={setChanging}
           onSetDone={setDone}
+          cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
+          onCardioFields={cardioFields.setFields}
         />
       ))}
       <ChangeExercisePicker

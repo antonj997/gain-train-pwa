@@ -26,6 +26,7 @@ import Sheet from "@/components/ui/Sheet";
 import { countLabel } from "@/lib/labels";
 import { lastUsedLabel } from "@/lib/library";
 import RoutinePlan from "@/components/RoutinePlan";
+import { useCardioFields } from "@/hooks/useCardioFields";
 import SharedRoutineList from "@/components/library/SharedRoutineList";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
 import { unpublishRoutine } from "@/data/shared-routines";
@@ -50,6 +51,7 @@ const views = [
 export default function RoutinesPanel() {
   const { state, save, deleteRecord } = useData();
   const { account } = useAuth();
+  const cardioFields = useCardioFields();
   const workoutStart = useStartWorkout();
   const draft = useRetainedDraft(
     draftKey(account, "routine"),
@@ -410,6 +412,8 @@ export default function RoutinesPanel() {
                       : removeExercise(exercise)
                   }
                   onChangeExercise={setChanging}
+                  cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
+                  onCardioFields={cardioFields.setFields}
                 />
               ))}
               <button

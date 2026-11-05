@@ -2,7 +2,7 @@ import { type RecordDoc, type WorkoutSet, validSet } from "./model";
 import { isDrop } from "./drops";
 import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
-import { cardioTotals, isCardioSet } from "../lib/cardio";
+import { cardioTotals, isCardioSet, type CardioTotals } from "../lib/cardio";
 import { estimate } from "./estimate";
 import { exerciseRecords } from "./exercise-records";
 export { estimate };
@@ -82,17 +82,15 @@ export function progressFor(records: RecordDoc[]) {
         a.name.localeCompare(b.name),
     );
 }
+/** One workout's checked sets of a cardio exercise, added up (see cardioTotals). */
 export type CardioSession = {
   date: string;
   workoutId: string;
-  durationSec: number;
-  distanceM: number;
-  calories: number;
-};
+} & CardioTotals;
 
 /**
  * Cardio exercises with one entry per workout: the time, distance and calories
- * of its checked sets added up. Oldest session first; the exercise trained most
+ * of its checked sets added up, with average heart rate and incline. Oldest session first; the exercise trained most
  * recently comes first.
  */
 export function cardioProgressFor(records: RecordDoc[]) {

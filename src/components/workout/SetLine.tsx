@@ -367,7 +367,15 @@ export default function SetLine({
             const props = inputs.find((input) => input.metric === metric)!;
             const { field } = props;
             return (
-              <div className="set-field" key={metric}>
+              // A new unit remounts the field, so it shows the value in that unit.
+              <div
+                className="set-field"
+                key={
+                  metric === "distance"
+                    ? `${metric}-${cardioFields.distanceUnit}`
+                    : metric
+                }
+              >
                 <SetNumberInput
                   aria-label={`${label} ${props.name}`}
                   aria-invalid={

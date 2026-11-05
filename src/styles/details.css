@@ -258,8 +258,7 @@
   flex: none;
   width: 48px;
   height: 48px;
-  border: 1px solid
-    color-mix(in srgb, var(--gt-danger-fg) 30%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gt-danger-fg) 30%, transparent);
   background-color: var(--gt-danger-bg);
   color: var(--gt-danger-fg);
 }

@@ -292,3 +292,16 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+.switch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding-block: var(--gt-space-1);
+}
+.switch-hint {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
+  line-height: 1.3;
+}

@@ -624,12 +624,14 @@ export const sv = {
   "cardio.metricIncline": "Lutning %",
   "cardio.metricCalories": "Kalorier",
   "cardio.metricHeartRate": "Puls",
-  "cardio.timeAlways": "Alltid på: ett set behöver en tid för att kunna kryssas i.",
+  "cardio.timeAlways":
+    "Alltid på: ett set behöver en tid för att kunna kryssas i.",
   "cardio.paceHint": "Räknas ut från tid och distans, i {unit}. Sparas inte.",
   "cardio.levelHint": "Maskinens nivå eller motstånd",
   "cardio.heartRateHint": "Snitt, i bpm",
   "cardio.distanceUnit": "Distansenhet",
-  "cardio.fieldsNote": "Sparas för {name} till nästa gång. Värden du redan fyllt i sparas och visas i Historik.",
+  "cardio.fieldsNote":
+    "Sparas för {name} till nästa gång. Värden du redan fyllt i sparas och visas i Historik.",
   "cardio.fieldsFailed": "Kunde inte spara fälten. Försök igen.",
   "cardio.note":
     "Kondition ingår inte i styrkerekord eller volym. Ett pass summerar ikryssade konditionsset för {name} under ett träningspass.",
