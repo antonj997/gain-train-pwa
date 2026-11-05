@@ -184,3 +184,30 @@ select,
 .picker-list .picker-group-title:first-child {
   margin-top: var(--gt-space-1);
 }
+
+/* The list is the picker's only scroller: the search row, the chips and the
+   footer stay put, and the list takes the rest of the sheet, which already
+   sits above an on-screen keyboard (useVisualViewport). Rows size to their
+   two lines; nothing gives them a fixed height. */
+.picker-dialog:has(> .picker-list) {
+  overflow-y: hidden;
+}
+.picker-dialog .picker-list {
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.picker-dialog .exercise-choice {
+  height: auto;
+  flex-shrink: 0;
+}
+.picker-dialog .exercise-choice small {
+  line-height: 1.35;
+}
+.picker-dialog .picker-footer {
+  padding-top: var(--gt-space-2);
+}
+.picker-dialog .picker-create {
+  border-bottom: 0;
+  color: var(--gt-accent);
+}

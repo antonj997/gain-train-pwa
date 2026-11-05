@@ -1002,12 +1002,15 @@ export const sv = {
   "picker.results": "Sökresultat för övningar",
   "picker.noMatch":
     "Inga övningar matchar. Prova en annan sökning eller skapa en.",
+  "picker.createNamed": "Skapa ”{name}”…",
+  "search.filter": "Filter",
+  "search.showFilters": "Visa filter",
+  "search.showFiltersCount": "Visa filter, {count} aktiva",
   "picker.resumeDraft": "Fortsätt utkastet",
   "picker.addCount": {
     one: "Lägg till {count} övning",
     other: "Lägg till {count} övningar",
   },
-  "picker.addNone": "Lägg till övningar",
 
   // Plan
   "dayType.legs": "Ben",

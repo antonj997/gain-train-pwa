@@ -993,12 +993,15 @@ export const en = {
   "picker.favourites": "Favourites",
   "picker.results": "Exercise search results",
   "picker.noMatch": "No matching exercises. Try another search or create one.",
+  "picker.createNamed": "Create “{name}”…",
+  "search.filter": "Filter",
+  "search.showFilters": "Show filters",
+  "search.showFiltersCount": "Show filters, {count} active",
   "picker.resumeDraft": "Resume draft",
   "picker.addCount": {
     one: "Add {count} exercise",
     other: "Add {count} exercises",
   },
-  "picker.addNone": "Add exercises",
 
   // Plan
   "dayType.legs": "Legs",

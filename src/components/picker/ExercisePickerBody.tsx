@@ -1,5 +1,7 @@
 import {
   Fragment,
+  useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -14,6 +16,7 @@ import {
 import { useData } from "@/contexts/useData";
 import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
 import FacetChips from "@/components/FacetChips";
+import { CollapsibleFilters, FilterToggle } from "@/components/SearchFilters";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
 import {
   inCategory,
@@ -105,6 +108,9 @@ export default function ExercisePickerBody({
     });
   const searchRef = useRef<HTMLInputElement>(null);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filtersId = useId();
+  const listRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
     [filter, setFilter] = useState(initialFilter),
@@ -186,6 +192,10 @@ export default function ExercisePickerBody({
     search,
   ]);
   const items = groups.flatMap((group) => group.items);
+  // A new query or filter shows its results from the top.
+  useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = 0;
+  }, [search, filter, equipment]);
   // Closing unmounts this body, which resets the search, filters and choices.
   const close = () => {
     if (busy) return;
@@ -223,9 +233,19 @@ export default function ExercisePickerBody({
     }
   };
   const searching = !creating && (searchFocused || !!search.trim());
+  // While searching, the results get the room: the title, the chip rows and
+  // an empty footer fold away until "Filter" brings the chips back.
+  const compact = searching && !filtersOpen;
+  const activeFilters = Number(filter !== initialFilter) + Number(!!equipment);
+  const startCreating = () => {
+    if (!pending) updateDraft({ name: search.trim() });
+    setCreating(true);
+  };
   return (
     <>
-      <DialogHeader>
+      <DialogHeader
+        className={compact ? "picker-header sr-only" : "picker-header"}
+      >
         <DialogTitle tabIndex={-1} className="picker-title">
           {creating
             ? t("picker.create")
@@ -313,64 +333,79 @@ export default function ExercisePickerBody({
         </div>
       ) : (
         <>
-          <div className="search-field">
-            <Search size={19} />
-            <input
-              ref={searchRef}
-              type="search"
-              aria-label={t("exercises.search")}
-              placeholder={t("exercises.search")}
-              value={search}
-              autoComplete="off"
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button
-                className="icon-button"
-                aria-label={t("picker.clearSearch")}
-                onClick={() => {
-                  setSearch("");
-                  searchRef.current?.focus();
+          <div className="search-row">
+            <div className="search-field">
+              <Search size={19} />
+              <input
+                ref={searchRef}
+                type="search"
+                aria-label={t("exercises.search")}
+                placeholder={t("exercises.search")}
+                value={search}
+                autoComplete="off"
+                onFocus={() => {
+                  setSearchFocused(true);
+                  setFiltersOpen(false);
                 }}
-              >
-                <X size={18} />
-              </button>
+                onBlur={() => setSearchFocused(false)}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  className="icon-button"
+                  aria-label={t("picker.clearSearch")}
+                  onClick={() => {
+                    setSearch("");
+                    searchRef.current?.focus();
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+            {compact && (
+              <FilterToggle
+                count={activeFilters}
+                controls={filtersId}
+                onClick={() => setFiltersOpen(true)}
+              />
             )}
           </div>
+          <CollapsibleFilters id={filtersId} collapsed={compact}>
+            <div
+              className="facet-chips"
+              role="group"
+              aria-label={t("picker.show")}
+            >
+              {[
+                ...(suggested?.length ? ["Suggested"] : []),
+                "All",
+                "Recent",
+                "Favourites",
+                ...categories,
+              ].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  className="filter-chip"
+                  aria-pressed={filter === c}
+                  onClick={() => setFilter(c)}
+                >
+                  {FILTER_LABELS[c] ? t(FILTER_LABELS[c]) : categoryLabel(c)}
+                </button>
+              ))}
+            </div>
+            <FacetChips
+              name={t("facet.equipment")}
+              allLabel={t("facet.allEquipment")}
+              format={equipmentLabel}
+              options={equipmentTypes}
+              value={equipment}
+              onChange={setEquipment}
+            />
+          </CollapsibleFilters>
           <div
-            className="facet-chips"
-            role="group"
-            aria-label={t("picker.show")}
-          >
-            {[
-              ...(suggested?.length ? ["Suggested"] : []),
-              "All",
-              "Recent",
-              "Favourites",
-              ...categories,
-            ].map((c) => (
-              <button
-                key={c}
-                type="button"
-                className="filter-chip"
-                aria-pressed={filter === c}
-                onClick={() => setFilter(c)}
-              >
-                {FILTER_LABELS[c] ? t(FILTER_LABELS[c]) : categoryLabel(c)}
-              </button>
-            ))}
-          </div>
-          <FacetChips
-            name={t("facet.equipment")}
-            allLabel={t("facet.allEquipment")}
-            format={equipmentLabel}
-            options={equipmentTypes}
-            value={equipment}
-            onChange={setEquipment}
-          />
-          <div
+            ref={listRef}
             className="picker-list"
             role="group"
             aria-label={t("picker.results")}
@@ -430,32 +465,47 @@ export default function ExercisePickerBody({
               </Fragment>
             ))}
             {!items.length && <p className="empty">{t("picker.noMatch")}</p>}
-          </div>
-          <div className="picker-footer">
-            <button
-              className="text-button"
-              onClick={() => {
-                if (!pending) updateDraft({ name: search });
-                setCreating(true);
-              }}
-            >
-              {pending ? t("picker.resumeDraft") : t("exercises.new")}
-            </button>
-            {!single && (
+            {compact && (
+              // "New exercise" moves out of the folded footer, to the list's end.
               <button
-                className="btn-primary"
-                disabled={!selected.length}
-                onClick={() => {
-                  onAdd(all.filter((e) => selected.includes(e.id)));
-                  close();
-                }}
+                type="button"
+                className="exercise-choice picker-create"
+                onClick={startCreating}
               >
-                {selected.length
-                  ? t("picker.addCount", { count: selected.length })
-                  : t("picker.addNone")}
+                <span>
+                  <strong>
+                    {pending
+                      ? t("picker.resumeDraft")
+                      : search.trim()
+                        ? t("picker.createNamed", { name: search.trim() })
+                        : t("exercises.new")}
+                  </strong>
+                </span>
+                <Plus size={20} aria-hidden="true" />
               </button>
             )}
           </div>
+          {(!compact || (!single && selected.length > 0)) && (
+            <div className="picker-footer">
+              {!compact && (
+                <button className="text-button" onClick={startCreating}>
+                  {pending ? t("picker.resumeDraft") : t("exercises.new")}
+                </button>
+              )}
+              {/* Hidden until something is chosen. */}
+              {!single && selected.length > 0 && (
+                <button
+                  className="btn-primary"
+                  onClick={() => {
+                    onAdd(all.filter((e) => selected.includes(e.id)));
+                    close();
+                  }}
+                >
+                  {t("picker.addCount", { count: selected.length })}
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
     </>
