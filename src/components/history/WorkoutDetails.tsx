@@ -4,11 +4,14 @@ import { ChevronRight, Pencil, Repeat, Trash2 } from "lucide-react";
 import DoneSetList from "@/components/DoneSetList";
 import { useData } from "@/contexts/useData";
 import { useCardioFields } from "@/hooks/useCardioFields";
-import { workoutRecordHits, type RecordKind } from "@/data/exercise-records";
+import { workoutPrs, type PrKind } from "@/data/exercise-records";
+import { improvedSetIds } from "@/data/set-improvement";
+import { lastSessions, priorWorkouts } from "@/data/workouts";
 import type { Workout } from "@/data/model";
-import { doneSetCount } from "@/data/selectors";
+import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import { summarize } from "@/data/summary";
 import { countLabel, durationLabel } from "@/lib/labels";
+import { recordKindsLabel } from "@/lib/record-labels";
 import { exercisePath, workoutPath } from "@/lib/routes";
 import { getWeightUnit, weightTotal } from "@/lib/units";
 import { formatFixed, t } from "@/i18n";
@@ -35,8 +38,10 @@ type Props = {
 /**
  * A finished workout, read-only, in the workout screen's parts: summary tiles,
  * a card per exercise (its name opens the exercise page) with the checked
- * rows, and PR chips on the sets that set a record. Repeat, Edit and Delete
- * sit in the sheet's sticky footer.
+ * rows. A set that beat the same set last time has a small up arrow; an
+ * exercise that set a PR (heaviest weight or best set volume) has one PR chip
+ * and a line naming the records. Repeat, Edit and Delete sit in the sheet's
+ * sticky footer.
  */
 export default function WorkoutDetails({
   id,
@@ -49,18 +54,21 @@ export default function WorkoutDetails({
   const { state } = useData();
   const { fieldsFor } = useCardioFields();
   const body = useRef<HTMLDivElement>(null);
-  const hits = useMemo(
-    () => workoutRecordHits(state.records, id),
-    [state.records, id],
-  );
+  const prs = useMemo(() => workoutPrs(state.records, id), [state.records, id]);
   const bySet = useMemo(() => {
-    const map = new Map<string, RecordKind[]>();
-    for (const hit of hits) if (hit.setId) map.set(hit.setId, hit.kinds);
+    const map = new Map<string, PrKind[]>();
+    for (const pr of prs) map.set(pr.set.id, pr.kinds);
     return map;
-  }, [hits]);
-  const sessionRecords = new Set(
-    hits.filter((hit) => !hit.setId).map((hit) => hit.exerciseId),
-  );
+  }, [prs]);
+  // Each exercise's previous session, as the workout screen's Previous column had it.
+  const previous = useMemo(() => {
+    const current = completedWorkouts(state.records).find((r) => r.id === id);
+    return current
+      ? lastSessions(
+          priorWorkouts(Object.values(state.records), current, w.date),
+        )
+      : new Map();
+  }, [state.records, id, w.date]);
   const totals = summarize([w], 1, w.date);
   // A record link scrolls its set into view once the sheet has opened.
   useEffect(() => {
@@ -79,8 +87,8 @@ export default function WorkoutDetails({
     },
     {
       label: t("records.tile"),
-      value: String(hits.length),
-      records: hits.length > 0,
+      value: String(prs.length),
+      records: prs.length > 0,
     },
   ];
   return (
@@ -99,6 +107,8 @@ export default function WorkoutDetails({
         </div>
         {w.exercises.map((ex) => {
           const done = ex.sets.filter((s) => s.done);
+          // An exercise added twice has its line on the card with the PR set.
+          const pr = prs.find((p) => done.some((s) => s.id === p.set.id));
           return (
             <section key={ex.id} className="card ex-card" aria-label={ex.name}>
               <Link className="ex-head-link" to={exercisePath(ex.exerciseId)}>
@@ -112,15 +122,17 @@ export default function WorkoutDetails({
                 </span>
                 <ChevronRight className="chev" size={20} aria-hidden="true" />
               </Link>
-              {sessionRecords.has(ex.exerciseId) && (
-                <p className="ex-session-record">
-                  {t("records.prLabel", { kinds: t("records.sessionVolume") })}
-                </p>
+              {pr && (
+                <p className="ex-record-line">{recordKindsLabel(pr.kinds)}</p>
               )}
               <DoneSetList
                 sets={ex.sets}
                 highlight={highlight}
                 records={bySet}
+                improved={improvedSetIds(
+                  ex.sets,
+                  previous.get(ex.exerciseId)?.sets,
+                )}
                 distanceUnit={fieldsFor(ex.exerciseId).distanceUnit}
               />
             </section>

@@ -153,13 +153,19 @@ const DialogContent = React.forwardRef<
           {...props}
           onOpenAutoFocus={(event) => {
             onOpenAutoFocus?.(event);
-            if (event.defaultPrevented || !coarsePointer()) return;
-            // On a touch screen a focused field opens the keyboard over the
-            // sheet the moment it appears; focus the sheet itself instead.
+            if (event.defaultPrevented) return;
             const first = content.current?.querySelector(
               "input, textarea, select, button, [href], [tabindex]:not([tabindex='-1'])",
             );
-            if (!opensKeyboard(first ?? null)) return;
+            // A full sheet's first control is its Close (×): focused on open,
+            // Safari rings it. The sheet itself takes focus; Tab reaches Close.
+            // On a touch screen a focused field opens the keyboard over the
+            // sheet the moment it appears, so it gets the same.
+            if (
+              !first?.classList.contains("dialog-close") &&
+              !(coarsePointer() && opensKeyboard(first ?? null))
+            )
+              return;
             event.preventDefault();
             content.current?.focus({ preventScroll: true });
           }}

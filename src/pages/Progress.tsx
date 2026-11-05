@@ -8,6 +8,7 @@ import {
   progressFor,
   recentBests,
 } from "@/data/analytics";
+import { prEvents } from "@/data/exercise-records";
 import { labelSet, today } from "@/data/model";
 import { historyPeriod } from "@/data/summary";
 import GoalsPanel from "@/components/goals/GoalsPanel";
@@ -17,6 +18,7 @@ import Sparkline from "@/components/Sparkline";
 import ListRow from "@/components/ui/ListRow";
 import Segmented from "@/components/ui/Segmented";
 import { localizedDate } from "@/lib/dates";
+import { prKindsText } from "@/lib/record-labels";
 import { exercisePath, historyPath } from "@/lib/routes";
 import { countLabel } from "@/lib/labels";
 import { totalsLabel } from "@/lib/cardio";
@@ -94,9 +96,10 @@ export default function Progress() {
       .filter((row) => row.sessions > 0)
       .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name));
   }, [items, cardioItems, period.start, period.end, t, fieldsFor]);
+  const prs = useMemo(() => prEvents(records), [records]);
   const bests = useMemo(
-    () => recentBests(items, period.start, period.end),
-    [items, period.start, period.end],
+    () => recentBests(prs, period.start, period.end),
+    [prs, period.start, period.end],
   );
   const query = search.trim().toLocaleLowerCase();
   const shown = rows.filter((row) =>
@@ -213,6 +216,7 @@ export default function Progress() {
                     >
                       <span className="badge-new">{t("history.newBest")}</span>
                       <strong>{labelSet(best.set, false)}</strong>
+                      <span className="row-sub">{prKindsText(best.kinds)}</span>
                       <time className="row-sub" dateTime={best.date}>
                         {best.date === now
                           ? t("common.todayCap")

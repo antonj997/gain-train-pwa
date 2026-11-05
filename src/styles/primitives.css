@@ -79,7 +79,8 @@
 .dialog-full .dialog-header {
   position: sticky;
   top: 44px;
-  z-index: 1;
+  /* Above the handle, which the Close (×) rises into by a few pixels. */
+  z-index: 2;
   margin: 0 calc(var(--gt-space-4) * -1);
   padding: 0 var(--gt-space-4) var(--gt-space-2);
   background-color: var(--gt-surface);
@@ -177,6 +178,11 @@
 }
 .dialog-header.has-close > .dialog-close {
   margin: calc(-1 * var(--gt-space-1)) calc(-1 * var(--gt-space-2)) 0 0;
+}
+/* Inset, so the sheet's edge and the sticky handle above never clip it. */
+.dialog-close:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
 }
 
 .dialog-title {

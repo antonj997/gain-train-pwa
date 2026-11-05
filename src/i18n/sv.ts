@@ -336,6 +336,7 @@ export const sv = {
   "set.nextSr": "Nästa set",
   "set.previousSr": "Förra:",
   "set.noPrevious": "Inget tidigare resultat",
+  "set.improved": "Bättre än förra gången",
   "set.fieldTime": "tid",
   "set.fieldDistance": "distans i kilometer",
   "set.fieldLevel": "nivå",
@@ -776,7 +777,7 @@ export const sv = {
   "records.reps": { one: "{count} rep", other: "{count} reps" },
   "records.empty": "Rekord visas efter ditt första avbockade arbetsset.",
   "records.note":
-    "Bara avbockade set; uppvärmning räknas aldrig. Uppskattad 1RM (Epley) använder viktset med högst 10 reps. Dropset räknas bara till tyngsta vikt och passvolym.",
+    "Bara avbockade set; uppvärmning räknas aldrig. Uppskattad 1RM (Epley) använder viktset med högst 10 reps. Dropset räknas bara till tyngsta vikt och passvolym. Ett PR i ett pass är en ny tyngsta vikt eller bästa setvolym.",
   "records.pr": "PR",
   "records.prLabel": "Rekord: {kinds}",
   "records.tile": "Rekord",

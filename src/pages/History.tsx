@@ -22,7 +22,8 @@ import { today } from "@/data/model";
 import PageHeader from "@/components/PageHeader";
 import ListRow from "@/components/ui/ListRow";
 import Sheet from "@/components/ui/Sheet";
-import { newBestWorkoutIds, progressFor } from "@/data/analytics";
+import { newBestWorkoutIds } from "@/data/analytics";
+import { prEvents } from "@/data/exercise-records";
 import { t } from "@/i18n";
 import { workoutTitle } from "@/lib/workout-name";
 /** "This week", or the Monday–Sunday span such as "19–25 Oct". */
@@ -48,10 +49,7 @@ export default function History() {
     () => completedWorkouts(state.records),
     [state.records],
   );
-  const bests = useMemo(
-    () => newBestWorkoutIds(progressFor(records)),
-    [records],
-  );
+  const bests = useMemo(() => newBestWorkoutIds(prEvents(records)), [records]);
   const period = historyCalendarBounds(calendar, now);
   const filtered = filterBySelection(records, calendar, now);
   const weeks = [...new Set(filtered.map((r) => weekStart(r.payload.date)))];

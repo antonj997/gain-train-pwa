@@ -4,7 +4,8 @@ import type { RecordDoc, Workout, WorkoutSet } from "../src/data/model";
 import {
   exerciseRecords,
   exerciseSessions,
-  workoutRecordHits,
+  prEvents,
+  workoutPrs,
 } from "../src/data/exercise-records";
 
 const ID = "builtin:bench-press";
@@ -194,7 +195,10 @@ test("no sessions, no records", () => {
   });
 });
 
-test("workout record hits: beats over earlier sessions, never the first", () => {
+const prsOf = (records: RecordDoc[], id: string) =>
+  workoutPrs(records, id).map((pr) => [pr.exerciseId, pr.set.id, pr.kinds]);
+
+test("PRs: heaviest weight and set volume over earlier sessions, never the first", () => {
   const first = workout([set({ weight: 100, reps: 5 })], "2026-10-01");
   const better = workout(
     [set({ weight: 102.5, reps: 5 }), set({ weight: 80, reps: 3 })],
@@ -202,34 +206,144 @@ test("workout record hits: beats over earlier sessions, never the first", () => 
   );
   const same = workout([set({ weight: 100, reps: 5 })], "2026-10-15");
   const records = [first, better, same];
-  assert.deepEqual(workoutRecordHits(records, first.id), []);
-  assert.deepEqual(workoutRecordHits(records, same.id), []);
-  const hits = workoutRecordHits(records, better.id);
+  assert.deepEqual(prsOf(records, first.id), []);
+  assert.deepEqual(prsOf(records, same.id), []);
   const top = (better.payload as Workout).exercises[0].sets[0].id;
-  assert.deepEqual(hits, [
-    {
-      exerciseId: ID,
-      kinds: ["e1rm", "heaviest", "setVolume"],
-      setId: top,
-    },
-    { exerciseId: ID, kinds: ["sessionVolume"], setId: null },
+  // One PR for the exercise, on the set that holds both records.
+  assert.deepEqual(prsOf(records, better.id), [
+    [ID, top, ["heaviest", "setVolume"]],
   ]);
-  // A later, better workout does not take the mark away.
+  // A later, better workout does not take the PR away.
   const later = workout([set({ weight: 110, reps: 5 })], "2026-10-22");
-  assert.equal(workoutRecordHits([...records, later], better.id).length, 2);
-  assert.deepEqual(workoutRecordHits(records, "missing"), []);
+  assert.equal(workoutPrs([...records, later], better.id).length, 1);
+  assert.deepEqual(workoutPrs(records, "missing"), []);
 });
 
-test("workout record hits: equal sets carry one mark, on the first", () => {
-  const first = workout([set({ weight: 100, reps: 5 })], "2026-10-01");
-  const sets = [set({ weight: 110 }), set({ weight: 110 }), set({ weight: 110 })];
+test("PRs: one chip per exercise, on the heaviest set when the records differ", () => {
+  const first = workout(
+    [set({ weight: 100, reps: 5 }), set({ weight: 80, reps: 8 })],
+    "2026-10-01",
+  );
+  // 105 × 2 is the heaviest; 80 × 10 = 800 beats 640 and 500 for set volume.
+  const sets = [set({ weight: 105, reps: 2 }), set({ weight: 80, reps: 10 })];
   const next = workout(sets, "2026-10-08");
-  const hits = workoutRecordHits([first, next], next.id);
-  assert.deepEqual(
-    hits.map((hit) => [hit.setId, hit.kinds]),
+  assert.deepEqual(prsOf([first, next], next.id), [
+    [ID, sets[0].id, ["heaviest", "setVolume"]],
+  ]);
+});
+
+test("PRs: set volume alone, and equal heaviest sets carry one chip on the first", () => {
+  const first = workout([set({ weight: 100, reps: 5 })], "2026-10-01");
+  const volume = [set({ weight: 90, reps: 8 }), set({ weight: 90, reps: 6 })];
+  const second = workout(volume, "2026-10-08");
+  assert.deepEqual(prsOf([first, second], second.id), [
+    [ID, volume[0].id, ["setVolume"]],
+  ]);
+  const heavy = [
+    set({ weight: 110 }),
+    set({ weight: 110 }),
+    set({ weight: 110 }),
+  ];
+  const third = workout(heavy, "2026-10-15");
+  // 110 × 5 = 550 is under 90 × 8 = 720: the heaviest weight only.
+  assert.deepEqual(prsOf([first, second, third], third.id), [
+    [ID, heavy[0].id, ["heaviest"]],
+  ]);
+});
+
+test("PRs: best e1RM, most reps and session volume alone are not PRs", () => {
+  const first = workout(
+    [set({ weight: 100, reps: 3 }), set({ weight: 60, reps: 10 })],
+    "2026-10-01",
+  );
+  // 95 × 5 (e1RM 110.8) beats 100 × 3 (110), 12 reps beat 10 and the session
+  // volume grows, but 95 is lighter than 100 and no set beats 60 × 10 = 600.
+  const next = workout(
     [
-      [sets[0].id, ["e1rm", "heaviest", "setVolume"]],
-      [null, ["sessionVolume"]],
+      set({ weight: 95, reps: 5 }),
+      set({ weight: 50, reps: 12 }),
+      set({ weight: 50, reps: 12 }),
+    ],
+    "2026-10-08",
+  );
+  assert.deepEqual(prsOf([first, next], next.id), []);
+  const r = exerciseRecords([first, next], ID);
+  assert.equal(r.bestE1rm?.workoutId, next.id);
+  assert.equal(r.mostReps?.workoutId, next.id);
+  assert.equal(r.bestSessionVolume?.workoutId, next.id);
+});
+
+test("PRs: warm-ups never count, a heavier drop sets the heaviest weight only", () => {
+  const first = workout([set({ weight: 100, reps: 5 })], "2026-10-01");
+  const warm = workout(
+    [set({ weight: 140, reps: 5, section: "warmup" }), set({ weight: 90 })],
+    "2026-10-08",
+  );
+  assert.deepEqual(prsOf([first, warm], warm.id), []);
+  const drop = [
+    set({ weight: 90, reps: 5 }),
+    set({ weight: 120, reps: 20, drop: true }),
+  ];
+  const dropped = workout(drop, "2026-10-15");
+  assert.deepEqual(prsOf([first, warm, dropped], dropped.id), [
+    [ID, drop[1].id, ["heaviest"]],
+  ]);
+});
+
+test("PRs: no earlier set of the kind to beat is no PR; bodyweight has none", () => {
+  const bw = workout(
+    [set({ load: "bodyweight", weight: null, reps: 10 })],
+    "2026-10-01",
+  );
+  const more = workout(
+    [set({ load: "bodyweight", weight: null, reps: 15 })],
+    "2026-10-08",
+  );
+  const added = workout(
+    [set({ load: "bodyweight", extraWeight: true, weight: 10, reps: 8 })],
+    "2026-10-15",
+  );
+  const heavier = workout(
+    [set({ load: "bodyweight", extraWeight: true, weight: 15, reps: 6 })],
+    "2026-10-22",
+  );
+  const records = [bw, more, added, heavier];
+  assert.deepEqual(prsOf(records, more.id), []);
+  assert.deepEqual(prsOf(records, added.id), []);
+  // Added weight has no set volume, so only the heaviest weight counts.
+  const top = (heavier.payload as Workout).exercises[0].sets[0].id;
+  assert.deepEqual(prsOf(records, heavier.id), [[ID, top, ["heaviest"]]]);
+});
+
+test("PR events: oldest first, per exercise, named as the exercise is now", () => {
+  const squat = "builtin:squat";
+  const a = workout([set({ weight: 100 })], "2026-10-01", {
+    extra: [
+      {
+        id: crypto.randomUUID(),
+        exerciseId: squat,
+        name: "Squat",
+        sets: [set({ weight: 120 })],
+      },
+    ],
+  });
+  const b = workout([set({ weight: 105 })], "2026-10-08", {
+    extra: [
+      {
+        id: crypto.randomUUID(),
+        exerciseId: squat,
+        name: "Back Squat",
+        sets: [set({ weight: 130 })],
+      },
+    ],
+  });
+  const c = workout([set({ weight: 110 })], "2026-10-15");
+  assert.deepEqual(
+    prEvents([c, a, b]).map((e) => [e.exerciseId, e.workoutId, e.name]),
+    [
+      [ID, b.id, "Bench"],
+      [squat, b.id, "Back Squat"],
+      [ID, c.id, "Bench"],
     ],
   );
 });

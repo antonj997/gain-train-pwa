@@ -336,6 +336,7 @@ export const en = {
   "set.nextSr": "Next set",
   "set.previousSr": "Previous:",
   "set.noPrevious": "No previous result",
+  "set.improved": "Better than last time",
   "set.fieldTime": "time",
   "set.fieldDistance": "distance in kilometres",
   "set.fieldLevel": "level",
@@ -774,7 +775,7 @@ export const en = {
   "records.reps": { one: "{count} rep", other: "{count} reps" },
   "records.empty": "Records show up after your first checked working set.",
   "records.note":
-    "Checked sets only; warm-ups never count. Estimated 1RM (Epley) uses weighted sets of up to 10 reps. Drops count towards the heaviest weight and session volume only.",
+    "Checked sets only; warm-ups never count. Estimated 1RM (Epley) uses weighted sets of up to 10 reps. Drops count towards the heaviest weight and session volume only. A PR in a workout is a new heaviest weight or best set volume.",
   "records.pr": "PR",
   "records.prLabel": "Record: {kinds}",
   "records.tile": "Records",

@@ -33,6 +33,7 @@ import {
 import { HOLD_MAX } from "@/lib/rep-hold";
 import SetNumberInput from "@/components/SetNumberInput";
 import SetBadge from "@/components/workout/SetBadge";
+import { ImprovedMark } from "@/components/DoneSetList";
 import "@/styles/workout.css";
 // The module translator, not a hook: the workout page remounts on a new
 // language, and tests render this row with a minimal hook host.
@@ -127,6 +128,7 @@ export default function SetLine({
   name,
   badge,
   previous,
+  improved = false,
   marker,
   bodyWeightKg = null,
   weightUnit,
@@ -147,6 +149,8 @@ export default function SetLine({
   name: string;
   badge: SetBadgeInfo;
   previous?: string;
+  /** Checked and better than the same set last time: a small up arrow by Previous. */
+  improved?: boolean;
   /** How this set's load differs from the exercise's default load. */
   marker: LoadMarker;
   bodyWeightKg?: number | null;
@@ -405,6 +409,12 @@ export default function SetLine({
             <>
               <span className="sr-only">{t("set.previousSr") + " "}</span>
               {previous}
+              {improved && set.done && (
+                <>
+                  {" "}
+                  <ImprovedMark />
+                </>
+              )}
             </>
           ) : (
             <>

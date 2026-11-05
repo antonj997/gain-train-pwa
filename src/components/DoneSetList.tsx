@@ -1,7 +1,8 @@
+import { ArrowUp } from "lucide-react";
 import { setBadge } from "@/data/drops";
 import { labelSet, type WorkoutSet } from "@/data/model";
 import { cardioLabel, isCardioSet, type DistanceUnit } from "@/lib/cardio";
-import type { RecordKind } from "@/data/exercise-records";
+import type { PrKind } from "@/data/exercise-records";
 import { recordKindsLabel } from "@/lib/record-labels";
 import { t } from "@/i18n";
 
@@ -41,8 +42,10 @@ type Props = {
   sets: WorkoutSet[];
   /** A set to highlight, such as the one a record link points to. */
   highlight?: string | null;
-  /** Records each set set in this workout, by set id. */
-  records?: ReadonlyMap<string, readonly RecordKind[]>;
+  /** The PR set of each exercise in this workout and its records, by set id. */
+  records?: ReadonlyMap<string, readonly PrKind[]>;
+  /** Sets that beat the same set last time (see improvedSetIds): a small up arrow. */
+  improved?: ReadonlySet<string>;
   /** Cardio: the unit the exercise's distance shows in. Every value a set holds is listed. */
   distanceUnit?: DistanceUnit;
 };
@@ -50,12 +53,14 @@ type Props = {
 /**
  * A finished exercise's checked sets, read-only, in the active workout's
  * checked-row style: the set's badge (number, W, C or ↓ for a drop), then the
- * result with a muted ×. A record set carries a PR chip.
+ * result with a muted ×. A set that beat the same set last time has a small
+ * up arrow; an exercise's PR set carries a PR chip.
  */
 export default function DoneSetList({
   sets,
   highlight,
   records,
+  improved,
   distanceUnit,
 }: Props) {
   const done = sets.filter((s) => s.done);
@@ -82,6 +87,7 @@ export default function DoneSetList({
               <span className="sr-only">{badge.name}</span>
             </span>
             <DoneSetValue set={set} distanceUnit={distanceUnit} />
+            {improved?.has(set.id) && <ImprovedMark />}
             {kinds?.length ? (
               <span
                 className="stat-chip warm done-pr"
@@ -95,5 +101,15 @@ export default function DoneSetList({
         );
       })}
     </ol>
+  );
+}
+
+/** The small up arrow on a set that beat the same set last time. */
+export function ImprovedMark() {
+  return (
+    <span className="set-up" title={t("set.improved")}>
+      <ArrowUp size={14} strokeWidth={2.5} aria-hidden="true" />
+      <span className="sr-only">{t("set.improved")}</span>
+    </span>
   );
 }

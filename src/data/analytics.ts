@@ -4,7 +4,7 @@ import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 import { cardioTotals, isCardioSet, type CardioTotals } from "../lib/cardio";
 import { estimate } from "./estimate";
-import { exerciseRecords } from "./exercise-records";
+import { exerciseRecords, type ExercisePr } from "./exercise-records";
 export { estimate };
 export function comparableSets(a: WorkoutSet, b: WorkoutSet) {
   if (
@@ -146,59 +146,20 @@ export type ExerciseProgress = ReturnType<typeof progressFor>[number];
 type Progress = ExerciseProgress;
 type ProgressPoint = Progress["points"][number];
 
-/** Points compare only within the same load, extra weight, section and measure. */
-const profileKey = (set: WorkoutSet) =>
-  [set.load, hasExtraWeight(set), set.section, set.measure ?? "reps"].join("|");
-
-/**
- * Sessions that beat every earlier comparable session of the exercise by
- * estimated 1RM, oldest first. An exercise's first session is a starting point,
- * not a best. Drops never reach `progressFor`, so they cannot set one.
- * Takes `progressFor`'s result, so a page computes that once.
- */
-export function bestEvents(progress: readonly ExerciseProgress[]) {
-  const events: (ProgressPoint & {
-    exerciseId: string;
-    name: string;
-    e1rm: number;
-  })[] = [];
-  for (const item of progress) {
-    // The best earlier estimate per profile. A point with an estimate only
-    // compares with earlier points that have one too (see comparableSets).
-    const best = new Map<string, number>();
-    for (const point of item.points) {
-      if (point.e1rm === null) continue;
-      const key = profileKey(point.set);
-      const before = best.get(key);
-      if (before !== undefined && point.e1rm > before)
-        events.push({
-          ...point,
-          e1rm: point.e1rm,
-          exerciseId: item.id,
-          name: item.name,
-        });
-      best.set(key, Math.max(before ?? 0, point.e1rm));
-    }
-  }
-  return events.sort(
-    (a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name),
-  );
+/** Ids of the workouts that set a PR for any exercise (see prEvents). */
+export function newBestWorkoutIds(events: readonly ExercisePr[]) {
+  return new Set(events.map((event) => event.workoutId));
 }
 
-/** Ids of the workouts that set a new best estimate for any exercise. */
-export function newBestWorkoutIds(progress: readonly ExerciseProgress[]) {
-  return new Set(bestEvents(progress).map((event) => event.workoutId));
-}
-
-/** The latest new best of each exercise set from `start` to `end`, newest first. */
+/** The latest PR of each exercise set from `start` to `end`, newest first. */
 export function recentBests(
-  progress: readonly ExerciseProgress[],
+  events: readonly ExercisePr[],
   start: string,
   end: string,
   limit = 4,
 ) {
   const seen = new Set<string>();
-  return bestEvents(progress)
+  return events
     .filter((event) => event.date >= start && event.date <= end)
     .reverse()
     .filter(
