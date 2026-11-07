@@ -1,3 +1,4 @@
+import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { useMemo, useState } from "react";
 import {
   Link,
@@ -207,30 +208,40 @@ export default function ExercisePage() {
       {workoutStart.confirmation}
       {header}
       {exercise && (
-        <p className="exercise-meta">
-          <span className="exercise-meta-main">
-            {categoryLabel(exercise.category)}
-          </span>
-          {categories.length > 0 && (
-            <span>
-              {t("exercise.also", {
-                categories: categories.map(categoryLabel).join(", "),
-              })}
+        <div className="exercise-identity">
+          <ExerciseAvatar
+            exerciseId={exercise.id}
+            category={exercise.category}
+            equipment={exercise.equipment}
+            size={60}
+          />
+          <p className="exercise-meta">
+            <span className="exercise-meta-main">
+              {categoryLabel(exercise.category)}
             </span>
-          )}
-          {exercise.equipment && (
-            <span>{equipmentLabel(exercise.equipment)}</span>
-          )}
-          {exercise.custom && (
-            <span className="stat-chip">{t("exercises.mine")}</span>
-          )}
-          {exercise.sharedId && (
-            <span className="stat-chip strong">{t("exercises.shared")}</span>
-          )}
-          {exercise.hidden && (
-            <span className="stat-chip muted">{t("exercise.hiddenChip")}</span>
-          )}
-        </p>
+            {categories.length > 0 && (
+              <span>
+                {t("exercise.also", {
+                  categories: categories.map(categoryLabel).join(", "),
+                })}
+              </span>
+            )}
+            {exercise.equipment && (
+              <span>{equipmentLabel(exercise.equipment)}</span>
+            )}
+            {exercise.custom && (
+              <span className="stat-chip">{t("exercises.mine")}</span>
+            )}
+            {exercise.sharedId && (
+              <span className="stat-chip strong">{t("exercises.shared")}</span>
+            )}
+            {exercise.hidden && (
+              <span className="stat-chip muted">
+                {t("exercise.hiddenChip")}
+              </span>
+            )}
+          </p>
+        </div>
       )}
       {exercise?.note && <p className="row-sub">{exercise.note}</p>}
       {logged && (

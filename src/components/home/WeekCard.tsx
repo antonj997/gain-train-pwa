@@ -6,6 +6,7 @@ import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
 import { useT } from "@/i18n/useT";
+import DayCell from "@/components/items/DayCell";
 
 type Props = {
   /** Finished workouts, newest first. */
@@ -65,17 +66,16 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
               }
             >
               <span aria-hidden="true">{d.label}</span>
-              <span
-                className={
-                  "dot" +
-                  (d.done ? " done" : "") +
-                  (d.today ? " today" : "") +
-                  (outlined ? " planned" : "")
-                }
+              <DayCell
+                size="week"
+                trained={d.done}
+                today={d.today}
+                planned={outlined}
+                count={d.count}
                 aria-hidden="true"
               >
                 {d.day}
-              </span>
+              </DayCell>
             </li>
           );
         })}

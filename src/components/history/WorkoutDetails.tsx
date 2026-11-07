@@ -1,3 +1,5 @@
+import ExerciseAvatar from "@/components/items/ExerciseAvatar";
+import RecordPill from "@/components/items/RecordPill";
 import { useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Pencil, Repeat, Trash2 } from "lucide-react";
@@ -112,6 +114,7 @@ export default function WorkoutDetails({
           return (
             <section key={ex.id} className="card ex-card" aria-label={ex.name}>
               <Link className="ex-head-link" to={exercisePath(ex.exerciseId)}>
+                <ExerciseAvatar exerciseId={ex.exerciseId} />
                 <span className="ex-titles">
                   <h3 className="ex-title">{ex.name}</h3>
                   <span className="ex-last">
@@ -123,7 +126,9 @@ export default function WorkoutDetails({
                 <ChevronRight className="chev" size={20} aria-hidden="true" />
               </Link>
               {pr && (
-                <p className="ex-record-line">{recordKindsLabel(pr.kinds)}</p>
+                <p className="ex-record-line">
+                  <RecordPill small>{recordKindsLabel(pr.kinds)}</RecordPill>
+                </p>
               )}
               <DoneSetList
                 sets={ex.sets}

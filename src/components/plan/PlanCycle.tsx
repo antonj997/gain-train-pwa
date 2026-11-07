@@ -1,10 +1,14 @@
 import Segmented from "@/components/ui/Segmented";
-import type { Plan } from "@/data/model";
+import { today, type Plan } from "@/data/model";
+import PhaseBar from "@/components/items/PhaseBar";
 import {
   type CyclePreset,
   cyclePreset,
   deloadOf,
   kindsForCycle,
+  MAX_PHASE_WEEKS,
+  phaseSegments,
+  phaseWeeks,
   weekKindsOf,
   withCyclePreset,
 } from "@/data/phase";
@@ -37,6 +41,12 @@ export default function PlanCycle({
 }) {
   const preset = cyclePreset(plan);
   const hasDeload = weekKindsOf(plan).includes("deload");
+  // One segment per week of the phase, deload weeks grey.
+  const showBar =
+    !!plan.startDate &&
+    !!plan.endDate &&
+    plan.startDate <= plan.endDate &&
+    phaseWeeks(plan) <= MAX_PHASE_WEEKS;
   const deload = deloadOf(plan);
   const setDeload = (change: Partial<typeof deload>) =>
     onChange((p) => ({ ...p, deload: { ...deloadOf(p), ...change } }));
@@ -68,6 +78,7 @@ export default function PlanCycle({
           </button>
         ))}
       </div>
+      {showBar && <PhaseBar tall segments={phaseSegments(plan, today())} />}
       {hasDeload && (
         <div className="plan-deload">
           <p className="row-sub">

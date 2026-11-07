@@ -1,3 +1,4 @@
+import GoalRing from "@/components/items/GoalRing";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import Sparkline from "@/components/Sparkline";
@@ -67,36 +68,34 @@ export default function GoalCard({
         </button>
         {chip && <span className={"stat-chip" + chip.tone}>{t(chip.key)}</span>}
       </span>
-      <span
-        className="goal-bar"
-        role="progressbar"
-        aria-label={t("goals.progressLabel", { title })}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress.fraction * 100)}
-      >
-        <span style={{ width: `${progress.fraction * 100}%` }} />
-      </span>
-      <span className="goal-values">
-        <span className="goal-value">
-          <span className="goal-value-label">{t("goals.start")}</span>
-          <span>
-            {progress.start > 0 ? kg(progress.start) : t("goals.noValue")}
+      <span className="goal-main">
+        <GoalRing
+          fraction={progress.fraction}
+          label={t("goals.progressLabel", { title })}
+        >
+          {Math.round(progress.fraction * 100)}%
+        </GoalRing>
+        <span className="goal-values">
+          <span className="goal-value">
+            <span className="goal-value-label">{t("goals.start")}</span>
+            <span>
+              {progress.start > 0 ? kg(progress.start) : t("goals.noValue")}
+            </span>
           </span>
+          <span className="goal-value">
+            <span className="goal-value-label">{t("goals.nowLabel")}</span>
+            <strong>
+              {progress.current === null
+                ? t("goals.noValue")
+                : kg(progress.current)}
+            </strong>
+          </span>
+          <span className="goal-value">
+            <span className="goal-value-label">{t("goals.targetLabel")}</span>
+            <span>{kg(progress.target)}</span>
+          </span>
+          {values.length >= 2 && <Sparkline values={values} />}
         </span>
-        <span className="goal-value">
-          <span className="goal-value-label">{t("goals.nowLabel")}</span>
-          <strong>
-            {progress.current === null
-              ? t("goals.noValue")
-              : kg(progress.current)}
-          </strong>
-        </span>
-        <span className="goal-value">
-          <span className="goal-value-label">{t("goals.targetLabel")}</span>
-          <span>{kg(progress.target)}</span>
-        </span>
-        {values.length >= 2 && <Sparkline values={values} />}
       </span>
       {progress.current === null && (
         <span className="row-sub">

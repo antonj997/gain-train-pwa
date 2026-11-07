@@ -120,8 +120,9 @@
 .ex-head-link {
   display: flex;
   align-items: center;
-  gap: var(--gt-space-2);
-  padding: 0 var(--gt-space-1) 0 var(--gt-space-2);
+  gap: 10px;
+  padding: var(--gt-space-1) var(--gt-space-1) var(--gt-space-1)
+    var(--gt-space-1);
 }
 .session-card-titles {
   display: flex;
@@ -249,10 +250,7 @@
   }
 }
 .ex-record-line {
-  margin: 0 var(--gt-space-2) var(--gt-space-1);
-  color: var(--gt-warm-fg);
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
+  margin: 0 var(--gt-space-1) var(--gt-space-1);
 }
 /* Repeat, Edit and Delete: one line in the sticky footer. */
 .dialog-full .sheet-footer.details-footer {

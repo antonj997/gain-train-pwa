@@ -1,3 +1,4 @@
+import DateTile from "@/components/items/DateTile";
 import { Link } from "react-router-dom";
 import { Repeat } from "lucide-react";
 import type { WorkoutRecord } from "@/data/model";
@@ -22,19 +23,22 @@ export default function LastWorkoutCard({
   return (
     <section className="card last-card" aria-label={t("home.lastWorkout")}>
       <Link className="last-text" to={historyPath(last.id)}>
-        <span className="row-sub">
-          {t("home.lastWorkout")} ·{" "}
-          {localizedDate(last.payload.date, {
-            weekday: "short",
-            day: "numeric",
-            month: "short",
-          })}
-        </span>
-        <span className="card-title">
-          {workoutTitle(last.payload.name)} ·{" "}
-          {countLabel(doneSetCount(last.payload), "set")}
-          {last.payload.duration !== null &&
-            ` · ${durationLabel(last.payload.duration)}`}
+        <DateTile date={last.payload.date} />
+        <span className="last-text-main">
+          <span className="row-sub">
+            {t("home.lastWorkout")} ·{" "}
+            {localizedDate(last.payload.date, {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            })}
+          </span>
+          <span className="card-title">
+            {workoutTitle(last.payload.name)} ·{" "}
+            {countLabel(doneSetCount(last.payload), "set")}
+            {last.payload.duration !== null &&
+              ` · ${durationLabel(last.payload.duration)}`}
+          </span>
         </span>
       </Link>
       <button className="btn-secondary" disabled={disabled} onClick={onRepeat}>

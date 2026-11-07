@@ -81,6 +81,27 @@ export function phaseWeek(plan: Plan, date: string) {
   return { week, weeks: phaseWeeks(plan), deload: isDeloadWeek(plan, week) };
 }
 
+export type PhaseSegment = {
+  week: number;
+  /** Past, this week or still to come, seen from `date`. */
+  state: "done" | "now" | "next";
+  deload: boolean;
+};
+
+/** One segment per week of the phase, for the phase bar. */
+export function phaseSegments(plan: Plan, date: string): PhaseSegment[] {
+  const current =
+    phaseWeek(plan, date)?.week ?? (date < plan.startDate ? 0 : Infinity);
+  return Array.from({ length: phaseWeeks(plan) }, (_, i): PhaseSegment => {
+    const week = i + 1;
+    return {
+      week,
+      state: week < current ? "done" : week === current ? "now" : "next",
+      deload: isDeloadWeek(plan, week),
+    };
+  });
+}
+
 const emptyWeek = (): (string | null)[] => Array(7).fill(null);
 
 /** The cycle presets: "3 + 1 deload", "5 + 1 deload", or every week normal. */

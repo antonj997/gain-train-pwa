@@ -2,13 +2,13 @@
    radii come from tokens.css. Controls are 44px or larger, except the heatmap
    squares, which are compact by design.
 
-   Two views share one header (title left, controls right), one day-cell look
-   and one caption line. A day is shaded by its workout count (.heat level-0 to
-   level-3), today has an ink ring and a selection is drawn as accent rings while
-   the other days fade. The
-   activity heatmap ("simple") packs a year of small squares; the month
-   calendar ("detailed") shows the same cells at 44px with the date number and
-   a From-To range. .calendar-day and friends below belong to PlanCalendar. */
+   Two views share one header (title left, controls right), the shared day
+   cell (.day-cell in items.css: trained filled, today an accent ring, planned
+   a done-coloured outline, the count badge on busy days) and one caption
+   line. A selection is drawn as accent rings while the other days fade. The
+   activity heatmap ("simple") packs a year of 12px squares; the month
+   calendar ("detailed") shows the same cells 44px tall with the date number
+   and a From-To range. .calendar-day and friends below belong to PlanCalendar. */
 
 .history-calendar {
   --cell-radius: 3px;
@@ -147,7 +147,7 @@
    so months read apart without changing the grid. Squares are smaller than
    44px by design; they sit in one tab stop with arrow-key movement. */
 .calendar-heatmap {
-  --hm-size: 16px;
+  --hm-size: 12px;
   --hm-gap: var(--cell-gap);
   --hm-label: 16px;
 }
@@ -168,7 +168,7 @@
   row-gap: var(--hm-gap);
   padding-top: calc(var(--hm-label) + var(--hm-gap) + 2px);
   color: var(--gt-ink-2);
-  font-size: var(--gt-fs-1);
+  font-size: 10px;
   font-weight: 600;
   line-height: var(--hm-size);
   text-align: center;
@@ -221,15 +221,8 @@
   padding: 0;
   border: 0;
 }
-.heatmap-day.level-0.tone-1 {
+.heatmap-day.tone-1:not(.is-trained):not(.is-planned) {
   background-color: color-mix(in srgb, var(--gt-ink) 5%, var(--gt-surface-2));
-}
-.heatmap-count {
-  font-size: 10px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  pointer-events: none;
 }
 /* Range: an accent-soft band, accent-filled start and end, rounded where a
    row of the band begins or ends. */
@@ -370,58 +363,31 @@
   cursor: not-allowed;
 }
 
-/* Day shades, shared by the heatmap squares and the month cells. Level 0 is
-   an empty surface; one workout is a light wash of the done colour, two a
-   strong mix and three or more the full colour. Text flips to on-accent once
-   the fill is dark enough to need it. */
-.heat {
-  border-radius: var(--cell-radius);
-  background-color: var(--gt-surface-2);
-  box-shadow: inset 0 0 0 1px var(--gt-line);
-  color: var(--gt-ink);
-}
-.heat.level-1 {
-  background-color: color-mix(in srgb, var(--gt-done) 40%, var(--gt-surface-2));
-  box-shadow: none;
-}
-.heat.level-2 {
-  background-color: color-mix(in srgb, var(--gt-done) 88%, var(--gt-surface-2));
-  box-shadow: none;
-  color: var(--gt-on-accent);
-}
-.heat.level-3 {
-  background-color: var(--gt-done);
-  box-shadow: none;
-  color: var(--gt-on-accent);
-}
 /* Selection, shared by both views and by the live drag preview: while
    anything is selected the rest of the grid fades back, selected days keep
-   their shade with a thin accent ring, and the first and last day (or the one
-   chosen day) get a solid ring. Today is an ink-2 ring until it is selected,
-   then a small dot. Rings are inset shadows, so nothing shifts. */
-.history-calendar .heat {
+   their fill with a thin accent ring, and the first and last day (or the one
+   chosen day) get a solid ring. Today keeps its accent ring until it is
+   selected, then a small dot. Rings are inset shadows, so nothing shifts. */
+.history-calendar .day-cell {
   transition:
     opacity var(--gt-motion),
     box-shadow var(--gt-motion);
 }
 .history-calendar
   .has-selection
-  .heat:not(:disabled):not(.is-selected):not(.is-preview) {
+  .day-cell:not(:disabled):not(.is-selected):not(.is-preview) {
   opacity: 0.35;
 }
-.history-calendar .heat.is-today:not(.is-selected):not(.is-preview) {
-  box-shadow: inset 0 0 0 1.5px var(--gt-ink-2);
-}
-.history-calendar .heat.is-selected,
-.history-calendar .heat.is-preview {
+.history-calendar .day-cell.is-selected,
+.history-calendar .day-cell.is-preview {
   box-shadow: inset 0 0 0 1.5px
     color-mix(in srgb, var(--gt-accent) 60%, transparent);
 }
-.history-calendar .heat.is-edge {
+.history-calendar .day-cell.is-edge {
   box-shadow: inset 0 0 0 2px var(--gt-accent);
 }
-.history-calendar .heat.is-today.is-selected::after,
-.history-calendar .heat.is-today.is-preview::after {
+.history-calendar .day-cell.is-today.is-selected::after,
+.history-calendar .day-cell.is-today.is-preview::after {
   content: "";
   position: absolute;
   bottom: 2px;
@@ -445,7 +411,7 @@
 .month-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: var(--cell-gap);
+  gap: 4px;
 }
 .month-weekdays {
   color: var(--gt-ink-2);
@@ -454,16 +420,6 @@
   text-align: center;
 }
 .month-day {
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-width: 0;
-  height: 44px;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: var(--gt-fs-3);
-  font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
 .month-day:disabled {

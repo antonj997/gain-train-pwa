@@ -1,3 +1,5 @@
+import ExerciseRow from "@/components/items/ExerciseRow";
+import RecordPill from "@/components/items/RecordPill";
 import { useMemo, useState } from "react";
 import { ChevronRight, Plus, Target, TrendingUp } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
@@ -15,7 +17,6 @@ import GoalsPanel from "@/components/goals/GoalsPanel";
 import PageHeader from "@/components/PageHeader";
 import ProgressSummary from "@/components/ProgressSummary";
 import Sparkline from "@/components/Sparkline";
-import ListRow from "@/components/ui/ListRow";
 import Segmented from "@/components/ui/Segmented";
 import { localizedDate } from "@/lib/dates";
 import { prKindsText } from "@/lib/record-labels";
@@ -214,7 +215,7 @@ export default function Progress() {
                         set: labelSet(best.set, false),
                       })}
                     >
-                      <span className="badge-new">{t("history.newBest")}</span>
+                      <RecordPill small>{t("history.newBest")}</RecordPill>
                       <strong>{labelSet(best.set, false)}</strong>
                       <span className="row-sub">{prKindsText(best.kinds)}</span>
                       <time className="row-sub" dateTime={best.date}>
@@ -247,14 +248,23 @@ export default function Progress() {
               />
             )}
             {shown.length > 0 && (
-              <div className="list">
+              <div className="flat-list">
                 {shown.map((row) => (
-                  <ListRow
+                  <ExerciseRow
                     key={row.id}
+                    exerciseId={row.id}
                     title={row.name}
-                    sub={`${row.best} · ${countLabel(row.sessions, "session")}`}
-                    trailing={<Sparkline values={row.trend} />}
-                    chevron
+                    meta={`${row.best} · ${countLabel(row.sessions, "session")}`}
+                    end={
+                      <>
+                        <Sparkline values={row.trend} />
+                        <ChevronRight
+                          className="chev"
+                          size={20}
+                          aria-hidden="true"
+                        />
+                      </>
+                    }
                     to={exercisePath(row.id)}
                   />
                 ))}

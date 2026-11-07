@@ -796,6 +796,7 @@ export const en = {
   "routines.resumeDraft": "Resume routine draft",
   "routines.new": "New routine",
   "routines.delete": "Delete routine",
+  "routines.editNamed": "Edit {name}",
   "routines.edit": "Edit routine",
   "routines.create": "Create routine",
   "routines.editorDescription":

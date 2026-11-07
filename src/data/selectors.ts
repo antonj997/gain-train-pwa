@@ -7,6 +7,7 @@ import {
   type WorkoutRecord,
 } from "./model";
 import { isDrop } from "./drops";
+import { catalogueById } from "./catalogue";
 import { t } from "../i18n";
 
 type Records = Record<string, RecordDoc> | readonly RecordDoc[];
@@ -73,6 +74,25 @@ export const customCategories = (records: Records) =>
   new Map(
     customExercises(records).map(({ id, payload }) => [id, payload.category]),
   );
+
+const categoryCache = new WeakMap<object, Map<string, string>>();
+/**
+ * An exercise's main category: the catalogue's, or a custom exercise's from
+ * the records (looked up once per records object). Undefined when unknown.
+ */
+export function exerciseCategory(
+  records: Record<string, RecordDoc>,
+  exerciseId: string,
+): string | undefined {
+  const builtin = catalogueById.get(exerciseId);
+  if (builtin) return builtin.category;
+  let map = categoryCache.get(records);
+  if (!map) {
+    map = customCategories(records);
+    categoryCache.set(records, map);
+  }
+  return map.get(exerciseId);
+}
 
 /** Each custom exercise's saved defaults, by id, for sets added from scratch. */
 export const customDefaults = (records: Records) =>

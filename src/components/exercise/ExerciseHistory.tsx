@@ -1,3 +1,4 @@
+import DateTile from "@/components/items/DateTile";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import DoneSetList from "@/components/DoneSetList";
@@ -46,6 +47,7 @@ export default function ExerciseHistory({
             className="card session-card"
           >
             <span className="session-card-head">
+              <DateTile date={session.date} />
               <span className="session-card-titles">
                 <span className="session-card-title">{title}</span>
                 <span className="row-sub">

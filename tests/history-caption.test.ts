@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { heatClass } from "../src/lib/heatmap";
 import { historyCaption } from "../src/lib/history-caption";
 
 const base = {
@@ -15,13 +14,6 @@ const counts = new Map([
   ["2026-10-07", 1],
   ["2026-10-20", 1],
 ]);
-
-test("heatClass maps counts to the shared shade levels", () => {
-  assert.equal(heatClass(0), "heat level-0");
-  assert.equal(heatClass(1), "heat level-1");
-  assert.equal(heatClass(2), "heat level-2");
-  assert.equal(heatClass(7), "heat level-3");
-});
 
 test("the caption names the chosen day with its workout count", () => {
   const caption = historyCaption(

@@ -9,6 +9,8 @@ import {
   routineMeta,
 } from "@/lib/routine-preview";
 import Sheet from "@/components/ui/Sheet";
+import RoutineCard from "@/components/items/RoutineCard";
+import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { useT } from "@/i18n/useT";
 
 export type RoutineStats = {
@@ -26,7 +28,7 @@ type RowProps = {
   onStart: () => void;
 };
 
-/** A fixed-height routine row: the name and counts open the preview, the play button starts. */
+/** A routine on Train: the card opens the preview, the play button starts it. */
 export function RoutineRow({
   routine,
   stats,
@@ -37,30 +39,15 @@ export function RoutineRow({
   const name = routine.payload.name;
   const { t } = useT();
   return (
-    <div className="routine-row">
-      <button
-        type="button"
-        className="row routine-row-open"
-        aria-label={t("routine.preview", { name })}
-        onClick={onPreview}
-      >
-        <span className="row-main">
-          <span className="row-title">{name}</span>
-          <span className="row-sub">
-            {routineMeta(routine.payload.exercises.length, stats.minutes)}
-          </span>
-        </span>
-      </button>
-      <button
-        type="button"
-        className="play-round routine-row-play"
-        aria-label={t("routine.startNamed", { name })}
-        disabled={disabled}
-        onClick={onStart}
-      >
-        <Play size={18} fill="currentColor" stroke="none" aria-hidden="true" />
-      </button>
-    </div>
+    <RoutineCard
+      title={name}
+      meta={routineMeta(routine.payload.exercises.length, stats.minutes)}
+      openLabel={t("routine.preview", { name })}
+      onOpen={onPreview}
+      startLabel={t("routine.startNamed", { name })}
+      disabled={disabled}
+      onStart={onStart}
+    />
   );
 }
 
@@ -117,6 +104,7 @@ export function RoutinePreviewSheet({
               const extras = exerciseExtras(exercise);
               return (
                 <li className="row preview-item" key={exercise.id}>
+                  <ExerciseAvatar exerciseId={exercise.exerciseId} />
                   <span className="row-main">
                     <span className="row-title">{exercise.name}</span>
                     {extras && <span className="row-sub">{extras}</span>}

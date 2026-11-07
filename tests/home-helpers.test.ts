@@ -7,6 +7,17 @@ import {
 } from "../src/lib/preferences.ts";
 import { durationLabel } from "../src/lib/labels.ts";
 
+test("week strip counts the workouts of each day", () => {
+  const strip = weekStrip(
+    ["2026-10-26", "2026-10-26", "2026-10-28"],
+    "2026-10-28",
+  );
+  assert.deepEqual(
+    strip.map((d) => d.count),
+    [2, 0, 1, 0, 0, 0, 0],
+  );
+});
+
 test("week strip runs Monday to Sunday and marks done days and today", () => {
   // 2026-10-28 is a Wednesday.
   const strip = weekStrip(

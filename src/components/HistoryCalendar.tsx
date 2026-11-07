@@ -28,7 +28,8 @@ import {
   weekdayIndex,
   weekdayNames,
 } from "@/lib/dates";
-import { heatClass } from "@/lib/heatmap";
+import { DayCount } from "@/components/items/DayCell";
+import { dayCellClass } from "@/components/items/day-cell";
 import { historyCaption } from "@/lib/history-caption";
 import { countLabel } from "@/lib/labels";
 import "@/styles/history-calendar.css";
@@ -38,11 +39,14 @@ export default function HistoryCalendar({
   value,
   now,
   records,
+  planned,
   onChange,
 }: {
   value: HistoryCalendarState;
   now: string;
   records: readonly RecordDoc[];
+  /** Whether a plan holds a workout on a date to come: a green outline. */
+  planned?: (date: string) => boolean;
   onChange: (value: HistoryCalendarState) => void;
 }) {
   const { month, mode, display, selectedDate, from, to, activeBound } = value;
@@ -190,6 +194,7 @@ export default function HistoryCalendar({
           counts={counts}
           instructionsId={instructionsId}
           headingId={headingId}
+          planned={planned}
           change={change}
         />
         {footer}
@@ -334,7 +339,15 @@ export default function HistoryCalendar({
                 if (node) buttons.current.set(cell.date, node);
                 else buttons.current.delete(cell.date);
               }}
-              className={`month-day ${heatClass(count)}${cell.date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${isEnd ? " is-edge" : ""}${!cell.inMonth ? " outside-month" : ""}`}
+              className={`month-day ${dayCellClass(
+                {
+                  trained: count > 0,
+                  today: cell.date === now,
+                  planned:
+                    cell.inMonth && cell.date > now && !!planned?.(cell.date),
+                },
+                "month",
+              )}${selected ? " is-selected" : ""}${isEnd ? " is-edge" : ""}${!cell.inMonth ? " outside-month" : ""}`}
               data-date={
                 cell.inMonth && cell.date <= now ? cell.date : undefined
               }
@@ -349,6 +362,7 @@ export default function HistoryCalendar({
               onClick={() => change({ type: "date", date: cell.date })}
             >
               {cell.day}
+              <DayCount count={count} />
             </button>
           );
         })}

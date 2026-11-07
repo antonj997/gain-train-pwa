@@ -1,3 +1,4 @@
+import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { memo, useCallback, useId, useRef, useState } from "react";
 import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 import {
@@ -249,6 +250,7 @@ function ExerciseCard({
       data-unit={weightUnit}
     >
       <div className="ex-head">
+        <ExerciseAvatar exerciseId={ex.exerciseId} />
         <div className="ex-titles">
           <h2 id={headingId} className="ex-title">
             {ex.name}

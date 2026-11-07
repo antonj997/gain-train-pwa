@@ -1,3 +1,4 @@
+import ExerciseRow from "@/components/items/ExerciseRow";
 import { Link } from "react-router-dom";
 import type { SharedStatus } from "@/hooks/useSharedExercises";
 import type { LibraryExercise } from "@/lib/library";
@@ -68,31 +69,32 @@ export default function SharedExerciseList({
       </p>
     );
   return (
-    <div className="list">
+    <div className="flat-list">
       {items.map((e) => (
-        <div className="row exercise-row" key={e.id}>
-          <span className="row-main">
-            <span className="row-title exercise-name">{e.name}</span>
-            <span className="row-sub">
-              {[
-                categoryLabel(e.category),
-                e.equipment && equipmentLabel(e.equipment),
-                e.sharedBy && sharedByLine(e.sharedBy),
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-          </span>
-          <button
-            type="button"
-            className="unhide"
-            aria-label={t("shared.addNamed", { name: e.name })}
-            disabled={!!adding}
-            onClick={() => onAdd(e.id)}
-          >
-            {adding === e.id ? t("shared.adding") : t("shared.add")}
-          </button>
-        </div>
+        <ExerciseRow
+          key={e.id}
+          exerciseId={"shared:" + e.id}
+          category={e.category}
+          title={e.name}
+          meta={[
+            categoryLabel(e.category),
+            e.equipment && equipmentLabel(e.equipment),
+            e.sharedBy && sharedByLine(e.sharedBy),
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          actions={
+            <button
+              type="button"
+              className="unhide"
+              aria-label={t("shared.addNamed", { name: e.name })}
+              disabled={!!adding}
+              onClick={() => onAdd(e.id)}
+            >
+              {adding === e.id ? t("shared.adding") : t("shared.add")}
+            </button>
+          }
+        />
       ))}
     </div>
   );

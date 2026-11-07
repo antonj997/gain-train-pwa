@@ -20,17 +20,14 @@ import {
   weekdayIndex,
   weekdayNames,
 } from "@/lib/dates";
-import {
-  heatmapMonthLabels,
-  heatmapWeeks,
-  heatClass,
-  monthTone,
-} from "@/lib/heatmap";
+import { heatmapMonthLabels, heatmapWeeks, monthTone } from "@/lib/heatmap";
 import {
   type HistoryCalendarAction,
   type HistoryCalendarState,
 } from "@/lib/history-calendar";
 import { countLabel } from "@/lib/labels";
+import { DayCount } from "@/components/items/DayCell";
+import { dayCellClass } from "@/components/items/day-cell";
 import { t } from "@/i18n";
 
 /**
@@ -46,6 +43,7 @@ export default function ActivityHeatmap({
   counts,
   instructionsId,
   headingId,
+  planned,
   change,
 }: {
   value: HistoryCalendarState;
@@ -53,6 +51,8 @@ export default function ActivityHeatmap({
   counts: ReadonlyMap<string, number>;
   instructionsId: string;
   headingId: string;
+  /** Whether a plan holds a workout on a date to come. */
+  planned?: (date: string) => boolean;
   change: (action: HistoryCalendarAction) => void;
 }) {
   const { selectedDate, mode, from, to, dates } = value;
@@ -199,7 +199,18 @@ export default function ActivityHeatmap({
             >
               {weeks.flatMap((week, column) =>
                 week.days.map((date, row) => {
-                  if (!date) return null;
+                  if (!date) {
+                    // The rest of this week: only a planned day shows.
+                    const later = shiftDate(week.days[0]!, row);
+                    return planned?.(later) ? (
+                      <span
+                        key={later}
+                        className={dayCellClass({ planned: true }, "grid")}
+                        style={{ gridColumn: column + 1, gridRow: row + 1 }}
+                        aria-hidden="true"
+                      />
+                    ) : null;
+                  }
                   const count = counts.get(date) ?? 0;
                   const inPreview = !!preview?.has(date);
                   const selected =
@@ -217,7 +228,10 @@ export default function ActivityHeatmap({
                         if (node) buttons.current.set(date, node);
                         else buttons.current.delete(date);
                       }}
-                      className={`heatmap-day ${heatClass(count)} tone-${monthTone(date)}${date === now ? " is-today" : ""}${selected ? " is-selected" : ""}${inPreview ? " is-preview" : ""}${(selected || inPreview) && edges.includes(date) ? " is-edge" : ""}`}
+                      className={`heatmap-day ${dayCellClass(
+                        { trained: count > 0, today: date === now },
+                        "grid",
+                      )} tone-${monthTone(date)}${selected ? " is-selected" : ""}${inPreview ? " is-preview" : ""}${(selected || inPreview) && edges.includes(date) ? " is-edge" : ""}`}
                       data-date={date}
                       style={{ gridColumn: column + 1, gridRow: row + 1 }}
                       tabIndex={date === focusable ? 0 : -1}
@@ -232,11 +246,7 @@ export default function ActivityHeatmap({
                         change({ type: "day", date, toggle: true });
                       }}
                     >
-                      {count >= 2 && (
-                        <span className="heatmap-count" aria-hidden="true">
-                          {count}
-                        </span>
-                      )}
+                      <DayCount count={count} />
                     </button>
                   );
                 }),

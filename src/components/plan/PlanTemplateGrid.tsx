@@ -4,6 +4,7 @@ import { REST, cellText } from "@/data/plans";
 import { type WeekKind, weekKindsOf } from "@/data/phase";
 import { weekdayNames } from "@/lib/dates";
 import { t } from "@/i18n";
+import DayCell from "@/components/items/DayCell";
 
 type Names = Parameters<typeof cellText>[1];
 
@@ -73,9 +74,11 @@ export default function PlanTemplateGrid({
               {row.map((cell, day) => {
                 const text = cellText(cell, names);
                 return (
-                  <button
+                  <DayCell
                     key={day}
-                    type="button"
+                    as="button"
+                    size="week"
+                    planned={!!cell && cell !== REST}
                     className={
                       "plan-cell" +
                       (cell === REST ? " is-rest" : cell ? " is-set" : "")
@@ -93,7 +96,7 @@ export default function PlanTemplateGrid({
                     onClick={() => onPick(week, day)}
                   >
                     <span>{text}</span>
-                  </button>
+                  </DayCell>
                 );
               })}
             </div>

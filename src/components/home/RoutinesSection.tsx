@@ -132,7 +132,9 @@ export default function RoutinesSection({
       {todayPlan?.kind === "group" && (
         <div className="plan-today-group">
           {planRoutines.length > 0 && (
-            <div className="list">{planRoutines.map(renderRoutine)}</div>
+            <div className="routine-cards">
+              {planRoutines.map(renderRoutine)}
+            </div>
           )}
           {todayPlan.categories.length > 0 && (
             <button
@@ -146,7 +148,7 @@ export default function RoutinesSection({
         </div>
       )}
       {recentRoutines.length ? (
-        <div className="list">{recentRoutines.map(renderRoutine)}</div>
+        <div className="routine-cards">{recentRoutines.map(renderRoutine)}</div>
       ) : (
         <div className="card col-12">
           <h3 className="card-title">{t("home.emptyRoutinesTitle")}</h3>
