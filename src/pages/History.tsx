@@ -1,6 +1,7 @@
 import HistoryCalendar from "@/components/HistoryCalendar";
 import WorkoutDetails from "@/components/history/WorkoutDetails";
 import {
+  changeHistoryCalendar,
   createHistoryCalendar,
   filterBySelection,
   historyCalendarBounds,
@@ -12,11 +13,17 @@ import { toastWithUndo } from "@/lib/undo-toast";
 import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { shiftDate, weekStart } from "@/lib/dates";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { usePlanned } from "@/hooks/usePlanned";
-import { CalendarDays } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarRange,
+  CalendarSearch,
+  MoreHorizontal,
+} from "lucide-react";
+import ActivityGridIcon from "@/components/ActivityGridIcon";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import { today } from "@/data/model";
@@ -46,6 +53,19 @@ export default function History() {
   const now = today();
   const [calendar, setCalendar] = useState(() => createHistoryCalendar(now));
   const [busy, setBusy] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [picking, setPicking] = useState(false);
+  // "Go to a month" opens the picker once the menu has closed, so the
+  // picker keeps the focus instead of the ⋯ button.
+  const pickAfterMenu = useRef(false);
+  const detailed = (state = calendar) =>
+    state.display === "detailed"
+      ? state
+      : changeHistoryCalendar(
+          state,
+          { type: "display", display: "detailed" },
+          now,
+        );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const records = useMemo(
     () => completedWorkouts(state.records),
@@ -118,6 +138,53 @@ export default function History() {
               })
         }
         title={t("history.title")}
+        action={
+          <div className="page-header-actions">
+            {/* The button shows the view it switches to. */}
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={
+                calendar.display === "simple"
+                  ? t("history.showMonth")
+                  : t("history.showGrid")
+              }
+              title={
+                calendar.display === "simple"
+                  ? t("history.showMonth")
+                  : t("history.showGrid")
+              }
+              onClick={() =>
+                setCalendar(
+                  changeHistoryCalendar(
+                    calendar,
+                    {
+                      type: "display",
+                      display:
+                        calendar.display === "simple" ? "detailed" : "simple",
+                    },
+                    now,
+                  ),
+                )
+              }
+            >
+              {calendar.display === "simple" ? (
+                <CalendarDays size={22} aria-hidden="true" />
+              ) : (
+                <ActivityGridIcon size={22} />
+              )}
+            </button>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={t("history.more")}
+              aria-haspopup="dialog"
+              onClick={() => setMenu(true)}
+            >
+              <MoreHorizontal size={22} aria-hidden="true" />
+            </button>
+          </div>
+        }
       />
       <HistoryCalendar
         value={calendar}
@@ -125,7 +192,62 @@ export default function History() {
         records={records}
         planned={plannedDay}
         onChange={setCalendar}
+        picking={picking}
+        onPicking={setPicking}
       />
+      {/* Choosing a period or a month: the calendar's rarer controls. */}
+      <Sheet
+        open={menu}
+        onClose={() => setMenu(false)}
+        title={t("history.title")}
+        onCloseAutoFocus={(event) => {
+          if (!pickAfterMenu.current) return;
+          pickAfterMenu.current = false;
+          event.preventDefault();
+          setPicking(true);
+        }}
+      >
+        <div className="sheet-menu">
+          <button
+            type="button"
+            className={
+              "sheet-menu-item" +
+              (calendar.mode === "range" ? " is-current" : "")
+            }
+            aria-pressed={calendar.mode === "range"}
+            onClick={() => {
+              setMenu(false);
+              setCalendar(
+                changeHistoryCalendar(
+                  detailed(),
+                  {
+                    type: "mode",
+                    mode: calendar.mode === "range" ? "month" : "range",
+                  },
+                  now,
+                ),
+              );
+            }}
+          >
+            <CalendarRange size={20} aria-hidden="true" />
+            {calendar.mode === "range"
+              ? t("history.stopPeriod")
+              : t("history.choosePeriod")}
+          </button>
+          <button
+            type="button"
+            className="sheet-menu-item"
+            onClick={() => {
+              pickAfterMenu.current = true;
+              setMenu(false);
+              setCalendar(detailed());
+            }}
+          >
+            <CalendarSearch size={20} aria-hidden="true" />
+            {t("history.chooseMonth")}
+          </button>
+        </div>
+      </Sheet>
       {groups.map(({ week, items, sets }) => (
         <section key={week} aria-label={weekTitle(week, now)}>
           <h2 className="group-title">

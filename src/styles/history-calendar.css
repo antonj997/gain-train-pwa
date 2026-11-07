@@ -24,31 +24,6 @@
   color: var(--gt-ink);
 }
 
-/* Detailed display only: turns on choosing a From and To date. */
-.calendar-range-toggle {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: var(--gt-space-2);
-  min-height: 44px;
-  padding: 0 var(--gt-space-3);
-  border: 1px solid transparent;
-  border-radius: var(--gt-radius-md);
-  background-color: var(--gt-surface-2);
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-3);
-  font-weight: 600;
-  transition:
-    background-color var(--gt-motion),
-    border-color var(--gt-motion),
-    color var(--gt-motion);
-}
-.calendar-range-toggle[aria-pressed="true"] {
-  border-color: var(--gt-accent);
-  background-color: var(--gt-accent-soft);
-  color: var(--gt-accent);
-}
-
 .calendar-range-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -271,9 +246,6 @@
   .heatmap-grid .heatmap-day:not(.is-selected):not(.is-preview):hover {
     outline: 1.5px solid var(--gt-ink-3);
     outline-offset: 0;
-  }
-  .calendar-range-toggle:not([aria-pressed="true"]):hover {
-    background-color: var(--gt-line);
   }
   .calendar-bound:hover {
     border-color: var(--gt-accent);

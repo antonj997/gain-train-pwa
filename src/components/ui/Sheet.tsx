@@ -22,6 +22,8 @@ type Props = {
   contentRef?: Ref<HTMLDivElement>;
   /** Runs before Escape closes the sheet; call preventDefault to keep it open. */
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
+  /** Runs when the closed sheet would return focus; call preventDefault to move it elsewhere. */
+  onCloseAutoFocus?: (event: Event) => void;
   children: ReactNode;
 };
 
@@ -40,6 +42,7 @@ export default function Sheet({
   className,
   contentRef,
   onEscapeKeyDown,
+  onCloseAutoFocus,
   children,
 }: Props) {
   return (
@@ -55,6 +58,7 @@ export default function Sheet({
         size={size}
         className={className}
         onEscapeKeyDown={onEscapeKeyDown}
+        onCloseAutoFocus={onCloseAutoFocus}
         // Without a description Radix warns about a missing one in development.
         {...(description === undefined
           ? { "aria-describedby": undefined }
