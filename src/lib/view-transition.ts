@@ -1,5 +1,6 @@
 import type { NavDirection } from "@/lib/page-transition";
 import { motionMs } from "@/lib/slow-motion";
+import { sweepSlowMotion } from "@/lib/slow-motion-player";
 
 /**
  * Page slides. A navigation from a tab, the Settings gear or a Back button runs
@@ -89,7 +90,8 @@ export function navigateWithTransition(
     delete root.dataset.navDir;
   };
   transition.finished.then(clear, clear);
-  quiet(transition.ready);
+  // Slow motion catches the pseudo-elements' animations on their first frame.
+  quiet(transition.ready.then(sweepSlowMotion));
   quiet(transition.updateCallbackDone);
 }
 
@@ -159,6 +161,7 @@ export function animatePageEntry(main: HTMLElement, direction: NavDirection) {
       ],
       { duration, easing },
     );
+    sweepSlowMotion();
   } catch {
     // An animation is never worth an error.
   }

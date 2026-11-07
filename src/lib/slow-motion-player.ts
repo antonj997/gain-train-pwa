@@ -28,6 +28,17 @@ const setRate = (animation: Animation, rate: number) => {
   }
 };
 
+/** The running player's sweep, for a caller that has just started animations. */
+let activeSweep: (() => void) | null = null;
+
+/**
+ * Slows what has just started at once instead of on the next frame (the
+ * view transition calls it when its pseudo-elements start). Off, a no-op.
+ */
+export function sweepSlowMotion() {
+  activeSweep?.();
+}
+
 /** Starts slowing animations by `scale`; returns the function that stops it. */
 export function startSlowMotion(scale: number, doc: Document = document) {
   const root = doc.documentElement;
@@ -45,11 +56,13 @@ export function startSlowMotion(scale: number, doc: Document = document) {
   };
   const events = ["animationstart", "transitionrun", "transitionstart"];
   for (const name of events) doc.addEventListener(name, sweep, true);
+  activeSweep = sweep;
   sweep();
   frame = requestAnimationFrame(loop);
 
   return () => {
     cancelAnimationFrame(frame);
+    if (activeSweep === sweep) activeSweep = null;
     for (const name of events) doc.removeEventListener(name, sweep, true);
     // Whatever is still running finishes at normal speed.
     for (const animation of animationsOf(doc))
