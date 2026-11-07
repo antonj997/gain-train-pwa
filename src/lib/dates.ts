@@ -80,6 +80,22 @@ export function weekdayIndex(date: string) {
 /** The Monday of the week that holds `date`. */
 export const weekStart = (date: string) => shiftDate(date, -weekdayIndex(date));
 
+/** The ISO 8601 week number (weeks start on Monday; week 1 holds the year's first Thursday), as Swedish calendars show it. */
+export function isoWeek(date: string) {
+  const thursday = atUtc(shiftDate(date, 3 - weekdayIndex(date)));
+  const january4 = Date.UTC(thursday.getUTCFullYear(), 0, 4);
+  const firstThursday = atUtc(
+    shiftDate(
+      dayOf(new Date(january4)),
+      3 - weekdayIndex(dayOf(new Date(january4))),
+    ),
+  );
+  return (
+    Math.round((thursday.getTime() - firstThursday.getTime()) / (7 * DAY_MS)) +
+    1
+  );
+}
+
 /** True for a real calendar day written as YYYY-MM-DD (no 31 April). */
 export function isIsoDay(day: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;

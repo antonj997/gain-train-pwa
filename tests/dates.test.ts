@@ -4,6 +4,7 @@ import {
   addMonths,
   endOfMonth,
   isIsoDay,
+  isoWeek,
   shiftDate,
   weekStart,
   weekdayIndex,
@@ -26,4 +27,17 @@ test("only real days are ISO days", () => {
   assert.equal(isIsoDay("2026-02-29"), false);
   assert.equal(isIsoDay("2026-04-31"), false);
   assert.equal(isIsoDay("2026-4-01"), false);
+});
+
+test("ISO week numbers start on Monday, week 1 holding the first Thursday", () => {
+  assert.equal(isoWeek("2026-11-07"), 45);
+  assert.equal(isoWeek("2026-11-02"), 45);
+  assert.equal(isoWeek("2026-11-08"), 45);
+  assert.equal(isoWeek("2026-11-09"), 46);
+  // 1 January 2027 is a Friday: still week 53 of 2026.
+  assert.equal(isoWeek("2027-01-01"), 53);
+  assert.equal(isoWeek("2027-01-04"), 1);
+  // 29 December 2025 is a Monday in week 1 of 2026.
+  assert.equal(isoWeek("2025-12-29"), 1);
+  assert.equal(isoWeek("2026-01-01"), 1);
 });
