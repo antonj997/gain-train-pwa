@@ -23,6 +23,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import ExerciseRow from "@/components/library/ExerciseRow";
 import ExerciseEditorSheet from "@/components/library/ExerciseEditorSheet";
 import LibraryExerciseMenu from "@/components/library/LibraryExerciseMenu";
+import { useExerciseMenu } from "@/components/gestures/ExerciseMenu";
 import SharedExerciseList from "@/components/library/SharedExerciseList";
 import {
   filterExercises,
@@ -171,6 +172,16 @@ export default function ExercisesPanel({
     }
     setOpen(true);
   });
+  // Press and hold on a row: its menu by the row.
+  const exerciseMenu = useExerciseMenu({
+    onEdit: (e) => {
+      const target = all.find((x) => x.id === e.id);
+      if (target) openEditor(target);
+    },
+  });
+  const hold = useStableCallback((e: LibraryExercise, anchor: HTMLElement) =>
+    exerciseMenu.open(e, anchor),
+  );
   const unhide = useStableCallback((e: LibraryExercise) =>
     toggleHidden(e, false),
   );
@@ -265,6 +276,7 @@ export default function ExercisesPanel({
   });
 
   const saved = !!edit && edit.id in state.records;
+  const firstId = groups[0]?.items[0]?.id;
   return (
     <div className="col-12">
       <div className="search-row">
@@ -361,6 +373,8 @@ export default function ExercisesPanel({
                   now={now}
                   onUnhide={unhide}
                   onMenu={setMenu}
+                  onHold={hold}
+                  tip={slot.item.id === firstId}
                 />
               ),
             )}
@@ -419,6 +433,7 @@ export default function ExercisesPanel({
           setOpen(false);
         }}
       />
+      {exerciseMenu.menu}
       <LibraryExerciseMenu
         exercise={menu}
         now={now}

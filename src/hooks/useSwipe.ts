@@ -250,6 +250,9 @@ export function useSwipe(options: SwipeOptions) {
 
     const cancel = (event: PointerEvent) => {
       if (!g || event.pointerId !== g.id) return;
+      // Taking the capture from the touched child fires its own
+      // lostpointercapture, which bubbles here: only the box's counts.
+      if (event.type === "lostpointercapture" && event.target !== box) return;
       const swiping = g.axis === "x";
       end();
       if (swiping) finish({ action: "close" });

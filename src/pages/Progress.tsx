@@ -27,6 +27,9 @@ import { useCardioFields } from "@/hooks/useCardioFields";
 import { useGoals } from "@/hooks/useGoals";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import { useT } from "@/i18n/useT";
+import { useExerciseMenu } from "@/components/gestures/ExerciseMenu";
+import { useHiddenExercises } from "@/hooks/useHiddenExercises";
+import { libraryExercises } from "@/lib/library";
 
 const periods = [
   { value: "4w", label: "progress.p4w", before: "progress.before4w" },
@@ -42,6 +45,24 @@ type Period = (typeof periods)[number]["value"];
  */
 export default function Progress() {
   const { state } = useData();
+  // Press and hold an exercise row: its menu by the row.
+  const exerciseMenu = useExerciseMenu();
+  const { hidden } = useHiddenExercises();
+  const library = useMemo(
+    () => libraryExercises(state.records, hidden),
+    [state.records, hidden],
+  );
+  const holdRow = (row: { id: string; name: string }, anchor: HTMLElement) =>
+    exerciseMenu.open(
+      library.find((e) => e.id === row.id) ?? {
+        id: row.id,
+        name: row.name,
+        category: "Other",
+        custom: false,
+        favourite: false,
+      },
+      anchor,
+    );
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<Period>("4w");
   const [choosing, setChoosing] = useState(false);
@@ -100,6 +121,7 @@ export default function Progress() {
   const current = periods.find((p) => p.value === range)!;
   return (
     <div className="page progress-page">
+      {exerciseMenu.menu}
       <PageHeader
         eyebrow={
           hasData
@@ -221,6 +243,7 @@ export default function Progress() {
                       </>
                     }
                     to={exercisePath(row.id)}
+                    onLongPress={(anchor) => holdRow(row, anchor)}
                   />
                 ))}
               </div>
