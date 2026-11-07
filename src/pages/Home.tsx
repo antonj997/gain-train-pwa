@@ -38,8 +38,11 @@ const capitalize = (text: string) =>
  */
 export default function Home() {
   const { state } = useData();
-  const { start: requestStart, busy: starting, confirmation } =
-    useStartWorkout();
+  const {
+    start: requestStart,
+    busy: starting,
+    confirmation,
+  } = useStartWorkout();
   // The most recently started workout is the running one. Another started
   // workout can arrive from a second device; it is offered separately below.
   const [running, ...otherRunning] = runningWorkouts(state.records);

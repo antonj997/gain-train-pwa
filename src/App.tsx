@@ -1,5 +1,5 @@
 import { lazy, type CSSProperties } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/useAuth";
@@ -20,6 +20,9 @@ const Auth = lazy(() => import("@/pages/Auth"));
 const Settings = lazy(() => import("@/pages/Settings"));
 const Library = lazy(() => import("@/pages/Library"));
 const Progress = lazy(() => import("@/pages/Progress"));
+const ProgressGoals = lazy(() => import("@/pages/ProgressGoals"));
+const LibraryPlan = lazy(() => import("@/pages/LibraryPlan"));
+const LibraryShared = lazy(() => import("@/pages/LibraryShared"));
 const AdminReports = lazy(() => import("@/pages/AdminReports"));
 const Exercise = lazy(() => import("@/pages/Exercise"));
 /** Sonner's own default time on screen; slow motion stretches it. */
@@ -69,22 +72,15 @@ function AccountApp() {
               <Route path="workout/:id" element={<ActiveWorkout />} />
               <Route path="history" element={<History />} />
               <Route path="progress" element={<Progress />} />
+              <Route path="progress/goals" element={<ProgressGoals />} />
               <Route path="settings" element={<Settings />} />
               <Route path="settings/admin" element={<AdminReports />} />
               <Route path="library" element={<Library />} />
+              <Route path="library/plan" element={<LibraryPlan />} />
+              <Route path="library/shared" element={<LibraryShared />} />
               <Route path="exercise/:id" element={<Exercise />} />
-              <Route
-                path="library/plan"
-                element={<Navigate to="/library?tab=plan" replace />}
-              />
-              <Route
-                path="routines"
-                element={<Navigate to="/library" replace />}
-              />
-              <Route
-                path="my-exercises"
-                element={<Navigate to="/library?tab=exercises" replace />}
-              />
+              {/* Old URLs (/routines, ?tab=plan, ?tab=goals …) are
+                  redirected in Layout; see src/lib/legacy-routes.ts. */}
               <Route path="auth" element={<Auth />} />
               <Route path="*" element={<NotFound />} />
             </Route>

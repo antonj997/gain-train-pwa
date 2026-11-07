@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { toast } from "sonner";
@@ -40,8 +40,15 @@ const filters = [
   { value: "hidden", label: "exercises.filterHidden" },
 ] as const satisfies readonly { value: Filter; label: MessageKey }[];
 
+/** A tap on Library's header Search or +, numbered so each tap acts once. */
+export type PanelRequest = { kind: "new" | "search"; n: number } | null;
+
 /** Library → Exercises: search, filters, groups and the custom exercise editor. */
-export default function ExercisesPanel() {
+export default function ExercisesPanel({
+  request = null,
+}: {
+  request?: PanelRequest;
+}) {
   const { state, save, deleteRecord } = useData();
   const { account } = useAuth();
   const draft = useRetainedDraft(
@@ -221,6 +228,24 @@ export default function ExercisesPanel() {
     if (target) openEditor(target);
   }, [editId, all, setParams, openEditor]);
 
+  const createExercise = () => {
+    if (!edit)
+      setEdit({
+        id: crypto.randomUUID(),
+        data: { name: "", category: "Other", note: "", favourite: false },
+      });
+    setOpen(true);
+  };
+  // Library's header: + opens a new exercise, Search focuses the field.
+  const searchInput = useRef<HTMLInputElement>(null);
+  const handled = useRef(request?.n ?? 0);
+  useEffect(() => {
+    if (!request || request.n === handled.current) return;
+    handled.current = request.n;
+    if (request.kind === "new") createExercise();
+    else searchInput.current?.focus();
+  });
+
   const saved = !!edit && edit.id in state.records;
   return (
     <div className="col-12">
@@ -228,6 +253,7 @@ export default function ExercisesPanel() {
         <label className="search-field">
           <Search size={20} aria-hidden="true" />
           <input
+            ref={searchInput}
             type="search"
             placeholder={t("exercises.search")}
             aria-label={t("exercises.search")}
@@ -331,18 +357,7 @@ export default function ExercisesPanel() {
           {draft.retained ? t("routines.keptOnPhone") : t("routines.keepOpen")}
         </p>
       )}
-      <button
-        type="button"
-        className="btn-dashed"
-        onClick={() => {
-          if (!edit)
-            setEdit({
-              id: crypto.randomUUID(),
-              data: { name: "", category: "Other", note: "", favourite: false },
-            });
-          setOpen(true);
-        }}
-      >
+      <button type="button" className="btn-dashed" onClick={createExercise}>
         <Plus size={20} aria-hidden="true" />
         {edit ? t("exercises.resumeDraft") : t("exercises.new")}
       </button>
