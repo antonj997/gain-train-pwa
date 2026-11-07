@@ -28,7 +28,8 @@ import {
   weekdayIndex,
   weekdayNames,
 } from "@/lib/dates";
-import { DayCount, dayCellClass } from "@/components/items/DayCell";
+import { DayCount } from "@/components/items/DayCell";
+import { dayCellClass } from "@/components/items/day-cell";
 import { historyCaption } from "@/lib/history-caption";
 import { countLabel } from "@/lib/labels";
 import "@/styles/history-calendar.css";

@@ -8,7 +8,7 @@ import {
 import { localizedDate, weekdayNames } from "@/lib/dates";
 import "@/styles/history-calendar.css";
 import { t } from "@/i18n";
-import { dayCellClass } from "@/components/items/DayCell";
+import { dayCellClass } from "@/components/items/day-cell";
 
 export type PlanDay = {
   kind: "planned" | "rest" | null;

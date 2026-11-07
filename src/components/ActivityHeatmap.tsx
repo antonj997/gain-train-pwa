@@ -26,7 +26,8 @@ import {
   type HistoryCalendarState,
 } from "@/lib/history-calendar";
 import { countLabel } from "@/lib/labels";
-import { DayCount, dayCellClass } from "@/components/items/DayCell";
+import { DayCount } from "@/components/items/DayCell";
+import { dayCellClass } from "@/components/items/day-cell";
 import { t } from "@/i18n";
 
 /**
