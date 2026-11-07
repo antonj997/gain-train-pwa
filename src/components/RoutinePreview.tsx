@@ -11,6 +11,8 @@ import {
 import Sheet from "@/components/ui/Sheet";
 import RoutineCard from "@/components/items/RoutineCard";
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
+import type { SwipeAction } from "@/components/gestures/Swipeable";
+import type { TipId } from "@/lib/tips";
 import { useT } from "@/i18n/useT";
 
 export type RoutineStats = {
@@ -26,6 +28,9 @@ type RowProps = {
   disabled?: boolean;
   onPreview: () => void;
   onStart: () => void;
+  /** Swipe left: More and Delete (see RoutineCard). */
+  swipeActions?: SwipeAction[];
+  tip?: TipId;
 };
 
 /** A routine on Train: the card opens the preview, the play button starts it. */
@@ -35,6 +40,8 @@ export function RoutineRow({
   disabled,
   onPreview,
   onStart,
+  swipeActions,
+  tip,
 }: RowProps) {
   const name = routine.payload.name;
   const { t } = useT();
@@ -47,6 +54,8 @@ export function RoutineRow({
       startLabel={t("routine.startNamed", { name })}
       disabled={disabled}
       onStart={onStart}
+      swipeActions={swipeActions}
+      tip={tip}
     />
   );
 }
@@ -59,6 +68,8 @@ type SheetProps = {
   onClose: () => void;
   onStart: () => void;
   onEdit: () => void;
+  /** Delete, the visible twin of the card's swipe. */
+  onDelete?: () => void;
 };
 
 /** The floating preview of a routine: its totals and every planned exercise. */
@@ -70,6 +81,7 @@ export function RoutinePreviewSheet({
   onClose,
   onStart,
   onEdit,
+  onDelete,
 }: SheetProps) {
   const exercises = routine?.payload.exercises ?? [];
   const { t } = useT();
@@ -132,6 +144,16 @@ export function RoutinePreviewSheet({
             <button type="button" className="btn-quiet" onClick={onEdit}>
               {t("common.edit")}
             </button>
+            {onDelete && (
+              <button
+                type="button"
+                className="text-button danger"
+                disabled={disabled}
+                onClick={onDelete}
+              >
+                {t("routines.delete")}
+              </button>
+            )}
           </div>
         </>
       )}

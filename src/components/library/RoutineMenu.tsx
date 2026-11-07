@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Pencil, Share2, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
+import type { SwipeAction } from "@/components/gestures/Swipeable";
 import { useData } from "@/contexts/useData";
 import type { RoutineRecord } from "@/data/model";
 import { routines as routineRecords } from "@/data/selectors";
@@ -149,3 +150,23 @@ export function useRoutineMenu({
     sheet,
   };
 }
+
+/** A routine card's swipe-left buttons: More (its ⋯ menu) and Delete. */
+export const routineSwipeActions = (
+  more: () => void,
+  remove: () => void,
+): SwipeAction[] => [
+  {
+    key: "more",
+    label: t("swipe.more"),
+    icon: <MoreHorizontal size={18} aria-hidden="true" />,
+    onSelect: more,
+  },
+  {
+    key: "delete",
+    label: t("swipe.delete"),
+    icon: <Trash2 size={18} aria-hidden="true" />,
+    tone: "danger",
+    onSelect: remove,
+  },
+];

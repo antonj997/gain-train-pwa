@@ -24,7 +24,10 @@ import {
   Trash2,
 } from "lucide-react";
 import RoutineCard from "@/components/items/RoutineCard";
-import { useRoutineMenu } from "@/components/library/RoutineMenu";
+import {
+  routineSwipeActions,
+  useRoutineMenu,
+} from "@/components/library/RoutineMenu";
 import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
 import { useWithUndo } from "@/hooks/useMessages";
 import { useData } from "@/contexts/useData";
@@ -317,6 +320,11 @@ export default function RoutinesPanel({
                     <MoreHorizontal size={22} aria-hidden="true" />
                   </button>
                 }
+                swipeActions={routineSwipeActions(
+                  () => routineMenu.open(r.id, index),
+                  () => void routineMenu.remove(r, index),
+                )}
+                tip={index === 0 ? "swipeRoutine" : undefined}
               />
             );
           })}

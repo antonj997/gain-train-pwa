@@ -10,6 +10,15 @@ import {
 import { routineEditPath } from "@/lib/routes";
 import { routineAverageMinutes } from "@/lib/routine-preview";
 import { useT } from "@/i18n/useT";
+import {
+  routineSwipeActions,
+  useRoutineMenu,
+} from "@/components/library/RoutineMenu";
+import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
+import { useWithUndo } from "@/hooks/useMessages";
+
+/** Your routines' list, where a deleted routine leaves its Undo. */
+const TRAIN_SCOPE = "routines:train";
 
 type Props = {
   /** Finished workouts, newest first. */
@@ -60,18 +69,29 @@ export default function RoutinesSection({
     lastDone:
       completed.find((r) => r.payload.routineId === id)?.payload.date ?? null,
   });
-  const renderRoutine = (r: RoutineRecord) => (
+  // More opens the routine's ⋯ menu; Delete leaves an Undo in its place.
+  const routineMenu = useRoutineMenu({
+    scope: TRAIN_SCOPE,
+    onEdit: (r) => navigate(routineEditPath(r.id)),
+  });
+  const cards = useWithUndo(TRAIN_SCOPE, recentRoutines);
+  const renderRoutine = (r: RoutineRecord, index: number) => (
     <RoutineRow
       key={r.id}
       routine={r}
       stats={routineStats(r.id)}
-      disabled={starting}
+      disabled={starting || routineMenu.busy}
       onPreview={() => setPreviewId(r.id)}
       onStart={() => onStart(r)}
+      swipeActions={routineSwipeActions(
+        () => routineMenu.open(r.id, index),
+        () => void routineMenu.remove(r, index),
+      )}
+      tip={index === 0 ? "swipeRoutine" : undefined}
     />
   );
   // The only routine is on the Today card: nothing else to list.
-  if (!recentRoutines.length && all.length) return null;
+  if (!recentRoutines.length && all.length && !cards.length) return null;
   return (
     <section aria-labelledby="routines-heading">
       <div className="section-head">
@@ -84,8 +104,16 @@ export default function RoutinesSection({
           {t("home.all")}
         </Link>
       </div>
-      {recentRoutines.length ? (
-        <div className="routine-cards">{recentRoutines.map(renderRoutine)}</div>
+      {cards.length ? (
+        <div className="routine-cards">
+          {cards.map((slot) =>
+            slot.kind === "undo" ? (
+              <UndoPlaceholder key={`u${slot.entry.id}`} entry={slot.entry} />
+            ) : (
+              renderRoutine(slot.item, slot.index)
+            ),
+          )}
+        </div>
       ) : (
         <div className="card col-12">
           <h3 className="card-title">{t("home.emptyRoutinesTitle")}</h3>
@@ -113,7 +141,16 @@ export default function RoutinesSection({
         onEdit={() => {
           if (previewRoutine) navigate(routineEditPath(previewRoutine.id));
         }}
+        onDelete={() => {
+          if (!previewRoutine) return;
+          const index = recentRoutines.findIndex(
+            (r) => r.id === previewRoutine.id,
+          );
+          setPreviewId(null);
+          void routineMenu.remove(previewRoutine, index);
+        }}
       />
+      {routineMenu.sheet}
     </section>
   );
 }

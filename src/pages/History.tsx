@@ -25,7 +25,10 @@ import {
   CalendarRange,
   CalendarSearch,
   MoreHorizontal,
+  Repeat2,
+  Trash2,
 } from "lucide-react";
+import Swipeable from "@/components/gestures/Swipeable";
 import ActivityGridIcon from "@/components/ActivityGridIcon";
 import { useData } from "@/contexts/useData";
 import { today, type WorkoutRecord } from "@/data/model";
@@ -308,19 +311,41 @@ export default function History() {
                 .filter(Boolean)
                 .join(" · ");
               return (
-                <WorkoutRow
+                <Swipeable
                   key={r.id}
-                  date={w.date}
-                  selected={calendar.selectedDate === w.date}
-                  title={workoutTitle(w.name)}
-                  meta={meta}
-                  badge={
-                    bests.has(r.id) ? (
-                      <RecordPill small>{t("history.newBest")}</RecordPill>
-                    ) : undefined
-                  }
-                  onClick={() => setParams({ workout: r.id })}
-                />
+                  className="swipe-row"
+                  actions={[
+                    {
+                      key: "repeat",
+                      label: t("swipe.repeat"),
+                      icon: <Repeat2 size={18} aria-hidden="true" />,
+                      onSelect: () => {
+                        if (!busy && !workoutStart.busy)
+                          void workoutStart.repeat(w);
+                      },
+                    },
+                    {
+                      key: "delete",
+                      label: t("swipe.delete"),
+                      icon: <Trash2 size={18} aria-hidden="true" />,
+                      tone: "danger",
+                      onSelect: () => void removeWorkout(r),
+                    },
+                  ]}
+                >
+                  <WorkoutRow
+                    date={w.date}
+                    selected={calendar.selectedDate === w.date}
+                    title={workoutTitle(w.name)}
+                    meta={meta}
+                    badge={
+                      bests.has(r.id) ? (
+                        <RecordPill small>{t("history.newBest")}</RecordPill>
+                      ) : undefined
+                    }
+                    onClick={() => setParams({ workout: r.id })}
+                  />
+                </Swipeable>
               );
             })}
           </div>

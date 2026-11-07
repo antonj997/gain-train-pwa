@@ -10,6 +10,7 @@ import "./styles/pages.css";
 import "./styles/details.css";
 import "./styles/items.css";
 import "./styles/messages.css";
+import "./styles/gestures.css";
 
 const UPDATE_CHECK_MS = 60 * 60 * 1000;
 let updateReady = false;
