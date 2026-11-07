@@ -222,7 +222,9 @@ export function movementIcon(exercise: MovementSource): Movement {
   if (byName) return byName;
   const equipment = builtin?.equipment ?? exercise.equipment;
   if (equipment === "cardio machine") return "run";
-  return BY_CATEGORY[builtin?.category ?? exercise.category ?? ""] ?? "dumbbell";
+  return (
+    BY_CATEGORY[builtin?.category ?? exercise.category ?? ""] ?? "dumbbell"
+  );
 }
 
 /** The CSS key of a main category's tint: "full-body"; anything unknown is "other". */

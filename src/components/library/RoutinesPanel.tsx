@@ -14,7 +14,8 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import { Plus, Play, Trash2, MoreHorizontal, Share2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MoreHorizontal, Share2 } from "lucide-react";
+import RoutineCard from "@/components/items/RoutineCard";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { type Exercise, type Routine } from "@/data/model";
@@ -294,22 +295,25 @@ export default function RoutinesPanel() {
             setPreviewId(null);
         }}
       />
-      {view === "mine" &&
-        records.map((r) => {
-          const done = lastDone.get(r.id);
-          return (
-            <section className="card col-12" key={r.id}>
-              <div className="card-head routine-head">
-                <div className="routine-title">
-                  <h2 className="card-title routine-name">
+      {view === "mine" && records.length > 0 && (
+        <div className="routine-cards">
+          {records.map((r) => {
+            const done = lastDone.get(r.id);
+            return (
+              <RoutineCard
+                key={r.id}
+                title={
+                  <>
                     {r.payload.name}
                     {r.payload.sharedId && (
                       <span className="stat-chip strong">
                         {t("exercises.shared")}
                       </span>
                     )}
-                  </h2>
-                  <span className="row-sub">
+                  </>
+                }
+                meta={
+                  <>
                     {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
                     {countLabel(setCount(r.payload), "set")} ·{" "}
                     {done
@@ -317,45 +321,41 @@ export default function RoutinesPanel() {
                           when: lastUsedLabel(done, now),
                         })
                       : t("routines.neverDone")}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  className="icon-btn routine-more"
-                  aria-label={t("routines.options", { name: r.payload.name })}
-                  disabled={busy}
-                  onClick={() => setMenu(r.id)}
-                >
-                  <MoreHorizontal size={22} aria-hidden="true" />
-                </button>
-              </div>
-              <p className="routine-exercises">
-                {r.payload.exercises.map((ex) => ex.name).join(" · ")}
-              </p>
-              <div className="routine-actions">
-                <button
-                  className="btn-primary"
-                  disabled={busy || workoutStart.busy}
-                  onClick={() =>
-                    void workoutStart.start(
-                      newWorkout(Object.values(state.records), { routine: r }),
-                    )
-                  }
-                >
-                  <Play size={16} fill="currentColor" stroke="none" />
-                  {t("common.start")}
-                </button>
-                <button
-                  className="btn-secondary"
-                  disabled={busy}
-                  onClick={() => startEdit(r.id, r.payload)}
-                >
-                  {t("common.edit")}
-                </button>
-              </div>
-            </section>
-          );
-        })}
+                  </>
+                }
+                detail={
+                  r.payload.exercises.map((ex) => ex.name).join(" · ") ||
+                  undefined
+                }
+                openLabel={t("routines.editNamed", { name: r.payload.name })}
+                onOpen={() => {
+                  if (!busy) startEdit(r.id, r.payload);
+                }}
+                startLabel={t("routine.startNamed", { name: r.payload.name })}
+                disabled={busy || workoutStart.busy}
+                onStart={() =>
+                  void workoutStart.start(
+                    newWorkout(Object.values(state.records), { routine: r }),
+                  )
+                }
+                actions={
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-label={t("routines.options", {
+                      name: r.payload.name,
+                    })}
+                    disabled={busy}
+                    onClick={() => setMenu(r.id)}
+                  >
+                    <MoreHorizontal size={22} aria-hidden="true" />
+                  </button>
+                }
+              />
+            );
+          })}
+        </div>
+      )}
       {view === "mine" && !records.length && !edit && (
         <p className="empty">{t("routines.empty")}</p>
       )}
@@ -381,6 +381,15 @@ export default function RoutinesPanel() {
         {menuRoutine && (
           <>
             <div className="list">
+              <ListRow
+                title={t("common.edit")}
+                leading={<Pencil size={20} aria-hidden="true" />}
+                disabled={busy}
+                onClick={() => {
+                  setMenu(null);
+                  startEdit(menuRoutine.id, menuRoutine.payload);
+                }}
+              />
               {shared.canShare ? (
                 <ListRow
                   title={

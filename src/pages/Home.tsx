@@ -12,12 +12,12 @@ import type { RoutineRecord } from "@/data/model";
 import {
   completedWorkouts,
   draftWorkouts,
-  routines as routineRecords,
   runningWorkouts,
 } from "@/data/selectors";
 import { newWorkout } from "@/data/start";
 import { today } from "@/data/model";
-import { activePlans, groupsOf, plannedFor, resolveCell } from "@/data/plans";
+import { activePlans, plannedFor } from "@/data/plans";
+import { usePlanned } from "@/hooks/usePlanned";
 import { phaseWeek } from "@/data/phase";
 import { workoutPath } from "@/lib/routes";
 import { readTrainingPreferences } from "@/lib/preferences";
@@ -64,17 +64,7 @@ export default function Home() {
   });
 
   const day = today();
-  // What the plans hold for a date. A deleted routine or group is ignored, as if
-  // nothing were planned.
-  const planned = useMemo(() => {
-    const plans = activePlans(state.records);
-    const names = {
-      routines: routineRecords(state.records),
-      groups: groupsOf(state.records),
-    };
-    return (date: string) =>
-      plans.length ? resolveCell(plannedFor(plans, date)?.cell, names) : null;
-  }, [state.records]);
+  const planned = usePlanned();
   const todayPlan = planned(day);
   // "Week 3 of 12", and whether it is a deload week, for today's plan row.
   const todayPhase = useMemo(() => {

@@ -299,7 +299,7 @@ export default function ExercisesPanel() {
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title}>
           <h2 className="group-title">{group.title}</h2>
-          <div className="list">
+          <div className="flat-list">
             {group.items.map((e) => (
               <ExerciseRow
                 key={e.id}

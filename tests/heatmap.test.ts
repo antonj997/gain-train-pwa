@@ -5,7 +5,6 @@ import {
   heatmapMonthLabels,
   heatmapWeeks,
   heatmapWindow,
-  intensityLevel,
   lastWorkoutDate,
   monthTone,
 } from "../src/lib/heatmap";
@@ -56,10 +55,6 @@ test("a first-column label is dropped when the next month is too close", () => {
   // Starts Mon 27 Oct 2025, so November's 1st is in column 0 and is the first label.
   const labels = heatmapMonthLabels(heatmapWeeks("2026-10-26").weeks);
   assert.deepEqual(labels[0], { column: 0, month: "2025-11" });
-});
-
-test("intensity levels are 0, 1, 2 and 3 or more", () => {
-  assert.deepEqual([0, 1, 2, 3, 7].map(intensityLevel), [0, 1, 2, 3, 3]);
 });
 
 test("the month tint alternates between neighbouring months, across years too", () => {

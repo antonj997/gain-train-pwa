@@ -800,6 +800,7 @@ export const sv = {
   "routines.resumeDraft": "Fortsätt rutinutkastet",
   "routines.new": "Ny rutin",
   "routines.delete": "Radera rutin",
+  "routines.editNamed": "Redigera {name}",
   "routines.edit": "Redigera rutin",
   "routines.create": "Skapa rutin",
   "routines.editorDescription":

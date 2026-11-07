@@ -748,7 +748,8 @@ details[open] > .session-summary > svg {
   display: grid;
   gap: var(--gt-space-2);
 }
-.exercise-row .unhide {
+.exercise-row .unhide,
+.ex-row .unhide {
   flex: none;
   min-height: 44px;
   padding: 0 var(--gt-space-4);

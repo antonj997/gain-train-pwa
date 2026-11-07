@@ -11,20 +11,24 @@ export type WeekDay = {
   /** Day of the month. */
   day: number;
   done: boolean;
+  /** Workouts logged that day. */
+  count: number;
   today: boolean;
 };
 
 /** Monday to Sunday of the week that contains `now`, marking days with a workout. */
 export function weekStrip(dates: readonly string[], now: string): WeekDay[] {
   const start = weekStart(now);
-  const done = new Set(dates);
+  const counts = new Map<string, number>();
+  for (const date of dates) counts.set(date, (counts.get(date) ?? 0) + 1);
   return weekdayNames("narrow").map((label, index) => {
     const date = shiftDate(start, index);
     return {
       date,
       label,
       day: Number(date.slice(8)),
-      done: done.has(date),
+      done: counts.has(date),
+      count: counts.get(date) ?? 0,
       today: date === now,
     };
   });

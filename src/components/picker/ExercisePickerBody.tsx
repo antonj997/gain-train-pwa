@@ -1,3 +1,4 @@
+import ExerciseRow from "@/components/items/ExerciseRow";
 import {
   Fragment,
   useEffect,
@@ -418,12 +419,39 @@ export default function ExercisePickerBody({
                   </h3>
                 )}
                 {group.items.map((e) => (
-                  <button
+                  <ExerciseRow
                     key={e.id}
-                    aria-pressed={selected.includes(e.id)}
-                    className={
-                      "exercise-choice " +
-                      (selected.includes(e.id) ? "chosen" : "")
+                    className="picker-item"
+                    exerciseId={e.id}
+                    category={e.category}
+                    equipment={"equipment" in e ? e.equipment : undefined}
+                    pressed={single ? undefined : selected.includes(e.id)}
+                    title={
+                      <>
+                        {e.name}
+                        {e.favourite && <FavouriteStar />}
+                        {own.has(e.id) && (
+                          <span className="stat-chip">
+                            {t("exercises.mine")}
+                          </span>
+                        )}
+                      </>
+                    }
+                    meta={
+                      <>
+                        {categoryText(e.category, e.categories)}
+                        {"equipment" in e && e.equipment
+                          ? ` · ${equipmentLabel(e.equipment)}`
+                          : ""}
+                        {recent.has(e.id) ? ` · ${t("picker.recent")}` : ""}
+                      </>
+                    }
+                    end={
+                      single ? undefined : selected.includes(e.id) ? (
+                        <Check className="picker-mark" size={21} />
+                      ) : (
+                        <Plus className="picker-mark" size={20} />
+                      )
                     }
                     onClick={() => {
                       if (single) {
@@ -436,31 +464,7 @@ export default function ExercisePickerBody({
                             : [...s, e.id],
                         );
                     }}
-                  >
-                    <span>
-                      <strong className="exercise-name">
-                        {e.name}
-                        {e.favourite && <FavouriteStar />}
-                        {own.has(e.id) && (
-                          <span className="stat-chip">
-                            {t("exercises.mine")}
-                          </span>
-                        )}
-                      </strong>
-                      <small>
-                        {categoryText(e.category, e.categories)}
-                        {"equipment" in e && e.equipment
-                          ? ` · ${equipmentLabel(e.equipment)}`
-                          : ""}
-                        {recent.has(e.id) ? ` · ${t("picker.recent")}` : ""}
-                      </small>
-                    </span>
-                    {single ? null : selected.includes(e.id) ? (
-                      <Check size={21} />
-                    ) : (
-                      <Plus size={20} />
-                    )}
-                  </button>
+                  />
                 ))}
               </Fragment>
             ))}

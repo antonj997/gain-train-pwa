@@ -48,11 +48,6 @@ export function heatmapMonthLabels(
   return labels;
 }
 
-/** 0 none, 1 one workout, 2 two, 3 three or more. */
-export function intensityLevel(count: number): 0 | 1 | 2 | 3 {
-  return count >= 3 ? 3 : count === 2 ? 2 : count === 1 ? 1 : 0;
-}
-
 /** 0 or 1: alternates by calendar month so neighbouring months read apart. */
 export function monthTone(date: string) {
   return (Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7))) % 2;
@@ -67,9 +62,4 @@ export function lastWorkoutDate(
   for (const [date, count] of counts)
     if (count > 0 && date <= now && (!last || date > last)) last = date;
   return last;
-}
-
-/** The class names that shade a day cell by its workout count, shared by the heatmap and the month grid. */
-export function heatClass(count: number) {
-  return `heat level-${intensityLevel(count)}`;
 }

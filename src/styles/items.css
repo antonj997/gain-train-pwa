@@ -1,0 +1,521 @@
+/* Item shapes: one recognisable shape per kind of thing (see DESIGN.md,
+   Shapes). Colours come from tokens.css. Components live in
+   src/components/items/. */
+
+/* Exercise avatar: a circle tinted by the main category. */
+.ex-avatar {
+  --tone-bg: var(--gt-cat-other-bg);
+  --tone-fg: var(--gt-cat-other-fg);
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--tone-bg);
+  color: var(--tone-fg);
+}
+.ex-avatar-lg {
+  width: 60px;
+  height: 60px;
+}
+.ex-avatar svg {
+  display: block;
+}
+[data-tone="chest"] {
+  --tone-bg: var(--gt-cat-chest-bg);
+  --tone-fg: var(--gt-cat-chest-fg);
+}
+[data-tone="back"] {
+  --tone-bg: var(--gt-cat-back-bg);
+  --tone-fg: var(--gt-cat-back-fg);
+}
+[data-tone="shoulders"] {
+  --tone-bg: var(--gt-cat-shoulders-bg);
+  --tone-fg: var(--gt-cat-shoulders-fg);
+}
+[data-tone="arms"] {
+  --tone-bg: var(--gt-cat-arms-bg);
+  --tone-fg: var(--gt-cat-arms-fg);
+}
+[data-tone="legs"] {
+  --tone-bg: var(--gt-cat-legs-bg);
+  --tone-fg: var(--gt-cat-legs-fg);
+}
+[data-tone="glutes"] {
+  --tone-bg: var(--gt-cat-glutes-bg);
+  --tone-fg: var(--gt-cat-glutes-fg);
+}
+[data-tone="core"] {
+  --tone-bg: var(--gt-cat-core-bg);
+  --tone-fg: var(--gt-cat-core-fg);
+}
+[data-tone="cardio"] {
+  --tone-bg: var(--gt-cat-cardio-bg);
+  --tone-fg: var(--gt-cat-cardio-fg);
+}
+[data-tone="full-body"] {
+  --tone-bg: var(--gt-cat-full-body-bg);
+  --tone-fg: var(--gt-cat-full-body-fg);
+}
+
+/* Exercise item: a flat row, no card. Rows in a .flat-list are separated by
+   hairlines; the row is at least 56px with a 44px+ target. */
+.flat-list {
+  display: flex;
+  flex-direction: column;
+}
+.ex-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-1);
+  min-width: 0;
+  border-bottom: 1px solid var(--gt-line);
+}
+.flat-list > .ex-row:last-child {
+  border-bottom: 0;
+}
+.ex-row-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--gt-space-3);
+  min-width: 0;
+  min-height: 56px;
+  padding: var(--gt-space-2) 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+a.ex-row-main,
+button.ex-row-main {
+  cursor: pointer;
+}
+.ex-row-main:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+  border-radius: var(--gt-radius-md);
+}
+@media (hover: hover) {
+  a.ex-row-main:hover .ex-row-title,
+  button.ex-row-main:hover:not(:disabled) .ex-row-title {
+    color: var(--gt-accent);
+  }
+}
+.ex-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ex-row-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-2);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.ex-row-meta {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* Routine item: a surface-2 card with a layers tile and a round play button. */
+.routine-card {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-width: 0;
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-item);
+  background-color: var(--gt-surface-2);
+}
+.routine-card-open {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--gt-space-3);
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-md);
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.routine-card-open:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 3px;
+}
+.routine-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--gt-radius-tile);
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.routine-card-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.routine-card-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gt-space-2);
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.routine-card-meta {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.routine-play {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  cursor: pointer;
+  transition: transform var(--gt-motion);
+}
+.routine-play svg {
+  margin-left: 2px;
+}
+.routine-play:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.routine-play:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.routine-play:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 3px;
+}
+.routine-card > .icon-btn {
+  flex: none;
+  color: var(--gt-ink-2);
+}
+.routine-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Workout item: a date tile in a grouped box of rows with hairlines. */
+.grouped {
+  overflow: hidden;
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-item);
+  background-color: var(--gt-surface);
+}
+.workout-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  width: 100%;
+  min-height: 70px;
+  padding: 10px var(--gt-space-3);
+  border: 0;
+  border-bottom: 1px solid var(--gt-line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.workout-row:last-child {
+  border-bottom: 0;
+}
+.workout-row.is-selected {
+  background-color: var(--gt-accent-soft);
+}
+.workout-row:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+}
+@media (hover: hover) {
+  .workout-row:hover:not(.is-selected) {
+    background-color: var(--gt-surface-2);
+  }
+}
+.workout-row-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.workout-row-title {
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.workout-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.date-tile {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  width: 44px;
+  height: 50px;
+  overflow: hidden;
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+}
+.date-tile-band {
+  width: 100%;
+  height: 16px;
+  background-color: var(--gt-done);
+  color: var(--gt-on-accent);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.date-tile-day {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Record item: a warm pill with a trophy. */
+.record-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 6px 12px 6px 9px;
+  border-radius: 999px;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.record-pill > svg {
+  flex: none;
+}
+.record-pill.is-small {
+  gap: 4px;
+  padding: 2px 8px 2px 6px;
+  font-size: var(--gt-fs-1);
+}
+
+/* Goal item: a progress ring. */
+.goal-ring {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+}
+.goal-ring svg {
+  position: absolute;
+  inset: 0;
+}
+.goal-ring-track {
+  fill: none;
+  stroke: var(--gt-surface-2);
+}
+.goal-ring-value {
+  fill: none;
+  stroke: var(--gt-accent);
+  stroke-linecap: round;
+}
+.goal-ring.is-done .goal-ring-value {
+  stroke: var(--gt-done);
+}
+.goal-ring-text {
+  position: relative;
+  font-size: var(--gt-fs-2);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Plan / phase item: a segmented week bar, deload weeks grey. */
+.phase-bar {
+  display: flex;
+  gap: 3px;
+  width: 100%;
+}
+.phase-seg {
+  flex: 1;
+  min-width: 2px;
+  height: 10px;
+  border-radius: 5px;
+  background-color: var(--gt-surface-2);
+}
+.phase-bar.is-tall .phase-seg {
+  height: 14px;
+}
+.phase-seg.is-done {
+  background-color: var(--gt-done);
+}
+.phase-seg.is-deload {
+  background-color: var(--gt-deload);
+}
+.phase-seg.is-done.is-deload {
+  background-color: color-mix(in srgb, var(--gt-done) 45%, var(--gt-deload));
+}
+.phase-seg.is-now {
+  background-color: var(--gt-accent);
+}
+
+/* Day item: one cell shape for every calendar. Trained is filled with the
+   done colour, today has an accent ring, planned days a done-coloured
+   outline, rest and empty days surface-2; two or more workouts carry the
+   count badge. Rings are inset shadows, so nothing shifts. */
+.day-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-day);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-variant-numeric: tabular-nums;
+}
+.day-cell.is-week {
+  width: 100%;
+  height: 40px;
+}
+.day-cell.is-month {
+  width: 100%;
+  height: 44px;
+  font-size: var(--gt-fs-3);
+}
+.day-cell.is-grid {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.day-cell.is-planned {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--gt-done);
+  color: var(--gt-ink);
+  font-weight: 600;
+}
+.day-cell.is-grid.is-planned {
+  box-shadow: inset 0 0 0 1.5px var(--gt-done);
+}
+.day-cell.is-trained {
+  background-color: var(--gt-done);
+  color: var(--gt-on-accent);
+  font-weight: 700;
+}
+.day-cell.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+  color: var(--gt-ink);
+  font-weight: 700;
+}
+.day-cell.is-trained.is-today {
+  box-shadow:
+    inset 0 0 0 2px var(--gt-accent),
+    inset 0 0 0 4px var(--gt-surface);
+  color: var(--gt-on-accent);
+}
+.day-cell.is-grid.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+.day-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid var(--gt-surface);
+  border-radius: 999px;
+  background-color: var(--gt-ink);
+  color: var(--gt-surface);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+.day-cell.is-grid .day-count {
+  position: static;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gt-on-accent);
+  font-size: 8px;
+}
+
+/* Picker rows: a toggle with a check or plus at the end. */
+.picker-list .ex-row-main {
+  padding-inline: var(--gt-space-2);
+}
+.ex-row.is-pressed {
+  background-color: color-mix(in srgb, var(--gt-accent) 8%, transparent);
+}
+.ex-row.is-pressed .ex-row-title,
+.ex-row .picker-mark {
+  color: var(--gt-accent);
+}
+.ex-row .picker-mark {
+  flex: none;
+}
+
+/* The exercise page: the 60px avatar beside the category line. */
+.exercise-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.exercise-identity .exercise-meta {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}

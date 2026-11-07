@@ -64,10 +64,16 @@ test("known exercises show their movement", () => {
 
 test("custom exercises always get the dumbbell", () => {
   assert.equal(
-    movementIcon({ id: "7a1d2c3e-0000-4000-8000-0000000000c1", category: "Legs" }),
+    movementIcon({
+      id: "7a1d2c3e-0000-4000-8000-0000000000c1",
+      category: "Legs",
+    }),
     "dumbbell",
   );
-  assert.equal(movementIcon({ id: "shared:abc", category: "Cardio" }), "dumbbell");
+  assert.equal(
+    movementIcon({ id: "shared:abc", category: "Cardio" }),
+    "dumbbell",
+  );
 });
 
 test("an unknown built-in falls back by equipment, then category", () => {
@@ -75,8 +81,14 @@ test("an unknown built-in falls back by equipment, then category", () => {
     movementIcon({ id: "builtin:new-thing", equipment: "cardio machine" }),
     "run",
   );
-  assert.equal(movementIcon({ id: "builtin:new-thing", category: "Back" }), "row");
-  assert.equal(movementIcon({ id: "builtin:new-thing", category: "Other" }), "dumbbell");
+  assert.equal(
+    movementIcon({ id: "builtin:new-thing", category: "Back" }),
+    "row",
+  );
+  assert.equal(
+    movementIcon({ id: "builtin:new-thing", category: "Other" }),
+    "dumbbell",
+  );
   assert.equal(movementIcon({ id: "builtin:new-thing" }), "dumbbell");
 });
 
@@ -87,7 +99,12 @@ test("every icon is drawn and keeps to the 24px grid", () => {
       const numbers =
         typeof shape === "string"
           ? (shape.match(/-?\d+(\.\d+)?/g) ?? []).map(Number)
-          : [shape.cx - shape.r, shape.cy - shape.r, shape.cx + shape.r, shape.cy + shape.r];
+          : [
+              shape.cx - shape.r,
+              shape.cy - shape.r,
+              shape.cx + shape.r,
+              shape.cy + shape.r,
+            ];
       for (const n of numbers) assert.ok(n >= 0 && n <= 24, `${name}: ${n}`);
     }
   }
@@ -120,17 +137,36 @@ test("category tints keep the glyph at 3:1 or more in both themes", () => {
     "utf8",
   );
   const block = (selector: string) =>
-    css.slice(css.indexOf(selector + " {"), css.indexOf("}", css.indexOf(selector + " {")));
-  const tones = ["chest", "back", "shoulders", "arms", "legs", "glutes", "core", "cardio", "full-body", "other"];
+    css.slice(
+      css.indexOf(selector + " {"),
+      css.indexOf("}", css.indexOf(selector + " {")),
+    );
+  const tones = [
+    "chest",
+    "back",
+    "shoulders",
+    "arms",
+    "legs",
+    "glutes",
+    "core",
+    "cardio",
+    "full-body",
+    "other",
+  ];
   for (const selector of [":root", ".dark"]) {
     const text = block(selector);
     for (const tone of tones) {
       const get = (part: string) =>
-        text.match(new RegExp(`--gt-cat-${tone}-${part}: (#[0-9a-f]{6});`))?.[1];
+        text.match(
+          new RegExp(`--gt-cat-${tone}-${part}: (#[0-9a-f]{6});`),
+        )?.[1];
       const bg = get("bg");
       const fg = get("fg");
       assert.ok(bg && fg, `${selector} ${tone}`);
-      assert.ok(contrast(fg!, bg!) >= 3, `${selector} ${tone}: ${contrast(fg!, bg!).toFixed(2)}`);
+      assert.ok(
+        contrast(fg!, bg!) >= 3,
+        `${selector} ${tone}: ${contrast(fg!, bg!).toFixed(2)}`,
+      );
     }
   }
 });

@@ -49,11 +49,7 @@ export const MOVEMENT_SHAPES = {
     "M18.5 3.5L21.5 6.5",
   ],
   // Straight arms, the body a plank from heels to head.
-  pushUp: [
-    "M3 19.5L15 12",
-    "M15 12V19.5",
-    head(18, 10.2),
-  ],
+  pushUp: ["M3 19.5L15 12", "M15 12V19.5", head(18, 10.2)],
   // Between parallel bars, arms straight, knees bent behind.
   dip: [
     head(12, 4.2),
@@ -255,11 +251,7 @@ export const MOVEMENT_SHAPES = {
     "M2 21H22",
   ],
   // Forearms on the floor, the body straight: planks and core holds.
-  plank: [
-    "M3 17.5L14.5 13.5",
-    "M14.5 13.5V18H19.5",
-    head(17.8, 11.6),
-  ],
+  plank: ["M3 17.5L14.5 13.5", "M14.5 13.5V18H19.5", head(17.8, 11.6)],
   // Hanging from a bar, legs raised in front.
   legRaise: [
     "M5 2.5H19",

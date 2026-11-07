@@ -8,6 +8,7 @@ import "./index.css";
 import "./styles/usability.css";
 import "./styles/pages.css";
 import "./styles/details.css";
+import "./styles/items.css";
 
 const UPDATE_CHECK_MS = 60 * 60 * 1000;
 let updateReady = false;

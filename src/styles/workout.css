@@ -827,8 +827,8 @@
 .ex-head {
   display: flex;
   align-items: center;
-  gap: var(--gt-space-2);
-  padding-left: var(--gt-space-2);
+  gap: 10px;
+  padding-left: var(--gt-space-1);
 }
 .ex-titles {
   flex: 1 1 auto;

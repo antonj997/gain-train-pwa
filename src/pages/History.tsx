@@ -15,12 +15,14 @@ import { shiftDate, weekStart } from "@/lib/dates";
 import { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
+import { usePlanned } from "@/hooks/usePlanned";
 import { CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
 import { today } from "@/data/model";
 import PageHeader from "@/components/PageHeader";
-import ListRow from "@/components/ui/ListRow";
+import WorkoutRow from "@/components/items/WorkoutRow";
+import RecordPill from "@/components/items/RecordPill";
 import Sheet from "@/components/ui/Sheet";
 import { newBestWorkoutIds } from "@/data/analytics";
 import { prEvents } from "@/data/exercise-records";
@@ -48,6 +50,14 @@ export default function History() {
   const records = useMemo(
     () => completedWorkouts(state.records),
     [state.records],
+  );
+  const planned = usePlanned();
+  const plannedDay = useMemo(
+    () => (date: string) => {
+      const day = planned(date);
+      return !!day && day.kind !== "rest";
+    },
+    [planned],
   );
   const bests = useMemo(() => newBestWorkoutIds(prEvents(records)), [records]);
   const period = historyCalendarBounds(calendar, now);
@@ -113,6 +123,7 @@ export default function History() {
         value={calendar}
         now={now}
         records={records}
+        planned={plannedDay}
         onChange={setCalendar}
       />
       {groups.map(({ week, items, sets }) => (
@@ -121,17 +132,11 @@ export default function History() {
             {weekTitle(week, now)} · {countLabel(items.length, "workout")} ·{" "}
             {countLabel(sets, "set")}
           </h2>
-          <div className="list">
+          <div className="grouped">
             {items.map((r) => {
               const w = r.payload;
-              const sub = [
-                w.date === now
-                  ? t("common.todayCap")
-                  : localizedDate(w.date, {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                    }),
+              const meta = [
+                w.date === now ? t("common.todayCap") : null,
                 w.duration !== null ? durationLabel(w.duration) : null,
                 countLabel(doneSetCount(w), "set"),
                 w.exercises
@@ -142,21 +147,17 @@ export default function History() {
                 .filter(Boolean)
                 .join(" · ");
               return (
-                <ListRow
+                <WorkoutRow
                   key={r.id}
-                  className={
-                    calendar.selectedDate === w.date
-                      ? "row-selected"
-                      : undefined
-                  }
+                  date={w.date}
+                  selected={calendar.selectedDate === w.date}
                   title={workoutTitle(w.name)}
-                  sub={sub}
-                  trailing={
+                  meta={meta}
+                  badge={
                     bests.has(r.id) ? (
-                      <span className="badge-new">{t("history.newBest")}</span>
+                      <RecordPill small>{t("history.newBest")}</RecordPill>
                     ) : undefined
                   }
-                  chevron
                   onClick={() => setParams({ workout: r.id })}
                 />
               );
