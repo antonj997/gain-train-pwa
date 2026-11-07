@@ -68,7 +68,11 @@ export function useExerciseMenu({
   } | null>(null);
 
   const addToWorkout = (e: MenuExercise) => {
-    const target = { id: e.id, name: e.name, ...customDefaults(state.records).get(e.id) };
+    const target = {
+      id: e.id,
+      name: e.name,
+      ...customDefaults(state.records).get(e.id),
+    };
     const [running] = runningWorkouts(state.records);
     // The workout adds it with your last sets, as its own picker would.
     if (running)

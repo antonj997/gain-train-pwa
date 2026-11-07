@@ -127,9 +127,7 @@ export function useRoutineMenu({
               title={t("routines.delete")}
               leading={<Trash2 size={20} aria-hidden="true" />}
               disabled={busy}
-              onClick={() =>
-                void remove(menuRoutine, menuIndex.current)
-              }
+              onClick={() => void remove(menuRoutine, menuIndex.current)}
             />
           </div>
           {shared.canShare && (

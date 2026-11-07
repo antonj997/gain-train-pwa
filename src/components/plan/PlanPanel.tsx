@@ -145,42 +145,46 @@ export default function PlanPanel() {
                 );
               const p = slot.item;
               return (
-              <div
-                key={p.id}
-                className={"plan-row" + (p.paused ? " is-paused" : "")}
-              >
-                <button
-                  type="button"
-                  className="row plan-row-open"
-                  onClick={() => edit({ kind: "plan", plan: p })}
+                <div
+                  key={p.id}
+                  className={"plan-row" + (p.paused ? " is-paused" : "")}
                 >
-                  <span className="row-main">
-                    <span className="row-title">{p.name}</span>
-                    <span className="row-sub">{summary(p)}</span>
-                    <PhaseBar segments={phaseSegments(p, today)} />
-                  </span>
-                  <span className="row-value">{status(p)}</span>
-                  <ChevronRight className="chev" size={20} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label={t(
-                    p.paused ? "plan.resumeNamed" : "plan.pauseNamed",
-                    {
-                      name: p.name,
-                    },
-                  )}
-                  disabled={pausing !== null}
-                  onClick={() => void togglePause(p)}
-                >
-                  {p.paused ? (
-                    <Play size={20} aria-hidden="true" />
-                  ) : (
-                    <Pause size={20} aria-hidden="true" />
-                  )}
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    className="row plan-row-open"
+                    onClick={() => edit({ kind: "plan", plan: p })}
+                  >
+                    <span className="row-main">
+                      <span className="row-title">{p.name}</span>
+                      <span className="row-sub">{summary(p)}</span>
+                      <PhaseBar segments={phaseSegments(p, today)} />
+                    </span>
+                    <span className="row-value">{status(p)}</span>
+                    <ChevronRight
+                      className="chev"
+                      size={20}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-label={t(
+                      p.paused ? "plan.resumeNamed" : "plan.pauseNamed",
+                      {
+                        name: p.name,
+                      },
+                    )}
+                    disabled={pausing !== null}
+                    onClick={() => void togglePause(p)}
+                  >
+                    {p.paused ? (
+                      <Play size={20} aria-hidden="true" />
+                    ) : (
+                      <Pause size={20} aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
               );
             })}
           </div>

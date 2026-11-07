@@ -1,12 +1,5 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
-import {
-  memo,
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from "react";
+import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 import {
   type Exercise,

@@ -59,7 +59,9 @@ export default function ContextMenu({
     const box = el.getBoundingClientRect();
     const floor = window.innerHeight - BOTTOM_INSET;
     const below = row.bottom + 4 + box.height <= floor;
-    let top = below ? row.bottom + 4 : Math.max(GUTTER, row.top - 4 - box.height);
+    let top = below
+      ? row.bottom + 4
+      : Math.max(GUTTER, row.top - 4 - box.height);
     let left = Math.min(
       Math.max(GUTTER, row.left + 56),
       window.innerWidth - GUTTER - box.width,
@@ -67,7 +69,10 @@ export default function ContextMenu({
     // A sheet moved by a transform is the fixed menu's frame.
     if (container && container !== document.body) {
       const style = getComputedStyle(container);
-      if (style.transform !== "none" || (style.translate && style.translate !== "none")) {
+      if (
+        style.transform !== "none" ||
+        (style.translate && style.translate !== "none")
+      ) {
         const frame = container.getBoundingClientRect();
         top -= frame.top;
         left -= frame.left;
@@ -79,6 +84,20 @@ export default function ContextMenu({
     });
   }, [anchor, container]);
 
+  // Escape closes it wherever focus is.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    if (!anchor) return;
+    const key = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeRef.current();
+    };
+    window.addEventListener("keydown", key, true);
+    return () => window.removeEventListener("keydown", key, true);
+  }, [anchor]);
   // Focus goes back to the row it came from.
   useEffect(() => {
     if (!anchor) return;

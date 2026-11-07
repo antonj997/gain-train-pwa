@@ -1668,6 +1668,7 @@ export const en = {
   "settings.showTips": "Show tips again",
   "settings.showTipsHint": "The one-time tips show again on this phone",
   "settings.tipsReset": "Tips will show again",
-  "exercises.restoreFailed": "Could not restore the exercise. Retry from a backup.",
+  "exercises.restoreFailed":
+    "Could not restore the exercise. Retry from a backup.",
   "plan.restoreFailed": "Could not restore the plan. Retry from a backup.",
 };

@@ -63,9 +63,13 @@ function firstVisible(id: TipId) {
 function currentBlockers(): TipBlockers {
   const active = document.activeElement;
   return {
-    focusedInput: opensKeyboard(active) || !!(active as HTMLElement | null)?.isContentEditable,
+    focusedInput:
+      opensKeyboard(active) ||
+      !!(active as HTMLElement | null)?.isContentEditable,
     dragging: blockers.get("drag") === true,
-    dialogOpen: !!document.querySelector('[role="dialog"], [role="alertdialog"], [role="menu"]'),
+    dialogOpen: !!document.querySelector(
+      '[role="dialog"], [role="alertdialog"], [role="menu"]',
+    ),
     languagePrompt: blockers.get("language") === true,
   };
 }

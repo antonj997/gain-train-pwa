@@ -108,7 +108,12 @@ export function useSwipe(options: SwipeOptions) {
       const from = drawn.current;
       animation.current?.cancel();
       animation.current = null;
-      if (!el || from === x || reducedMotion() || typeof el.animate !== "function") {
+      if (
+        !el ||
+        from === x ||
+        reducedMotion() ||
+        typeof el.animate !== "function"
+      ) {
         draw(x);
         if (!x && root.current) root.current.dataset.side = "";
         return Promise.resolve();
@@ -120,7 +125,9 @@ export function useSwipe(options: SwipeOptions) {
       const run = el.animate(
         [
           { transform: `translate3d(${from}px, 0, 0)` },
-          { transform: x ? `translate3d(${x}px, 0, 0)` : "translate3d(0, 0, 0)" },
+          {
+            transform: x ? `translate3d(${x}px, 0, 0)` : "translate3d(0, 0, 0)",
+          },
         ],
         { duration, easing },
       );

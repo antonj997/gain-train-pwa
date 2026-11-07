@@ -136,7 +136,11 @@ function SetSwipeRow({
         { transform: `translate3d(${from}px, 0, 0)`, opacity: 1 },
         { transform: `translate3d(${-width - 24}px, 0, 0)`, opacity: 0.4 },
       ],
-      { duration: slide, easing: "cubic-bezier(0.4, 0, 1, 1)", fill: "forwards" },
+      {
+        duration: slide,
+        easing: "cubic-bezier(0.4, 0, 1, 1)",
+        fill: "forwards",
+      },
     );
     for (const el of others)
       el.animate([{ opacity: 1 }, { opacity: 0 }], {
@@ -150,7 +154,11 @@ function SetSwipeRow({
         { transform: "scale(1.12)", offset: 0.36 },
         { transform: "scale(0)", offset: 1 },
       ],
-      { duration: gulp, easing: "cubic-bezier(0.3, 0.7, 0.2, 1)", fill: "forwards" },
+      {
+        duration: gulp,
+        easing: "cubic-bezier(0.3, 0.7, 0.2, 1)",
+        fill: "forwards",
+      },
     );
     await Promise.all([finished(out, slide), finished(swallow, gulp)]);
     setBubble(0);
@@ -163,7 +171,11 @@ function SetSwipeRow({
               { height: `${el.getBoundingClientRect().height}px` },
               { height: "0px" },
             ],
-            { duration: collapse, easing: "cubic-bezier(0.3, 0.7, 0.2, 1)", fill: "forwards" },
+            {
+              duration: collapse,
+              easing: "cubic-bezier(0.3, 0.7, 0.2, 1)",
+              fill: "forwards",
+            },
           ),
           collapse,
         ),
@@ -177,8 +189,11 @@ function SetSwipeRow({
   const swipe = useSwipe({
     config,
     tip: tip ? "swipeSet" : undefined,
-    onDrag: (_offset, progress, armed) =>
-      setBubble(bubbleScale(progress, armed)),
+    // With reduced motion the bubble does not grow: it is simply there.
+    onDrag: (offset, progress, armed) =>
+      setBubble(
+        reducedMotion() ? (offset < 0 ? 1 : 0) : bubbleScale(progress, armed),
+      ),
     onArm: (armed) => {
       if (armed) pop();
     },

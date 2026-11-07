@@ -1,9 +1,4 @@
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { dismissTip, getTipState, subscribeTips } from "@/lib/tip-store";
 import { tipPlacement } from "@/lib/tips";
 import { useT } from "@/i18n/useT";

@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { AlertCircle, Check, Info, X } from "lucide-react";
 import {
   dismissMessage,
@@ -186,7 +181,13 @@ function MessageBanner({
  * The line under an undo placeholder that runs out with its time. `ms` is
  * unscaled: slow motion slows the animation itself.
  */
-export function UndoTimer({ ms, startAt = 1 }: { ms: number; startAt?: number }) {
+export function UndoTimer({
+  ms,
+  startAt = 1,
+}: {
+  ms: number;
+  startAt?: number;
+}) {
   const line = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
     const el = line.current;

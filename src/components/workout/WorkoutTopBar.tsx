@@ -81,54 +81,54 @@ export default function WorkoutTopBar({
   ];
   return (
     <div className="top-bar-wrap" data-top-bar>
-    <div className="top-bar">
-      <button
-        type="button"
-        className="icon-btn"
-        aria-label={editing ? t("workout.backToHistory") : t("workout.leave")}
-        onClick={onLeave}
-        disabled={busy}
-      >
-        <ArrowLeft size={23} aria-hidden="true" />
-      </button>
-      <div className="top-bar-text">
-        <h1 className="top-bar-title">
-          <button
-            type="button"
-            aria-haspopup="dialog"
-            disabled={busy}
-            onClick={onDetails}
-          >
-            {/* A running workout's unnamed title follows its exercises. */}
-            {editing
-              ? t("workout.editTitle", { name: workoutTitle(w.name) })
-              : workoutTitle(autoWorkoutName(w, {}, custom))}
-          </button>
-        </h1>
-        <p className="top-bar-status">
-          {status.map((part, index) => (
-            <Fragment key={part.key}>
-              {index > 0 && <span aria-hidden="true"> · </span>}
-              {part}
-            </Fragment>
-          ))}
-        </p>
+      <div className="top-bar">
+        <button
+          type="button"
+          className="icon-btn"
+          aria-label={editing ? t("workout.backToHistory") : t("workout.leave")}
+          onClick={onLeave}
+          disabled={busy}
+        >
+          <ArrowLeft size={23} aria-hidden="true" />
+        </button>
+        <div className="top-bar-text">
+          <h1 className="top-bar-title">
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              disabled={busy}
+              onClick={onDetails}
+            >
+              {/* A running workout's unnamed title follows its exercises. */}
+              {editing
+                ? t("workout.editTitle", { name: workoutTitle(w.name) })
+                : workoutTitle(autoWorkoutName(w, {}, custom))}
+            </button>
+          </h1>
+          <p className="top-bar-status">
+            {status.map((part, index) => (
+              <Fragment key={part.key}>
+                {index > 0 && <span aria-hidden="true"> · </span>}
+                {part}
+              </Fragment>
+            ))}
+          </p>
+        </div>
+        <button
+          type="button"
+          className={
+            editing
+              ? "btn-primary"
+              : allChecked
+                ? "btn-primary finish-ready"
+                : "btn-secondary finish-pending"
+          }
+          disabled={finishDisabled}
+          onClick={onFinish}
+        >
+          {editing ? t("workout.save") : t("workout.finish")}
+        </button>
       </div>
-      <button
-        type="button"
-        className={
-          editing
-            ? "btn-primary"
-            : allChecked
-              ? "btn-primary finish-ready"
-              : "btn-secondary finish-pending"
-        }
-        disabled={finishDisabled}
-        onClick={onFinish}
-      >
-        {editing ? t("workout.save") : t("workout.finish")}
-      </button>
-    </div>
       {/* Messages hang under the bar and push the cards down. */}
       <MessageSlot />
     </div>

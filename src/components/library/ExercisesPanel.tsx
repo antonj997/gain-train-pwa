@@ -228,7 +228,9 @@ export default function ExercisesPanel({
       setDeleting(null);
       // Its row's place in the list keeps an Undo for a few seconds; it
       // comes back unshared, as its shared copy is gone.
-      const group = groups.find((g) => g.items.some((e) => e.id === deleting.id));
+      const group = groups.find((g) =>
+        g.items.some((e) => e.id === deleting.id),
+      );
       if (payload) {
         const restored = structuredClone(payload);
         delete restored.sharedId;

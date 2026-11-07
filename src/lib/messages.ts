@@ -57,9 +57,7 @@ export function addMessage(
       ? -1
       : list.findIndex((m) => m.key === message.key);
   const next =
-    at >= 0
-      ? list.map((m, i) => (i === at ? message : m))
-      : [...list, message];
+    at >= 0 ? list.map((m, i) => (i === at ? message : m)) : [...list, message];
   while (next.length > max) {
     const drop = next.findIndex((m) => m.tone !== "error");
     next.splice(drop >= 0 ? drop : 0, 1);
@@ -118,8 +116,7 @@ export type UndoEntry = {
 };
 
 export type Interleaved<T> =
-  | { kind: "item"; item: T; index: number }
-  | { kind: "undo"; entry: UndoEntry };
+  { kind: "item"; item: T; index: number } | { kind: "undo"; entry: UndoEntry };
 
 /**
  * A list with its placeholders put back where the removed items were: an
@@ -143,7 +140,11 @@ export function interleave<T>(
 }
 
 /** How much of an undo placeholder's time is left, 0–1. */
-export function undoRemaining(entry: { expiresAt: number }, ms: number, now: number) {
+export function undoRemaining(
+  entry: { expiresAt: number },
+  ms: number,
+  now: number,
+) {
   if (!(ms > 0)) return 0;
   return Math.max(0, Math.min(1, (entry.expiresAt - now) / ms));
 }
