@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { useSwipe } from "@/hooks/useSwipe";
 import { bubbleScale, commitThreshold, type SwipeConfig } from "@/lib/swipe";
 import { motionMs } from "@/lib/slow-motion";
+import { registerTipTarget } from "@/lib/tip-store";
 import { reducedMotion } from "@/hooks/useMessages";
 
 /** The parts of the delete, in ms: the row out and the bubble's gulp side by side, then the collapse. */
@@ -198,6 +199,11 @@ function SetSwipeRow({
     },
   });
 
+  // The first set row is where the swipe tip points.
+  useEffect(() => {
+    const box = swipe.rootRef.current;
+    if (tip && box) return registerTipTarget("swipeSet", box);
+  }, [tip, swipe.rootRef]);
   useEffect(() => {
     register(setId, () => void playRef.current(true));
     return () => register(setId, null);

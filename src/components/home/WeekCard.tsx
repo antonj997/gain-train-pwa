@@ -8,6 +8,7 @@ import { countLabel, durationLabel } from "@/lib/labels";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
 import { useT } from "@/i18n/useT";
 import DayCell from "@/components/items/DayCell";
+import { useTipTarget } from "@/hooks/useTipTarget";
 
 type Props = {
   /** Finished workouts, newest first. */
@@ -23,6 +24,7 @@ type Props = {
  */
 export default function WeekCard({ completed, goal, day, planned }: Props) {
   const { t, language } = useT();
+  const tipRef = useTipTarget<HTMLAnchorElement>("weekStrip", { tap: true });
   const week = useMemo(() => {
     const dates = completed.map((r) => r.payload.date);
     const days = weekStrip(dates, day);
@@ -58,7 +60,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
       ? t("home.streak", { count: week.streak })
       : t("home.nothingThisWeek");
   return (
-    <Link to="/history" className="card col-12 week-card">
+    <Link ref={tipRef} to="/history" className="card col-12 week-card">
       <span className="week-card-head">
         <span className={"week-card-title" + (goalMet ? " is-met" : "")}>
           {summary}

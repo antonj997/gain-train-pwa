@@ -1,3 +1,4 @@
+import { registerTipTarget, setTipBlocker, tipUsed } from "@/lib/tip-store";
 import {
   useCallback,
   useEffect,
@@ -77,6 +78,7 @@ export function useDragSelect({
       live.current = null;
       setDrag(null);
       if (!current) return;
+      setTipBlocker("drag", false);
       if (!current.touch) {
         try {
           containerRef.current?.releasePointerCapture(current.id);
@@ -122,6 +124,9 @@ export function useDragSelect({
       }
     }
     navigator.vibrate?.(10);
+    // The hold was found: its tip goes, and no tip shows mid-drag.
+    tipUsed("calendarDay");
+    setTipBlocker("drag", true);
     setDrag({ start: press.start, current: press.start });
   };
 
@@ -195,6 +200,8 @@ export function useDragSelect({
       detach.current = () => {};
       return;
     }
+    // The grid is where the hold-and-drag tip points.
+    const forgetTip = registerTipTarget("calendarDay", node);
     const h = touchHandlers.current;
     const options = { passive: false } as const;
     node.addEventListener("touchstart", h.start, options);
@@ -206,6 +213,7 @@ export function useDragSelect({
       node.removeEventListener("touchmove", h.move);
       node.removeEventListener("touchend", h.end);
       node.removeEventListener("touchcancel", h.cancel);
+      forgetTip();
     };
   });
 

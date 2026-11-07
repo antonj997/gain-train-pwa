@@ -1,5 +1,12 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
-import { memo, useCallback, useId, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 import {
   type Exercise,
@@ -60,6 +67,7 @@ import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
 import SetSwipeRow from "@/components/gestures/SetSwipeRow";
+import { useTipTarget } from "@/hooks/useTipTarget";
 import { motionMs } from "@/lib/slow-motion";
 import SetSheet from "@/components/workout/SetSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
@@ -239,6 +247,20 @@ function ExerciseCard({
     isDrop(sets[index])
       ? []
       : sets.slice(index + 1, dropGroup(sets, index).end).map((x) => x.id);
+  // One-time tips, pointed at the headings and the first set's badge.
+  const tips = mode === "log";
+  const unitTip = useTipTarget<HTMLButtonElement>(tips && "unitHeader", {
+    tap: true,
+  });
+  const repsTip = useTipTarget<HTMLButtonElement>(tips && "repsHeader", {
+    tap: true,
+  });
+  const [badgeEl, setBadgeEl] = useState<HTMLElement | null>(null);
+  const badgeTip = useTipTarget<HTMLElement>(tips && "setBadge", { tap: true });
+  useEffect(() => badgeTip(badgeEl), [badgeEl, badgeTip]);
+  const card = useCallback((node: HTMLElement | null) => {
+    setBadgeEl(node?.querySelector<HTMLElement>(".set-badge") ?? null);
+  }, []);
   const openSet = useCallback(
     (setId: string) => setSheet({ kind: "set", setId }),
     [],
@@ -263,6 +285,7 @@ function ExerciseCard({
 
   return (
     <section
+      ref={card}
       className="card ex-card"
       aria-labelledby={headingId}
       data-unit={weightUnit}
@@ -340,6 +363,7 @@ function ExerciseCard({
           {/* The headings pick the unit and the count; the rest of Load and
               count is in the exercise's menu. */}
           <button
+            ref={unitTip}
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
@@ -350,6 +374,7 @@ function ExerciseCard({
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           <button
+            ref={repsTip}
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
@@ -369,7 +394,7 @@ function ExerciseCard({
           companions={dropIds(i)}
           onDelete={deleteSet}
           register={registerDelete}
-          tip={i === 0}
+          tip={tips && i === 0}
         >
           <SetLineMemo
             set={s}

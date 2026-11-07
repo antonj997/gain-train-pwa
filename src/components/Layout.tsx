@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/useAuth";
 import { useLegacyPlanImport } from "@/hooks/useLegacyPlanImport";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LanguagePrompt from "@/components/LanguagePrompt";
+import Tips from "@/components/Tips";
 import { useT } from "@/i18n/useT";
 import { usePageTransitions } from "@/hooks/usePageTransitions";
 import { TAB_PATHS, tabIndex } from "@/lib/page-transition";
@@ -96,6 +97,7 @@ export default function Layout() {
         </nav>
       )}
       {ready && <LanguagePrompt />}
+      {ready && <Tips />}
     </div>
   );
 }

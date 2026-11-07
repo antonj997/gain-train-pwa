@@ -5,6 +5,7 @@ import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
 import { hasUserData, languageOnLaunch } from "@/i18n";
 import { useT } from "@/i18n/useT";
+import { setTipBlocker } from "@/lib/tip-store";
 
 /**
  * Asks once which language to use, on a device that already holds a log from
@@ -22,6 +23,13 @@ export default function LanguagePrompt() {
   useEffect(() => {
     if (action === "default") setLanguage("en");
   }, [action, setLanguage]);
+  // No tip shows over the first-launch prompt.
+  const prompting = action === "prompt";
+  useEffect(() => {
+    if (!prompting) return;
+    setTipBlocker("language", true);
+    return () => setTipBlocker("language", false);
+  }, [prompting]);
   if (action !== "prompt") return null;
   return (
     <Sheet

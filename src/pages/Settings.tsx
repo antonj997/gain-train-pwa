@@ -9,6 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
 import ProfileForm from "@/components/ProfileForm";
 import ListRow from "@/components/ui/ListRow";
+import { resetTips } from "@/lib/tip-store";
 import Sheet from "@/components/ui/Sheet";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { formatWeight, type WeightUnit } from "@/lib/units";
@@ -172,6 +173,14 @@ export default function Settings() {
             value={LANGUAGE_NAMES[language]}
             chevron
             onClick={() => setSheet("language")}
+          />
+          <ListRow
+            title={t("settings.showTips")}
+            sub={t("settings.showTipsHint")}
+            onClick={() => {
+              resetTips();
+              notify.success(t("settings.tipsReset"));
+            }}
           />
         </div>
       </section>
