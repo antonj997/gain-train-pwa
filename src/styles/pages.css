@@ -309,41 +309,6 @@ label.row {
   font-size: var(--gt-fs-1);
   color: var(--gt-ink-2);
 }
-.dot {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background-color: var(--gt-surface-2);
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-2);
-}
-.dot.today {
-  box-shadow: inset 0 0 0 2px var(--gt-accent);
-  color: var(--gt-accent);
-  font-weight: 700;
-}
-.dot.done {
-  background-color: var(--gt-done);
-  color: var(--gt-on-accent);
-}
-.dot.done.today {
-  box-shadow:
-    inset 0 0 0 2px var(--gt-accent),
-    inset 0 0 0 4px var(--gt-surface);
-  color: var(--gt-on-accent);
-}
-.play-round {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: var(--gt-accent-soft);
-  color: var(--gt-accent);
-}
 .last-card {
   display: flex;
   align-items: center;
@@ -527,19 +492,6 @@ label.row {
 .row-selected {
   background-color: var(--gt-accent-soft);
 }
-.badge-new {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-  max-width: 100%;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background-color: var(--gt-warm-bg);
-  color: var(--gt-warm-fg);
-  font-size: var(--gt-fs-1);
-  font-weight: 700;
-  line-height: 1.3;
-}
 .tiles {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -650,40 +602,7 @@ details[open] > .session-summary > svg {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
-
-/* Library: routine cards, exercise rows and the dashed create button. */
-.routine-head {
-  align-items: flex-start;
-}
-.routine-title {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.routine-name {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--gt-space-2);
-}
-.routine-more {
-  margin: calc(-1 * var(--gt-space-2)) calc(-1 * var(--gt-space-2)) 0 0;
-}
-.routine-exercises {
-  font-size: var(--gt-fs-3);
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-.routine-actions {
-  display: flex;
-  gap: var(--gt-space-2);
-}
-.routine-actions > * {
-  flex: 1 1 0;
-  min-width: 0;
-}
+/* Library: exercise rows and the dashed create button (routine cards are items.css). */
 .search-field {
   display: flex;
   flex-direction: row;
@@ -1415,47 +1334,6 @@ details[open] > .session-summary > svg {
   align-items: center;
   gap: var(--gt-space-2);
 }
-.dot.planned:not(.today):not(.done) {
-  box-shadow: inset 0 0 0 1.5px var(--gt-ink-3);
-}
-
-/* Routine rows on Train: one fixed height, name and counts on one line each. */
-.routine-row {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-2);
-  height: 68px;
-  padding-right: var(--gt-space-4);
-  border-bottom: 1px solid var(--gt-line);
-}
-.routine-row:last-child {
-  border-bottom: 0;
-}
-.routine-row-open {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  border-bottom: 0;
-}
-.routine-row-open .row-title,
-.routine-row-open .row-sub {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.routine-row-play {
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
-.routine-row-play:focus-visible {
-  outline: 3px solid var(--gt-accent);
-  outline-offset: 2px;
-}
-.routine-row-play:disabled {
-  opacity: 0.5;
-}
-
 /* The routine preview sheet. */
 .preview-list {
   margin: 0;

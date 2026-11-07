@@ -137,7 +137,7 @@ button.ex-row-main {
   min-width: 0;
   padding: var(--gt-space-3);
   border-radius: var(--gt-radius-item);
-  background-color: var(--gt-surface-2);
+  background-color: var(--gt-routine-fill);
 }
 .routine-card-open {
   display: flex;

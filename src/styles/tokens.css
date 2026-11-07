@@ -26,6 +26,9 @@
   --gt-danger-bg: #fdecec;
   /* A deload week in a plan's phase bar. */
   --gt-deload: #c5cbd4;
+  /* The routine card's fill: surface-2 in dark; a step darker in light so it
+     stands off the light-grey ground. */
+  --gt-routine-fill: #e8ebf0;
 
   /* Exercise avatars: a circle tinted by the main category with the movement
      icon in its colour. Every pair keeps the glyph at 3:1 or more (a test
@@ -116,6 +119,7 @@
   --gt-danger-fg: #ff8a80;
   --gt-danger-bg: #3a1715;
   --gt-deload: #3a414d;
+  --gt-routine-fill: #22262e;
   --gt-cat-chest-bg: #2b1f3d;
   --gt-cat-chest-fg: #c4a6ff;
   --gt-cat-back-bg: #12303a;

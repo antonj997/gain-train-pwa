@@ -115,7 +115,8 @@ export default function PlanCalendar({
                   ? " plan-day " +
                     dayCellClass(
                       {
-                        planned: day.kind === "planned",
+                        // Only days to come are drawn as planned.
+                        planned: day.kind === "planned" && cell.date >= today,
                         today: cell.date === today,
                       },
                       "month",
