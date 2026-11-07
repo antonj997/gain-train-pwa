@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/useData";
 import { RoutineRow, RoutinePreviewSheet } from "@/components/RoutinePreview";
 import type { RoutineRecord, WorkoutRecord } from "@/data/model";
-import type { PlannedDay } from "@/data/plans";
 import {
   routines as routineRecords,
   workouts as allWorkouts,
@@ -16,28 +15,24 @@ type Props = {
   /** Finished workouts, newest first. */
   completed: WorkoutRecord[];
   day: string;
-  todayPlan: PlannedDay | null;
-  /** Where today sits in the plan's phase. */
-  todayPhase?: { week: number; weeks: number; deload: boolean } | null;
+  /** The routine the Today card offers, left out here. */
+  exclude?: string | null;
   starting: boolean;
   onStart: (routine: RoutineRecord) => void;
-  /** Starts an empty workout with the picker on today's planned categories. */
-  onStartSuggestions: () => void;
 };
 
-/** "Start a routine": today's plan, the three routines used most recently and their preview. */
+/** "Your routines" on Train: up to three routines used most recently (not today's), with their preview. */
 export default function RoutinesSection({
   completed,
   day,
-  todayPlan,
-  todayPhase,
+  exclude,
   starting,
   onStart,
-  onStartSuggestions,
 }: Props) {
   const { state } = useData();
   const navigate = useNavigate();
   const { t } = useT();
+  const all = routineRecords(state.records);
   // Routines last used first; those never used keep their saved order.
   const recentRoutines = useMemo(() => {
     const lastUsed = new Map<string, number>();
@@ -46,6 +41,7 @@ export default function RoutinesSection({
       if (id && !lastUsed.has(id)) lastUsed.set(id, index);
     });
     return routineRecords(state.records)
+      .filter((routine) => routine.id !== exclude)
       .map((routine, order) => ({ routine, order }))
       .sort(
         (a, b) =>
@@ -54,7 +50,7 @@ export default function RoutinesSection({
       )
       .slice(0, 3)
       .map(({ routine }) => routine);
-  }, [state.records]);
+  }, [state.records, exclude]);
 
   const [previewId, setPreviewId] = useState<string | null>(null);
   const previewRoutine =
@@ -74,79 +70,20 @@ export default function RoutinesSection({
       onStart={() => onStart(r)}
     />
   );
-  const planRoutines = todayPlan
-    ? todayPlan.routineIds.flatMap((id) => {
-        const routine = routineRecords(state.records).find((r) => r.id === id);
-        return routine ? [routine] : [];
-      })
-    : [];
-
+  // The only routine is on the Today card: nothing else to list.
+  if (!recentRoutines.length && all.length) return null;
   return (
     <section aria-labelledby="routines-heading">
       <div className="section-head">
-        <h2 id="routines-heading">{t("home.startRoutine")}</h2>
-        <Link className="text-link" to="/library">
-          {t("home.allRoutines")}
+        <h2 id="routines-heading">{t("home.yourRoutines")}</h2>
+        <Link
+          className="text-link"
+          to="/library"
+          aria-label={t("home.allRoutines")}
+        >
+          {t("home.all")}
         </Link>
       </div>
-      {todayPlan && (
-        <div className="card plan-today">
-          <span className="plan-today-text">
-            <span className="row-sub">
-              {todayPhase
-                ? [
-                    t("plan.weekOf", {
-                      week: todayPhase.week,
-                      weeks: todayPhase.weeks,
-                    }),
-                    todayPhase.deload ? t("plan.deload") : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")
-                : t("home.fromPlan")}
-            </span>
-            <strong className="card-title">
-              {t("home.todayPlan", { title: todayPlan.title })}
-            </strong>
-          </span>
-          {todayPlan.kind === "routine" && planRoutines[0] && (
-            <button
-              className="btn-primary btn-sm"
-              disabled={starting}
-              onClick={() => onStart(planRoutines[0])}
-            >
-              {t("common.start")}
-            </button>
-          )}
-          {todayPlan.kind === "type" && (
-            <button
-              className="btn-primary btn-sm"
-              disabled={starting}
-              onClick={onStartSuggestions}
-            >
-              {t("home.startSuggestions")}
-            </button>
-          )}
-        </div>
-      )}
-      {todayPlan?.kind === "group" && (
-        <div className="plan-today-group">
-          {planRoutines.length > 0 && (
-            <div className="routine-cards">
-              {planRoutines.map(renderRoutine)}
-            </div>
-          )}
-          {todayPlan.categories.length > 0 && (
-            <button
-              className="btn-secondary btn-block"
-              disabled={starting}
-              onClick={onStartSuggestions}
-            >
-              {t("home.startSuggestions")}
-            </button>
-          )}
-        </div>
-      )}
       {recentRoutines.length ? (
         <div className="routine-cards">{recentRoutines.map(renderRoutine)}</div>
       ) : (

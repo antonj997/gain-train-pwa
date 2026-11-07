@@ -1,29 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
 import { readAccount } from "@/data/database";
 import { phoneRecordsToCopy } from "@/data/actions";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { isSyncOutage } from "@/lib/sync-health";
 import { needsSignInAgain } from "@/lib/auth-account";
-import { local, storageKeys, writeStored } from "@/lib/storage";
 import { useT } from "@/i18n/useT";
 
 /**
  * The sync, sign-in and conflict notices, as banners under a page's title.
- * Problems show on every page; the plain "saved on this phone" status only
- * where `status` is set (Train).
+ * Problems show on every page. The plain status (saved on this phone, waiting
+ * to sync, offline) and the invitation to sign in live in Settings' account
+ * section instead.
  */
-export default function SyncNotices({ status = false }: { status?: boolean }) {
-  const { state, error, syncing, online, syncHealth } = useData();
+export default function SyncNotices() {
+  const { state, error, online, syncHealth } = useData();
   const { user, account } = useAuth();
   const { t, locale } = useT();
   const [phoneLogAvailable, setPhoneLogAvailable] = useState(false);
-  // The sign-in invitation is closed once per device; Settings keeps the way in.
-  const [inviteClosed, setInviteClosed] = useState(
-    () => local.getItem(storageKeys.signInBannerDismissed) === "1",
-  );
   // Only additions can change whether phone records are missing here, so don't
   // re-read the phone log on every edit.
   const recordCount = Object.keys(state.records).length;
@@ -49,7 +44,6 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
   const all = Object.values(state.records);
   const conflicts = all.filter((r) => r.conflict).length;
   const rejected = all.filter((r) => r.syncError).length;
-  const dirty = all.filter((r) => r.dirty).length;
   const needsUpdate = Object.keys(state.quarantine ?? {}).length > 0;
   const outage = !!user && online && isSyncOutage(syncHealth);
 
@@ -111,34 +105,6 @@ export default function SyncNotices({ status = false }: { status?: boolean }) {
         <Link to="/settings">{t("sync.openSettings")}</Link>
       </div>,
     );
-  if (status && !syncing) {
-    if (!user && !signedOut) {
-      if (!inviteClosed)
-        banners.push(
-          <div className="banner banner-closable" key="status">
-            <span>{t("sync.savedOnPhone")}</span>
-            <Link to="/auth">{t("sync.signInToSync")}</Link>
-            <button
-              type="button"
-              className="icon-btn"
-              aria-label={t("sync.dismissSignIn")}
-              onClick={() => {
-                // Closed for this visit even if storage refuses to remember it.
-                writeStored(storageKeys.signInBannerDismissed, "1");
-                setInviteClosed(true);
-              }}
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          </div>,
-        );
-    } else if (dirty)
-      banners.push(
-        <div className="banner" key="status">
-          {online ? t("sync.pending", { count: dirty }) : t("sync.offline")}
-        </div>,
-      );
-  }
   if (!banners.length) return null;
   // No live region around the stack: the alerts inside announce themselves,
   // and a wrapping status region would read the whole stack again on any change.

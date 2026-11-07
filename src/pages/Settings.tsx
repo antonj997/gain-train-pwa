@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
@@ -48,7 +49,7 @@ type SheetName =
 
 export default function Settings() {
   const { user, account, signOut } = useAuth(),
-    { state, syncing, error } = useData(),
+    { state, syncing, error, online } = useData(),
     { theme } = useTheme(),
     { bodyWeightKg } = useProfile(),
     { t, language } = useT(),
@@ -78,9 +79,11 @@ export default function Settings() {
   const syncStatus = user
     ? syncing
       ? t("settings.signedInSyncing")
-      : dirty
-        ? t("settings.signedInPending", { count: dirty })
-        : t("settings.signedInSynced")
+      : !online
+        ? t("settings.signedInOffline")
+        : dirty
+          ? t("settings.signedInPending", { count: dirty })
+          : t("settings.signedInSynced")
     : account === "phone"
       ? t("settings.phoneSignIn")
       : t("settings.phoneSignInAgain");
@@ -204,7 +207,17 @@ export default function Settings() {
 
       <section>
         <h2 className="group-title">{t("settings.account")}</h2>
-        {/* Signed out, the account row above is the way in. */}
+        {/* The invitation to sign in, which used to be a banner on Train. */}
+        {!user && account === "phone" && (
+          <div className="card sign-in-prompt">
+            <h3 className="card-title">{t("settings.signInPromptTitle")}</h3>
+            <p className="row-sub">{t("settings.signInPromptText")}</p>
+            <Link className="btn-primary" to="/auth">
+              {t("settings.signInPromptButton")}
+            </Link>
+          </div>
+        )}
+        {/* Signed out, the account row above is the way in too. */}
         {(user || account !== "phone") && (
           <div className="list">
             {user ? (

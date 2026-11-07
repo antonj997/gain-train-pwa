@@ -287,12 +287,6 @@ label.row {
   background-color: var(--gt-accent);
   color: var(--gt-on-accent);
 }
-.home-actions {
-  align-items: stretch;
-}
-.home-actions .btn-quiet {
-  align-self: center;
-}
 .week {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -309,30 +303,114 @@ label.row {
   font-size: var(--gt-fs-1);
   color: var(--gt-ink-2);
 }
-.last-card {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-3);
-}
-.last-text {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: var(--gt-space-3);
-  min-width: 0;
-  color: var(--gt-ink);
+/* The profile avatar at Train's top right: opens Settings. */
+.profile-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--gt-line);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink-2);
   font-size: var(--gt-fs-3);
-  font-weight: 600;
+  font-weight: 700;
 }
-.last-text .row-sub {
-  font-weight: 400;
+.profile-btn.is-signed-in {
+  border-color: transparent;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
 }
-.last-text-main {
+.page-header-bar.align-first-line > .profile-btn {
+  margin-top: calc((2px + var(--gt-fs-6) * 1.15 - 44px) / 2);
+}
+/* This week: the whole card is a link to History. */
+.week-card {
+  color: var(--gt-ink);
+  text-decoration: none;
+}
+.week-card-head {
   display: flex;
-  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
+.week-card-title {
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  color: var(--gt-ink-2);
+}
+.week-card-title.is-met {
+  color: var(--gt-done);
+}
+@media (hover: hover) {
+  .week-card:hover {
+    border-color: var(--gt-line-strong);
+  }
+}
+/* Today: the plan's workout or a suggestion, with one big Start. */
+.today-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+  padding: 14px var(--gt-space-4) var(--gt-space-4);
+  border-radius: 22px;
+  background-color: var(--gt-accent-soft);
+}
+.today-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  margin-right: calc(-1 * var(--gt-space-2));
+}
+.today-label {
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--gt-accent);
+}
+.today-main {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+.today-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  background-color: var(--gt-surface);
+  color: var(--gt-accent);
+}
+.today-text {
+  display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+.today-title {
+  font-size: var(--gt-fs-5);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.today-why {
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+}
+.today-card .btn-quiet {
+  align-self: center;
+}
+.home-log-past {
+  align-self: center;
+}
+.row-play {
+  flex: none;
+  color: var(--gt-accent);
 }
 
 /* Bottom navigation: four icon tabs. The current one also shows its name, in
@@ -486,6 +564,16 @@ label.row {
 }
 .settings-page .card {
   border-radius: var(--gt-radius-lg);
+}
+/* Signed out: the invitation to sign in, at the top of the Account group. */
+.sign-in-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+  margin-bottom: var(--gt-space-3);
+}
+.sign-in-prompt .btn-primary {
+  margin-top: var(--gt-space-1);
 }
 
 /* History and Progress. */

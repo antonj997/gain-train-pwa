@@ -10,8 +10,6 @@ type Props = {
   leading?: ReactNode;
   /** A control at the right edge, such as an icon button. */
   action?: ReactNode;
-  /** Show the plain "saved on this phone" status banner too. */
-  status?: boolean;
   /** Set to false where the notices would repeat what the page itself shows. */
   notices?: boolean;
   /** "first-line" centres the action on the title's first line instead of its last. */
@@ -24,7 +22,6 @@ export default function PageHeader({
   title,
   leading,
   action,
-  status,
   notices = true,
   align = "last-line",
 }: Props) {
@@ -47,7 +44,7 @@ export default function PageHeader({
         </div>
         {action}
       </div>
-      {notices && <SyncNotices status={status} />}
+      {notices && <SyncNotices />}
     </header>
   );
 }
