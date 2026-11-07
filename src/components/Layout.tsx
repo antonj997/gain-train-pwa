@@ -10,6 +10,7 @@ import LanguagePrompt from "@/components/LanguagePrompt";
 import { useT } from "@/i18n/useT";
 import { usePageTransitions } from "@/hooks/usePageTransitions";
 import { TAB_PATHS, tabIndex } from "@/lib/page-transition";
+import { legacyRedirect } from "@/lib/legacy-routes";
 
 // In the order of TAB_PATHS, which sets the slide direction.
 const tabs = [
@@ -25,12 +26,15 @@ export default function Layout() {
   const { ready } = useData();
   const { passwordRecovery } = useAuth();
   const { t, language } = useT();
-  const path = useLocation().pathname;
+  const location = useLocation();
+  const path = location.pathname;
+  const moved = legacyRedirect(path, location.search);
   const activeWorkout = path.startsWith("/workout/");
   const main = useRef<HTMLElement>(null);
   const { onClickCapture } = usePageTransitions(main);
   const active = tabIndex(path);
-  // On Settings no tab is active; the pill fades out where it was.
+  // On Settings no tab is active; the pill fades out where it was. A tab's
+  // subscreens (Goals, Plan, Shared routines) keep their tab lit.
   const pillAt = useRef(0);
   if (active >= 0) pillAt.current = active;
   useEffect(() => {
@@ -38,6 +42,8 @@ export default function Layout() {
   }, [path]);
   if (passwordRecovery && path !== "/auth")
     return <Navigate to="/auth" replace />;
+  // Old links (?tab=plan, ?tab=goals, /routines …) go where the screen is now.
+  if (moved) return <Navigate to={moved + location.hash} replace />;
   return (
     <div className="app-shell" onClickCapture={onClickCapture}>
       <main ref={main}>

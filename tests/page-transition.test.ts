@@ -15,7 +15,10 @@ test("each tab route maps to its place in the bar, left to right", () => {
   assert.equal(tabIndex("/history/"), 1);
   assert.equal(tabIndex("/progress"), 2);
   assert.equal(tabIndex("/library"), 3);
+  // A tab's subscreens keep their tab lit in the bar.
   assert.equal(tabIndex("/library/plan"), 3);
+  assert.equal(tabIndex("/library/shared"), 3);
+  assert.equal(tabIndex("/progress/goals"), 2);
   // Not tabs: Train is "/" only, and a name that merely starts alike is another route.
   assert.equal(tabIndex("/settings"), -1);
   assert.equal(tabIndex("/workout/abc"), -1);
@@ -23,13 +26,17 @@ test("each tab route maps to its place in the bar, left to right", () => {
   assert.equal(tabIndex("/auth"), -1);
 });
 
-test("tabs are level 0, Settings 1, Admin 2, and other routes have no level", () => {
+test("tabs are level 0, Settings and subscreens 1, Admin 2, and other routes have no level", () => {
   assert.equal(routeDepth("/"), 0);
   assert.equal(routeDepth("/library"), 0);
   assert.equal(routeDepth("/settings"), 1);
   assert.equal(routeDepth("/settings/"), 1);
   assert.equal(routeDepth("/settings/admin"), 2);
   assert.equal(routeDepth("/exercise/builtin%3Asquat"), 1);
+  assert.equal(routeDepth("/progress/goals"), 1);
+  assert.equal(routeDepth("/library/plan"), 1);
+  assert.equal(routeDepth("/library/shared/"), 1);
+  assert.equal(routeDepth("/library/nowhere"), null);
   assert.equal(routeDepth("/exercise/"), null);
   assert.equal(routeDepth("/workout/abc"), null);
   assert.equal(routeDepth("/auth"), null);
@@ -54,6 +61,13 @@ test("sub-pages push in and Back pops out, at any depth", () => {
   assert.equal(pageTransition("/settings/admin", "/settings"), "pop");
   assert.equal(pageTransition("/settings", "/"), "pop");
   assert.equal(pageTransition("/settings/admin", "/library"), "pop");
+  // A tab's subscreens push in from their tab and pop back to it.
+  assert.equal(pageTransition("/progress", "/progress/goals"), "push");
+  assert.equal(pageTransition("/progress/goals", "/progress"), "pop");
+  assert.equal(pageTransition("/library", "/library/plan"), "push");
+  assert.equal(pageTransition("/", "/library/plan"), "push");
+  assert.equal(pageTransition("/library/shared", "/library"), "pop");
+  assert.equal(pageTransition("/library/plan", "/history"), "pop");
 });
 
 test("no slide for the same route, the workout, sign-in or an unknown route", () => {

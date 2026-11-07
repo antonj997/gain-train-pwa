@@ -57,8 +57,6 @@ export const storageKeys = {
   /** "kg" or "lb"; weights are stored in kg either way. */
   weightUnit: "gt-weight-unit",
   persistRequested: "gt-persist-requested",
-  /** This device closed Train's "Sign in to sync" banner. */
-  signInBannerDismissed: "gt-sign-in-banner-dismissed",
   /** The last crash the error screen showed, offered with a bug report. */
   lastError: "gt-last-error",
   deleted: (account: string) => "gt-deleted-" + account,

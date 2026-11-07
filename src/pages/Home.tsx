@@ -1,17 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Plus, Settings } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import PageHeader from "@/components/PageHeader";
-import LastWorkoutCard from "@/components/home/LastWorkoutCard";
+import ProfileButton from "@/components/ProfileButton";
 import ResumeCards from "@/components/home/ResumeCards";
 import RoutinesSection from "@/components/home/RoutinesSection";
+import TodayCard from "@/components/home/TodayCard";
 import WeekCard from "@/components/home/WeekCard";
 import type { RoutineRecord } from "@/data/model";
 import {
   completedWorkouts,
   draftWorkouts,
+  routines as routineRecords,
   runningWorkouts,
 } from "@/data/selectors";
 import { newWorkout } from "@/data/start";
@@ -19,6 +21,7 @@ import { today } from "@/data/model";
 import { activePlans, plannedFor } from "@/data/plans";
 import { usePlanned } from "@/hooks/usePlanned";
 import { phaseWeek } from "@/data/phase";
+import { lastDoneByRoutine, todayPick } from "@/data/today";
 import { workoutPath } from "@/lib/routes";
 import { readTrainingPreferences } from "@/lib/preferences";
 import { autoWorkoutName } from "@/lib/workout-name";
@@ -28,11 +31,15 @@ import { useT } from "@/i18n/useT";
 const capitalize = (text: string) =>
   text.charAt(0).toLocaleUpperCase() + text.slice(1);
 
+/**
+ * Train: start training now. The date and the profile avatar, this week (a
+ * link to History), the running workout or the Today card, your routines and
+ * an empty workout.
+ */
 export default function Home() {
   const { state } = useData();
   const {
     start: requestStart,
-    repeat,
     busy: starting,
     confirmation,
   } = useStartWorkout();
@@ -46,9 +53,8 @@ export default function Home() {
     () => completedWorkouts(state.records),
     [state.records],
   );
-  const last = completed[0];
   const navigate = useNavigate();
-  const { t, locale } = useT();
+  const { locale, t } = useT();
   const [params, setParams] = useSearchParams();
   const handledShortcut = useRef(false);
   const [goal] = useState(() => readTrainingPreferences().weeklyGoal);
@@ -66,24 +72,30 @@ export default function Home() {
   const day = today();
   const planned = usePlanned();
   const todayPlan = planned(day);
-  // "Week 3 of 12", and whether it is a deload week, for today's plan row.
+  // "Week 3 of 12", and whether it is a deload week, for the Today card.
   const todayPhase = useMemo(() => {
     const plan = plannedFor(activePlans(state.records), day)?.plan;
     return plan ? phaseWeek(plan, day) : null;
   }, [state.records, day]);
+  const routines = useMemo(
+    () => routineRecords(state.records),
+    [state.records],
+  );
+  const lastDone = useMemo(() => lastDoneByRoutine(completed), [completed]);
+  const pick = todayPick(
+    todayPlan,
+    routines.map((r) => r.id),
+    lastDone,
+  );
   // A day type or group with categories starts an empty workout and opens the
   // picker on those categories.
-  const startWithSuggestions = () =>
-    todayPlan &&
+  const startWithSuggestions = (categories: string[], title: string) =>
     void requestStart(
       {
         ...newWorkout(Object.values(state.records)),
-        name: autoWorkoutName(
-          { name: "", exercises: [] },
-          { plan: todayPlan.title },
-        ),
+        name: autoWorkoutName({ name: "", exercises: [] }, { plan: title }),
       },
-      todayPlan.categories,
+      categories,
     );
 
   return (
@@ -98,63 +110,55 @@ export default function Home() {
           }),
         )}
         align="first-line"
-        status
-        action={
-          <Link
-            to="/settings"
-            className="icon-btn filled"
-            aria-label={t("home.settings")}
-          >
-            <Settings size={22} aria-hidden="true" />
-          </Link>
-        }
+        action={<ProfileButton />}
       />
+      <WeekCard completed={completed} goal={goal} day={day} planned={planned} />
       <ResumeCards
         running={running}
         otherRunning={otherRunning}
         drafts={drafts}
       />
-      <div className="home-actions">
+      {!running && (
+        <TodayCard
+          pick={pick}
+          phase={todayPhase}
+          routines={routines}
+          lastDone={lastDone}
+          day={day}
+          starting={starting}
+          onStartRoutine={(routine) => void start(false, routine)}
+          onStartSuggestions={startWithSuggestions}
+          onStartEmpty={() => void start()}
+          onLogPast={() => void start(true)}
+        />
+      )}
+      <RoutinesSection
+        completed={completed}
+        day={day}
+        exclude={!running && pick.kind !== "none" ? pick.routineId : null}
+        starting={starting}
+        onStart={(routine) => void start(false, routine)}
+      />
+      <button
+        type="button"
+        className="btn-dashed"
+        disabled={starting}
+        onClick={() => void start()}
+      >
+        <Plus size={20} aria-hidden="true" />
+        {starting ? t("home.starting") : t("home.emptyWorkout")}
+      </button>
+      {/* While a workout runs the Today card and its ⋯ step aside; logging an
+          earlier workout stays one tap away. */}
+      {running && (
         <button
-          className={
-            drafts.length
-              ? "btn-secondary btn-block"
-              : "btn-primary btn-block btn-lg"
-          }
-          disabled={starting}
-          onClick={() => void start()}
-        >
-          <Plus size={20} aria-hidden="true" />
-          {starting
-            ? t("home.starting")
-            : drafts.length
-              ? t("home.startNew")
-              : t("home.start")}
-        </button>
-        <button
-          className="btn-quiet"
+          type="button"
+          className="btn-quiet home-log-past"
           disabled={starting}
           onClick={() => void start(true)}
         >
           {t("home.logPast")}
         </button>
-      </div>
-      <WeekCard completed={completed} goal={goal} day={day} planned={planned} />
-      <RoutinesSection
-        completed={completed}
-        day={day}
-        todayPlan={todayPlan}
-        todayPhase={todayPhase}
-        starting={starting}
-        onStart={(routine) => void start(false, routine)}
-        onStartSuggestions={startWithSuggestions}
-      />
-      {last && (
-        <LastWorkoutCard
-          last={last}
-          disabled={starting}
-          onRepeat={() => void repeat(last.payload)}
-        />
       )}
     </div>
   );

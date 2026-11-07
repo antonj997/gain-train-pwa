@@ -1,8 +1,8 @@
 import ExerciseRow from "@/components/items/ExerciseRow";
 import RecordPill from "@/components/items/RecordPill";
 import { useMemo, useState } from "react";
-import { ChevronRight, Plus, Target, TrendingUp } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useData } from "@/contexts/useData";
 import {
   cardioProgressFor,
@@ -13,18 +13,17 @@ import {
 import { prEvents } from "@/data/exercise-records";
 import { labelSet, today } from "@/data/model";
 import { historyPeriod } from "@/data/summary";
-import GoalsPanel from "@/components/goals/GoalsPanel";
+import GoalStrip from "@/components/goals/GoalStrip";
 import PageHeader from "@/components/PageHeader";
 import ProgressSummary from "@/components/ProgressSummary";
 import Sparkline from "@/components/Sparkline";
-import Segmented from "@/components/ui/Segmented";
+import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { localizedDate } from "@/lib/dates";
 import { prKindsText } from "@/lib/record-labels";
 import { exercisePath, historyPath } from "@/lib/routes";
 import { countLabel } from "@/lib/labels";
 import { totalsLabel } from "@/lib/cardio";
 import { useCardioFields } from "@/hooks/useCardioFields";
-import { useGoalEditor } from "@/hooks/useGoalEditor";
 import { useGoals } from "@/hooks/useGoals";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import { useT } from "@/i18n/useT";
@@ -36,29 +35,20 @@ const periods = [
 ] as const;
 type Period = (typeof periods)[number]["value"];
 
-type Tab = "stats" | "goals";
-const tabs = [
-  { value: "stats", label: "goals.tabStats" },
-  { value: "goals", label: "goals.tabGoals" },
-] as const;
-
-/** Progress: stats over a period, or goals with `?tab=goals`. */
+/**
+ * Progress: am I getting stronger. One scroll: the period in a header chip,
+ * goal rings (the full goals are the /progress/goals subscreen), the 2×2
+ * tiles, recent records and the exercises trained in the period.
+ */
 export default function Progress() {
   const { state } = useData();
-  const [params, setParams] = useSearchParams();
-  const tab: Tab = params.get("tab") === "goals" ? "goals" : "stats";
-  const setTab = (next: Tab) =>
-    setParams(next === "goals" ? { tab: next } : {}, { replace: true });
   const [search, setSearch] = useState("");
   const [range, setRange] = useState<Period>("4w");
+  const [choosing, setChoosing] = useState(false);
   const { t } = useT();
-  const periodOptions: { value: Period; label: string }[] = periods.map(
-    ({ value, label }) => ({ value, label: t(label) }),
-  );
   const now = today();
-  const [preferences, updatePreferences] = useTrainingPreferences();
+  const [preferences] = useTrainingPreferences();
   const goals = useGoals(preferences.weeklyGoal, now);
-  const goalEditor = useGoalEditor();
   const records = useMemo(() => Object.values(state.records), [state.records]);
   // Recomputed only when the log changes, not while typing in the search box.
   const items = useMemo(() => progressFor(records), [records]);
@@ -107,86 +97,55 @@ export default function Progress() {
     row.name.toLocaleLowerCase().includes(query),
   );
   const hasData = items.length > 0 || cardioItems.length > 0;
-  const before = periods.find((p) => p.value === range)!.before;
-  // "Goals: 2 active · this week 2/3", only once there is something to show.
-  const goalChip = (() => {
-    const parts = [
-      goals.open.length > 0 &&
-        t("goals.chipActive", { count: goals.open.length }),
-      goals.weekly &&
-        t("goals.chipWeek", {
-          done: goals.weekly.done,
-          goal: goals.weekly.goal,
-        }),
-    ].filter(Boolean);
-    if (!parts.length && goals.reached.length)
-      parts.push(t("goals.chipReached", { count: goals.reached.length }));
-    return parts.length ? t("goals.chip", { parts: parts.join(" · ") }) : null;
-  })();
+  const current = periods.find((p) => p.value === range)!;
   return (
     <div className="page progress-page">
-      {tab === "stats" ? (
-        <PageHeader
-          eyebrow={
-            hasData
-              ? t("progress.comparedWith", { before: t(before) })
-              : undefined
-          }
-          title={t("progress.title")}
-        />
-      ) : (
-        <PageHeader
-          eyebrow={
-            goals.open.length
-              ? t("goals.eyebrow", { count: goals.open.length })
-              : t("progress.title")
-          }
-          title={t("goals.title")}
-          action={
+      <PageHeader
+        eyebrow={
+          hasData
+            ? t("progress.comparedWith", { before: t(current.before) })
+            : undefined
+        }
+        title={t("progress.title")}
+        action={
+          hasData && (
             <button
               type="button"
-              className="text-link"
-              onClick={() => goalEditor.edit("new")}
+              className="period-chip"
+              aria-haspopup="dialog"
+              aria-label={t("progress.periodChoose", {
+                period: t(current.label),
+              })}
+              onClick={() => setChoosing(true)}
             >
-              <Plus size={18} aria-hidden="true" />
-              {t("goals.add")}
+              {t(current.label)}
+              <ChevronDown size={16} aria-hidden="true" />
             </button>
-          }
-        />
-      )}
-      <Segmented<Tab>
-        label={t("goals.tabs")}
-        value={tab}
-        options={tabs.map(({ value, label }) => ({ value, label: t(label) }))}
-        onChange={setTab}
+          )
+        }
       />
-      {tab === "goals" && (
-        <GoalsPanel
-          {...goals}
-          preferences={preferences}
-          onPreferences={updatePreferences}
-          onEdit={goalEditor.edit}
-        />
-      )}
-      {tab === "stats" && goalChip && (
-        <button
-          type="button"
-          className="goals-chip-link"
-          onClick={() => setTab("goals")}
-        >
-          <Target size={18} aria-hidden="true" />
-          <span>{goalChip}</span>
-          <ChevronRight className="chev" size={18} aria-hidden="true" />
-        </button>
-      )}
-      {tab === "stats" && hasData && (
+      <ChoiceSheet<Period>
+        open={choosing}
+        onClose={() => setChoosing(false)}
+        title={t("progress.period")}
+        value={range}
+        options={periods.map(({ value, label }) => ({
+          value,
+          label: t(label),
+        }))}
+        onChoose={setRange}
+      />
+      <section aria-labelledby="goals-heading">
+        <div className="section-head">
+          <h2 id="goals-heading">{t("progress.goalsHeading")}</h2>
+          <Link className="text-link" to="/progress/goals">
+            {t("progress.allGoals")}
+          </Link>
+        </div>
+        <GoalStrip weekly={goals.weekly} open={goals.open} />
+      </section>
+      {hasData && (
         <>
-          <Segmented<Period>
-            label={t("progress.period")}
-            value={range}
-            options={periodOptions}
-            onChange={setRange}
-          />
           <ProgressSummary
             records={records}
             progress={items}
@@ -198,38 +157,34 @@ export default function Progress() {
               <div className="section-head">
                 <h2 id="bests-heading">{t("progress.recentBests")}</h2>
               </div>
-              <div className="best-grid">
-                {bests.map((best) => (
-                  <div className="card best-card" key={best.exerciseId}>
+              <div className="record-pills">
+                {bests.map((best) => {
+                  const set = labelSet(best.set, false);
+                  return (
                     <Link
-                      className="best-card-exercise"
-                      to={exercisePath(best.exerciseId)}
-                    >
-                      {best.name}
-                    </Link>
-                    <Link
-                      className="best-card-open"
+                      key={best.exerciseId}
+                      className="record-link"
                       to={historyPath(best.workoutId, best.set.id)}
-                      aria-label={t("progress.openBest", {
+                      aria-label={t("progress.recordOpen", {
                         name: best.name,
-                        set: labelSet(best.set, false),
+                        set,
+                        kinds: prKindsText(best.kinds),
+                        date:
+                          best.date === now
+                            ? t("common.todayCap")
+                            : localizedDate(best.date, {
+                                weekday: "short",
+                                day: "numeric",
+                                month: "short",
+                              }),
                       })}
                     >
-                      <RecordPill small>{t("history.newBest")}</RecordPill>
-                      <strong>{labelSet(best.set, false)}</strong>
-                      <span className="row-sub">{prKindsText(best.kinds)}</span>
-                      <time className="row-sub" dateTime={best.date}>
-                        {best.date === now
-                          ? t("common.todayCap")
-                          : localizedDate(best.date, {
-                              weekday: "short",
-                              day: "numeric",
-                              month: "short",
-                            })}
-                      </time>
+                      <RecordPill>
+                        {best.name} {set}
+                      </RecordPill>
                     </Link>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           )}
@@ -288,7 +243,7 @@ export default function Progress() {
           </section>
         </>
       )}
-      {tab === "stats" && !hasData && (
+      {!hasData && (
         <div className="empty-card">
           <TrendingUp size={30} />
           <h2>{t("progress.emptyTitle")}</h2>
@@ -298,7 +253,6 @@ export default function Progress() {
           </Link>
         </div>
       )}
-      {goalEditor.editor}
     </div>
   );
 }

@@ -12,9 +12,18 @@ import { reorderByIds } from "@/lib/exercise-order";
 import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
-import { Plus, Pencil, Trash2, MoreHorizontal, Share2 } from "lucide-react";
+import {
+  ChevronRight,
+  Globe,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Search,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import RoutineCard from "@/components/items/RoutineCard";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
@@ -31,9 +40,8 @@ import { lastUsedLabel } from "@/lib/library";
 import RoutinePlan from "@/components/RoutinePlan";
 import { useCardioFields } from "@/hooks/useCardioFields";
 import { useRepHold } from "@/hooks/useRepHold";
-import SharedRoutineList from "@/components/library/SharedRoutineList";
-import SharedRoutinePreviewSheet from "@/components/library/SharedRoutinePreview";
-import { routineAverageMinutes } from "@/lib/routine-preview";
+import PhaseCard from "@/components/library/PhaseCard";
+import type { PanelRequest } from "@/components/library/ExercisesPanel";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
 import { unpublishRoutine } from "@/data/shared-routines";
 import { toast } from "sonner";
@@ -45,16 +53,17 @@ import {
   DialogDescription,
   DialogCloseButton,
 } from "@/components/ui/dialog";
-import { t, type MessageKey } from "@/i18n";
+import { t } from "@/i18n";
 
-type View = "mine" | "shared";
-const views = [
-  { value: "mine", label: "routines.viewMine" },
-  { value: "shared", label: "routines.viewShared" },
-] as const satisfies readonly { value: View; label: MessageKey }[];
-
-/** Library → Routines: a card per routine, the routine editor and a link to the training plan. */
-export default function RoutinesPanel() {
+/**
+ * Library → Routines: the phase card (to the Plan subscreen), a card per
+ * routine, the routine editor, and a row to the Shared routines subscreen.
+ */
+export default function RoutinesPanel({
+  request = null,
+}: {
+  request?: PanelRequest;
+}) {
   const { state, save, deleteRecord } = useData();
   const { account } = useAuth();
   const cardioFields = useCardioFields();
@@ -72,10 +81,10 @@ export default function RoutinesPanel() {
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
-  const [view, setView] = useState<View>("mine");
-  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [query, setQuery] = useState<string | null>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
   const shared = useSharedRoutines({
-    browsing: view === "shared",
+    browsing: false,
     // An open draft of the routine follows its shared id.
     onSharedId: (id, sharedId) => {
       if (edit?.id !== id) return;
@@ -116,14 +125,6 @@ export default function RoutinesPanel() {
     return dates;
   }, [state.records]);
   const menuRoutine = records.find((r) => r.id === menu);
-  // The shared row being previewed and, for the user's own, its routine here.
-  const previewRow =
-    view === "shared"
-      ? (shared.rows.find((r) => r.id === previewId) ?? null)
-      : null;
-  const previewOwn = previewRow?.mine
-    ? records.find((r) => r.payload.sharedId === previewRow.id)
-    : undefined;
   const update = (exercise: Exercise) => {
     if (edit)
       setEdit({
@@ -233,71 +234,53 @@ export default function RoutinesPanel() {
       );
     });
   };
+  // A search narrows the cards by name or exercise.
+  const needle = (query ?? "").trim().toLocaleLowerCase();
+  const shown = needle
+    ? records.filter(
+        (r) =>
+          r.payload.name.toLocaleLowerCase().includes(needle) ||
+          r.payload.exercises.some((ex) =>
+            ex.name.toLocaleLowerCase().includes(needle),
+          ),
+      )
+    : records;
+  // Library's header: + starts a new routine, Search opens the search field.
+  const handled = useRef(request?.n ?? 0);
+  useEffect(() => {
+    if (!request || request.n === handled.current) return;
+    handled.current = request.n;
+    if (request.kind === "new") create();
+    else {
+      setQuery((q) => q ?? "");
+      requestAnimationFrame(() => searchInput.current?.focus());
+    }
+    // Runs once per tap: `create` is this render's, and nothing else matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request]);
   return (
     <div className="col-12">
       {workoutStart.confirmation}
-      <div className="filters" role="group" aria-label={t("routines.view")}>
-        {views.map((v) => (
-          <button
-            key={v.value}
-            type="button"
-            className="filter-chip"
-            aria-pressed={view === v.value}
-            onClick={() => setView(v.value)}
-          >
-            {t(v.label)}
-          </button>
-        ))}
-      </div>
-      {view === "shared" && (
-        <SharedRoutineList
-          canShare={shared.canShare}
-          ready={shared.ready}
-          status={shared.status}
-          hasRows={shared.hasRows}
-          rows={shared.rows}
-          added={shared.added}
-          adding={shared.adding}
-          onRetry={shared.retry}
-          onAdd={(id) => void shared.add(id)}
-          onPreview={setPreviewId}
-        />
+      <PhaseCard />
+      {query !== null && (
+        <label className="search-field routine-search">
+          <Search size={20} aria-hidden="true" />
+          <input
+            ref={searchInput}
+            type="search"
+            placeholder={t("routines.find")}
+            aria-label={t("library.searchRoutines")}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onBlur={() => {
+              if (!query.trim()) setQuery(null);
+            }}
+          />
+        </label>
       )}
-      <SharedRoutinePreviewSheet
-        row={previewRow}
-        records={state.records}
-        minutes={
-          previewOwn
-            ? routineAverageMinutes(previewOwn.id, state.records)
-            : null
-        }
-        added={!!previewRow && shared.added.has(previewRow.id)}
-        adding={!!previewRow && shared.adding === previewRow.id}
-        busy={
-          busy ||
-          shared.sharing ||
-          (!!shared.adding && shared.adding !== previewRow?.id)
-        }
-        canEdit={!!previewOwn}
-        onClose={() => setPreviewId(null)}
-        onAdd={async () => {
-          if (previewRow && (await shared.add(previewRow.id)))
-            setPreviewId(null);
-        }}
-        onEdit={() => {
-          if (!previewOwn) return;
-          setPreviewId(null);
-          setView("mine");
-          startEdit(previewOwn.id, previewOwn.payload);
-        }}
-        onStopSharing={async () => {
-          if (previewRow && (await shared.unshare(previewRow.id)))
-            setPreviewId(null);
-        }}
-      />
-      {view === "mine" && records.length > 0 && (
+      {shown.length > 0 && (
         <div className="routine-cards">
-          {records.map((r) => {
+          {shown.map((r) => {
             const done = lastDone.get(r.id);
             return (
               <RoutineCard
@@ -356,10 +339,15 @@ export default function RoutinesPanel() {
           })}
         </div>
       )}
-      {view === "mine" && !records.length && !edit && (
+      {records.length > 0 && !shown.length && (
+        <p className="empty" role="status">
+          {t("routines.noMatch")}
+        </p>
+      )}
+      {!records.length && !edit && (
         <p className="empty">{t("routines.empty")}</p>
       )}
-      {view === "mine" && edit && !open && (
+      {edit && !open && (
         <p className="draft-receipt" role="status">
           {t("routines.unfinished", {
             name: edit.data.name || t("routines.untitled"),
@@ -367,12 +355,20 @@ export default function RoutinesPanel() {
           {draft.retained ? t("routines.keptOnPhone") : t("routines.keepOpen")}
         </p>
       )}
-      {view === "mine" && (
-        <button type="button" className="btn-dashed" onClick={create}>
-          <Plus size={20} aria-hidden="true" />
-          {edit ? t("routines.resumeDraft") : t("routines.new")}
-        </button>
-      )}
+      <button type="button" className="btn-dashed" onClick={create}>
+        <Plus size={20} aria-hidden="true" />
+        {edit ? t("routines.resumeDraft") : t("routines.new")}
+      </button>
+      <div className="list">
+        <Link className="row shared-routines-row" to="/library/shared">
+          <Globe size={20} aria-hidden="true" />
+          <span className="row-main">
+            <span className="row-title">{t("library.sharedRow")}</span>
+            <span className="row-sub">{t("library.sharedRowText")}</span>
+          </span>
+          <ChevronRight className="chev" size={20} aria-hidden="true" />
+        </Link>
+      </div>
       <Sheet
         open={!!menuRoutine}
         onClose={() => setMenu(null)}

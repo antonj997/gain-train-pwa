@@ -1,15 +1,8 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
-import {
-  CalendarDays,
-  CalendarRange,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { type RecordDoc } from "@/data/model";
 import { useDragSelect } from "@/hooks/useDragSelect";
 import { monthDragRange } from "@/lib/drag-selection";
-import ActivityGridIcon from "@/components/ActivityGridIcon";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
 import HistoryFooter from "@/components/HistoryFooter";
 import MonthPicker from "@/components/MonthPicker";
@@ -41,6 +34,8 @@ export default function HistoryCalendar({
   records,
   planned,
   onChange,
+  picking,
+  onPicking,
 }: {
   value: HistoryCalendarState;
   now: string;
@@ -48,6 +43,9 @@ export default function HistoryCalendar({
   /** Whether a plan holds a workout on a date to come: a green outline. */
   planned?: (date: string) => boolean;
   onChange: (value: HistoryCalendarState) => void;
+  /** The month picker is open (from the month title or History's ⋯). */
+  picking: boolean;
+  onPicking: (open: boolean) => void;
 }) {
   const { month, mode, display, selectedDate, from, to, activeBound } = value;
   const cells = calendarCells(month);
@@ -57,7 +55,6 @@ export default function HistoryCalendar({
   const heat = display === "simple";
   const canReset = !!selectedDate || !!from || !!to || !!value.dates;
   const caption = historyCaption(value, counts, now);
-  const [picking, setPicking] = useState(false);
   const instructionsId = useId();
   const headingId = useId();
   const [focused, setFocused] = useState(selectedDate ?? now);
@@ -141,26 +138,6 @@ export default function HistoryCalendar({
     if (!target.startsWith(month)) browse(target.slice(0, 7));
   };
 
-  // The button shows the view it switches to.
-  const toDetailed = heat;
-  const viewToggle = (
-    <button
-      type="button"
-      className="icon-btn"
-      aria-label={toDetailed ? t("history.showMonth") : t("history.showGrid")}
-      title={toDetailed ? t("history.showMonth") : t("history.showGrid")}
-      onClick={() =>
-        change({ type: "display", display: toDetailed ? "detailed" : "simple" })
-      }
-    >
-      {toDetailed ? (
-        <CalendarDays size={22} aria-hidden="true" />
-      ) : (
-        <ActivityGridIcon size={22} />
-      )}
-    </button>
-  );
-
   const footer = (
     <HistoryFooter
       caption={caption}
@@ -186,7 +163,6 @@ export default function HistoryCalendar({
           <h2 className="history-title" id={headingId}>
             {t("history.lastYear")}
           </h2>
-          <div className="history-controls">{viewToggle}</div>
         </div>
         <ActivityHeatmap
           value={value}
@@ -220,7 +196,7 @@ export default function HistoryCalendar({
                 year: "numeric",
               }),
             })}
-            onClick={() => setPicking(!picking)}
+            onClick={() => onPicking(!picking)}
           >
             {localizedDate(month + "-01", { month: "long", year: "numeric" })}
             <ChevronDown size={16} aria-hidden="true" />
@@ -245,36 +221,19 @@ export default function HistoryCalendar({
           >
             <ChevronRight size={22} aria-hidden="true" />
           </button>
-          {viewToggle}
         </div>
         {picking && (
           <MonthPicker
             month={month}
             max={currentMonth}
-            onClose={() => setPicking(false)}
+            onClose={() => onPicking(false)}
             onPick={(next) => {
-              setPicking(false);
+              onPicking(false);
               browse(next);
             }}
           />
         )}
       </div>
-      <button
-        type="button"
-        className="calendar-range-toggle"
-        aria-pressed={mode === "range"}
-        title={
-          mode === "month"
-            ? t("history.chooseFromTo")
-            : t("history.rangeSelected")
-        }
-        onClick={() =>
-          change({ type: "mode", mode: mode === "month" ? "range" : "month" })
-        }
-      >
-        <CalendarRange size={20} aria-hidden="true" />
-        {t("history.dateRange")}
-      </button>
       {mode === "range" && (
         <div className="calendar-range-fields">
           {(["from", "to"] as const).map((bound) => (

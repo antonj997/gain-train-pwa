@@ -5,7 +5,8 @@
  * - "right": a tab to the right of the current one. The new page enters from
  *   the right; the old one drifts left and fades.
  * - "left": the mirror image, for a tab to the left.
- * - "push": into a sub-page (Settings, Admin, an exercise). The new page enters from the right.
+ * - "push": into a sub-page (Settings, Admin, an exercise, a tab's subscreen
+ *   such as Goals, Plan or Shared routines). The new page enters from the right.
  * - "pop": back out of one. The old page slides away to the right.
  */
 export type NavDirection = "left" | "right" | "push" | "pop";
@@ -13,10 +14,17 @@ export type NavDirection = "left" | "right" | "push" | "pop";
 /** The bottom navigation's routes, left to right. */
 export const TAB_PATHS = ["/", "/history", "/progress", "/library"] as const;
 
-/** Sub-pages, by how many levels they sit below the tabs. */
+/**
+ * Sub-pages, by how many levels they sit below the tabs. A tab's subscreens
+ * (Progress → Goals, Library → Plan and Shared routines) keep their tab lit in
+ * the bar but slide like any sub-page.
+ */
 const SUB_PAGES: Record<string, number> = {
   "/settings": 1,
   "/settings/admin": 2,
+  "/progress/goals": 1,
+  "/library/plan": 1,
+  "/library/shared": 1,
 };
 
 /** "/history/" and "/history" are the same route. */
@@ -37,15 +45,16 @@ const SUB_PAGE_PREFIXES: Record<string, number> = {
   "/exercise/": 1,
 };
 
-/** 0 for a tab, 1 for Settings or an exercise, 2 for Admin; null for any other route (the workout, sign-in, not found). */
+/** 0 for a tab, 1 for Settings, an exercise or a subscreen, 2 for Admin; null for any other route (the workout, sign-in, not found). */
 export function routeDepth(pathname: string): number | null {
   const path = normalise(pathname);
-  if (tabIndex(path) >= 0) return 0;
+  if (path in SUB_PAGES) return SUB_PAGES[path];
+  if (TAB_PATHS.includes(path as (typeof TAB_PATHS)[number])) return 0;
   const prefix = Object.keys(SUB_PAGE_PREFIXES).find(
     (start) => path.startsWith(start) && path.length > start.length,
   );
   if (prefix) return SUB_PAGE_PREFIXES[prefix];
-  return SUB_PAGES[path] ?? null;
+  return null;
 }
 
 /** How to animate a move from one route to another, or null for none. */

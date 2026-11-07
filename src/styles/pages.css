@@ -287,12 +287,6 @@ label.row {
   background-color: var(--gt-accent);
   color: var(--gt-on-accent);
 }
-.home-actions {
-  align-items: stretch;
-}
-.home-actions .btn-quiet {
-  align-self: center;
-}
 .week {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -309,30 +303,114 @@ label.row {
   font-size: var(--gt-fs-1);
   color: var(--gt-ink-2);
 }
-.last-card {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-3);
-}
-.last-text {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: var(--gt-space-3);
-  min-width: 0;
-  color: var(--gt-ink);
+/* The profile avatar at Train's top right: opens Settings. */
+.profile-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--gt-line);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink-2);
   font-size: var(--gt-fs-3);
-  font-weight: 600;
+  font-weight: 700;
 }
-.last-text .row-sub {
-  font-weight: 400;
+.profile-btn.is-signed-in {
+  border-color: transparent;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
 }
-.last-text-main {
+.page-header-bar.align-first-line > .profile-btn {
+  margin-top: calc((2px + var(--gt-fs-6) * 1.15 - 44px) / 2);
+}
+/* This week: the whole card is a link to History. */
+.week-card {
+  color: var(--gt-ink);
+  text-decoration: none;
+}
+.week-card-head {
   display: flex;
-  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
+.week-card-title {
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  color: var(--gt-ink-2);
+}
+.week-card-title.is-met {
+  color: var(--gt-done);
+}
+@media (hover: hover) {
+  .week-card:hover {
+    border-color: var(--gt-line-strong);
+  }
+}
+/* Today: the plan's workout or a suggestion, with one big Start. */
+.today-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+  padding: 14px var(--gt-space-4) var(--gt-space-4);
+  border-radius: 22px;
+  background-color: var(--gt-accent-soft);
+}
+.today-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  margin-right: calc(-1 * var(--gt-space-2));
+}
+.today-label {
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--gt-accent);
+}
+.today-main {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+.today-tile {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 15px;
+  background-color: var(--gt-surface);
+  color: var(--gt-accent);
+}
+.today-text {
+  display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+.today-title {
+  font-size: var(--gt-fs-5);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.today-why {
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink-2);
+}
+.today-card .btn-quiet {
+  align-self: center;
+}
+.home-log-past {
+  align-self: center;
+}
+.row-play {
+  flex: none;
+  color: var(--gt-accent);
 }
 
 /* Bottom navigation: four icon tabs. The current one also shows its name, in
@@ -487,6 +565,16 @@ label.row {
 .settings-page .card {
   border-radius: var(--gt-radius-lg);
 }
+/* Signed out: the invitation to sign in, at the top of the Account group. */
+.sign-in-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+  margin-bottom: var(--gt-space-3);
+}
+.sign-in-prompt .btn-primary {
+  margin-top: var(--gt-space-1);
+}
 
 /* History and Progress. */
 .row-selected {
@@ -559,21 +647,118 @@ label.row {
 details[open] > .session-summary > svg {
   transform: rotate(180deg);
 }
-.best-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--gt-space-3);
+/* Progress header: the period as a chip that opens a small menu. */
+.period-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--gt-line);
+  border-radius: 999px;
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  font: inherit;
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
 }
-.best-card {
+.period-chip svg {
+  color: var(--gt-ink-2);
+}
+/* Goals: a sideways strip of ring tiles, the weekly goal first. */
+.goal-strip {
+  display: flex;
+  gap: 10px;
+  padding: 2px 0 4px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.goal-strip::-webkit-scrollbar {
+  display: none;
+}
+.goal-strip > li {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+.goal-tile {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--gt-space-1);
-  min-width: 0;
-  padding: var(--gt-space-3) 14px;
+  align-items: center;
+  gap: 6px;
+  width: 112px;
+  min-height: 100%;
+  padding: 12px 8px;
+  border: 1px solid var(--gt-line);
+  border-radius: 18px;
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  text-align: center;
+  text-decoration: none;
 }
-.best-card strong {
-  font-size: var(--gt-fs-4);
+.goal-tile .goal-ring-text {
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+}
+.goal-tile-title {
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.goal-tile-sub {
+  font-size: var(--gt-fs-1);
+  color: var(--gt-ink-2);
+}
+.goal-tile-sub.is-behind {
+  color: var(--gt-warm-fg);
+}
+.goal-add-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  color: var(--gt-ink);
+  text-decoration: none;
+}
+.goal-add-ring {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border: 2px dashed var(--gt-line-strong);
+  border-radius: 50%;
+  color: var(--gt-accent);
+}
+.goal-add-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+@media (hover: hover) {
+  .goal-tile:hover,
+  .goal-add-tile:hover {
+    border-color: var(--gt-line-strong);
+  }
+}
+/* Recent records: warm pills, each opening its workout. */
+.record-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--gt-space-2);
+}
+.record-link {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 44px;
+  border-radius: 999px;
+  text-decoration: none;
+}
+.record-link .record-pill {
   overflow-wrap: anywhere;
 }
 .progress-page input[type="search"] {
@@ -1185,33 +1370,6 @@ details[open] > .session-summary > svg {
   flex-direction: column;
   gap: 20px;
 }
-/* Stats → "Goals: 2 active · this week 2/3", one line that opens the Goals tab. */
-.goals-chip-link {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-2);
-  min-height: 44px;
-  padding: 0 var(--gt-space-3);
-  border: 1px solid var(--gt-line);
-  border-radius: var(--gt-radius-md);
-  background-color: var(--gt-surface);
-  color: var(--gt-ink);
-  font: inherit;
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
-  text-align: left;
-}
-.goals-chip-link > svg:first-child {
-  flex: none;
-  color: var(--gt-accent);
-}
-.goals-chip-link > span {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .weekly-empty-title {
   display: flex;
   align-items: center;
@@ -1819,4 +1977,53 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   content: "";
   position: absolute;
   inset: -12px -4px;
+}
+
+/* Library → Routines: the phase card on top opens the Plan subscreen. */
+.phase-card {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  color: var(--gt-ink);
+  text-decoration: none;
+}
+.phase-card-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.phase-card-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.phase-card-eyebrow {
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  color: var(--gt-ink-2);
+}
+.phase-card-title {
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.phase-card .phase-bar {
+  margin-top: 4px;
+}
+@media (hover: hover) {
+  .phase-card:hover {
+    border-color: var(--gt-line-strong);
+  }
+}
+/* The last row of Routines: Explore shared routines. */
+.shared-routines-row > svg:first-child {
+  flex: none;
+  color: var(--gt-accent);
 }
