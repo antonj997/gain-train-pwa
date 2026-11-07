@@ -1,3 +1,4 @@
+import GoalRing from "@/components/items/GoalRing";
 import { CalendarCheck, ChevronRight } from "lucide-react";
 import { localizedDate } from "@/lib/dates";
 import type { WeeklyGoalStats } from "@/lib/week-summary";
@@ -99,6 +100,17 @@ export default function WeeklyGoalCard({
         </button>
       </div>
       <div className="weekly-now">
+        <GoalRing
+          size={44}
+          fraction={Math.min(1, done / goal)}
+          done={met}
+          label={t("goals.weekProgressLabel")}
+          value={{
+            now: Math.min(done, goal),
+            max: goal,
+            text: t("home.goalProgress", { done, goal }),
+          }}
+        />
         <div className="weekly-now-head">
           <strong>{t("home.goalProgress", { done, goal })}</strong>
           <span className={"stat-chip" + (met ? " done" : "")}>
@@ -107,17 +119,6 @@ export default function WeeklyGoalCard({
               : t("goals.weekDaysLeft", { count: daysLeft })}
           </span>
         </div>
-        <span
-          className={"goal-bar" + (met ? " is-done" : "")}
-          role="progressbar"
-          aria-label={t("goals.weekProgressLabel")}
-          aria-valuemin={0}
-          aria-valuemax={goal}
-          aria-valuenow={Math.min(done, goal)}
-          aria-valuetext={t("home.goalProgress", { done, goal })}
-        >
-          <span style={{ width: `${Math.min(1, done / goal) * 100}%` }} />
-        </span>
       </div>
       <WeekStrip stats={stats} />
       <ul className="weekly-facts">

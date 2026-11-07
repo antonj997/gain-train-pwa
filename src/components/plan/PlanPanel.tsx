@@ -19,7 +19,13 @@ import {
   withPaused,
 } from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
-import { phaseWeek, phaseWeeks, weekKindsOf } from "@/data/phase";
+import {
+  phaseSegments,
+  phaseWeek,
+  phaseWeeks,
+  weekKindsOf,
+} from "@/data/phase";
+import PhaseBar from "@/components/items/PhaseBar";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { t } from "@/i18n";
@@ -137,6 +143,7 @@ export default function PlanPanel() {
                   <span className="row-main">
                     <span className="row-title">{p.name}</span>
                     <span className="row-sub">{summary(p)}</span>
+                    <PhaseBar segments={phaseSegments(p, today)} />
                   </span>
                   <span className="row-value">{status(p)}</span>
                   <ChevronRight className="chev" size={20} aria-hidden="true" />

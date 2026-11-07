@@ -10,6 +10,8 @@ type Props = {
   children?: ReactNode;
   /** Drawn in the done colour once reached. */
   done?: boolean;
+  /** What the progress bar reports, when it counts something other than percent. */
+  value?: { now: number; max: number; text?: string };
 };
 
 /** The goal item: a progress ring, accent on a surface-2 track. */
@@ -19,6 +21,7 @@ export default function GoalRing({
   label,
   children,
   done,
+  value,
 }: Props) {
   const clamped = Math.min(1, Math.max(0, fraction));
   const stroke = size === 60 ? 6 : 5;
@@ -31,8 +34,9 @@ export default function GoalRing({
       role="progressbar"
       aria-label={label}
       aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(clamped * 100)}
+      aria-valuemax={value ? value.max : 100}
+      aria-valuenow={value ? value.now : Math.round(clamped * 100)}
+      aria-valuetext={value?.text}
     >
       <svg
         width={size}

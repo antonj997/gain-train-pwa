@@ -1,3 +1,4 @@
+import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { useMemo, useRef, useState } from "react";
 import { ListPlus, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -144,11 +145,14 @@ export default function PlanProgression({
                         className="prog-lift"
                         onClick={() => setOpenId(item.exerciseId)}
                       >
-                        <span className="prog-lift-name">{item.name}</span>
-                        <span className="row-sub">
-                          {missing
-                            ? t("prog.enterStart")
-                            : `${kgText(item.startKg)} → ${kgText(item.targetKg)} kg × ${item.reps}`}
+                        <ExerciseAvatar exerciseId={item.exerciseId} />
+                        <span className="prog-lift-text">
+                          <span className="prog-lift-name">{item.name}</span>
+                          <span className="row-sub">
+                            {missing
+                              ? t("prog.enterStart")
+                              : `${kgText(item.startKg)} → ${kgText(item.targetKg)} kg × ${item.reps}`}
+                          </span>
                         </span>
                       </button>
                     </th>

@@ -352,8 +352,8 @@ label.row {
 .last-text {
   display: flex;
   flex: 1;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--gt-space-3);
   min-width: 0;
   color: var(--gt-ink);
   font-size: var(--gt-fs-3);
@@ -361,6 +361,13 @@ label.row {
 }
 .last-text .row-sub {
   font-weight: 400;
+}
+.last-text-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 /* Bottom navigation: four icon tabs. The current one also shows its name, in
@@ -797,19 +804,6 @@ details[open] > .session-summary > svg {
   gap: var(--gt-space-2);
   padding-inline: var(--gt-space-1);
 }
-.plan-mark {
-  display: inline-block;
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-.plan-mark.planned {
-  background-color: var(--gt-accent);
-}
-.plan-mark.rest {
-  box-shadow: inset 0 0 0 1.5px var(--gt-ink-3);
-}
 .plan-day.is-override {
   background-color: var(--gt-accent-soft);
 }
@@ -822,6 +816,13 @@ details[open] > .session-summary > svg {
   width: 14px;
   height: 14px;
   border-radius: 4px;
+  background-color: var(--gt-surface-2);
+}
+.plan-swatch.is-planned {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--gt-done);
+}
+.plan-swatch.is-changed {
   background-color: var(--gt-accent-soft);
   box-shadow: inset 0 0 0 1px var(--gt-line-strong);
 }
@@ -929,19 +930,15 @@ details[open] > .session-summary > svg {
   flex-direction: column;
   gap: var(--gt-space-1);
 }
-.plan-cell {
-  display: grid;
-  place-items: center;
-  min-height: 48px;
-  padding: 0;
-  border: 1px solid var(--gt-line-strong);
-  border-radius: var(--gt-radius-sm);
-  background-color: var(--gt-surface);
-  color: var(--gt-ink);
+.day-cell.plan-cell {
+  height: auto;
+  min-height: 52px;
+  padding: 2px;
   font-size: var(--gt-fs-1);
   font-weight: 600;
   line-height: 1.15;
   text-align: center;
+  cursor: pointer;
 }
 .plan-cell > span {
   display: -webkit-box;
@@ -951,14 +948,9 @@ details[open] > .session-summary > svg {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.plan-cell.is-set {
-  border-color: transparent;
-  background-color: var(--gt-accent-soft);
-  color: var(--gt-accent);
-}
 .plan-cell.is-rest {
-  background-color: var(--gt-surface-2);
   color: var(--gt-ink-2);
+  font-weight: 400;
 }
 /* A plan's phase: week kinds, presets, deload rule and progression. */
 .plan-week-head {
@@ -990,7 +982,7 @@ details[open] > .session-summary > svg {
   color: var(--gt-ink);
 }
 .plan-grid-week.is-deload .plan-cell.is-set {
-  background-color: var(--gt-surface-2);
+  box-shadow: inset 0 0 0 2px var(--gt-deload);
   color: var(--gt-ink-2);
 }
 .plan-copy-week {
@@ -1068,8 +1060,8 @@ details[open] > .session-summary > svg {
   position: sticky;
   left: 0;
   z-index: 1;
-  min-width: 132px;
-  max-width: 150px;
+  min-width: 168px;
+  max-width: 188px;
   border-right: 1px solid var(--gt-line);
   background-color: var(--gt-surface);
   text-align: left;
@@ -1101,11 +1093,20 @@ details[open] > .session-summary > svg {
   cursor: pointer;
 }
 .prog-lift {
-  align-items: flex-start;
-  gap: 2px;
-  padding: var(--gt-space-2) var(--gt-space-3);
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: var(--gt-space-2) var(--gt-space-3) var(--gt-space-2)
+    var(--gt-space-2);
   text-align: left;
   white-space: normal;
+}
+.prog-lift-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 .prog-lift-name {
   font-weight: 600;
@@ -1260,22 +1261,6 @@ details[open] > .session-summary > svg {
   font-weight: 600;
   text-decoration: none;
 }
-.goal-bar {
-  display: block;
-  height: 8px;
-  overflow: hidden;
-  border-radius: 999px;
-  background-color: var(--gt-surface-2);
-}
-.goal-bar > span {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background-color: var(--gt-accent);
-}
-.goal-bar.is-done > span {
-  background-color: var(--gt-done);
-}
 .goals-panel {
   display: flex;
   flex-direction: column;
@@ -1327,11 +1312,13 @@ details[open] > .session-summary > svg {
 }
 .weekly-now {
   display: flex;
-  flex-direction: column;
-  gap: var(--gt-space-2);
+  align-items: center;
+  gap: var(--gt-space-3);
 }
 .weekly-now-head {
   display: flex;
+  flex: 1;
+  min-width: 0;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
@@ -1388,10 +1375,17 @@ details[open] > .session-summary > svg {
   color: var(--gt-ink-2);
 }
 /* Start → Now → Target, with the sparkline at the end. */
+.goal-main {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
 .goal-values {
   display: flex;
+  flex: 1;
   align-items: flex-end;
   gap: var(--gt-space-3);
+  min-width: 0;
 }
 .goal-value {
   display: flex;

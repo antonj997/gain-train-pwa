@@ -8,6 +8,7 @@ import {
 import { localizedDate, weekdayNames } from "@/lib/dates";
 import "@/styles/history-calendar.css";
 import { t } from "@/i18n";
+import { dayCellClass } from "@/components/items/DayCell";
 
 export type PlanDay = {
   kind: "planned" | "rest" | null;
@@ -110,7 +111,16 @@ export default function PlanCalendar({
               key={cell.date}
               className={
                 "calendar-day" +
-                (day ? " plan-day" : "") +
+                (day
+                  ? " plan-day " +
+                    dayCellClass(
+                      {
+                        planned: day.kind === "planned",
+                        today: cell.date === today,
+                      },
+                      "month",
+                    )
+                  : "") +
                 (cell.date === today ? " is-today" : "") +
                 (day?.override ? " is-override" : "") +
                 (edges ? " is-selected" : "") +
@@ -133,12 +143,6 @@ export default function PlanCalendar({
               onClick={() => onPick(cell.date)}
             >
               <span>{cell.day}</span>
-              {day && (
-                <span
-                  className={"plan-mark" + (day.kind ? " " + day.kind : "")}
-                  aria-hidden="true"
-                />
-              )}
             </button>
           );
         })}
@@ -146,15 +150,15 @@ export default function PlanCalendar({
       {describe && (
         <div className="calendar-footer plan-legend">
           <span>
-            <span className="plan-mark planned" aria-hidden="true" />{" "}
+            <span className="plan-swatch is-planned" aria-hidden="true" />{" "}
             {t("plan.legendPlanned")}
           </span>
           <span>
-            <span className="plan-mark rest" aria-hidden="true" />{" "}
+            <span className="plan-swatch is-rest" aria-hidden="true" />{" "}
             {t("plan.legendRest")}
           </span>
           <span>
-            <span className="plan-swatch" aria-hidden="true" />{" "}
+            <span className="plan-swatch is-changed" aria-hidden="true" />{" "}
             {t("plan.legendChanged")}
           </span>
         </div>

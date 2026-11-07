@@ -519,3 +519,19 @@ button.ex-row-main {
   min-width: 0;
   margin: 0;
 }
+
+/* The plan's Upcoming calendar borrows the History calendar's cells. */
+.calendar-day.day-cell {
+  border-radius: var(--gt-radius-day);
+  background-color: var(--gt-surface-2);
+}
+.calendar-day.day-cell.is-planned {
+  background-color: transparent;
+}
+.calendar-day.day-cell.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+.calendar-day.day-cell.is-planned.is-override,
+.calendar-day.day-cell.is-override {
+  background-color: var(--gt-accent-soft);
+}
