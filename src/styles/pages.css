@@ -1904,3 +1904,46 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   min-height: 0;
   overflow: hidden;
 }
+
+/* Settings → Admin → Developer, and slow motion's pill (components/SlowMotion.tsx). */
+.developer-section {
+  margin-top: var(--gt-space-3);
+}
+.developer-card {
+  display: grid;
+  gap: var(--gt-space-3);
+}
+.developer-label {
+  margin: 0;
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
+.developer-card .row-sub {
+  margin: 0;
+}
+/* Top centre, just under the status bar: clear of the back button, the gear,
+   Finish and the bottom bar, and under any sheet. Small and see-through; the
+   tap area reaches 44px through an invisible extension. */
+.slow-motion-pill {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 2px);
+  left: 50%;
+  z-index: 40;
+  transform: translateX(-50%);
+  height: 20px;
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-1);
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+.slow-motion-pill::after {
+  content: "";
+  position: absolute;
+  inset: -12px -4px;
+}
