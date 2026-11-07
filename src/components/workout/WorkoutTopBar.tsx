@@ -1,10 +1,10 @@
-import { Fragment, useMemo, useRef } from "react";
+import { Fragment, useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 import type { Workout } from "@/data/model";
 import { useData } from "@/contexts/useData";
 import { customCategories } from "@/data/selectors";
 import { useNow } from "@/hooks/useNow";
-import { useToastClearance } from "@/hooks/useToastClearance";
+import MessageSlot from "@/components/messages/MessageSlot";
 import { localizedDate } from "@/lib/dates";
 import { durationLabel } from "@/lib/labels";
 import { autoWorkoutName, workoutTitle } from "@/lib/workout-name";
@@ -42,14 +42,12 @@ export default function WorkoutTopBar({
   // A live timer for a running workout; a past or edited one shows its date.
   const timed = !editing && !!w.startedAt;
   const now = useNow(timed);
-  const bar = useRef<HTMLDivElement>(null);
   const { t } = useT();
   const { state } = useData();
   const custom = useMemo(
     () => customCategories(state.records),
     [state.records],
   );
-  useToastClearance(bar, true);
   // Finish is an outline until every set is checked, then it fills.
   const allChecked = total > 0 && completed === total;
   const status = [
@@ -82,7 +80,8 @@ export default function WorkoutTopBar({
     </span>,
   ];
   return (
-    <div ref={bar} className="top-bar" data-top-bar>
+    <div className="top-bar-wrap" data-top-bar>
+    <div className="top-bar">
       <button
         type="button"
         className="icon-btn"
@@ -129,6 +128,9 @@ export default function WorkoutTopBar({
       >
         {editing ? t("workout.save") : t("workout.finish")}
       </button>
+    </div>
+      {/* Messages hang under the bar and push the cards down. */}
+      <MessageSlot />
     </div>
   );
 }

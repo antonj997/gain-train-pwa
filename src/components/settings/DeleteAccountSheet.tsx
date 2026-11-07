@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import Sheet from "@/components/ui/Sheet";
 import { errorMessage } from "@/lib/errors";
@@ -66,7 +66,7 @@ export default function DeleteAccountSheet({
             await deleteAccount();
             removeProfileCache(account);
             onClose();
-            toast.success(t("deleteAccount.deleted"));
+            notify.success(t("deleteAccount.deleted"));
           } catch (error) {
             setDeleteError(errorMessage(error, t("deleteAccount.failed")));
           } finally {

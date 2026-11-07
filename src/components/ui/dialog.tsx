@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { capturePointer } from "@/lib/pointer-capture";
 import { coarsePointer, opensKeyboard } from "@/lib/touch";
 import { t } from "@/i18n";
+import MessageSlot from "@/components/messages/MessageSlot";
 
 // Base classes live in styles/primitives.css; callers add their own.
 const classes = (base: string, extra?: string) =>
@@ -185,11 +186,15 @@ const DialogContent = React.forwardRef<
 );
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
+// An open sheet's messages show under its title, over the page's.
 const DialogHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={classes("dialog-header", className)} {...props} />
+  <>
+    <div className={classes("dialog-header", className)} {...props} />
+    <MessageSlot priority={2} />
+  </>
 );
 DialogHeader.displayName = "DialogHeader";
 

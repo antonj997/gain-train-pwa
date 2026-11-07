@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronRight } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import ListRow from "@/components/ui/ListRow";
 import { importSummary } from "@/data/actions";
@@ -45,7 +45,7 @@ export default function DataSection() {
             files: [file],
             title: t("data.backupTitle"),
           });
-          toast.success(t("data.exported"));
+          notify.success(t("data.exported"));
           return;
         } catch (error) {
           if ((error as Error)?.name === "AbortError") return;
@@ -58,9 +58,9 @@ export default function DataSection() {
       a.click();
       // Slow devices can still be reading the file a second later.
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
-      toast.success(t("data.savedAs", { name }));
+      notify.success(t("data.savedAs", { name }));
     } catch (error) {
-      toast.error(errorMessage(error, t("data.exportFailed")));
+      notify.error(errorMessage(error, t("data.exportFailed")));
     }
   };
   const restore = async (file?: File) => {
@@ -69,9 +69,9 @@ export default function DataSection() {
     try {
       if (file.size > MAX_BACKUP_BYTES) throw Error(t("data.tooBig"));
       const records = parseBackup(await file.text());
-      toast.success(importSummary(await importRecords(records)));
+      notify.success(importSummary(await importRecords(records)));
     } catch (e) {
-      toast.error(errorMessage(e, t("data.restoreFailed")));
+      notify.error(errorMessage(e, t("data.restoreFailed")));
     } finally {
       setImporting(false);
     }
@@ -80,9 +80,9 @@ export default function DataSection() {
     try {
       const ok = await requestPersistentStorage();
       setProtectedStorage(ok);
-      toast(ok ? t("data.persistOn") : t("data.persistAuto"));
+      notify(ok ? t("data.persistOn") : t("data.persistAuto"));
     } catch {
-      toast.error(t("data.persistFailed"));
+      notify.error(t("data.persistFailed"));
     }
   };
 

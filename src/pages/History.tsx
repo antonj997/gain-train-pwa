@@ -9,7 +9,10 @@ import {
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { errorMessage } from "@/lib/errors";
-import { toastWithUndo } from "@/lib/undo-toast";
+import { notify, offerUndo } from "@/lib/message-store";
+import { interleave } from "@/lib/messages";
+import { useMessageState } from "@/hooks/useMessages";
+import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
 import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { shiftDate, weekStart } from "@/lib/dates";
@@ -24,9 +27,8 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import ActivityGridIcon from "@/components/ActivityGridIcon";
-import { toast } from "sonner";
 import { useData } from "@/contexts/useData";
-import { today } from "@/data/model";
+import { today, type WorkoutRecord } from "@/data/model";
 import PageHeader from "@/components/PageHeader";
 import WorkoutRow from "@/components/items/WorkoutRow";
 import RecordPill from "@/components/items/RecordPill";
@@ -45,6 +47,9 @@ function weekTitle(week: string, now: string) {
     ? `${day(week)}–${day(end)} ${month(end)}`
     : `${day(week)} ${month(week)}–${day(end)} ${month(end)}`;
 }
+
+/** The undo placeholders of one week's box. */
+const historyScope = (week: string) => `history:${week}`;
 
 export default function History() {
   const { state, deleteRecord, restoreWorkout } = useData();
@@ -82,7 +87,16 @@ export default function History() {
   const bests = useMemo(() => newBestWorkoutIds(prEvents(records)), [records]);
   const period = historyCalendarBounds(calendar, now);
   const filtered = filterBySelection(records, calendar, now);
-  const weeks = [...new Set(filtered.map((r) => weekStart(r.payload.date)))];
+  // A week whose last workout was just deleted keeps its box for the Undo.
+  const { undos } = useMessageState();
+  const weeks = [
+    ...new Set([
+      ...filtered.map((r) => weekStart(r.payload.date)),
+      ...undos
+        .filter((u) => u.scope.startsWith("history:"))
+        .map((u) => u.scope.slice("history:".length)),
+    ]),
+  ].sort((a, b) => (a < b ? 1 : a > b ? -1 : 0));
   const selected = records.find((r) => r.id === params.get("workout"));
   const w = selected?.payload;
   const repeat = async () => {
@@ -90,22 +104,36 @@ export default function History() {
     setParams({});
     await workoutStart.repeat(w);
   };
-  const remove = async () => {
-    if (!selected || busy) return;
+  // Deleting leaves an Undo in the workout's place in its week's box.
+  const removeWorkout = async (r: WorkoutRecord) => {
+    if (busy) return false;
+    const week = weekStart(r.payload.date);
+    const index = filtered
+      .filter((x) => weekStart(x.payload.date) === week)
+      .findIndex((x) => x.id === r.id);
     setBusy(true);
     try {
-      await deleteRecord(selected.id);
-      setConfirmDelete(false);
-      setParams({});
-      toastWithUndo(
-        t("history.deleted"),
-        () => restoreWorkout(selected.id),
-        t("history.restoreFailed"),
-      );
+      await deleteRecord(r.id);
+      offerUndo({
+        scope: historyScope(week),
+        index,
+        text: t("history.deleted", { name: workoutTitle(r.payload.name) }),
+        undo: () => restoreWorkout(r.id),
+        failed: t("history.restoreFailed"),
+      });
+      return true;
     } catch (error) {
-      toast.error(errorMessage(error, t("history.deleteFailed")));
+      notify.error(errorMessage(error, t("history.deleteFailed")));
+      return false;
     } finally {
       setBusy(false);
+    }
+  };
+  const remove = async () => {
+    if (!selected) return;
+    if (await removeWorkout(selected)) {
+      setConfirmDelete(false);
+      setParams({});
     }
   };
   const monthName = localizedDate(calendar.month + "-01", { month: "long" });
@@ -255,7 +283,18 @@ export default function History() {
             {countLabel(sets, "set")}
           </h2>
           <div className="grouped">
-            {items.map((r) => {
+            {interleave(
+              items,
+              undos.filter((u) => u.scope === historyScope(week)),
+            ).map((slot) => {
+              if (slot.kind === "undo")
+                return (
+                  <UndoPlaceholder
+                    key={`u${slot.entry.id}`}
+                    entry={slot.entry}
+                  />
+                );
+              const r = slot.item;
               const w = r.payload;
               const meta = [
                 w.date === now ? t("common.todayCap") : null,

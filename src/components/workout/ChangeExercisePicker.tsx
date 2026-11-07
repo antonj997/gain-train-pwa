@@ -9,7 +9,6 @@ import {
 } from "@/lib/workout-editor";
 import { isCardioSet } from "@/lib/cardio";
 import type { ExerciseDefaults } from "@/data/workouts";
-import { toastWithUndo } from "@/lib/undo-toast";
 import ExercisePicker from "@/components/ExercisePicker";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { t } from "@/i18n";
@@ -18,7 +17,7 @@ import { t } from "@/i18n";
  * "Swap exercise" for a whole workout or routine: one picker shared by every
  * card instead of one per card. The sets stay, adapted to the new exercise's
  * load and count. Swapping to a strength exercise from cardio (or back) asks
- * first when logged sets would be cleared; Undo restores the card as it was.
+ * first when logged sets would be cleared.
  */
 export default function ChangeExercisePicker({
   exercise,
@@ -45,23 +44,17 @@ export default function ChangeExercisePicker({
     current: Exercise;
     target: ExerciseTarget;
   } | null>(null);
-  // The Undo toast outlives this render; it must change the latest workout.
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-  const apply = (from: Exercise, card: Exercise, target: ExerciseTarget) => {
+  // The card changes in place and the top bar says Saved: no message, and no
+  // Undo (undo is kept for things that take time to make). Changing again
+  // goes back; a change that would clear logged sets asks first.
+  const apply = (card: Exercise, target: ExerciseTarget) =>
     onChange(changeExercise(card, target, defaults?.get(card.exerciseId)));
-    toastWithUndo(
-      t("change.changedTo", { name: target.name }),
-      async () => onChangeRef.current(from),
-      t("change.undoFailed"),
-    );
-  };
   const choose = (items: ExerciseTarget[]) => {
     const target = items[0];
     if (!target || !before || !current) return;
     if (changeDiscardsSets(current, target) && loggedSetCount(current) > 0)
       setPending({ before, current, target });
-    else apply(before, current, target);
+    else apply(current, target);
   };
   const logged = pending ? loggedSetCount(pending.current) : 0;
   const cardio = !!pending?.current.sets.some(isCardioSet);
@@ -88,7 +81,7 @@ export default function ChangeExercisePicker({
         onConfirm={() => {
           const choice = pending;
           setPending(null);
-          if (choice) apply(choice.before, choice.current, choice.target);
+          if (choice) apply(choice.current, choice.target);
         }}
       />
     </>

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { useStableCallback } from "@/hooks/useStableCallback";
@@ -41,7 +41,7 @@ export function useCardioFields() {
       saveLibrary(
         withCardioFields(libraryOf(state.records, account), exerciseId, fields),
       ).catch(() => {
-        toast.error(t("cardio.fieldsFailed"));
+        notify.error(t("cardio.fieldsFailed"));
       }),
   );
   return { fieldsFor, setFields };

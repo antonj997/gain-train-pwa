@@ -121,7 +121,6 @@ export const sv = {
   "home.starting": "Startar…",
   "home.start": "Starta pass",
   "home.logPast": "Logga ett tidigare pass",
-  "home.abandoned": "Passet avbrutet",
   "home.restoreFailed":
     "Kunde inte återställa passet. Prova att importera en säkerhetskopia.",
   "home.abandonFailed": "Kunde inte avbryta. Försök igen.",
@@ -299,8 +298,6 @@ export const sv = {
   "exercise.moveHandle": "Flytta {name}, plats {n}",
   "exercise.moveUpNamed": "Flytta upp {name}",
   "exercise.moveDownNamed": "Flytta ner {name}",
-  "exercise.reordered": "Övningarna har fått ny ordning",
-  "exercise.reorderUndoFailed": "Kunde inte ångra den nya ordningen.",
   "load.count": "Mäts i",
   "load.reps": "Reps",
   "load.appliesUnchecked": "Gäller de set du inte har kryssat i än.",
@@ -390,8 +387,6 @@ export const sv = {
   "set.movingAt":
     "Setet är på plats {position} av {total}. Flytta med piltangenterna eller dra, släpp med mellanslag eller Enter.",
   "set.moveHandle": "Flytta {name} set {n}",
-  "change.changedTo": "Bytt till {name}",
-  "change.undoFailed": "Kunde inte ångra ändringen.",
   "change.title": "Byta till {name}?",
   "change.cardioToStrength": {
     one: "Ditt {count} loggade set passar inte en styrkeövning och rensas.",
@@ -485,7 +480,7 @@ export const sv = {
   "history.onThisDay": "{workouts} den här dagen",
   "history.inView": "{workouts} i vyn",
   "history.inMonth": "{workouts} i {month}",
-  "history.deleted": "Passet raderat",
+  "history.deleted": "Passet {name} borttaget",
   "history.restoreFailed":
     "Kunde inte återställa passet. Prova att återställa en säkerhetskopia.",
   "history.deleteFailed": "Kunde inte radera passet. Försök igen.",
@@ -818,7 +813,7 @@ export const sv = {
     "Kunde inte spara. Försök igen; ditt utkast finns kvar.",
   "routines.resumeFirst":
     "Fortsätt eller släng det befintliga rutinutkastet först.",
-  "routines.deleted": "Rutinen raderad",
+  "routines.deleted": "Rutinen {name} borttagen",
   "routines.restoreFailed":
     "Kunde inte återställa rutinen. Försök från en säkerhetskopia.",
   "routines.lastDone": "senast {when}",
@@ -896,7 +891,7 @@ export const sv = {
     "Sluta dela {name} först. Anslut och logga in för att ta bort den från det delade biblioteket.",
   "exercises.unpublishFailed":
     "Kunde inte ta bort {name} från det delade biblioteket. Inget raderades; försök igen.",
-  "exercises.deleted": "Övningen raderad",
+  "exercises.deleted": "Övningen {name} borttagen",
   "exercises.deleteFailed":
     "Kunde inte radera. Övningen finns kvar; försök igen.",
   "exercises.search": "Sök övningar",
@@ -1135,7 +1130,7 @@ export const sv = {
   "plan.deleteText":
     "Schemat och dess datumändringar tas bort. Dina rutiner och pass finns kvar.",
   "plan.keep": "Behåll schemat",
-  "plan.deletedToast": "Schemat raderat",
+  "plan.deletedToast": "Schemat {name} borttaget",
   "plan.deleteFailed": "Kunde inte radera. Schemat finns kvar; försök igen.",
   "plan.from": "Från",
   "plan.to": "Till",
@@ -1654,4 +1649,34 @@ export const sv = {
   "slowmo.option": "{scale}×",
   "slowmo.pill": "Slow {scale}×",
   "slowmo.pillLabel": "Slow motion {scale}×. Tryck för att stänga av.",
+
+  // Meddelanden, gester och tips (redesign 1C)
+  "messages.dismiss": "Stäng",
+  "swipe.start": "Starta",
+  "swipe.more": "Mer",
+  "swipe.delete": "Ta bort",
+  "swipe.repeat": "Kör igen",
+  "menu.optionsFor": "Val för {name}",
+  "menu.addToWorkout": "Lägg till i pass",
+  "menu.addToSelection": "Lägg till i valet",
+  "menu.removeFromSelection": "Ta bort ur valet",
+  "menu.openExercise": "Öppna övningssidan",
+  "menu.addedToWorkout": "{name} lades till i passet",
+  "tips.label": "Tips",
+  "tips.ok": "Ok",
+  "tips.weekStrip": "Tryck på veckan för hela historiken",
+  "tips.swipeRoutine": "Svep höger för att starta direkt",
+  "tips.libraryExercise": "Håll in för fler val",
+  "tips.calendarDay": "Håll in och dra för att välja en period",
+  "tips.setBadge": "Tryck för uppvärmning, dropset eller ta bort",
+  "tips.swipeSet": "Svep vänster för att ta bort ett set",
+  "tips.unitHeader": "Byt mellan kg och lb här",
+  "tips.repsHeader": "Välj reps, hold eller reps + hold",
+  "settings.showTips": "Visa tips igen",
+  "settings.showTipsHint": "Engångstipsen visas igen på den här telefonen",
+  "settings.tipsReset": "Tipsen visas igen",
+  "exercises.restoreFailed":
+    "Kunde inte återställa övningen. Försök från en säkerhetskopia.",
+  "plan.restoreFailed":
+    "Kunde inte återställa schemat. Försök från en säkerhetskopia.",
 } satisfies Messages;

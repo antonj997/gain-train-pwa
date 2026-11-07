@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
@@ -71,7 +71,7 @@ export default function Settings() {
     try {
       await signOut();
     } catch {
-      toast.error(failure);
+      notify.error(failure);
     } finally {
       setAccountBusy(false);
     }

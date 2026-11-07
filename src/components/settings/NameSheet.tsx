@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import Sheet from "@/components/ui/Sheet";
 import type { DisplayNameStatus } from "@/hooks/useDisplayName";
 import { DISPLAY_NAME_MAX, normalizeDisplayName } from "@/lib/display-name";
@@ -38,7 +38,7 @@ export default function NameSheet({
     setError("");
     try {
       await onSave(next);
-      toast.success(next ? t("name.saved") : t("name.removed"));
+      notify.success(next ? t("name.saved") : t("name.removed"));
       onClose();
     } catch {
       setError(t("name.saveFailed"));

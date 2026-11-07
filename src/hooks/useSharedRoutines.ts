@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import type { Routine } from "@/data/model";
@@ -102,16 +102,16 @@ export function useSharedRoutines({
     try {
       await unpublishRoutine(payload.sharedId);
     } catch {
-      toast.error(t("shared.stopFailed", { name: payload.name }));
+      notify.error(t("shared.stopFailed", { name: payload.name }));
       setSharing(false);
       return false;
     }
     try {
       await setSharedId(id, null);
-      toast(t("shared.stopped", { name: payload.name }));
+      notify(t("shared.stopped", { name: payload.name }));
       return true;
     } catch {
-      toast.error(t("shared.phoneFailed"));
+      notify.error(t("shared.phoneFailed"));
       return false;
     } finally {
       setSharing(false);
@@ -139,7 +139,7 @@ export function useSharedRoutines({
       if (!row || row.mine || adding) return false;
       const copy = importSharedRoutine(row, state.records);
       if (!copy) {
-        toast.error(t("sharedRoutines.unusable", { name: row.name }));
+        notify.error(t("sharedRoutines.unusable", { name: row.name }));
         return false;
       }
       setAdding(row.id);
@@ -148,10 +148,10 @@ export function useSharedRoutines({
         for (const exercise of copy.exercises)
           await save(exercise.id, "exercise", exercise.payload);
         await save(crypto.randomUUID(), "routine", copy.routine);
-        toast(t("sharedRoutines.addedToast", { name: copy.routine.name }));
+        notify(t("sharedRoutines.addedToast", { name: copy.routine.name }));
         return true;
       } catch {
-        toast.error(t("shared.addFailed", { name: row.name }));
+        notify.error(t("shared.addFailed", { name: row.name }));
         return false;
       } finally {
         setAdding("");
@@ -168,12 +168,12 @@ export function useSharedRoutines({
           toSharedRoutineInsert(payload, state.records),
         );
         await setSharedId(id, sharedId);
-        toast(t("shared.sharedOk", { name: payload.name }));
+        notify(t("shared.sharedOk", { name: payload.name }));
         return true;
       } catch (cause) {
         // Remove the row again if only the local save failed, so nothing is half done.
         if (sharedId) await unpublishRoutine(sharedId).catch(() => {});
-        toast.error(shareFailure(cause, payload.name));
+        notify.error(shareFailure(cause, payload.name));
         return false;
       } finally {
         setSharing(false);
@@ -198,10 +198,10 @@ export function useSharedRoutines({
         setSharing(true);
         try {
           await unpublishRoutine(sharedId);
-          toast(t("shared.stopped", { name: row.name }));
+          notify(t("shared.stopped", { name: row.name }));
           done = true;
         } catch {
-          toast.error(t("shared.stopFailed", { name: row.name }));
+          notify.error(t("shared.stopFailed", { name: row.name }));
         } finally {
           setSharing(false);
         }
@@ -224,7 +224,7 @@ export function useSharedRoutines({
           toSharedRoutineInsert(after, state.records),
         );
       } catch {
-        toast.error(t("shared.staleCopy"));
+        notify.error(t("shared.staleCopy"));
       }
     },
   };

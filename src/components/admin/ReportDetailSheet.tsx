@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
@@ -94,7 +94,7 @@ export default function ReportDetailSheet({
       });
       onUpdated(change);
       setNote(change.admin_note ?? "");
-      toast.success(t("admin.saved"));
+      notify.success(t("admin.saved"));
     } catch (cause) {
       setError(errorMessage(cause, t("admin.saveFailed")));
     } finally {
@@ -106,10 +106,10 @@ export default function ReportDetailSheet({
     try {
       await deleteReport(report);
       setConfirm(false);
-      toast.success(t("admin.deleted"));
+      notify.success(t("admin.deleted"));
       onDeleted(report.id);
     } catch {
-      toast.error(t("admin.deleteFailed"));
+      notify.error(t("admin.deleteFailed"));
     } finally {
       setBusy(false);
     }

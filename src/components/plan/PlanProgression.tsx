@@ -1,7 +1,7 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { useMemo, useRef, useState } from "react";
 import { ListPlus, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import ExercisePicker from "@/components/ExercisePicker";
 import ProgressionSheet from "@/components/plan/ProgressionSheet";
 import { kgText } from "@/lib/plan-note";
@@ -250,7 +250,7 @@ export default function PlanProgression({
                   })),
                 );
                 setChoosingRoutine(false);
-                toast(
+                notify(
                   fresh.length
                     ? t("prog.addedFromRoutine", {
                         lifts: countLabel(fresh.length, "progression"),

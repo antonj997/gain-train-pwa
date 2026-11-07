@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Pause, Play } from "lucide-react";
-import { toast } from "sonner";
+import { notify, offerUndo } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CellSheet from "@/components/plan/CellSheet";
@@ -39,6 +39,9 @@ import { localizedDate, weekdayNames } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { errorMessage } from "@/lib/errors";
 import { t } from "@/i18n";
+
+/** The Plan subscreen's list, where a deleted plan leaves its Undo. */
+export const PLANS_SCOPE = "plans";
 
 /** The cell being chosen: a template day, or one dated override. */
 type Target = { week: number; day: number } | { date: string };
@@ -201,7 +204,7 @@ export default function PlanEditor({
       };
       if (progression) payload.progression = progression;
       await save(plan?.id ?? crypto.randomUUID(), "plan", payload);
-      toast.success(message);
+      notify.success(message);
       onClose();
     } catch (cause) {
       setError(errorMessage(cause, t("plan.saveFailed")));
@@ -390,11 +393,19 @@ export default function PlanEditor({
           if (!plan) return;
           setBusy(true);
           try {
-            await deleteRecord(plan.id);
-            toast(t("plan.deletedToast"));
+            const index = plans.findIndex((p) => p.id === plan.id);
+            const { id, ...saved } = plan;
+            await deleteRecord(id);
+            offerUndo({
+              scope: PLANS_SCOPE,
+              index,
+              text: t("plan.deletedToast", { name: plan.name }),
+              undo: () => save(id, "plan", saved),
+              failed: t("plan.restoreFailed"),
+            });
             onClose();
           } catch {
-            toast.error(t("plan.deleteFailed"));
+            notify.error(t("plan.deleteFailed"));
           } finally {
             setBusy(false);
             setDeleting(false);

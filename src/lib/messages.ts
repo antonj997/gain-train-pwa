@@ -37,6 +37,9 @@ export type UndoAction = {
   failed: string;
 };
 
+/** The list on Train (the resume card's place) where an abandoned workout leaves its Undo. */
+export const RESUME_SCOPE = "resume";
+
 /** Time on screen for a banner under the header, and for an undo placeholder. */
 export const MESSAGE_MS = 4000;
 export const UNDO_MS = 5000;

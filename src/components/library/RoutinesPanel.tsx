@@ -7,7 +7,6 @@ import {
 } from "@/data/selectors";
 import { today } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
-import { toastWithUndo } from "@/lib/undo-toast";
 import { reorderByIds } from "@/lib/exercise-order";
 import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -25,6 +24,9 @@ import {
   Trash2,
 } from "lucide-react";
 import RoutineCard from "@/components/items/RoutineCard";
+import { useRoutineMenu } from "@/components/library/RoutineMenu";
+import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
+import { useWithUndo } from "@/hooks/useMessages";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { type Exercise, type Routine } from "@/data/model";
@@ -43,8 +45,7 @@ import { useRepHold } from "@/hooks/useRepHold";
 import PhaseCard from "@/components/library/PhaseCard";
 import type { PanelRequest } from "@/components/library/ExercisesPanel";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
-import { unpublishRoutine } from "@/data/shared-routines";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import {
   Dialog,
   DialogContent,
@@ -112,7 +113,6 @@ export default function RoutinesPanel({
     setRemoving(null);
   };
   const lock = useRef(false);
-  const [menu, setMenu] = useState<string | null>(null);
   const records = routines(state.records);
   const now = today();
   // The newest finished workout that started from each routine.
@@ -124,7 +124,6 @@ export default function RoutinesPanel({
     }
     return dates;
   }, [state.records]);
-  const menuRoutine = records.find((r) => r.id === menu);
   const update = (exercise: Exercise) => {
     if (edit)
       setEdit({
@@ -153,15 +152,8 @@ export default function RoutinesPanel({
       },
     });
   };
-  const saveOrder = (ids: string[]) => {
-    const before = edit?.data.exercises.map((ex) => ex.id) ?? [];
-    reorderTo(ids);
-    toastWithUndo(
-      t("exercise.reordered"),
-      async () => reorderTo(before),
-      t("exercise.reorderUndoFailed"),
-    );
-  };
+  // The editor shows the new order at once; reordering is its own undo.
+  const saveOrder = (ids: string[]) => reorderTo(ids);
   const run = async (action: () => Promise<void>) => {
     if (lock.current) return;
     lock.current = true;
@@ -170,9 +162,8 @@ export default function RoutinesPanel({
     try {
       await action();
     } catch (cause) {
-      const message = errorMessage(cause, t("routines.saveFailed"));
-      setError(message);
-      toast.error(message);
+      // Shown in the editor's footer, by Save.
+      setError(errorMessage(cause, t("routines.saveFailed")));
     } finally {
       lock.current = false;
       setBusy(false);
@@ -180,7 +171,7 @@ export default function RoutinesPanel({
   };
   const startEdit = (id: string, data: Routine) => {
     if (edit && edit.id !== id) {
-      toast(t("routines.resumeFirst"));
+      notify(t("routines.resumeFirst"));
       setOpen(true);
       return;
     }
@@ -188,6 +179,19 @@ export default function RoutinesPanel({
     setError(null);
     setOpen(true);
   };
+  const routineMenu = useRoutineMenu({
+    scope: "routines:library",
+    onEdit: (r) => {
+      if (!busy) startEdit(r.id, r.payload);
+    },
+    onSharedId: (id, sharedId) => {
+      if (edit?.id !== id) return;
+      const data = structuredClone(edit.data);
+      if (sharedId) data.sharedId = sharedId;
+      else delete data.sharedId;
+      setEdit({ ...edit, data });
+    },
+  });
   // `?edit=<id>` (from the Train preview) opens that routine's editor once.
   const [params, setParams] = useSearchParams();
   const editId = params.get("edit");
@@ -206,34 +210,6 @@ export default function RoutinesPanel({
     setError(null);
     setOpen(true);
   };
-  const remove = (r: (typeof records)[number]) => {
-    const sharedId = r.payload.sharedId;
-    // A shared routine leaves the shared library first, while its record
-    // still holds the id needed to remove it.
-    if (sharedId && !shared.ready) {
-      toast.error(t("exercises.stopSharingFirst", { name: r.payload.name }));
-      return;
-    }
-    return run(async () => {
-      if (sharedId)
-        try {
-          await unpublishRoutine(sharedId);
-        } catch {
-          toast.error(t("exercises.unpublishFailed", { name: r.payload.name }));
-          return;
-        }
-      await deleteRecord(r.id);
-      setMenu(null);
-      // Undo brings the routine back unshared: its shared row is gone.
-      const restored = structuredClone(r.payload);
-      delete restored.sharedId;
-      toastWithUndo(
-        t("routines.deleted"),
-        () => save(r.id, "routine", restored),
-        t("routines.restoreFailed"),
-      );
-    });
-  };
   // A search narrows the cards by name or exercise.
   const needle = (query ?? "").trim().toLocaleLowerCase();
   const shown = needle
@@ -245,6 +221,8 @@ export default function RoutinesPanel({
           ),
       )
     : records;
+  // A deleted routine's place keeps an Undo for a few seconds.
+  const cards = useWithUndo("routines:library", shown);
   // Library's header: + starts a new routine, Search opens the search field.
   const handled = useRef(request?.n ?? 0);
   useEffect(() => {
@@ -278,9 +256,14 @@ export default function RoutinesPanel({
           />
         </label>
       )}
-      {shown.length > 0 && (
+      {cards.length > 0 && (
         <div className="routine-cards">
-          {shown.map((r) => {
+          {cards.map((slot) => {
+            if (slot.kind === "undo")
+              return (
+                <UndoPlaceholder key={`u${slot.entry.id}`} entry={slot.entry} />
+              );
+            const { item: r, index } = slot;
             const done = lastDone.get(r.id);
             return (
               <RoutineCard
@@ -329,7 +312,7 @@ export default function RoutinesPanel({
                       name: r.payload.name,
                     })}
                     disabled={busy}
-                    onClick={() => setMenu(r.id)}
+                    onClick={() => routineMenu.open(r.id, index)}
                   >
                     <MoreHorizontal size={22} aria-hidden="true" />
                   </button>
@@ -369,62 +352,7 @@ export default function RoutinesPanel({
           <ChevronRight className="chev" size={20} aria-hidden="true" />
         </Link>
       </div>
-      <Sheet
-        open={!!menuRoutine}
-        onClose={() => setMenu(null)}
-        title={menuRoutine?.payload.name}
-      >
-        {menuRoutine && (
-          <>
-            <div className="list">
-              <ListRow
-                title={t("common.edit")}
-                leading={<Pencil size={20} aria-hidden="true" />}
-                disabled={busy}
-                onClick={() => {
-                  setMenu(null);
-                  startEdit(menuRoutine.id, menuRoutine.payload);
-                }}
-              />
-              {shared.canShare ? (
-                <ListRow
-                  title={
-                    shared.sharing
-                      ? t("exercises.working")
-                      : menuRoutine.payload.sharedId
-                        ? t("exercises.stopSharing")
-                        : t("exercises.shareToLibrary")
-                  }
-                  leading={<Share2 size={20} aria-hidden="true" />}
-                  disabled={busy || shared.sharing}
-                  onClick={async () => {
-                    const done = menuRoutine.payload.sharedId
-                      ? await shared.stopSharing(menuRoutine.id)
-                      : await shared.share(menuRoutine.id);
-                    if (done) setMenu(null);
-                  }}
-                />
-              ) : (
-                <ListRow
-                  title={t("exercises.signInToShare")}
-                  leading={<Share2 size={20} aria-hidden="true" />}
-                  to="/auth"
-                />
-              )}
-              <ListRow
-                tone="danger"
-                title={t("routines.delete")}
-                leading={<Trash2 size={20} aria-hidden="true" />}
-                disabled={busy}
-                onClick={() => void remove(menuRoutine)}
-              />
-            </div>
-            {shared.canShare && (
-              <p className="row-sub">{t("sharedRoutines.menuNote")}</p>
-            )}
-          </>
-        )}
-      </Sheet>
+      {routineMenu.sheet}
       <Dialog
         open={open && !!edit}
         onOpenChange={(value) => {
@@ -545,7 +473,7 @@ export default function RoutinesPanel({
                       await save(edit.id, "routine", edit.data);
                       setEdit(null);
                       setOpen(false);
-                      toast.success(t("routines.saved"));
+                      notify.success(t("routines.saved"));
                       await shared.syncEdit(before, edit.data);
                     })
                   }

@@ -37,7 +37,6 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
 import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import { reorderByIds } from "@/lib/exercise-order";
-import { toastWithUndo } from "@/lib/undo-toast";
 import EditSaveDialog from "@/components/workout/EditSaveDialog";
 import FinishSheet from "@/components/workout/FinishSheet";
 import NextSetChip from "@/components/workout/NextSetChip";
@@ -190,22 +189,13 @@ function Editor({
     setReorderFrom(ex.id);
     setReorderOpen(true);
   });
-  const saveOrder = (ids: string[]) => {
-    const before = w.exercises.map((e) => e.id);
+  // The new order shows at once and the top bar says Saved; reordering is
+  // its own undo.
+  const saveOrder = (ids: string[]) =>
     changeWith((current) => ({
       ...current,
       exercises: reorderByIds(current.exercises, ids),
     }));
-    toastWithUndo(
-      t("exercise.reordered"),
-      async () =>
-        changeWith((current) => ({
-          ...current,
-          exercises: reorderByIds(current.exercises, before),
-        })),
-      t("exercise.reorderUndoFailed"),
-    );
-  };
   const requestRemove = useStableCallback((ex: Exercise) =>
     hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex),
   );

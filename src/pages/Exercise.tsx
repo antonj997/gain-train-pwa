@@ -7,7 +7,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { MoreHorizontal, Play, Star } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { cardioProgressFor, progressFor } from "@/data/analytics";
@@ -166,16 +166,16 @@ export default function ExercisePage() {
       const change = favouriteChange(state.records, e);
       await save(change.id, "exercise", change.payload, change.deleted);
     } catch {
-      toast.error(t("exercises.favouriteFailed"));
+      notify.error(t("exercises.favouriteFailed"));
     }
   }
   const toggleHidden = async (e: LibraryExercise, hide: boolean) => {
     try {
       await setHidden(e.id, hide);
       setMenu(null);
-      toast(t(hide ? "exercises.hidden" : "exercises.back", { name: e.name }));
+      notify(t(hide ? "exercises.hidden" : "exercises.back", { name: e.name }));
     } catch {
-      toast.error(
+      notify.error(
         t(hide ? "exercises.hideFailed" : "exercises.unhideFailed", {
           name: e.name,
         }),

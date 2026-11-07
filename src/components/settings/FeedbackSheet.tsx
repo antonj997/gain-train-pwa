@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { ImagePlus, X } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { readLastError } from "@/components/ErrorBoundary";
@@ -176,7 +176,7 @@ export default function FeedbackSheet({
       setKind("bug");
       setImageNote("");
       setSentAt(Date.now());
-      toast.success(t("feedback.sent"));
+      notify.success(t("feedback.sent"));
       onClose();
     } catch (cause) {
       setError(errorMessage(cause, t("feedback.sendFailed")));
