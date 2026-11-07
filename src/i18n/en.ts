@@ -157,7 +157,7 @@ export const en = {
   "home.todayRest": "Rest day",
   "home.suggestRotation": "Nothing planned: the routine you did longest ago",
   "home.suggestRotationRest":
-    "Rest day in your plan. Training anyway? The routine you did longest ago",
+    "Training anyway? The routine you did longest ago",
   "home.suggestFirst": "Nothing planned: your first routine",
   "home.nothingPlanned": "Nothing planned",
   "home.nothingPlannedText":

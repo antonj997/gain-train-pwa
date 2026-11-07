@@ -154,8 +154,7 @@ export const sv = {
   "home.todaySuggested": "Förslag",
   "home.todayRest": "Vilodag",
   "home.suggestRotation": "Inget planerat: rutinen du kört längst sedan",
-  "home.suggestRotationRest":
-    "Vilodag i schemat. Tränar du ändå? Rutinen du kört längst sedan",
+  "home.suggestRotationRest": "Tränar du ändå? Rutinen du kört längst sedan",
   "home.suggestFirst": "Inget planerat: din första rutin",
   "home.nothingPlanned": "Inget planerat",
   "home.nothingPlannedText":
