@@ -24,6 +24,32 @@
   --gt-cool-bg: #e4eeff;
   --gt-danger-fg: #b42318;
   --gt-danger-bg: #fdecec;
+  /* A deload week in a plan's phase bar. */
+  --gt-deload: #c5cbd4;
+
+  /* Exercise avatars: a circle tinted by the main category with the movement
+     icon in its colour. Every pair keeps the glyph at 3:1 or more (a test
+     reads these lines). */
+  --gt-cat-chest-bg: #f1eaff;
+  --gt-cat-chest-fg: #6b3fc9;
+  --gt-cat-back-bg: #e2f3f7;
+  --gt-cat-back-fg: #0e6a7e;
+  --gt-cat-shoulders-bg: #eaf0ff;
+  --gt-cat-shoulders-fg: #2f5bea;
+  --gt-cat-arms-bg: #fde8f0;
+  --gt-cat-arms-fg: #b0336a;
+  --gt-cat-legs-bg: #f7f0d4;
+  --gt-cat-legs-fg: #735b00;
+  --gt-cat-glutes-bg: #fdede2;
+  --gt-cat-glutes-fg: #a34a14;
+  --gt-cat-core-bg: #ebf5dc;
+  --gt-cat-core-fg: #447012;
+  --gt-cat-cardio-bg: #e3f4ea;
+  --gt-cat-cardio-fg: #1e7a4c;
+  --gt-cat-full-body-bg: #fde9e5;
+  --gt-cat-full-body-fg: #b0391f;
+  --gt-cat-other-bg: #eef0f3;
+  --gt-cat-other-fg: #5b6270;
 
   --gt-font:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
@@ -47,6 +73,10 @@
   --gt-radius-md: 12px;
   --gt-radius-lg: 18px;
   --gt-radius-xl: 22px;
+  /* Item shapes: a routine card, the routine tile, a day cell (36–40px). */
+  --gt-radius-item: 20px;
+  --gt-radius-tile: 13px;
+  --gt-radius-day: 11px;
 
   --gt-motion: 180ms ease-out;
   /* Things that move: page slides, the tab pill, the segmented thumb and the
@@ -85,6 +115,27 @@
   --gt-cool-bg: #142640;
   --gt-danger-fg: #ff8a80;
   --gt-danger-bg: #3a1715;
+  --gt-deload: #3a414d;
+  --gt-cat-chest-bg: #2b1f3d;
+  --gt-cat-chest-fg: #c4a6ff;
+  --gt-cat-back-bg: #12303a;
+  --gt-cat-back-fg: #7fd3e6;
+  --gt-cat-shoulders-bg: #1c2540;
+  --gt-cat-shoulders-fg: #7c9bff;
+  --gt-cat-arms-bg: #3a1f2b;
+  --gt-cat-arms-fg: #ff9fbf;
+  --gt-cat-legs-bg: #2d2a12;
+  --gt-cat-legs-fg: #e7d27a;
+  --gt-cat-glutes-bg: #3a2516;
+  --gt-cat-glutes-fg: #ffad7a;
+  --gt-cat-core-bg: #26301a;
+  --gt-cat-core-fg: #b5e07a;
+  --gt-cat-cardio-bg: #13261d;
+  --gt-cat-cardio-fg: #3cc985;
+  --gt-cat-full-body-bg: #3b1d19;
+  --gt-cat-full-body-fg: #ff9d86;
+  --gt-cat-other-bg: #22262e;
+  --gt-cat-other-fg: #a3acba;
 }
 
 @media (prefers-reduced-motion: reduce) {
