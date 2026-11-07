@@ -1,4 +1,5 @@
 import type { NavDirection } from "@/lib/page-transition";
+import { motionMs } from "@/lib/slow-motion";
 
 /**
  * Page slides. A navigation from a tab, the Settings gear or a Back button runs
@@ -172,6 +173,6 @@ export function markPageEntering(main: HTMLElement) {
   main.setAttribute("data-entering", "");
   enteringTimer = setTimeout(
     () => main.removeAttribute("data-entering"),
-    MAX_WAIT_MS + 400,
+    motionMs(MAX_WAIT_MS + 400),
   );
 }

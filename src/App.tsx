@@ -9,6 +9,9 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useTheme } from "@/contexts/useTheme";
 import { LanguageProvider } from "@/i18n/LanguageProvider";
 import Layout from "@/components/Layout";
+import SlowMotion from "@/components/SlowMotion";
+import { useMotionScale } from "@/hooks/useSlowMotion";
+import { motionMs } from "@/lib/slow-motion";
 import Home from "@/pages/Home";
 import ActiveWorkout from "@/pages/ActiveWorkout";
 import NotFound from "@/pages/NotFound";
@@ -19,11 +22,15 @@ const Library = lazy(() => import("@/pages/Library"));
 const Progress = lazy(() => import("@/pages/Progress"));
 const AdminReports = lazy(() => import("@/pages/AdminReports"));
 const Exercise = lazy(() => import("@/pages/Exercise"));
+/** Sonner's own default time on screen; slow motion stretches it. */
+const TOAST_MS = 4000;
 function AppToaster() {
   const { theme } = useTheme();
+  const scale = useMotionScale();
   return (
     <Toaster
       theme={theme}
+      duration={motionMs(TOAST_MS, scale)}
       // At the top and phone-wide, but below the page's header or the
       // workout's top bar (--toast-top in usability.css), so Back, Save and
       // the title stay in reach; two at most, the newest in front.
@@ -54,6 +61,7 @@ function AccountApp() {
   return (
     <ProfileProvider key={account}>
       <DataProvider>
+        <SlowMotion />
         <BrowserRouter basename={import.meta.env.BASE_URL}>
           <Routes>
             <Route element={<Layout />}>

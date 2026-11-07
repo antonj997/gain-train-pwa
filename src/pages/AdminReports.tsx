@@ -5,6 +5,7 @@ import { useData } from "@/contexts/useData";
 import FacetChips from "@/components/FacetChips";
 import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
+import DeveloperSection from "@/components/admin/DeveloperSection";
 import ReportDetailSheet from "@/components/admin/ReportDetailSheet";
 import StatusChip from "@/components/admin/StatusChip";
 import ListRow from "@/components/ui/ListRow";
@@ -22,7 +23,10 @@ import {
 import { useT } from "@/i18n/useT";
 import { usePageBack } from "@/hooks/usePageTransitions";
 
-/** Settings → Admin: every report, filtered by status and kind, with a detail sheet. */
+/**
+ * Settings → Admin: every report, filtered by status and kind, with a detail
+ * sheet, and the Developer tools (slow motion) at the end.
+ */
 export default function AdminReports() {
   const { t, locale } = useT();
   const { online } = useData();
@@ -179,6 +183,7 @@ export default function AdminReports() {
           ))}
         </div>
       )}
+      {isAdmin && <DeveloperSection />}
       <ReportDetailSheet
         report={report}
         onClose={() => setSelected(null)}

@@ -1614,4 +1614,13 @@ export const sv = {
   "admin.deleted": "Rapporten raderad",
   "admin.deleteFailed": "Kunde inte radera rapporten. Försök igen.",
   "admin.sentBy": "{who} · {when}",
+  "admin.developer": "Utvecklare",
+  "slowmo.title": "Slow motion",
+  "slowmo.note":
+    "Saktar ner alla animationer så att du kan granska dem. Bara för admins, på den här enheten.",
+  "slowmo.reducedNote":
+    "Reducera rörelse är på, så bara den rörelse som finns kvar saktas ner.",
+  "slowmo.option": "{scale}×",
+  "slowmo.pill": "Slow {scale}×",
+  "slowmo.pillLabel": "Slow motion {scale}×. Tryck för att stänga av.",
 } satisfies Messages;

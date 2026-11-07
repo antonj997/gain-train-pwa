@@ -5,6 +5,7 @@ import { isDrop, type SetBadgeInfo } from "@/data/drops";
 import { getSetIssues } from "@/lib/workout-editor";
 import { bodyWeightForSet } from "@/lib/set-editing";
 import { hasExtraWeight } from "@/lib/set-load";
+import { motionMs } from "@/lib/slow-motion";
 import {
   formatWeightValue,
   fromUnit,
@@ -195,7 +196,10 @@ export default function SetLine({
   useEffect(() => {
     if (set.done && !wasDone.current) {
       setCheckedNow(true);
-      const timeout = window.setTimeout(() => setCheckedNow(false), 200);
+      const timeout = window.setTimeout(
+        () => setCheckedNow(false),
+        motionMs(200),
+      );
       wasDone.current = set.done;
       return () => window.clearTimeout(timeout);
     }

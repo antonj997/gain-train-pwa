@@ -1606,4 +1606,13 @@ export const en = {
   "admin.deleted": "Report deleted",
   "admin.deleteFailed": "Could not delete the report. Try again.",
   "admin.sentBy": "{who} · {when}",
+  "admin.developer": "Developer",
+  "slowmo.title": "Slow motion",
+  "slowmo.note":
+    "Slows down every animation so you can review it. Only for admins, on this device.",
+  "slowmo.reducedNote":
+    "Reduce Motion is on, so only the motion that remains is slowed.",
+  "slowmo.option": "{scale}×",
+  "slowmo.pill": "Slow {scale}×",
+  "slowmo.pillLabel": "Slow motion {scale}×. Tap to turn it off.",
 };

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { motionMs } from "@/lib/slow-motion";
 import { local, storageKeys, writeStored } from "@/lib/storage";
 import { ThemeContext, type Theme } from "./useTheme";
 
@@ -51,7 +52,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     void document.documentElement.offsetWidth;
     fadeTimer.current = setTimeout(
       () => document.documentElement.classList.remove("theme-fading"),
-      700,
+      motionMs(700),
     );
     const next = theme === "light" ? "dark" : "light";
     writeStored(storageKeys.theme, next);
