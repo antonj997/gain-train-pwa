@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Play } from "lucide-react";
-import { toast } from "sonner";
+import { notify, offerUndo } from "@/lib/message-store";
+import { RESUME_SCOPE } from "@/lib/messages";
+import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
+import { useUndoEntries } from "@/hooks/useMessages";
 import { useData } from "@/contexts/useData";
 import type { WorkoutRecord } from "@/data/model";
 import { doneSetCount, nextSetLabel, setCount } from "@/data/selectors";
@@ -10,7 +13,6 @@ import { localizedDate } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
 import { durationLabel } from "@/lib/labels";
 import { workoutPath } from "@/lib/routes";
-import { toastWithUndo } from "@/lib/undo-toast";
 import { useT } from "@/i18n/useT";
 import { workoutTitle } from "@/lib/workout-name";
 
@@ -30,24 +32,31 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
   const { t } = useT();
   const now = useNow(!!running);
   const [abandoning, setAbandoning] = useState("");
-  const abandon = async (id: string) => {
+  const undos = useUndoEntries(RESUME_SCOPE);
+  const abandon = async (r: WorkoutRecord) => {
     if (abandoning) return;
-    setAbandoning(id);
+    setAbandoning(r.id);
     try {
-      await deleteRecord(id);
-      toastWithUndo(
-        t("home.abandoned"),
-        () => restoreWorkout(id),
-        t("home.restoreFailed"),
-      );
+      await deleteRecord(r.id);
+      // Its place on Train keeps an Undo for a few seconds.
+      offerUndo({
+        scope: RESUME_SCOPE,
+        index: 0,
+        text: t("start.abandonedNamed", { name: workoutTitle(r.payload.name) }),
+        undo: () => restoreWorkout(r.id),
+        failed: t("home.restoreFailed"),
+      });
     } catch (error) {
-      toast.error(errorMessage(error, t("home.abandonFailed")));
+      notify.error(errorMessage(error, t("home.abandonFailed")));
     } finally {
       setAbandoning("");
     }
   };
   return (
     <>
+      {undos.map((entry) => (
+        <UndoPlaceholder key={`u${entry.id}`} entry={entry} />
+      ))}
       {otherRunning.map((r) => (
         <div className="banner workout-banner" role="status" key={r.id}>
           <p>
@@ -69,7 +78,7 @@ export default function ResumeCards({ running, otherRunning, drafts }: Props) {
               type="button"
               className="btn-quiet btn-sm"
               disabled={!!abandoning}
-              onClick={() => void abandon(r.id)}
+              onClick={() => void abandon(r)}
             >
               {abandoning === r.id ? t("home.abandoning") : t("home.abandon")}
             </button>

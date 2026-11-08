@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { notify, offerUndo } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import { errorMessage } from "@/lib/errors";
 import { requestPersistenceOnce } from "@/lib/persistence";
 import { historyPath } from "@/lib/routes";
-import { toastWithUndo } from "@/lib/undo-toast";
+import { RESUME_SCOPE } from "@/lib/messages";
+import { workoutTitle } from "@/lib/workout-name";
 import { finishWorkout } from "@/lib/workout-editor";
 import { customCategories } from "@/data/selectors";
 import type { useRestTimer } from "@/hooks/useRestTimer";
@@ -36,7 +37,7 @@ export function useWorkoutActions(
       await action();
     } catch (cause) {
       setError(errorMessage(cause, t("actions.saveFailed")));
-      toast.error(failure);
+      notify.error(failure);
     } finally {
       actionLocked.current = false;
       autosave.unlock();
@@ -65,10 +66,10 @@ export function useWorkoutActions(
               })),
             });
           } catch {
-            toast.error(t("actions.routineFailed"));
+            notify.error(t("actions.routineFailed"));
           }
         }
-        toast.success(
+        notify.success(
           editing ? t("actions.changesSaved") : t("actions.workoutSaved"),
         );
         navigate(historyPath(id));
@@ -84,15 +85,18 @@ export function useWorkoutActions(
       try {
         await deleteRecord(id);
       } catch (cause) {
-        toast.error(errorMessage(cause, t("actions.abandonFailed")));
+        notify.error(errorMessage(cause, t("actions.abandonFailed")));
         return;
       }
       rest.skip();
-      toastWithUndo(
-        t("home.abandoned"),
-        () => restoreWorkout(id),
-        t("home.restoreFailed"),
-      );
+      // Train's resume card was its place: the Undo waits there.
+      offerUndo({
+        scope: RESUME_SCOPE,
+        index: 0,
+        text: t("start.abandonedNamed", { name: workoutTitle(w.name) }),
+        undo: () => restoreWorkout(id),
+        failed: t("home.restoreFailed"),
+      });
     }, t("actions.abandonRetry"));
   return { busy, complete, abandon };
 }

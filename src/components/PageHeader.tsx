@@ -1,6 +1,6 @@
-import { useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import SyncNotices from "@/components/SyncNotices";
-import { useToastClearance } from "@/hooks/useToastClearance";
+import MessageSlot from "@/components/messages/MessageSlot";
 
 type Props = {
   /** A muted line over the title, such as today's date. */
@@ -16,7 +16,10 @@ type Props = {
   align?: "last-line" | "first-line";
 };
 
-/** The top bar every page shares: eyebrow, title and an optional action, with the notices below. */
+/**
+ * The top bar every page shares: eyebrow, title and an optional action, with
+ * the notices below and then the page's messages, which push the content down.
+ */
 export default function PageHeader({
   eyebrow,
   title,
@@ -25,12 +28,9 @@ export default function PageHeader({
   notices = true,
   align = "last-line",
 }: Props) {
-  const bar = useRef<HTMLDivElement>(null);
-  useToastClearance(bar);
   return (
     <header className="page-header">
       <div
-        ref={bar}
         className={
           "page-header-bar" +
           (leading ? " has-leading" : "") +
@@ -45,6 +45,7 @@ export default function PageHeader({
         {action}
       </div>
       {notices && <SyncNotices />}
+      <MessageSlot />
     </header>
   );
 }

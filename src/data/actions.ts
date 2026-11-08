@@ -205,7 +205,7 @@ export function importRecordsIn(
   return result;
 }
 
-/** The toast after a restore: what was added and brought back, and what was kept. */
+/** The message after a restore: what was added and brought back, and what was kept. */
 export function importSummary({ added, restored, kept }: ImportResult) {
   if (!added && !restored) return t("err.nothingToRestore");
   const parts = [
@@ -303,7 +303,7 @@ export function copyPhoneLogIn(
   return result;
 }
 
-/** The toast after copying the phone log. */
+/** The message after copying the phone log. */
 export function copySummary({ added, pastWorkouts }: CopyResult) {
   if (!added) return t("err.nothingToCopy");
   return (

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import { type Workout, repeatExercises, today } from "@/data/model";
 import {
@@ -10,7 +10,6 @@ import {
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { errorMessage } from "@/lib/errors";
 import { workoutPath } from "@/lib/routes";
-import { toastWithUndo } from "@/lib/undo-toast";
 import { useT } from "@/i18n/useT";
 import { workoutTitle } from "@/lib/workout-name";
 
@@ -60,21 +59,27 @@ export function useStartWorkout() {
       );
       // "Abandon and start" removed the running workout; offer it back.
       const replaced = request.replacing?.[0];
+      // Its own place (Train's resume card) is not on screen: the Undo
+      // waits in a dashed placeholder under the new workout's top bar.
       if (replaced)
-        toastWithUndo(
+        notify(
           t("start.abandonedNamed", { name: workoutTitle(replaced.name) }),
-          async () => {
-            navigate("/", { replace: true });
-            await deleteRecord(request.id);
-            await restoreWorkout(replaced.id);
-            navigate(workoutPath(replaced.id));
+          {
+            undo: {
+              run: async () => {
+                navigate("/", { replace: true });
+                await deleteRecord(request.id);
+                await restoreWorkout(replaced.id);
+                navigate(workoutPath(replaced.id));
+              },
+              failed: t("start.restoreFailed"),
+            },
           },
-          t("start.restoreFailed"),
         );
     } catch (error) {
       if (error instanceof WorkoutInProgressError)
         setPending({ ...request, replacing: error.workouts });
-      else toast.error(errorMessage(error, t("start.failed")));
+      else notify.error(errorMessage(error, t("start.failed")));
     } finally {
       lock.current = false;
       setBusy(false);

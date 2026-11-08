@@ -1,0 +1,270 @@
+/* Gestures (src/components/gestures/): only boxed items swipe. The item keeps
+   vertical scrolling for the browser (touch-action: pan-y); the front moves
+   over the layers under it. Colours come from tokens.css. */
+
+.swipe,
+.set-swipe {
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.swipe.is-swiping,
+.set-swipe.is-swiping {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.swipe-front {
+  position: relative;
+  z-index: 1;
+  will-change: transform;
+}
+
+/* A routine card: 20px corners on the box, the card itself the front. */
+.swipe-card {
+  border-radius: var(--gt-radius-item);
+}
+.swipe-card > .swipe-front > .routine-card {
+  position: relative;
+}
+/* Right: a green Start layer, its label growing in as the card moves. */
+.swipe-start {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding-left: var(--gt-space-5);
+  background-color: var(--gt-done);
+  color: var(--gt-surface);
+  font-weight: 700;
+  font-size: var(--gt-fs-3);
+  visibility: hidden;
+}
+.swipe[data-side="right"] > .swipe-start {
+  visibility: visible;
+}
+.swipe-start-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: calc(0.35 + 0.65 * var(--swipe-progress, 0));
+  transform-origin: left center;
+}
+.swipe-start-label.is-armed {
+  opacity: 1;
+}
+
+/* Left: buttons at the trailing edge (More, Delete; Repeat, Delete). */
+.swipe-actions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  visibility: hidden;
+}
+.swipe[data-side="left"] > .swipe-actions {
+  visibility: visible;
+}
+.swipe-action {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 44px;
+  padding: 0 4px;
+  border: 0;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font: inherit;
+  font-size: var(--gt-fs-1);
+  font-weight: 700;
+  cursor: pointer;
+}
+.swipe-action[data-tone="danger"] {
+  background-color: var(--gt-danger-bg);
+  color: var(--gt-danger-fg);
+}
+.swipe-action:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+}
+.swipe-card .swipe-action:last-child {
+  border-radius: 0 var(--gt-radius-item) var(--gt-radius-item) 0;
+}
+
+/* A workout in a week's box: the row is the front, on the box's surface. */
+.grouped > .swipe-row {
+  border-bottom: 1px solid var(--gt-line);
+}
+.grouped > .swipe-row:last-child {
+  border-bottom: 0;
+}
+.swipe-row > .swipe-front {
+  background-color: var(--gt-surface);
+}
+.swipe-row > .swipe-front > .workout-row {
+  border-bottom: 0;
+}
+
+/* A set row: the bin bubble waits at the trailing edge under the row. */
+.set-swipe-front {
+  background-color: var(--gt-surface);
+  border-radius: var(--gt-radius-sm);
+}
+.set-bin {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  visibility: hidden;
+}
+.set-swipe[data-side="left"] > .set-bin,
+.set-swipe[data-deleting] > .set-bin {
+  visibility: visible;
+}
+.set-bin-bubble,
+.set-bin-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+.set-bin-bubble {
+  display: grid;
+  place-items: center;
+  background-color: var(--gt-bin);
+  color: var(--gt-on-bin);
+  transform: scale(0);
+}
+.set-bin-ring {
+  border: 2px solid var(--gt-bin);
+  opacity: 0;
+}
+
+/* Long-press on a flat row: no callout, no text selection. */
+.long-press {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* The long-press menu: a small popover by the row. */
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: transparent;
+}
+.context-menu {
+  position: fixed;
+  z-index: 61;
+  width: min(240px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface);
+  box-shadow: var(--gt-shadow-chip);
+}
+.context-menu-title {
+  padding: 10px 14px 6px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-top: 1px solid var(--gt-line);
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  font-size: var(--gt-fs-3);
+  text-align: left;
+  cursor: pointer;
+}
+.context-menu-item[data-tone="danger"] {
+  color: var(--gt-danger-fg);
+}
+.context-menu-item:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+}
+@media (hover: hover) {
+  .context-menu-item:hover {
+    background-color: var(--gt-surface-2);
+  }
+}
+
+/* A one-time tip: an accent bubble with an arrow and Ok. */
+.tip-bubble {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 8px 8px 8px 12px;
+  border-radius: 14px;
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: var(--gt-shadow-chip);
+}
+.tip-arrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background-color: var(--gt-accent);
+  transform: rotate(45deg);
+}
+.tip-bubble[data-side="below"] .tip-arrow {
+  top: -5px;
+}
+.tip-bubble[data-side="above"] .tip-arrow {
+  bottom: -5px;
+}
+.tip-ok {
+  flex: none;
+  min-width: 44px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background-color: var(--gt-ground);
+  color: var(--gt-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tip-ok:focus-visible {
+  outline: 3px solid var(--gt-ink);
+  outline-offset: 2px;
+}
+.tip-target {
+  box-shadow: 0 0 0 2px var(--gt-accent);
+  border-radius: var(--tip-radius, 10px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tip-bubble {
+    animation: gt-tip-in 200ms var(--gt-ease-out) both;
+  }
+}
+@keyframes gt-tip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}

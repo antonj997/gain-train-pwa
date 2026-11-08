@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import Sheet from "@/components/ui/Sheet";
@@ -64,9 +64,9 @@ export default function AccountSheet({
         onClick={async () => {
           setBusy(true);
           try {
-            toast.success(copySummary(await copyPhoneLog()));
+            notify.success(copySummary(await copyPhoneLog()));
           } catch (error) {
-            toast.error(errorMessage(error, t("account.copyFailed")));
+            notify.error(errorMessage(error, t("account.copyFailed")));
           } finally {
             setBusy(false);
           }

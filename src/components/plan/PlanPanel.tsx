@@ -1,10 +1,12 @@
 import { useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Pause, Play, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import GroupEditor from "@/components/plan/GroupEditor";
-import PlanEditor from "@/components/plan/PlanEditor";
+import PlanEditor, { PLANS_SCOPE } from "@/components/plan/PlanEditor";
+import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
+import { useWithUndo } from "@/hooks/useMessages";
 import ListRow from "@/components/ui/ListRow";
 import { libraryOf } from "@/data/exercises";
 import { type RoutineGroup, today as todayDate } from "@/data/model";
@@ -51,6 +53,8 @@ export default function PlanPanel() {
     () => routineRecords(state.records),
     [state.records],
   );
+  // A deleted plan's row keeps an Undo for a few seconds.
+  const planSlots = useWithUndo(PLANS_SCOPE, plans);
   const [editing, setEditing] = useState<Editing>(null);
   // A new key each time, so a reopened editor starts from the saved record.
   const [session, setSession] = useState(0);
@@ -107,15 +111,15 @@ export default function PlanPanel() {
     const next = withPaused(plan, !p.paused);
     const blocking = p.paused ? findOverlap(plans, next, id) : null;
     if (blocking) {
-      toast.error(overlapMessage(blocking));
+      notify.error(overlapMessage(blocking));
       return;
     }
     setPausing(id);
     try {
       await save(id, "plan", next);
-      toast.success(t(p.paused ? "plan.resumedToast" : "plan.pausedToast"));
+      notify.success(t(p.paused ? "plan.resumedToast" : "plan.pausedToast"));
     } catch {
-      toast.error(t("plan.saveFailed"));
+      notify.error(t("plan.saveFailed"));
     } finally {
       setPausing(null);
     }
@@ -128,46 +132,61 @@ export default function PlanPanel() {
         <h2 className="group-title" id="plans-heading">
           {t("plan.plans")}
         </h2>
-        {plans.length > 0 && (
+        {planSlots.length > 0 && (
           <div className="list">
-            {plans.map((p) => (
-              <div
-                key={p.id}
-                className={"plan-row" + (p.paused ? " is-paused" : "")}
-              >
-                <button
-                  type="button"
-                  className="row plan-row-open"
-                  onClick={() => edit({ kind: "plan", plan: p })}
+            {planSlots.map((slot) => {
+              if (slot.kind === "undo")
+                return (
+                  <UndoPlaceholder
+                    key={`u${slot.entry.id}`}
+                    entry={slot.entry}
+                    className="in-list"
+                  />
+                );
+              const p = slot.item;
+              return (
+                <div
+                  key={p.id}
+                  className={"plan-row" + (p.paused ? " is-paused" : "")}
                 >
-                  <span className="row-main">
-                    <span className="row-title">{p.name}</span>
-                    <span className="row-sub">{summary(p)}</span>
-                    <PhaseBar segments={phaseSegments(p, today)} />
-                  </span>
-                  <span className="row-value">{status(p)}</span>
-                  <ChevronRight className="chev" size={20} aria-hidden="true" />
-                </button>
-                <button
-                  type="button"
-                  className="icon-btn"
-                  aria-label={t(
-                    p.paused ? "plan.resumeNamed" : "plan.pauseNamed",
-                    {
-                      name: p.name,
-                    },
-                  )}
-                  disabled={pausing !== null}
-                  onClick={() => void togglePause(p)}
-                >
-                  {p.paused ? (
-                    <Play size={20} aria-hidden="true" />
-                  ) : (
-                    <Pause size={20} aria-hidden="true" />
-                  )}
-                </button>
-              </div>
-            ))}
+                  <button
+                    type="button"
+                    className="row plan-row-open"
+                    onClick={() => edit({ kind: "plan", plan: p })}
+                  >
+                    <span className="row-main">
+                      <span className="row-title">{p.name}</span>
+                      <span className="row-sub">{summary(p)}</span>
+                      <PhaseBar segments={phaseSegments(p, today)} />
+                    </span>
+                    <span className="row-value">{status(p)}</span>
+                    <ChevronRight
+                      className="chev"
+                      size={20}
+                      aria-hidden="true"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-label={t(
+                      p.paused ? "plan.resumeNamed" : "plan.pauseNamed",
+                      {
+                        name: p.name,
+                      },
+                    )}
+                    disabled={pausing !== null}
+                    onClick={() => void togglePause(p)}
+                  >
+                    {p.paused ? (
+                      <Play size={20} aria-hidden="true" />
+                    ) : (
+                      <Pause size={20} aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
         <button

@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
-import { toast } from "sonner";
+import { dismissMessage, notify } from "./lib/message-store";
 import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { t } from "./i18n";
@@ -9,6 +9,8 @@ import "./styles/usability.css";
 import "./styles/pages.css";
 import "./styles/details.css";
 import "./styles/items.css";
+import "./styles/messages.css";
+import "./styles/gestures.css";
 
 const UPDATE_CHECK_MS = 60 * 60 * 1000;
 let updateReady = false;
@@ -18,7 +20,7 @@ const update = registerSW({
     showUpdate();
   },
   onOfflineReady() {
-    toast(t("app.offlineReady"));
+    notify(t("app.offlineReady"));
   },
   // An installed app can stay open for days without a navigation, which is when
   // browsers normally look for a new version. Check on return and hourly.
@@ -34,13 +36,18 @@ const update = registerSW({
   },
 });
 function showUpdate() {
-  if (!updateReady || location.pathname.includes("/workout/")) return;
-  toast(t("app.updateReady"), {
-    id: "app-update",
-    duration: Infinity,
+  if (!updateReady) return;
+  if (location.pathname.includes("/workout/")) {
+    dismissMessage("app-update");
+    return;
+  }
+  // Under the page header until it is installed, never over a workout.
+  notify(t("app.updateReady"), {
+    key: "app-update",
+    sticky: true,
     action: {
       label: t("app.update"),
-      onClick: () => {
+      run: () => {
         if (!location.pathname.includes("/workout/")) void update(true);
       },
     },

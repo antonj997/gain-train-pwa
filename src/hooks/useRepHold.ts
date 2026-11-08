@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { useStableCallback } from "@/hooks/useStableCallback";
@@ -26,7 +26,7 @@ export function useRepHold() {
   const setHold = useStableCallback((exerciseId: string, on: boolean) => {
     if (repHoldIds(library).has(exerciseId) === on) return;
     saveLibrary(withRepHold(library, exerciseId, on)).catch(() => {
-      toast.error(t("load.repsHoldFailed"));
+      notify.error(t("load.repsHoldFailed"));
     });
   });
   return { holdFor, setHold };

@@ -123,7 +123,6 @@ export const en = {
   "home.starting": "Starting…",
   "home.start": "Start workout",
   "home.logPast": "Log a past workout",
-  "home.abandoned": "Workout abandoned",
   "home.restoreFailed":
     "Could not restore the workout. Try importing a backup.",
   "home.abandonFailed": "Could not abandon. Try again.",
@@ -301,8 +300,6 @@ export const en = {
   "exercise.moveHandle": "Move {name}, position {n}",
   "exercise.moveUpNamed": "Move {name} up",
   "exercise.moveDownNamed": "Move {name} down",
-  "exercise.reordered": "Exercises reordered",
-  "exercise.reorderUndoFailed": "Could not undo the new order.",
   "load.count": "Count",
   "load.reps": "Reps",
   "load.appliesUnchecked": "Applies to the sets you haven't checked yet.",
@@ -391,8 +388,6 @@ export const en = {
   "set.movingAt":
     "Set at position {position} of {total}. Use arrow keys or drag to move, Space or Enter to drop.",
   "set.moveHandle": "Move {name} set {n}",
-  "change.changedTo": "Swapped to {name}",
-  "change.undoFailed": "Could not undo the change.",
   "change.title": "Swap to {name}?",
   "change.cardioToStrength": {
     one: "Your {count} logged set doesn't fit a strength exercise and will be cleared.",
@@ -485,7 +480,7 @@ export const en = {
   "history.onThisDay": "{workouts} on this day",
   "history.inView": "{workouts} in view",
   "history.inMonth": "{workouts} in {month}",
-  "history.deleted": "Workout deleted",
+  "history.deleted": "Workout {name} deleted",
   "history.restoreFailed":
     "Could not restore the workout. Try restoring a backup.",
   "history.deleteFailed": "Could not delete this workout. Try again.",
@@ -815,7 +810,7 @@ export const en = {
   "records.tile": "Records",
   "routines.saveFailed": "Could not save. Retry; your draft is still here.",
   "routines.resumeFirst": "Resume or discard the existing routine draft first.",
-  "routines.deleted": "Routine deleted",
+  "routines.deleted": "Routine {name} deleted",
   "routines.restoreFailed":
     "Could not restore the routine. Retry from a backup.",
   "routines.lastDone": "last done {when}",
@@ -893,7 +888,7 @@ export const en = {
     "Stop sharing {name} first. Connect and sign in to remove it from the shared library.",
   "exercises.unpublishFailed":
     "Could not remove {name} from the shared library. Nothing was deleted; retry.",
-  "exercises.deleted": "Exercise deleted",
+  "exercises.deleted": "Exercise {name} deleted",
   "exercises.deleteFailed":
     "Could not delete. The exercise is still here; retry.",
   "exercises.search": "Search exercises",
@@ -1126,7 +1121,7 @@ export const en = {
   "plan.deleteText":
     "The plan and its dated changes are removed. Your routines and workouts stay.",
   "plan.keep": "Keep plan",
-  "plan.deletedToast": "Plan deleted",
+  "plan.deletedToast": "Plan {name} deleted",
   "plan.deleteFailed": "Could not delete. The plan is still here; retry.",
   "plan.from": "From",
   "plan.to": "To",
@@ -1647,4 +1642,33 @@ export const en = {
   "slowmo.option": "{scale}×",
   "slowmo.pill": "Slow {scale}×",
   "slowmo.pillLabel": "Slow motion {scale}×. Tap to turn it off.",
+
+  // Messages, gestures and tips (redesign 1C)
+  "messages.dismiss": "Dismiss",
+  "swipe.start": "Start",
+  "swipe.more": "More",
+  "swipe.delete": "Delete",
+  "swipe.repeat": "Repeat",
+  "menu.optionsFor": "Options for {name}",
+  "menu.addToWorkout": "Add to workout",
+  "menu.addToSelection": "Add to selection",
+  "menu.removeFromSelection": "Remove from selection",
+  "menu.openExercise": "Open exercise page",
+  "menu.addedToWorkout": "{name} added to the workout",
+  "tips.label": "Tip",
+  "tips.ok": "OK",
+  "tips.weekStrip": "Tap the week for your whole history",
+  "tips.swipeRoutine": "Swipe right to start straight away",
+  "tips.libraryExercise": "Press and hold for more options",
+  "tips.calendarDay": "Press and hold, then drag to choose a period",
+  "tips.setBadge": "Tap for warm-up, drop set or delete",
+  "tips.swipeSet": "Swipe left to delete a set",
+  "tips.unitHeader": "Switch between kg and lb here",
+  "tips.repsHeader": "Choose reps, hold or reps + hold",
+  "settings.showTips": "Show tips again",
+  "settings.showTipsHint": "The one-time tips show again on this phone",
+  "settings.tipsReset": "Tips will show again",
+  "exercises.restoreFailed":
+    "Could not restore the exercise. Retry from a backup.",
+  "plan.restoreFailed": "Could not restore the plan. Retry from a backup.",
 };

@@ -1,0 +1,147 @@
+/* Messages that never cover anything (src/components/messages/). A banner
+   grows open under the page header, the workout's top bar or a sheet's title,
+   so the content under it moves down; an undo placeholder takes the place of
+   the item that went. Colours come from tokens.css. */
+
+.page-messages {
+  /* The parent's gap is drawn inside each banner, so an empty slot adds no space. */
+  --slot-gap: var(--gt-space-3);
+  display: flex;
+  flex-direction: column;
+  margin-top: calc(-1 * var(--slot-gap));
+}
+.page-messages:empty {
+  display: none;
+}
+.dialog-content .page-messages {
+  --slot-gap: var(--sheet-gap, var(--gt-space-3));
+}
+.page-message-wrap {
+  overflow: hidden;
+  padding-top: var(--slot-gap);
+}
+.page-message {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 44px;
+  padding: 4px 4px 4px var(--gt-space-3);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.page-message[data-tone="success"] {
+  background-color: var(--gt-done-soft);
+  color: var(--gt-done);
+}
+.page-message[data-tone="error"] {
+  background-color: var(--gt-danger-bg);
+  color: var(--gt-danger-fg);
+}
+.page-message-icon {
+  flex: none;
+}
+.page-message-text {
+  flex: 1;
+  min-width: 0;
+  padding-block: 6px;
+  overflow-wrap: anywhere;
+}
+.page-message-action,
+.page-message-close {
+  flex: none;
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.page-message-close {
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.page-message-action:focus-visible,
+.page-message-close:focus-visible,
+.undo-button:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 1px;
+}
+
+/* The workout: the slot hangs under the sticky top bar and moves with it. */
+.top-bar-wrap {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background-color: var(--gt-ground);
+}
+.top-bar-wrap .page-messages {
+  --slot-gap: var(--gt-space-2);
+  margin-top: 0;
+  padding-bottom: var(--gt-space-2);
+}
+
+/* In the space something left: a dashed box with Undo and a running line. */
+.undo-placeholder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  min-height: 58px;
+  padding: 0 var(--gt-space-2) 0 14px;
+  overflow: hidden;
+  border: 1.5px dashed var(--gt-line-strong);
+  border-radius: var(--gt-radius-item);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.undo-placeholder.in-slot {
+  min-height: 48px;
+  border-radius: var(--gt-radius-sm);
+}
+.grouped > .undo-placeholder {
+  border-width: 0 0 1px;
+  border-style: solid;
+  border-color: var(--gt-line);
+  border-radius: 0;
+  min-height: 70px;
+}
+.grouped > .undo-placeholder:last-child {
+  border-bottom: 0;
+}
+.undo-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.undo-button {
+  flex: none;
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.undo-timer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--gt-accent);
+  transform-origin: left center;
+}

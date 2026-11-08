@@ -2,6 +2,9 @@ import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import ExerciseAvatar from "./ExerciseAvatar";
+import { useLongPress } from "@/hooks/useLongPress";
+import { useTipTarget } from "@/hooks/useTipTarget";
+import type { TipId } from "@/lib/tips";
 
 type Props = {
   exerciseId: string;
@@ -24,6 +27,13 @@ type Props = {
   /** Controls beside the row, outside its link or button (⋯, Unhide). */
   actions?: ReactNode;
   className?: string;
+  /**
+   * Press and hold opens the row's menu (a flat row never swipes); the
+   * same actions are on its ⋯ or the exercise page.
+   */
+  onLongPress?: (anchor: HTMLElement) => void;
+  /** The tip that points the hold out, on the first row. */
+  tip?: TipId;
 };
 
 /**
@@ -45,7 +55,11 @@ export default function ExerciseRow({
   end,
   actions,
   className,
+  onLongPress,
+  tip,
 }: Props) {
+  const hold = useLongPress(onLongPress, tip);
+  const tipRef = useTipTarget<HTMLDivElement>(tip);
   const content = (
     <>
       <ExerciseAvatar
@@ -83,11 +97,14 @@ export default function ExerciseRow({
   );
   return (
     <div
+      ref={tipRef}
       className={
         "ex-row" +
         (pressed ? " is-pressed" : "") +
+        (onLongPress ? " long-press" : "") +
         (className ? " " + className : "")
       }
+      {...hold}
     >
       {main}
       {actions}

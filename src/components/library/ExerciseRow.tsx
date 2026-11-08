@@ -16,11 +16,17 @@ function ExerciseRow({
   now,
   onUnhide,
   onMenu,
+  onHold,
+  tip = false,
 }: {
   exercise: LibraryExercise;
   now: string;
   onUnhide: (exercise: LibraryExercise) => void;
   onMenu: (exercise: LibraryExercise) => void;
+  /** Press and hold: the long-press menu. */
+  onHold?: (exercise: LibraryExercise, anchor: HTMLElement) => void;
+  /** Point the hold out (the first row). */
+  tip?: boolean;
 }) {
   return (
     <ExerciseItem
@@ -39,6 +45,8 @@ function ExerciseRow({
       }
       meta={exerciseSub(e, now)}
       to={exercisePath(e.id)}
+      onLongPress={onHold && ((anchor) => onHold(e, anchor))}
+      tip={tip ? "libraryExercise" : undefined}
       actions={
         e.hidden ? (
           <button

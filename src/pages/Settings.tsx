@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
@@ -9,6 +9,7 @@ import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
 import ProfileForm from "@/components/ProfileForm";
 import ListRow from "@/components/ui/ListRow";
+import { resetTips } from "@/lib/tip-store";
 import Sheet from "@/components/ui/Sheet";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { formatWeight, type WeightUnit } from "@/lib/units";
@@ -71,7 +72,7 @@ export default function Settings() {
     try {
       await signOut();
     } catch {
-      toast.error(failure);
+      notify.error(failure);
     } finally {
       setAccountBusy(false);
     }
@@ -172,6 +173,14 @@ export default function Settings() {
             value={LANGUAGE_NAMES[language]}
             chevron
             onClick={() => setSheet("language")}
+          />
+          <ListRow
+            title={t("settings.showTips")}
+            sub={t("settings.showTipsHint")}
+            onClick={() => {
+              resetTips();
+              notify.success(t("settings.tipsReset"));
+            }}
           />
         </div>
       </section>

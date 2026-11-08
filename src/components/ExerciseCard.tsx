@@ -1,5 +1,5 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
-import { memo, useCallback, useId, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 import {
   type Exercise,
@@ -59,6 +59,9 @@ import {
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
+import SetSwipeRow from "@/components/gestures/SetSwipeRow";
+import { useTipTarget } from "@/hooks/useTipTarget";
+import { motionMs } from "@/lib/slow-motion";
 import SetSheet from "@/components/workout/SetSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
@@ -221,6 +224,36 @@ function ExerciseCard({
     const now = next.find((s) => s.id === setId);
     if (was && !was.done && now?.done) onSetDone?.();
   });
+  // Swipe left on a set (or Delete in its sheet) removes it with its drops.
+  const deleteSet = useStableCallback((setId: string) =>
+    changeSets(removeSetOrDrop(sets, setId)),
+  );
+  const deleters = useRef(new Map<string, () => void>());
+  const registerDelete = useCallback(
+    (setId: string, play: (() => void) | null) => {
+      if (play) deleters.current.set(setId, play);
+      else deleters.current.delete(setId);
+    },
+    [],
+  );
+  const dropIds = (index: number) =>
+    isDrop(sets[index])
+      ? []
+      : sets.slice(index + 1, dropGroup(sets, index).end).map((x) => x.id);
+  // One-time tips, pointed at the headings and the first set's badge.
+  const tips = mode === "log";
+  const unitTip = useTipTarget<HTMLButtonElement>(tips && "unitHeader", {
+    tap: true,
+  });
+  const repsTip = useTipTarget<HTMLButtonElement>(tips && "repsHeader", {
+    tap: true,
+  });
+  const [badgeEl, setBadgeEl] = useState<HTMLElement | null>(null);
+  const badgeTip = useTipTarget<HTMLElement>(tips && "setBadge", { tap: true });
+  useEffect(() => badgeTip(badgeEl), [badgeEl, badgeTip]);
+  const card = useCallback((node: HTMLElement | null) => {
+    setBadgeEl(node?.querySelector<HTMLElement>(".set-badge") ?? null);
+  }, []);
   const openSet = useCallback(
     (setId: string) => setSheet({ kind: "set", setId }),
     [],
@@ -245,6 +278,7 @@ function ExerciseCard({
 
   return (
     <section
+      ref={card}
       className="card ex-card"
       aria-labelledby={headingId}
       data-unit={weightUnit}
@@ -322,6 +356,7 @@ function ExerciseCard({
           {/* The headings pick the unit and the count; the rest of Load and
               count is in the exercise's menu. */}
           <button
+            ref={unitTip}
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
@@ -332,6 +367,7 @@ function ExerciseCard({
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           <button
+            ref={repsTip}
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
@@ -345,28 +381,36 @@ function ExerciseCard({
         </div>
       )}
       {sets.map((s, i) => (
-        <SetLineMemo
+        <SetSwipeRow
           key={s.id}
-          set={s}
-          hold={hold}
-          mode={mode}
-          name={ex.name}
-          badge={setBadge(sets, i)}
-          previous={previousOf(i)}
-          improved={improved?.has(s.id) ?? false}
-          marker={loadMarker(s, defaultKey)}
-          bodyWeightKg={mode === "log" ? bodyWeightKg : null}
-          weightUnit={weightUnit}
-          cardioFields={cardio ? cardioFields : undefined}
-          next={nextSetId === s.id}
-          editing={openSetId === s.id}
-          unlocked={unlockChecked}
-          canCheck={groupComplete(sets, i)}
-          checkHint={checkHintFor(sets, i)}
-          onOpenSheet={openSet}
-          onChange={updateSet}
-          onToggleDone={toggleDone}
-        />
+          setId={s.id}
+          companions={dropIds(i)}
+          onDelete={deleteSet}
+          register={registerDelete}
+          tip={tips && i === 0}
+        >
+          <SetLineMemo
+            set={s}
+            hold={hold}
+            mode={mode}
+            name={ex.name}
+            badge={setBadge(sets, i)}
+            previous={previousOf(i)}
+            improved={improved?.has(s.id) ?? false}
+            marker={loadMarker(s, defaultKey)}
+            bodyWeightKg={mode === "log" ? bodyWeightKg : null}
+            weightUnit={weightUnit}
+            cardioFields={cardio ? cardioFields : undefined}
+            next={nextSetId === s.id}
+            editing={openSetId === s.id}
+            unlocked={unlockChecked}
+            canCheck={groupComplete(sets, i)}
+            checkHint={checkHintFor(sets, i)}
+            onOpenSheet={openSet}
+            onChange={updateSet}
+            onToggleDone={toggleDone}
+          />
+        </SetSwipeRow>
       ))}
       <button
         type="button"
@@ -398,8 +442,13 @@ function ExerciseCard({
             close();
           }}
           onDelete={() => {
-            changeSets(removeSetOrDrop(sets, shown.id));
+            const id = shown.id;
             close();
+            // The row plays the same bubble as a swipe once the sheet is
+            // on its way down; it removes the set when the bubble is gone.
+            const play = deleters.current.get(id);
+            if (play) window.setTimeout(play, motionMs(120));
+            else deleteSet(id);
           }}
         />
       )}

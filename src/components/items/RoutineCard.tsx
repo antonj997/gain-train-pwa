@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
 import { Layers, Play } from "lucide-react";
+import Swipeable, { type SwipeAction } from "@/components/gestures/Swipeable";
+import type { TipId } from "@/lib/tips";
+import { useTipTarget } from "@/hooks/useTipTarget";
+import { t } from "@/i18n";
 
 type Props = {
   title: ReactNode;
@@ -15,12 +19,20 @@ type Props = {
   disabled?: boolean;
   /** Extra controls before the play button, such as ⋯. */
   actions?: ReactNode;
+  /**
+   * The card swipes: right starts it (as the play button does), left shows
+   * these buttons (More, Delete), which are also in its ⋯ menu.
+   */
+  swipeActions?: SwipeAction[];
+  /** The tip that points the swipe out, on the first card. */
+  tip?: TipId;
 };
 
 /**
  * The routine item: a card on surface-2 (20px corners) with a 44px layers
  * tile, the name and a muted line, and a round 44px play button that starts
- * it. Tapping the rest of the card opens the routine.
+ * it. Tapping the rest of the card opens the routine. With `swipeActions`
+ * it swipes (Swipeable): right to start, left for its buttons.
  */
 export default function RoutineCard({
   title,
@@ -32,9 +44,12 @@ export default function RoutineCard({
   startLabel,
   disabled,
   actions,
+  swipeActions,
+  tip,
 }: Props) {
-  return (
-    <div className="routine-card">
+  const tipRef = useTipTarget<HTMLDivElement>(tip);
+  const card = (
+    <div className="routine-card" ref={tipRef}>
       <button
         type="button"
         className="routine-card-open"
@@ -61,5 +76,16 @@ export default function RoutineCard({
         <Play size={18} fill="currentColor" stroke="none" aria-hidden="true" />
       </button>
     </div>
+  );
+  if (!swipeActions) return card;
+  return (
+    <Swipeable
+      className="swipe-card"
+      start={{ label: t("swipe.start"), onStart, disabled }}
+      actions={swipeActions}
+      tip={tip}
+    >
+      {card}
+    </Swipeable>
   );
 }

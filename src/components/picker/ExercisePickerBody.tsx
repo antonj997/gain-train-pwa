@@ -35,6 +35,10 @@ import {
   type ExerciseGroup,
 } from "@/lib/library";
 import FavouriteStar from "@/components/ui/FavouriteStar";
+import {
+  selectionItem,
+  useExerciseMenu,
+} from "@/components/gestures/ExerciseMenu";
 import { errorMessage } from "@/lib/errors";
 import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
@@ -202,6 +206,28 @@ export default function ExercisePickerBody({
     if (busy) return;
     onClose();
   };
+  // Press and hold a row: its menu, led by adding it.
+  const toggle = (id: string) =>
+    setSelected((s) =>
+      s.includes(id) ? s.filter((x) => x !== id) : [...s, id],
+    );
+  const exerciseMenu = useExerciseMenu({
+    add: (m) => {
+      if (!single)
+        return selectionItem(selected.includes(m.id), () => toggle(m.id));
+      const e = all.find((x) => x.id === m.id);
+      return e
+        ? {
+            key: "add",
+            label: t("menu.addToWorkout"),
+            onSelect: () => {
+              onAdd([e]);
+              close();
+            },
+          }
+        : null;
+    },
+  });
   const create = async () => {
     if (busy || !name.trim()) return;
     const match = all.find(
@@ -244,6 +270,7 @@ export default function ExercisePickerBody({
   };
   return (
     <>
+      {exerciseMenu.menu}
       <DialogHeader
         className={compact ? "picker-header sr-only" : "picker-header"}
       >
@@ -457,13 +484,21 @@ export default function ExercisePickerBody({
                       if (single) {
                         onAdd([e]);
                         close();
-                      } else
-                        setSelected((s) =>
-                          s.includes(e.id)
-                            ? s.filter((id) => id !== e.id)
-                            : [...s, e.id],
-                        );
+                      } else toggle(e.id);
                     }}
+                    onLongPress={(anchor) =>
+                      exerciseMenu.open(
+                        {
+                          id: e.id,
+                          name: e.name,
+                          category: e.category,
+                          custom: own.has(e.id),
+                          favourite: e.favourite,
+                          hidden: false,
+                        },
+                        anchor,
+                      )
+                    }
                   />
                 ))}
               </Fragment>

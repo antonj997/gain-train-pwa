@@ -79,7 +79,7 @@ export function subscribeSlowMotionSetting(listener: () => void) {
   };
 }
 
-// The scale in effect, set by the controller, read by motionMs and the toaster.
+// The scale in effect, set by the controller, read by motionMs and the messages.
 let currentScale: SlowMotionScale = 1;
 const scaleListeners = new Set<() => void>();
 export const motionScale = () => currentScale;
@@ -97,7 +97,7 @@ export function subscribeMotionScale(listener: () => void) {
 
 /**
  * A duration that ends something visual (a timer that removes a class, a
- * toast's time on screen), stretched by the slow-motion scale so it keeps
+ * banner's time on screen), stretched by the slow-motion scale so it keeps
  * pace with the slowed animations. Not for autosave, sync or other timers.
  */
 export function motionMs(ms: number, scale: number = currentScale) {

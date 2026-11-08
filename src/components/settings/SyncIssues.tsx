@@ -1,5 +1,5 @@
 import { RefreshCw } from "lucide-react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import { recordLabel } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
@@ -16,7 +16,7 @@ export default function SyncIssues() {
     try {
       await resolve(id, mine);
     } catch (error) {
-      toast.error(errorMessage(error, t("issues.choiceFailed")));
+      notify.error(errorMessage(error, t("issues.choiceFailed")));
     }
   };
 
@@ -48,7 +48,7 @@ export default function SyncIssues() {
                 await retryRejected();
                 void sync();
               } catch (error) {
-                toast.error(errorMessage(error, t("issues.retryFailed")));
+                notify.error(errorMessage(error, t("issues.retryFailed")));
               }
             }}
           >

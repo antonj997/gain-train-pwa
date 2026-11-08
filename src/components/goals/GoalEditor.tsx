@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { toast } from "sonner";
+import { notify } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -114,7 +114,7 @@ export default function GoalEditor({
     };
     try {
       await save(goal?.id ?? crypto.randomUUID(), "goal", payload);
-      toast.success(t("goals.saved"));
+      notify.success(t("goals.saved"));
       onClose();
     } catch (cause) {
       setError(errorMessage(cause, t("goals.saveFailed")));
@@ -253,10 +253,10 @@ export default function GoalEditor({
           setBusy(true);
           try {
             await deleteRecord(goal.id);
-            toast(t("goals.deleted"));
+            notify(t("goals.deleted"));
             onClose();
           } catch {
-            toast.error(t("goals.deleteFailed"));
+            notify.error(t("goals.deleteFailed"));
           } finally {
             setBusy(false);
             setDeleting(false);

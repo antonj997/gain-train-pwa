@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -37,7 +38,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
 import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import { reorderByIds } from "@/lib/exercise-order";
-import { toastWithUndo } from "@/lib/undo-toast";
+import { notify } from "@/lib/message-store";
 import EditSaveDialog from "@/components/workout/EditSaveDialog";
 import FinishSheet from "@/components/workout/FinishSheet";
 import NextSetChip from "@/components/workout/NextSetChip";
@@ -125,7 +126,13 @@ function Editor({
   // logging a past workout opens its details sheet to pick the date.
   const location = useLocation();
   const [startState] = useState(
-    () => location.state as { suggest?: string[]; details?: boolean } | null,
+    () =>
+      location.state as {
+        suggest?: string[];
+        details?: boolean;
+        /** Added from a long-press menu elsewhere (Library, Progress). */
+        add?: ExerciseTarget[];
+      } | null,
   );
   const suggested = startState?.suggest;
   const [picker, setPicker] = useState(() => !!suggested?.length);
@@ -165,6 +172,19 @@ function Editor({
   const repHold = useRepHold();
   const add = (items: ExerciseTarget[]) =>
     change(addExercises(w, items, previous));
+  // An exercise added from another screen's long-press menu: once, on arrival.
+  const addedOnArrival = useRef(false);
+  useEffect(() => {
+    const items = startState?.add;
+    if (!items?.length || addedOnArrival.current) return;
+    addedOnArrival.current = true;
+    add(items);
+    notify.success(
+      t("menu.addedToWorkout", { name: items.map((i) => i.name).join(", ") }),
+    );
+    // Only the first render's state counts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // One identity each for the editor's lifetime, so memoised cards only
   // re-render when their own exercise changes.
   const update = useCallback(
@@ -190,22 +210,13 @@ function Editor({
     setReorderFrom(ex.id);
     setReorderOpen(true);
   });
-  const saveOrder = (ids: string[]) => {
-    const before = w.exercises.map((e) => e.id);
+  // The new order shows at once and the top bar says Saved; reordering is
+  // its own undo.
+  const saveOrder = (ids: string[]) =>
     changeWith((current) => ({
       ...current,
       exercises: reorderByIds(current.exercises, ids),
     }));
-    toastWithUndo(
-      t("exercise.reordered"),
-      async () =>
-        changeWith((current) => ({
-          ...current,
-          exercises: reorderByIds(current.exercises, before),
-        })),
-      t("exercise.reorderUndoFailed"),
-    );
-  };
   const requestRemove = useStableCallback((ex: Exercise) =>
     hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex),
   );

@@ -1,7 +1,10 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
-import { toast } from "sonner";
+import { notify, offerUndo } from "@/lib/message-store";
+import { interleave } from "@/lib/messages";
+import { useMessageState } from "@/hooks/useMessages";
+import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
@@ -20,6 +23,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 import ExerciseRow from "@/components/library/ExerciseRow";
 import ExerciseEditorSheet from "@/components/library/ExerciseEditorSheet";
 import LibraryExerciseMenu from "@/components/library/LibraryExerciseMenu";
+import { useExerciseMenu } from "@/components/gestures/ExerciseMenu";
 import SharedExerciseList from "@/components/library/SharedExerciseList";
 import {
   filterExercises,
@@ -73,6 +77,7 @@ export default function ExercisesPanel({
     null,
   );
   const now = today();
+  const { undos } = useMessageState();
   // While searching the chip rows fold away; "Filter" brings them back.
   const compact = (searchFocused || !!search.trim()) && !filtersOpen;
   const activeFilters =
@@ -138,7 +143,7 @@ export default function ExercisesPanel({
       const change = favouriteChange(state.records, e);
       await save(change.id, "exercise", change.payload, change.deleted);
     } catch {
-      toast.error(t("exercises.favouriteFailed"));
+      notify.error(t("exercises.favouriteFailed"));
     }
   });
   const toggleHidden = useStableCallback(
@@ -146,11 +151,11 @@ export default function ExercisesPanel({
       try {
         await setHidden(e.id, hide);
         setMenu(null);
-        toast(
+        notify(
           t(hide ? "exercises.hidden" : "exercises.back", { name: e.name }),
         );
       } catch {
-        toast.error(
+        notify.error(
           t(hide ? "exercises.hideFailed" : "exercises.unhideFailed", {
             name: e.name,
           }),
@@ -159,7 +164,7 @@ export default function ExercisesPanel({
     },
   );
   const openEditor = useStableCallback((e: LibraryExercise) => {
-    if (edit && edit.id !== e.id) toast(t("exercises.resumeFirst"));
+    if (edit && edit.id !== e.id) notify(t("exercises.resumeFirst"));
     else if (!edit) {
       const record = state.records[e.id];
       if (record?.kind === "exercise")
@@ -167,6 +172,16 @@ export default function ExercisesPanel({
     }
     setOpen(true);
   });
+  // Press and hold on a row: its menu by the row.
+  const exerciseMenu = useExerciseMenu({
+    onEdit: (e) => {
+      const target = all.find((x) => x.id === e.id);
+      if (target) openEditor(target);
+    },
+  });
+  const hold = useStableCallback((e: LibraryExercise, anchor: HTMLElement) =>
+    exerciseMenu.open(e, anchor),
+  );
   const unhide = useStableCallback((e: LibraryExercise) =>
     toggleHidden(e, false),
   );
@@ -180,7 +195,7 @@ export default function ExercisesPanel({
       await save(edit.id, "exercise", edit.data);
       setEdit(null);
       setOpen(false);
-      toast.success(t("exercises.saved"));
+      notify.success(t("exercises.saved"));
       await shared.syncEdit(before, edit.data);
     } catch (cause) {
       setError(errorMessage(cause, t("exercises.saveFailed")));
@@ -194,7 +209,7 @@ export default function ExercisesPanel({
     // A shared exercise leaves the shared library first, while its record
     // still holds the id needed to remove it.
     if (sharedId && !shared.ready) {
-      toast.error(t("exercises.stopSharingFirst", { name: deleting.name }));
+      notify.error(t("exercises.stopSharingFirst", { name: deleting.name }));
       setDeleting(null);
       return;
     }
@@ -204,15 +219,31 @@ export default function ExercisesPanel({
         try {
           await unpublishExercise(sharedId);
         } catch {
-          toast.error(t("exercises.unpublishFailed", { name: deleting.name }));
+          notify.error(t("exercises.unpublishFailed", { name: deleting.name }));
           return;
         }
+      const payload = customPayload(deleting.id);
       await deleteRecord(deleting.id);
       if (edit?.id === deleting.id) setEdit(null);
       setDeleting(null);
-      toast(t("exercises.deleted"));
+      // Its row's place in the list keeps an Undo for a few seconds; it
+      // comes back unshared, as its shared copy is gone.
+      const group = groups.find((g) =>
+        g.items.some((e) => e.id === deleting.id),
+      );
+      if (payload) {
+        const restored = structuredClone(payload);
+        delete restored.sharedId;
+        offerUndo({
+          scope: `exercises:${group?.title ?? ""}`,
+          index: group?.items.findIndex((e) => e.id === deleting.id) ?? 0,
+          text: t("exercises.deleted", { name: deleting.name }),
+          undo: () => save(deleting.id, "exercise", restored),
+          failed: t("exercises.restoreFailed"),
+        });
+      }
     } catch {
-      toast.error(t("exercises.deleteFailed"));
+      notify.error(t("exercises.deleteFailed"));
     } finally {
       setBusy(false);
     }
@@ -247,6 +278,7 @@ export default function ExercisesPanel({
   });
 
   const saved = !!edit && edit.id in state.records;
+  const firstId = groups[0]?.items[0]?.id;
   return (
     <div className="col-12">
       <div className="search-row">
@@ -326,18 +358,41 @@ export default function ExercisesPanel({
         <section key={group.title} aria-label={group.title}>
           <h2 className="group-title">{group.title}</h2>
           <div className="flat-list">
-            {group.items.map((e) => (
-              <ExerciseRow
-                key={e.id}
-                exercise={e}
-                now={now}
-                onUnhide={unhide}
-                onMenu={setMenu}
-              />
-            ))}
+            {interleave(
+              group.items,
+              undos.filter((u) => u.scope === `exercises:${group.title}`),
+            ).map((slot) =>
+              slot.kind === "undo" ? (
+                <UndoPlaceholder
+                  key={`u${slot.entry.id}`}
+                  entry={slot.entry}
+                  className="in-flat-list"
+                />
+              ) : (
+                <ExerciseRow
+                  key={slot.item.id}
+                  exercise={slot.item}
+                  now={now}
+                  onUnhide={unhide}
+                  onMenu={setMenu}
+                  onHold={hold}
+                  tip={slot.item.id === firstId}
+                />
+              ),
+            )}
           </div>
         </section>
       ))}
+      {/* A deleted exercise whose group went with it keeps its Undo here. */}
+      {undos
+        .filter(
+          (u) =>
+            u.scope.startsWith("exercises:") &&
+            !groups.some((g) => u.scope === `exercises:${g.title}`),
+        )
+        .map((entry) => (
+          <UndoPlaceholder key={`u${entry.id}`} entry={entry} />
+        ))}
       {filter !== "shared" && !groups.length && (
         <p className="empty" role="status">
           {filter === "recent" && !search.trim()
@@ -380,6 +435,7 @@ export default function ExercisesPanel({
           setOpen(false);
         }}
       />
+      {exerciseMenu.menu}
       <LibraryExerciseMenu
         exercise={menu}
         now={now}
