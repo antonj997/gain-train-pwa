@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { Layers, Play } from "lucide-react";
+import { Play } from "lucide-react";
+import RoutineBadge from "@/components/items/RoutineBadge";
 import Swipeable, { type SwipeAction } from "@/components/gestures/Swipeable";
 import type { TipId } from "@/lib/tips";
 import { useTipTarget } from "@/hooks/useTipTarget";
@@ -7,6 +8,8 @@ import { t } from "@/i18n";
 
 type Props = {
   title: ReactNode;
+  /** The routine's exercises: the first one's movement icon and the count make its badge. */
+  exercises: readonly { exerciseId: string }[];
   /** A muted line: exercises, length, when it was last done. */
   meta?: ReactNode;
   /** A second muted line, such as the exercise names. */
@@ -29,13 +32,14 @@ type Props = {
 };
 
 /**
- * The routine item: a card on surface-2 (20px corners) with a 44px layers
- * tile, the name and a muted line, and a round 44px play button that starts
+ * The routine item: a card on surface-2 (20px corners) with a 48px badge
+ * (the leading exercise's 30px movement icon and the exercise count), the name and a muted line, and a round 44px play button that starts
  * it. Tapping the rest of the card opens the routine. With `swipeActions`
  * it swipes (Swipeable): right to start, left for its buttons.
  */
 export default function RoutineCard({
   title,
+  exercises,
   meta,
   detail,
   onOpen,
@@ -56,9 +60,7 @@ export default function RoutineCard({
         aria-label={openLabel}
         onClick={onOpen}
       >
-        <span className="routine-tile" aria-hidden="true">
-          <Layers size={22} />
-        </span>
+        <RoutineBadge exercises={exercises} />
         <span className="routine-card-text">
           <span className="routine-card-title">{title}</span>
           {meta && <span className="routine-card-meta">{meta}</span>}

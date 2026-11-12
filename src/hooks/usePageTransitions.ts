@@ -12,6 +12,8 @@ import {
   canViewTransition,
   markPageEntering,
   navigateWithTransition,
+  noteSettledPath,
+  playMorphFallback,
   settlePageTransition,
 } from "@/lib/view-transition";
 
@@ -29,10 +31,15 @@ export function usePageTransitions(main: RefObject<HTMLElement>) {
   useLayoutEffect(() => {
     const from = previous.current;
     previous.current = pathname;
+    noteSettledPath(pathname);
     if (from === pathname) return;
     const handled = settlePageTransition(main.current);
     const direction = pageTransition(from, pathname);
-    if (!direction) return;
+    if (!direction) {
+      // Train's running-workout card opening its workout, without view transitions.
+      if (!handled && main.current) playMorphFallback(main.current);
+      return;
+    }
     if (window.scrollY) window.scrollTo(0, 0);
     const element = main.current;
     if (!element) return;

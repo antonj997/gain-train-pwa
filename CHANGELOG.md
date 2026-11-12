@@ -1,5 +1,15 @@
 # Changelog
 
+## 12 November 2026 — mockup v5, part 3: Train, the day sheet, the plan's week and goals
+
+- **Routine badges** replace the layers tile: 48px, tinted by the routine's leading exercise, with its 30px movement icon and the exercise count (56px / 34px on the Today card). Train, Library and the day sheet.
+- **Today card on a day with nothing planned** (no plan, an empty day or a rest day): “Empty workout · Add exercises as you go” with **Start empty workout**; the routine you did longest ago stays one quiet tap below.
+- **Day sheet** from a planned day in the week strip: ‹ › step the workout one day at a time with a live preview in the strip, **Do this workout today** (was “Start now instead of today” in the mockup), **Skip, make it a rest day** with an Undo slot under the strip. No calendar dialog.
+- **Hold and drag** a planned day in the week strip (pointer events, works with touch on iPhone): its ring lifts, a label says where it goes, past days and days outside the plan refuse it, and a busy day swaps. Changes are dated overrides on the plan, so the synced record keeps its shape (no migration).
+- **Workout in progress** comes first on Train with the workout's badge and a progress bar. Its rotating border and pulsing dot stay and pause off screen; tapping it grows the card into the workout's top bar (shared view-transition-name; a rise-in fallback without the API), and coming back it shrinks back and turns one quick lap.
+- **Plan editor**: week cells are 78px with a 26–28px icon; **+ New goal** in the goals heading and last in the list creates a goal linked to the plan.
+- Code: `src/data/plan-moves.ts` (moveDay, skipDay, restoreDay, canMoveTo, canEditDay), `src/lib/spring.ts`, `src/components/items/RoutineBadge.tsx`, `src/components/home/DaySheet.tsx`, `WeekCard`, `ResumeCards`, `TodayCard`; `morphToWorkout` in `src/lib/view-transition.ts`; `PlanTemplateGrid`, `PlanGoalLinks`, `GoalEditor` (`defaultByDate`, `onSaved`).
+
 ## 12 November 2026 — mockup v5 phase 1: the set row, the card foot, Finish, History's period and the rest timer
 
 - **Set row.** Done is a green tone across the whole row (drops included), with no rail; the ✓ is a 52px green-tinted box at the far right. A narrow column between Previous and the load holds the ↑ of a set that beat the same set last time, or a **record mark** (a trophy in a warm circle) on the set that holds a heaviest-weight or best-set-volume record so far, counted live as if the workout were finished now. A drop has the same columns as its set. The next set has an accent ring and tone with its badge filled; badges fill the 44px target; Previous is left-aligned.

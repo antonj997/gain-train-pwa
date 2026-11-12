@@ -48,6 +48,7 @@ export function RoutineRow({
   return (
     <RoutineCard
       title={name}
+      exercises={routine.payload.exercises}
       meta={routineMeta(routine.payload.exercises.length, stats.minutes)}
       openLabel={t("routine.preview", { name })}
       onOpen={onPreview}
