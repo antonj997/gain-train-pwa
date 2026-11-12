@@ -26,10 +26,10 @@ test("the seen list parses known tips only and survives garbage", () => {
   assert.deepEqual([...parseSeen(null)], []);
   assert.deepEqual([...parseSeen("not json")], []);
   assert.deepEqual([...parseSeen('{"a":1}')], []);
-  assert.deepEqual([...parseSeen('["swipeSet","nope","weekStrip"]')].sort(), [
-    "swipeSet",
-    "weekStrip",
-  ]);
+  assert.deepEqual(
+    [...parseSeen('["swipeSet","nope","weekStrip"]')].sort(),
+    ["swipeSet", "weekStrip"],
+  );
   assert.equal(
     serializeSeen(new Set<TipId>(["swipeSet", "weekStrip"])),
     '["weekStrip","swipeSet"]',

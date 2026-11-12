@@ -126,10 +126,5 @@ export function tipPlacement(input: {
   const maxLeft = Math.max(gutter, viewport.width - gutter - bubble.width);
   const left = Math.min(maxLeft, Math.max(gutter, centre - bubble.width / 2));
   const arrow = Math.min(bubble.width - 22, Math.max(22, centre - left));
-  return {
-    side: below ? ("below" as const) : ("above" as const),
-    top,
-    left,
-    arrow,
-  };
+  return { side: below ? ("below" as const) : ("above" as const), top, left, arrow };
 }
