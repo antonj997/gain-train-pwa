@@ -5,6 +5,7 @@ import { useData } from "@/contexts/useData";
 import { customCategories } from "@/data/selectors";
 import { useNow } from "@/hooks/useNow";
 import MessageSlot from "@/components/messages/MessageSlot";
+import RollingNumber from "@/components/workout/RollingNumber";
 import { localizedDate } from "@/lib/dates";
 import { durationLabel } from "@/lib/labels";
 import { autoWorkoutName, workoutTitle } from "@/lib/workout-name";
@@ -70,7 +71,20 @@ export default function WorkoutTopBar({
         {localizedDate(w.date, { day: "numeric", month: "short" })}
       </button>
     ),
-    <span key="sets">{t("workout.setsOf", { done: completed, total })}</span>,
+    // "3 of 9 sets", its numbers rolling as sets are checked and added.
+    <span key="sets">
+      {t("workout.setsOf", { done: "\u2060d\u2060", total: "\u2060t\u2060" })
+        .split("\u2060")
+        .map((part, index) =>
+          index % 2 && part === "d" ? (
+            <RollingNumber key={index} value={completed} />
+          ) : index % 2 && part === "t" ? (
+            <RollingNumber key={index} value={total} />
+          ) : (
+            part
+          ),
+        )}
+    </span>,
     <span
       key="save"
       role="status"

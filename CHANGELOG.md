@@ -1,5 +1,15 @@
 # Changelog
 
+## 12 November 2026 — mockup v5, part 2: motion and input in the workout
+
+- **Set check.** The ✓ presses in and springs back, the tick draws itself, the green tone sweeps across the row from the ✓, the ↑ slides into its slot and a new record mark pops once with a light sweep; the next set's ring fades in. Unchecking pulls the tone back. “3 of 9 sets” rolls. All within about 300 ms and never in the way of the next tap; vibrate-on-check still applies.
+- **Rest dock** replaces the floating rest bar: its own space at the bottom (the page makes room, so it never covers the next set), the background is the time left, a tap on the time adds 15 s, a swipe down skips, the last 3 s pulse, “Next: set 3 · 87.5 kg × 5”. When the rest is over it turns green with two pulses and a short sound, then leaves after 4 s. With every set checked it becomes **Finish workout**. The screen stays on during a running workout (Screen Wake Lock, where supported).
+- **Settings:** **Sound when rest ends** under the rest timer, shown while the timer is on (on by default; `gt-rest-sound`).
+- **Number pad** for load and reps in a live workout, instead of the phone's keyboard: big digits, decimal mark, backspace, ±2.5 kg (±5 lb) or ±1 rep, Same as last and Next (kg → reps → drops → check → the next set's kg). The row being typed stays above it. Hold a load or reps field and drag up or down to step it without the pad. A hardware keyboard still types; cardio, timed holds and the hold field keep the phone's keyboard.
+- **Sets in and out.** Add set grows the new row in and gives its kg the pad; deleting a set cross-fades the numbers below. The swipe-left delete is unchanged except that the row now brakes past the threshold and a fast fling deletes.
+- Reduced motion turns all of it into 120 ms fades (the rest fill stays); the admin slow motion slows all of it.
+- Code: `src/lib/motion.ts` (`play`, `playSpring`, `MOTION`, `EASE`), `src/lib/number-pad.ts`, `src/lib/drag-step.ts`, `src/lib/rest-dock.ts`, `src/lib/rest-sound.ts`, `src/hooks/useWakeLock.ts`; `components/workout/NumberPad.tsx`, `RestDock.tsx`, `WorkoutDock.tsx`, `RollingNumber.tsx`, `set-motion.ts`, `number-pad-context.ts`; `band` and `fling` on a swipe side (`src/lib/swipe.ts`). Tested in `tests/number-pad.test.ts`, `tests/rest-dock.test.ts` and `tests/gestures.test.ts`.
+
 ## 12 November 2026 — mockup v5, part 3: Train, the day sheet, the plan's week and goals
 
 - **Routine badges** replace the layers tile: 48px, tinted by the routine's leading exercise, with its 30px movement icon and the exercise count (56px / 34px on the Today card). Train, Library and the day sheet.

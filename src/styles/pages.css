@@ -2488,7 +2488,8 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   justify-content: space-between;
   gap: var(--gt-space-3);
 }
-.list .rest-setting-time {
+.list .rest-setting-time,
+.list .rest-setting-sound {
   padding-left: var(--gt-space-5);
 }
 .rest-setting-label {

@@ -34,6 +34,9 @@ async function host(
     },
     useRef: (current: unknown) => ({ current }),
     useEffect() {},
+    useLayoutEffect() {},
+    // No number pad: a routine's sets or a finished workout.
+    useContext: () => null,
   };
   const jsx = (type: unknown, props: Record<string, unknown>) => ({
     type,

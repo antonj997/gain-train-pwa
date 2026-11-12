@@ -14,6 +14,7 @@ import { useProfile } from "@/contexts/useProfile";
 import {
   type Workout,
   type Exercise,
+  type WorkoutSet,
   validSet,
   isFromNewerApp,
 } from "@/data/model";
@@ -44,7 +45,16 @@ import { notify } from "@/lib/message-store";
 import EditSaveDialog from "@/components/workout/EditSaveDialog";
 import FinishSheet from "@/components/workout/FinishSheet";
 import NextSetChip from "@/components/workout/NextSetChip";
-import RestBar from "@/components/workout/RestBar";
+import WorkoutDock from "@/components/workout/WorkoutDock";
+import { NumberPadContext } from "@/components/workout/number-pad-context";
+import type { DockNext } from "@/components/workout/RestDock";
+import type { PadField, PadTarget } from "@/lib/number-pad";
+import { setBadge } from "@/data/drops";
+import { labelSet } from "@/data/model";
+import { durationLabel } from "@/lib/labels";
+import { primeRestSound } from "@/lib/rest-sound";
+import { useWakeLock } from "@/hooks/useWakeLock";
+import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import WorkoutBanners from "@/components/workout/WorkoutBanners";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
 import WorkoutTopBar from "@/components/workout/WorkoutTopBar";
@@ -246,11 +256,77 @@ function Editor({
   const requestRemove = useStableCallback((ex: Exercise) =>
     hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex),
   );
-  const setDone = useStableCallback(() => {
+  // The exercise of the set checked last: the dock names the next set's
+  // exercise only when it is another one.
+  const [lastChecked, setLastChecked] = useState<string | null>(null);
+  const setDone = useStableCallback((exerciseId: string) => {
     if (editing) return;
+    // The tap that checks a set lets the rest's tone play later.
+    primeRestSound();
     rest.start();
     trainingHaptic(rest.preferences.haptics);
+    setLastChecked(exerciseId);
   });
+  // Every set checked: no rest, the dock is Finish workout.
+  const allChecked = total > 0 && completed === total;
+  useEffect(() => {
+    if (allChecked && !editing) rest.skip();
+    // Only when the last set is checked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allChecked]);
+  // The screen stays on through a running workout.
+  useWakeLock(!editing);
+  // The number pad of a live workout (NumberPad.tsx).
+  const [padTarget, setPadTarget] = useState<PadTarget | null>(null);
+  const padApi = useMemo(
+    () => ({
+      open: (setId: string, field: PadField) =>
+        setPadTarget((current) =>
+          current?.setId === setId && current.field === field
+            ? current
+            : { setId, field },
+        ),
+      coarse:
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(pointer: coarse)").matches,
+    }),
+    [],
+  );
+  const changeSet = useCallback(
+    (setId: string, edit: (set: WorkoutSet) => WorkoutSet) =>
+      changeWith((current) => ({
+        ...current,
+        exercises: current.exercises.map((ex) =>
+          ex.sets.some((s) => s.id === setId)
+            ? {
+                ...ex,
+                sets: ex.sets.map((s) => (s.id === setId ? edit(s) : s)),
+              }
+            : ex,
+        ),
+      })),
+    [changeWith],
+  );
+  const [{ weightUnit }] = useTrainingPreferences();
+  const dockNext = useMemo((): DockNext | null => {
+    for (const ex of w.exercises) {
+      const index = ex.sets.findIndex((s) => !s.done);
+      if (index < 0) continue;
+      const set = ex.sets[index];
+      const title = setBadge(ex.sets, index).name;
+      const what = validSet(set) ? `${title} · ${labelSet(set)}` : title;
+      return {
+        setId: set.id,
+        title,
+        label:
+          lastChecked && lastChecked !== ex.id ? `${ex.name} · ${what}` : what,
+      };
+    }
+    return null;
+    // The unit changes the label.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [w.exercises, lastChecked, weightUnit]);
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
     else navigate(editing ? historyPath(id) : "/");
@@ -300,32 +376,38 @@ function Editor({
         onKeepMine={autosave.keepMine}
         onRetry={() => change(w)}
       />
-      {w.exercises.map((ex) => (
-        <ExerciseCard
-          key={ex.id}
-          exercise={ex}
-          lastSession={previous.get(ex.exerciseId)}
-          bodyWeightKg={bodyWeightKg}
-          // Only the card holding the next set needs to know which it is.
-          nextSetId={
-            ex.sets.some((s) => s.id === nextSet?.id) ? nextSet?.id : undefined
-          }
-          unlockChecked={editing}
-          defaults={defaults.get(ex.exerciseId)}
-          planNote={planNote(w.plan, ex.exerciseId)}
-          onChange={update}
-          onReorderExercises={w.exercises.length > 1 ? openReorder : undefined}
-          onRemove={requestRemove}
-          onChangeExercise={setChanging}
-          onSetDone={setDone}
-          records={recordLabels}
-          restChip={!editing}
-          cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
-          onCardioFields={cardioFields.setFields}
-          repHold={repHold.holdFor(ex.exerciseId)}
-          onRepHold={repHold.setHold}
-        />
-      ))}
+      <NumberPadContext.Provider value={editing ? null : padApi}>
+        {w.exercises.map((ex) => (
+          <ExerciseCard
+            key={ex.id}
+            exercise={ex}
+            lastSession={previous.get(ex.exerciseId)}
+            bodyWeightKg={bodyWeightKg}
+            // Only the card holding the next set needs to know which it is.
+            nextSetId={
+              ex.sets.some((s) => s.id === nextSet?.id)
+                ? nextSet?.id
+                : undefined
+            }
+            unlockChecked={editing}
+            defaults={defaults.get(ex.exerciseId)}
+            planNote={planNote(w.plan, ex.exerciseId)}
+            onChange={update}
+            onReorderExercises={
+              w.exercises.length > 1 ? openReorder : undefined
+            }
+            onRemove={requestRemove}
+            onChangeExercise={setChanging}
+            onSetDone={setDone}
+            records={recordLabels}
+            restChip={!editing}
+            cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
+            onCardioFields={cardioFields.setFields}
+            repHold={repHold.holdFor(ex.exerciseId)}
+            onRepHold={repHold.setHold}
+          />
+        ))}
+      </NumberPadContext.Provider>
       <ReorderExercisesSheet
         open={reorderOpen}
         exercises={w.exercises}
@@ -361,9 +443,34 @@ function Editor({
         </button>
       )}
       <div className="float-stack">
-        <NextSetChip setId={nextSet?.id} />
-        {!editing && <RestBar rest={rest} />}
+        {!padTarget && <NextSetChip setId={nextSet?.id} />}
       </div>
+      {!editing && (
+        <WorkoutDock
+          rest={{
+            rest,
+            allChecked,
+            next: dockNext,
+            totalSets: total,
+            minutes: durationLabel(
+              Math.max(
+                0,
+                Math.floor((Date.now() - (w.startedAt ?? Date.now())) / 60000),
+              ),
+            ),
+            finishDisabled: busy || !!error,
+            onFinish: () => setFinish(true),
+          }}
+          pad={{
+            target: padTarget,
+            setTarget: setPadTarget,
+            workout: w,
+            previous,
+            unit: weightUnit,
+            changeSet,
+          }}
+        />
+      )}
       <ExercisePicker
         open={picker}
         onClose={() => setPicker(false)}

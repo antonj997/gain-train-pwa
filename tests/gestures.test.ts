@@ -124,3 +124,26 @@ test("the delete bubble grows to 0.82 while dragging and is full once armed", ()
   assert.equal(bubbleScale(2, false), 0.82);
   assert.equal(bubbleScale(1, true), 1);
 });
+
+const bandedRow: SwipeConfig = {
+  left: { kind: "commit", threshold: 100, max: 250, band: 0.35, fling: 0.5 },
+};
+
+test("a set row brakes past its threshold, 0.35 px per px", () => {
+  assert.equal(resistedOffset(-80, bandedRow), -80);
+  assert.equal(resistedOffset(-100, bandedRow), -100);
+  assert.equal(resistedOffset(-200, bandedRow), -135);
+});
+
+test("a fling deletes a set short of the threshold, but only outwards and once it has moved", () => {
+  assert.deepEqual(settle(-40, -0.6, bandedRow), {
+    action: "commit",
+    side: "left",
+  });
+  // Too slow, too short, or flung back.
+  assert.deepEqual(settle(-40, -0.3, bandedRow), { action: "close" });
+  assert.deepEqual(settle(-10, -1, bandedRow), { action: "close" });
+  assert.deepEqual(settle(-60, 0.8, bandedRow), { action: "close" });
+  // A routine card's commit still has to be meant: no fling.
+  assert.deepEqual(settle(60, 2, card), { action: "close" });
+});

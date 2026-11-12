@@ -19,6 +19,8 @@ export const SNAP_PULL = 10;
 export const DISARM_SLACK = 12;
 /** A flick (px/ms) that opens a reveal side even short of its threshold. */
 export const FLICK_SPEED = 0.45;
+/** How far (px) an item must have moved for a fling to commit. */
+export const FLING_MIN = 24;
 /** How far a side with no action gives before it stops, as a rubber band. */
 const NO_ACTION_GIVE = 36;
 
@@ -54,6 +56,16 @@ export type SwipeSide = {
   threshold: number;
   /** Free travel; past it the item resists. A reveal side opens to it. */
   max: number;
+  /**
+   * A commit side that brakes past its threshold: each further px of the
+   * finger moves the item this much (a set row: 0.35).
+   */
+  band?: number;
+  /**
+   * A commit side that also acts on a fling outwards this fast (px/ms) once
+   * it has moved FLING_MIN px, short of the threshold (a set row: 0.5).
+   */
+  fling?: number;
 };
 /** `left` is a swipe to the left (dx < 0); `right` a swipe to the right. */
 export type SwipeConfig = { left?: SwipeSide | null; right?: SwipeSide | null };
@@ -68,6 +80,8 @@ export function resistedOffset(raw: number, config: SwipeConfig) {
   const distance = Math.abs(raw);
   const side = sideOf(raw, config);
   if (!side) return sign * rubberBand(distance, NO_ACTION_GIVE);
+  if (side.band !== undefined && distance > side.threshold)
+    return sign * (side.threshold + (distance - side.threshold) * side.band);
   if (distance <= side.max) return raw;
   return sign * (side.max + rubberBand(distance - side.max, side.max));
 }
@@ -105,9 +119,10 @@ export type Settle =
   | { action: "commit"; side: "left" | "right" };
 
 /**
- * What a release does. A commit side acts only past its threshold (no flick:
- * deleting or starting must be meant). A reveal side opens past its threshold
- * or on a flick outwards, and closes on a flick back.
+ * What a release does. A commit side acts past its threshold, or on a fling
+ * outwards when it allows one (`fling`: a set row; starting a routine must be
+ * meant). A reveal side opens past its threshold or on a flick outwards, and
+ * closes on a flick back.
  */
 export function settle(
   offset: number,
@@ -121,7 +136,11 @@ export function settle(
   const outward = Math.sign(velocity) === Math.sign(offset);
   const speed = Math.abs(velocity);
   if (side.kind === "commit")
-    return distance >= side.threshold
+    return distance >= side.threshold ||
+      (side.fling !== undefined &&
+        outward &&
+        speed >= side.fling &&
+        distance >= FLING_MIN)
       ? { action: "commit", side: name }
       : { action: "close" };
   if (speed >= FLICK_SPEED && !outward) return { action: "close" };
