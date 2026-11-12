@@ -1,12 +1,46 @@
-import { Copy } from "lucide-react";
+import { useContext } from "react";
+import { Copy, Layers, Moon, Plus, Sparkles } from "lucide-react";
+import { DataContext } from "@/contexts/useData";
+import MovementIcon from "@/components/icons/exercise/MovementIcon";
 import type { Plan } from "@/data/model";
 import { REST, cellText } from "@/data/plans";
+import { exerciseCategory } from "@/data/selectors";
+import { categoryTone, movementIcon } from "@/lib/movement-icon";
 import { type WeekKind, weekKindsOf } from "@/data/phase";
 import { weekdayNames } from "@/lib/dates";
 import { t } from "@/i18n";
 import DayCell from "@/components/items/DayCell";
 
 type Names = Parameters<typeof cellText>[1];
+
+/**
+ * A template day's 26px icon: the routine's leading exercise in its category's
+ * colour, the layers for a group, sparkles for a day type, a moon for rest and
+ * a plus for an empty day.
+ */
+function CellIcon({ cell }: { cell: string | null }) {
+  const data = useContext(DataContext);
+  if (!cell) return <Plus size={24} aria-hidden="true" />;
+  if (cell === REST) return <Moon size={26} aria-hidden="true" />;
+  if (cell.startsWith("group:")) return <Layers size={26} aria-hidden="true" />;
+  if (cell.startsWith("type:"))
+    return <Sparkles size={26} aria-hidden="true" />;
+  const record = data?.state.records[cell];
+  const lead =
+    record?.kind === "routine" && !record.deleted
+      ? record.payload.exercises[0]
+      : undefined;
+  if (!lead) return <Layers size={26} aria-hidden="true" />;
+  const category = exerciseCategory(data!.state.records, lead.exerciseId);
+  return (
+    <span className="plan-cell-icon" data-tone={categoryTone(category)}>
+      <MovementIcon
+        movement={movementIcon({ id: lead.exerciseId, category })}
+        size={28}
+      />
+    </span>
+  );
+}
 
 /**
  * The repeating week or weeks of a plan; tapping a day chooses what it holds.
@@ -81,7 +115,11 @@ export default function PlanTemplateGrid({
                     planned={!!cell && cell !== REST}
                     className={
                       "plan-cell" +
-                      (cell === REST ? " is-rest" : cell ? " is-set" : "")
+                      (cell === REST
+                        ? " is-rest"
+                        : cell
+                          ? " is-set"
+                          : " is-empty")
                     }
                     aria-label={t(
                       plan.cycleWeeks > 1
@@ -95,7 +133,8 @@ export default function PlanTemplateGrid({
                     )}
                     onClick={() => onPick(week, day)}
                   >
-                    <span>{text}</span>
+                    <CellIcon cell={cell} />
+                    {text && <span className="plan-cell-text">{text}</span>}
                   </DayCell>
                 );
               })}

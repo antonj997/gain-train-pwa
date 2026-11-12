@@ -278,6 +278,120 @@ label.row {
   font-size: var(--gt-fs-2);
   color: var(--gt-ink-2);
 }
+/* The card's parts: the state line, the workout with its badge, a thin
+   progress bar of checked sets. */
+.home-page .resume-card .resume-body {
+  flex: 1;
+  gap: 10px;
+}
+.home-page .resume-card span.resume-state,
+.home-page .resume-card span.resume-text,
+.home-page .resume-card span.resume-main {
+  color: inherit;
+  font-size: inherit;
+}
+.resume-main {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  min-width: 0;
+}
+.resume-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.resume-bar {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background-color: color-mix(in srgb, var(--gt-accent) 18%, transparent);
+}
+.resume-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--gt-accent);
+}
+/* Off screen, the turning border and the pulsing dot wait. */
+.home-page .resume-card.is-running.is-running[data-offscreen],
+.home-page .resume-card[data-offscreen] .resume-live::after {
+  animation-play-state: paused;
+}
+/* Back from the workout: one quick lap, then the usual 5 s turn. */
+@media (prefers-reduced-motion: no-preference) {
+  .resume-card.is-running.is-returning {
+    animation:
+      resume-turn 1.2s cubic-bezier(0.3, 0, 0.2, 1) 300ms 1,
+      resume-turn 5s linear 1.5s infinite;
+  }
+}
+/* Card → top bar. While <html data-nav-dir="morph"> the tapped card and the
+   workout's bar share a view-transition-name, so the browser grows one into
+   the other (300ms on the ease-out curve); the name moves with it. The rest
+   of Train fades and drifts 12px up; the workout's content rises 12px. With
+   reduced motion no names are set and the pages cross-fade in 120ms. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-nav-dir="morph"] .resume-card.is-morph-source,
+  html[data-nav-dir="morph"] .top-bar {
+    view-transition-name: workout-head;
+  }
+  html[data-nav-dir="morph"] .resume-card.is-morph-source .resume-title,
+  html[data-nav-dir="morph"] .top-bar-title {
+    view-transition-name: workout-title;
+  }
+}
+html[data-nav-dir="morph"]::view-transition-group(workout-head),
+html[data-nav-dir="morph"]::view-transition-group(workout-title) {
+  animation-duration: calc(var(--gt-page-duration) + 40ms);
+  animation-timing-function: var(--gt-ease-out);
+}
+html[data-nav-dir="morph"]::view-transition-old(workout-head),
+html[data-nav-dir="morph"]::view-transition-new(workout-head),
+html[data-nav-dir="morph"]::view-transition-old(workout-title),
+html[data-nav-dir="morph"]::view-transition-new(workout-title) {
+  height: 100%;
+  animation-duration: calc(var(--gt-page-duration) + 40ms);
+  animation-timing-function: var(--gt-ease-out);
+}
+html[data-nav-dir="morph"]::view-transition-old(root) {
+  animation: gt-morph-out 180ms ease-out both;
+}
+html[data-nav-dir="morph"]::view-transition-new(root) {
+  animation: gt-morph-in 220ms var(--gt-ease-out) 120ms both;
+}
+@keyframes gt-morph-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+@keyframes gt-morph-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nav-dir="morph"]::view-transition-old(root) {
+    animation: gt-morph-fade-out 120ms linear both;
+  }
+  html[data-nav-dir="morph"]::view-transition-new(root) {
+    animation: gt-morph-fade-in 120ms linear both;
+  }
+}
+@keyframes gt-morph-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes gt-morph-fade-in {
+  from {
+    opacity: 0;
+  }
+}
 .resume-play {
   flex: none;
   width: 44px;
@@ -325,10 +439,282 @@ label.row {
 .page-header-bar.align-first-line > .profile-btn {
   margin-top: calc((2px + var(--gt-fs-6) * 1.15 - 44px) / 2);
 }
-/* This week: the whole card is a link to History. */
+/* This week: the head is a link to History and its tap area stretches over
+   the card; planned days are buttons above it (tap: the day sheet; hold until
+   the ring lifts, then drag to another day). */
 .week-card {
+  position: relative;
   color: var(--gt-ink);
+}
+.week-card-link {
+  color: inherit;
   text-decoration: none;
+}
+.week-card-link::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  content: "";
+}
+.week-card-link:focus-visible {
+  outline: none;
+}
+.week-card:has(.week-card-link:focus-visible) {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.week-days-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.week-card .week {
+  gap: 6px;
+}
+.week-days .day {
+  position: relative;
+}
+.week-days .day:has(> .week-move) {
+  z-index: 1;
+}
+/* A movable planned day: the finger holds it without scrolling the page,
+   selecting text or opening the callout. */
+.day-cell.week-move {
+  z-index: 1;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.day-cell.week-move:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+/* Today with a planned workout keeps its green outline inside the accent ring. */
+.week-card .day-cell.is-planned.is-today {
+  box-shadow:
+    inset 0 0 0 2px var(--gt-done),
+    0 0 0 2px var(--gt-accent);
+}
+/* While its ring is lifted or sliding, the day shows no outline of its own
+   (today keeps its accent ring). */
+.week-card .week-days .day-cell.is-ghosted {
+  box-shadow: none;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
+.week-card .week-days .day-cell.is-ghosted.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+.week-card .week-days .day-cell.is-drop-target {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-ink);
+}
+.week-card .week-days .day-cell.is-drop-bad {
+  opacity: 0.45;
+}
+/* The day the sheet is about: its outline gets an accent halo. */
+.week-card .week-days .day-cell.is-selected-day {
+  box-shadow:
+    inset 0 0 0 2px var(--gt-done),
+    0 0 0 2px var(--gt-surface),
+    0 0 0 4px var(--gt-accent);
+}
+/* A skipped day carries a small moon at its corner. */
+.week-moon {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  color: var(--gt-ink-2);
+  animation: week-fade-in 180ms ease-out 120ms both;
+}
+.week-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: none;
+  border-radius: var(--gt-radius-day);
+  box-shadow: inset 0 0 0 2px var(--gt-done);
+  pointer-events: none;
+}
+.week-ring[data-on] {
+  display: block;
+}
+.week-ring.is-lifted {
+  background-color: color-mix(in srgb, var(--gt-done) 22%, transparent);
+  box-shadow:
+    inset 0 0 0 2px var(--gt-done),
+    0 10px 24px rgb(0 0 0 / 0.3);
+}
+.week-bubble {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 15px;
+  background-color: var(--gt-ink);
+  color: var(--gt-ground);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  line-height: 30px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--gt-motion);
+}
+.week-bubble[data-on] {
+  opacity: 1;
+}
+/* The line under the strip: the totals, or for a moment what just changed. */
+.week-status.is-change {
+  color: var(--gt-ink);
+  animation: week-fade-in 160ms ease-out both;
+}
+.week-undo {
+  position: relative;
+  z-index: 1;
+  min-height: 48px;
+}
+@keyframes week-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .week-moon,
+  .week-status.is-change {
+    animation-duration: 120ms;
+    animation-delay: 0ms;
+  }
+}
+
+/* The day sheet: ‹ date › at the top, the workout, two actions and Done.
+   Its backdrop stays light so the strip above shows each step. */
+.day-sheet .dialog-header {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.day-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+}
+.day-sheet-date {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  text-align: center;
+}
+.day-sheet-date strong {
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.day-sheet-date[data-dir="1"] {
+  animation: day-date-from-right 200ms var(--gt-ease-out) both;
+}
+.day-sheet-date[data-dir="-1"] {
+  animation: day-date-from-left 200ms var(--gt-ease-out) both;
+}
+@keyframes day-date-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes day-date-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .day-sheet-date[data-dir] {
+    animation: week-fade-in 120ms linear both;
+  }
+}
+.day-step {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-accent);
+  cursor: pointer;
+  transition: transform var(--gt-motion);
+}
+.day-step:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.day-step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.day-step:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.day-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-item);
+  background-color: var(--gt-routine-fill);
+}
+.day-sheet-item .routine-badge-count {
+  border-color: var(--gt-routine-fill);
+}
+.day-sheet-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.day-sheet-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.day-sheet-text strong {
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.day-sheet-menu {
+  border-radius: var(--gt-radius-item);
+  background-color: var(--gt-surface-2);
+  gap: 0;
+}
+.day-sheet-menu .sheet-menu-item {
+  min-height: 56px;
+  padding: 0 var(--gt-space-4);
+}
+.day-sheet-menu .sheet-menu-item + .sheet-menu-item {
+  border-top: 1px solid var(--gt-line);
+  border-radius: 0;
 }
 .week-card-head {
   display: flex;
@@ -1034,17 +1420,45 @@ details[open] > .session-summary > svg {
   flex-direction: column;
   gap: var(--gt-space-1);
 }
+/* A template day: 78px tall with a 26–28px icon over the name (v5 F3). */
 .day-cell.plan-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   height: auto;
-  min-height: 52px;
-  padding: 2px;
+  min-height: 78px;
+  padding: 6px 2px;
   font-size: var(--gt-fs-1);
   font-weight: 600;
   line-height: 1.15;
   text-align: center;
   cursor: pointer;
 }
-.plan-cell > span {
+.plan-cell > svg,
+.plan-cell-icon {
+  flex: none;
+}
+.plan-cell-icon {
+  display: grid;
+  place-items: center;
+  color: var(--tone-fg, var(--gt-accent));
+}
+.plan-cell.is-set > svg {
+  color: var(--gt-accent);
+}
+.day-cell.plan-cell.is-empty {
+  background-color: transparent;
+  box-shadow: none;
+  outline: 1.5px dashed var(--gt-line-strong);
+  outline-offset: -1.5px;
+  color: var(--gt-ink-3);
+}
+.day-cell.plan-cell.is-rest {
+  background-color: transparent;
+}
+.plan-cell > .plan-cell-text {
   display: -webkit-box;
   max-width: 100%;
   overflow: hidden;
@@ -1088,6 +1502,26 @@ details[open] > .session-summary > svg {
 .plan-grid-week.is-deload .plan-cell.is-set {
   box-shadow: inset 0 0 0 2px var(--gt-deload);
   color: var(--gt-ink-2);
+}
+/* The plan's goals: "+ New goal" sits at the heading's end and ends the list. */
+.plan-goals-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
+.plan-new-goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  font-weight: 600;
+}
+.plan-new-goal-row .row-title {
+  color: var(--gt-accent);
+}
+.plan-new-goal-row > svg:first-child {
+  color: var(--gt-accent);
 }
 .plan-copy-week {
   align-self: flex-start;

@@ -112,12 +112,13 @@ export default function Home() {
         align="first-line"
         action={<ProfileButton />}
       />
-      <WeekCard completed={completed} goal={goal} day={day} planned={planned} />
+      {/* The running workout comes first (v5 A2), then the week. */}
       <ResumeCards
         running={running}
         otherRunning={otherRunning}
         drafts={drafts}
       />
+      <WeekCard completed={completed} goal={goal} day={day} planned={planned} />
       {!running && (
         <TodayCard
           pick={pick}
@@ -135,7 +136,7 @@ export default function Home() {
       <RoutinesSection
         completed={completed}
         day={day}
-        exclude={!running && pick.kind !== "none" ? pick.routineId : null}
+        exclude={!running && pick.kind === "planned" ? pick.routineId : null}
         starting={starting}
         onStart={(routine) => void start(false, routine)}
       />

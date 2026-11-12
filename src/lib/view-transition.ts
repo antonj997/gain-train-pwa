@@ -39,7 +39,7 @@ const quiet = (promise: Promise<unknown> | undefined) => {
  * once (and the location change then runs the fallback).
  */
 export function navigateWithTransition(
-  direction: NavDirection,
+  direction: NavDirection | "morph",
   navigate: () => void,
 ) {
   if (!canViewTransition()) {
@@ -178,4 +178,64 @@ export function markPageEntering(main: HTMLElement) {
     () => main.removeAttribute("data-entering"),
     motionMs(MAX_WAIT_MS + 400),
   );
+}
+
+/**
+ * Train's "Workout in progress" card becomes the workout's top bar. With view
+ * transitions the tapped card and the workout's bar share the
+ * `workout-head` view-transition-name (and the name `workout-title`) while
+ * <html data-nav-dir="morph">, so the browser grows one into the other; see
+ * styles/pages.css. Without the API the workout page rises into place
+ * instead (`playMorphFallback`, called by the page transitions on arrival).
+ */
+let morphFallback = false;
+export function morphToWorkout(card: HTMLElement, navigate: () => void) {
+  if (!canViewTransition()) {
+    morphFallback = true;
+    navigate();
+    return;
+  }
+  card.classList.add("is-morph-source");
+  const clear = () => card.classList.remove("is-morph-source");
+  navigateWithTransition("morph", navigate);
+  // The old page was captured with the name; the card leaves with the page.
+  if (current) current.finished.then(clear, clear);
+  else clear();
+}
+
+/** The fallback: the workout page fades in, rising 12px. True when it ran. */
+export function playMorphFallback(main: HTMLElement) {
+  if (!morphFallback) return false;
+  morphFallback = false;
+  if (typeof main.animate !== "function") return true;
+  try {
+    const css = getComputedStyle(document.documentElement);
+    const duration = ms(css.getPropertyValue("--gt-page-duration"), 260);
+    const easing = css.getPropertyValue("--gt-ease-out").trim() || "ease-out";
+    const reduced = duration < 200;
+    main.animate(
+      reduced
+        ? [{ opacity: 0 }, { opacity: 1 }]
+        : [
+            { opacity: 0, transform: "translate3d(0, 12px, 0)" },
+            { opacity: 1, transform: "translate3d(0, 0, 0)" },
+          ],
+      { duration, easing },
+    );
+    sweepSlowMotion();
+  } catch {
+    // An animation is never worth an error.
+  }
+  return true;
+}
+
+/**
+ * The route the page transitions last settled on. Read while a new route
+ * renders, it is still the route being left, so Train can tell it is coming
+ * back from a workout and shrink the card back from the top bar.
+ */
+let shownPath = "";
+export const settledPath = () => shownPath;
+export function noteSettledPath(pathname: string) {
+  shownPath = pathname;
 }

@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   CalendarDays,
-  Dumbbell,
   History,
   Layers,
   MoreHorizontal,
   Play,
+  Plus,
   Shuffle,
   Sparkles,
 } from "lucide-react";
@@ -15,6 +15,7 @@ import type { RoutineRecord } from "@/data/model";
 import type { TodayPick } from "@/data/today";
 import Sheet from "@/components/ui/Sheet";
 import ListRow from "@/components/ui/ListRow";
+import RoutineBadge from "@/components/items/RoutineBadge";
 import { categoryLabel } from "@/lib/catalogue-labels";
 import { lastUsedLabel } from "@/lib/library";
 import { routineAverageMinutes, routineMeta } from "@/lib/routine-preview";
@@ -37,9 +38,11 @@ type Props = {
 };
 
 /**
- * Train's "Today" card: the plan's routine, day type or group for today, or
- * a suggestion when nothing is planned (see `todayPick`). One big Start, and
- * ⋯ with Change workout, View plan and Log a past workout.
+ * Train's "Today" card: the plan's routine, day type or group for today. On a
+ * day with nothing planned (no plan, an empty day or a rest day) it offers an
+ * empty workout, with the routine you did longest ago one quiet tap below (see
+ * `todayPick`). One big Start, and ⋯ with Change workout, View plan and Log a
+ * past workout.
  */
 export default function TodayCard({
   pick,
@@ -72,27 +75,24 @@ export default function TodayCard({
       .join(" · ");
   };
 
-  const routine =
-    pick.kind === "none" ? null : routineById(pick.routineId ?? null);
   const planned = pick.kind === "planned" ? pick.day : null;
+  // Nothing planned: the card starts an empty workout; a suggestion stays below.
+  const suggested =
+    pick.kind === "suggested" ? routineById(pick.routineId) : null;
+  const routine = pick.kind === "planned" ? routineById(pick.routineId) : null;
   const categories = planned?.categories ?? [];
   const rest = pick.kind !== "planned" && pick.rest;
   const label = [
     t("home.today"),
     phase && t("plan.weekOf", { week: phase.week, weeks: phase.weeks }),
     phase?.deload && t("plan.deload"),
-    rest
-      ? t("home.todayRest")
-      : pick.kind === "suggested"
-        ? t("home.todaySuggested")
-        : null,
+    rest ? t("home.todayRest") : !planned ? t("home.todayNothing") : null,
   ]
     .filter(Boolean)
     .join(" · ");
 
   let title: string;
   let sub: string;
-  let why: string | null = null;
   if (planned?.kind === "group") {
     title = planned.title;
     sub = routine
@@ -110,16 +110,9 @@ export default function TodayCard({
   } else if (routine) {
     title = routine.payload.name;
     sub = meta(routine);
-    if (pick.kind === "suggested")
-      why =
-        pick.reason === "first"
-          ? t("home.suggestFirst")
-          : rest
-            ? t("home.suggestRotationRest")
-            : t("home.suggestRotation");
   } else {
-    title = t("home.nothingPlanned");
-    sub = t("home.nothingPlannedText");
+    title = t("home.emptyWorkout");
+    sub = t("home.emptyText");
   }
 
   const start = () => {
@@ -128,7 +121,7 @@ export default function TodayCard({
       onStartSuggestions(categories, planned.title);
     else onStartEmpty();
   };
-  const Icon = routine ? Layers : planned ? Sparkles : Dumbbell;
+  const startLabel = planned ? t("home.start") : t("home.startEmpty");
 
   return (
     <section className="today-card" aria-labelledby="today-heading">
@@ -147,15 +140,29 @@ export default function TodayCard({
         </button>
       </div>
       <div className="today-main">
-        <span className="today-tile" aria-hidden="true">
-          <Icon size={26} />
-        </span>
+        {routine ? (
+          <RoutineBadge exercises={routine.payload.exercises} size={56} />
+        ) : (
+          <span
+            className={"today-tile" + (planned ? "" : " is-empty")}
+            aria-hidden="true"
+          >
+            {planned ? (
+              planned.kind === "group" ? (
+                <Layers size={28} />
+              ) : (
+                <Sparkles size={28} />
+              )
+            ) : (
+              <Plus size={30} />
+            )}
+          </span>
+        )}
         <span className="today-text">
           <strong className="today-title">{title}</strong>
           <span className="row-sub">{sub}</span>
         </span>
       </div>
-      {why && <p className="today-why">{why}</p>}
       <button
         type="button"
         className="btn-primary btn-block btn-lg"
@@ -163,8 +170,23 @@ export default function TodayCard({
         onClick={start}
       >
         <Play size={18} fill="currentColor" stroke="none" aria-hidden="true" />
-        {starting ? t("home.starting") : t("home.start")}
+        {starting ? t("home.starting") : startLabel}
       </button>
+      {suggested && pick.kind === "suggested" && (
+        <button
+          type="button"
+          className="btn-quiet"
+          disabled={starting}
+          onClick={() => onStartRoutine(suggested)}
+        >
+          {t(
+            pick.reason === "first"
+              ? "home.suggestFirstRoutine"
+              : "home.suggestOldestRoutine",
+            { name: suggested.payload.name },
+          )}
+        </button>
+      )}
       {planned?.kind === "group" && routine && categories.length > 0 && (
         <button
           type="button"
