@@ -158,10 +158,7 @@ function locate(exercises: PadExercise[], setId: string) {
  * Where Next goes from a field: the set's reps after its load, then each of
  * its drops in turn, then a check of the set (drops are checked with it).
  */
-export function padNext(
-  exercises: PadExercise[],
-  current: PadTarget,
-): PadNext {
+export function padNext(exercises: PadExercise[], current: PadTarget): PadNext {
   const found = locate(exercises, current.setId);
   if (!found) return { kind: "close" };
   const { sets, index } = found;

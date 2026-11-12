@@ -129,19 +129,24 @@ export default function RestDock({
       );
       // The dock took its space under the page: make sure it did not take
       // the next set's place on screen.
-      const timer = window.setTimeout(() => {
-        const row = next
-          ? document.querySelector(`[data-set-id="${CSS.escape(next.setId)}"]`)
-          : null;
-        if (!row || !root.current) return;
-        const bottom = row.getBoundingClientRect().bottom;
-        const top = root.current.getBoundingClientRect().top;
-        if (bottom > top - 8)
-          window.scrollBy({
-            top: bottom - top + 12,
-            behavior: reduced() ? "auto" : "smooth",
-          });
-      }, motionMs(MOTION.dockIn + 20));
+      const timer = window.setTimeout(
+        () => {
+          const row = next
+            ? document.querySelector(
+                `[data-set-id="${CSS.escape(next.setId)}"]`,
+              )
+            : null;
+          if (!row || !root.current) return;
+          const bottom = row.getBoundingClientRect().bottom;
+          const top = root.current.getBoundingClientRect().top;
+          if (bottom > top - 8)
+            window.scrollBy({
+              top: bottom - top + 12,
+              behavior: reduced() ? "auto" : "smooth",
+            });
+        },
+        motionMs(MOTION.dockIn + 20),
+      );
       return () => window.clearTimeout(timer);
     }
     if (shown === "done") {
@@ -165,9 +170,13 @@ export default function RestDock({
         playRestSound();
       return;
     }
-    play(el.querySelector(".rest-dock-body"), [{ opacity: 0.2 }, { opacity: 1 }], {
-      duration: MOTION.dockSwap,
-    });
+    play(
+      el.querySelector(".rest-dock-body"),
+      [{ opacity: 0.2 }, { opacity: 1 }],
+      {
+        duration: MOTION.dockSwap,
+      },
+    );
     // Only phase changes animate; the rest values are read when they happen.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shown, leaving]);

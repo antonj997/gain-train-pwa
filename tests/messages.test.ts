@@ -67,7 +67,11 @@ test("over the cap the oldest message that is not an error goes first", () => {
 });
 
 test("removing by key clears every message of that kind, and nothing else", () => {
-  const list = [message(1, { key: "sync" }), message(2), message(3, { key: "sync" })];
+  const list = [
+    message(1, { key: "sync" }),
+    message(2),
+    message(3, { key: "sync" }),
+  ];
   assert.deepEqual(
     removeMessage(list, "sync").map((m) => m.id),
     [2],

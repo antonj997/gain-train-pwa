@@ -73,12 +73,12 @@ export default function WorkoutTopBar({
     ),
     // "3 of 9 sets", its numbers rolling as sets are checked and added.
     <span key="sets">
-      {t("workout.setsOf", { done: "\u0001", total: "\u0002" })
-        .split(/(\u0001|\u0002)/)
+      {t("workout.setsOf", { done: "\u2060d\u2060", total: "\u2060t\u2060" })
+        .split("\u2060")
         .map((part, index) =>
-          part === "\u0001" ? (
+          index % 2 && part === "d" ? (
             <RollingNumber key={index} value={completed} />
-          ) : part === "\u0002" ? (
+          ) : index % 2 && part === "t" ? (
             <RollingNumber key={index} value={total} />
           ) : (
             part

@@ -453,18 +453,86 @@
   width: 100%;
   height: 44px;
 }
-@keyframes set-check-settle {
+/* The check's motion (set-motion.ts). The row is its own stacking context, so
+   the green sweep (z-index -1) paints over the row's tone and under its
+   content; it grows from the ✓ at the right and is only seen while it runs. */
+.set-line[data-mode="log"] {
+  z-index: 0;
+}
+.set-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background-color: var(--gt-done-soft);
+  opacity: 0;
+  transform-origin: right center;
+  pointer-events: none;
+}
+/* The record mark pops in once with one light sweep across it. */
+.set-record-pop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+.set-record-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    var(--gt-sheen) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+/* A set number that changed (a set above was deleted) cross-fades. */
+.set-badge-chip {
+  position: relative;
+}
+.set-badge-in {
+  animation: set-badge-in var(--gt-fade) both;
+}
+.set-badge-out {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  animation: set-badge-out var(--gt-fade) forwards;
+}
+@keyframes set-badge-in {
   from {
-    transform: scale(0.8);
-  }
-  to {
-    transform: scale(1);
+    opacity: 0;
   }
 }
-@media (prefers-reduced-motion: no-preference) {
-  .set-line.is-just-checked .set-check svg {
-    animation: set-check-settle var(--gt-motion);
+@keyframes set-badge-out {
+  to {
+    opacity: 0;
   }
+}
+/* Drag a load or reps field up or down: it grows a little while it steps. */
+.set-line .set-field {
+  transition: transform 120ms ease-out;
+}
+.set-line .set-field.is-stepping {
+  z-index: 2;
+  transform: scale(1.08);
+}
+@media (prefers-reduced-motion: reduce) {
+  .set-line .set-field.is-stepping {
+    transform: none;
+  }
+}
+/* The field the number pad types keeps its ring even when focus is on the pad. */
+.set-line .set-field input[data-pad-target] {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+  border-color: var(--gt-accent);
 }
 
 /* Field messages and the unlock notice run under the whole row. */
@@ -486,7 +554,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--gt-space-4);
-  padding-bottom: calc(var(--sheet-space, 0px) + var(--gt-space-6) * 3);
+  /* Room for the dock (rest, number pad) or an open sheet, whichever is
+     taller, so the last row can sit above either. */
+  padding-bottom: calc(
+    max(var(--sheet-space, 0px), var(--dock-space, 0px)) + var(--gt-space-6) * 3
+  );
 }
 .workout-editor > * {
   min-width: 0;
@@ -649,7 +721,9 @@
 .float-stack {
   position: fixed;
   right: 0;
-  bottom: calc(var(--gt-space-4) + env(safe-area-inset-bottom));
+  bottom: calc(
+    var(--dock-space, 0px) + var(--gt-space-4) + env(safe-area-inset-bottom)
+  );
   left: 0;
   z-index: 20;
   display: flex;
@@ -679,28 +753,6 @@
   font-weight: 600;
   box-shadow: var(--gt-shadow-chip);
 }
-.rest-bar {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-1);
-  width: min(100%, 420px);
-  min-height: 56px;
-  padding: var(--gt-space-1) var(--gt-space-1) var(--gt-space-1)
-    var(--gt-space-4);
-  border: 1px solid var(--gt-line);
-  border-radius: var(--gt-radius-lg);
-  background-color: var(--gt-surface);
-  color: var(--gt-ink);
-  box-shadow: var(--gt-shadow-bar);
-}
-.rest-bar-time {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: var(--gt-fs-5);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
 /* Sheet content: the Set, Load and count, exercise menu and Reorder sheets. */
 .sheet-title-line {
   display: flex;
@@ -1045,4 +1097,271 @@
 }
 .reorder-exercise .icon-btn:disabled {
   opacity: 0.35;
+}
+
+/* The dock at the foot of a live workout (WorkoutDock): the rest dock, with
+   the number pad under it while a field is typed. It is fixed to the bottom
+   and publishes its height (--dock-space), so the page leaves room for it. */
+.workout-dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 800px);
+  margin-inline: auto;
+  pointer-events: none;
+}
+.workout-dock > * {
+  pointer-events: auto;
+}
+.workout-dock > :last-child {
+  --dock-safe: env(safe-area-inset-bottom);
+}
+[data-keyboard-open] .workout-dock {
+  display: none;
+}
+
+/* The rest dock: its whole background is the rest left (an accent-soft fill
+   that empties to the left), green when the rest is done. */
+.rest-dock {
+  position: relative;
+  overflow: hidden;
+  padding: var(--gt-space-1) var(--gt-space-4)
+    calc(var(--gt-space-3) + var(--dock-safe, 0px));
+  border-top: 1px solid var(--gt-line);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  box-shadow: var(--gt-shadow-dock);
+  touch-action: none;
+  transition: background-color 200ms ease-out;
+}
+.rest-dock[data-phase="done"] {
+  background-color: var(--gt-done-soft);
+}
+.rest-dock[data-phase="finish"] {
+  padding-top: var(--gt-space-3);
+}
+.rest-dock-fill {
+  position: absolute;
+  inset: 0;
+  background-color: var(--gt-accent-soft);
+  transform-origin: left center;
+  pointer-events: none;
+}
+.rest-dock[data-phase="done"] .rest-dock-fill {
+  display: none;
+}
+.rest-dock-body {
+  position: relative;
+}
+.rest-dock-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+}
+.rest-dock-time {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+}
+.rest-dock-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.rest-dock-label {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.rest-dock-value {
+  display: inline-block;
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  transform-origin: 0 60%;
+}
+.rest-dock[data-phase="done"] .rest-dock-value {
+  color: var(--gt-done);
+  font-size: 24px;
+}
+.rest-dock-plus {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--gt-space-3);
+  border-radius: 16px;
+  background-color: var(--gt-surface-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.rest-dock-skip {
+  flex: none;
+  min-height: 48px;
+  padding: 0 var(--gt-space-1) 0 var(--gt-space-3);
+  border: 0;
+  background: none;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+}
+.rest-dock-next {
+  margin: 0;
+  overflow: hidden;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rest-dock-next b {
+  color: var(--gt-ink);
+  font-weight: 600;
+}
+.rest-dock-next.is-centred {
+  margin-top: 6px;
+  text-align: center;
+}
+.rest-dock-finish {
+  width: 100%;
+  min-height: 54px;
+  font-size: var(--gt-fs-4);
+}
+
+/* The number pad: in thumb reach, big keys, no shade over the page so the row
+   being typed stays readable above it. */
+.number-pad {
+  padding: 0 var(--gt-space-3) calc(var(--gt-space-3) + var(--dock-safe, 0px));
+  border-top: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-xl) var(--gt-radius-xl) 0 0;
+  background-color: var(--gt-ground);
+  color: var(--gt-ink);
+  box-shadow: var(--gt-shadow-pad);
+}
+.rest-dock + .workout-dock-pad .number-pad {
+  border-radius: 0;
+  box-shadow: none;
+}
+.number-pad-grab {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 24px;
+  padding: 10px 0 0;
+  border: 0;
+  background: none;
+  touch-action: none;
+}
+.number-pad-grab span {
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background-color: var(--gt-line-strong);
+}
+.number-pad-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+  padding: var(--gt-space-2) var(--gt-space-1) var(--gt-space-3);
+}
+.number-pad-titles {
+  min-width: 0;
+}
+.number-pad-title {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.number-pad-meta {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.number-pad-head .segmented {
+  flex: none;
+  width: 132px;
+}
+.number-pad-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1.3fr;
+  gap: 6px;
+}
+.number-pad-key {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  touch-action: manipulation;
+}
+.number-pad-key.is-step {
+  padding: 0 6px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  line-height: 1.15;
+  text-align: center;
+}
+.number-pad-key.is-go {
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+}
+.number-pad-key.is-go.is-check {
+  background-color: var(--gt-done);
+}
+.number-pad-key:disabled {
+  opacity: 0.4;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .number-pad-key {
+    transition: transform 60ms ease-out;
+  }
+  .number-pad-key:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+}
+
+/* The top bar's "3 of 9 sets": the numbers roll (RollingNumber). */
+.rolling-number {
+  position: relative;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+.rolling-number > span {
+  display: inline-block;
+}
+.rolling-old {
+  position: absolute;
+  top: 0;
+  left: 0;
 }

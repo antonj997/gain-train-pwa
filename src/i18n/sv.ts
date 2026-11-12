@@ -167,7 +167,8 @@ export const sv = {
   "home.suggestOldestRoutine": "Eller {name}, rutinen du kört längst sedan",
   "home.suggestFirstRoutine": "Eller {name}, din första rutin",
   "week.dayLabel": "{day}: {title}",
-  "week.dayHint": "Tryck för fler val, håll in och dra till en annan dag för att flytta.",
+  "week.dayHint":
+    "Tryck för fler val, håll in och dra till en annan dag för att flytta.",
   "week.dragTo": "{name} → {day}",
   "week.swapWith": "Byter med {name}",
   "week.passed": "Redan passerad",

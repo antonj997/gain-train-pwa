@@ -482,11 +482,7 @@ function ExerciseCard({
             {restLabel(preferences.restSeconds)}
           </button>
         )}
-        <button
-          type="button"
-          className="ex-add-set"
-          onClick={addSet}
-        >
+        <button type="button" className="ex-add-set" onClick={addSet}>
           <Plus size={18} aria-hidden="true" />
           {t("exercise.addSet")}
         </button>

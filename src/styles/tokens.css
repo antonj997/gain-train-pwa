@@ -94,11 +94,22 @@
   --gt-page-shift: 32px;
   --gt-page-exit-shift: 12px;
   --gt-slide: 260ms var(--gt-ease-out);
+  /* Sheets and the number pad slide in on this curve (340ms) and out on the
+     ease-in (240ms); the rest dock leaves on the ease-in too. A short fade is
+     what reduced motion keeps (120ms). */
+  --gt-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --gt-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --gt-fade: 120ms linear;
 
   /* The rest bar and the next-set chip are the only floating controls. The
      shadows are translucent neutrals, so they read the same in both themes. */
   --gt-shadow-bar: 0 8px 24px rgb(20 22 26 / 0.16);
   --gt-shadow-chip: 0 4px 16px rgb(20 22 26 / 0.24);
+  /* The rest dock and the number pad cast a little shade up the page; a
+     record mark's one light sweep is this white in both themes. */
+  --gt-shadow-dock: 0 -6px 20px rgb(20 22 26 / 0.08);
+  --gt-shadow-pad: 0 -8px 24px rgb(20 22 26 / 0.12);
+  --gt-sheen: rgb(255 255 255 / 0.65);
 }
 
 .dark {

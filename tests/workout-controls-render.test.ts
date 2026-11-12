@@ -345,11 +345,22 @@ test("the workout stylesheet hides Previous on narrow phones, uses tokens only a
   );
   assert.doesNotMatch(sheet, /#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/i);
   assert.doesNotMatch(sheet, /@import/);
-  // The settle animation only runs when motion is allowed.
+  // The pad keys only press in when motion is allowed, and a stepped field
+  // does not grow under reduced motion.
   assert.match(
     sheet,
-    /@media \(prefers-reduced-motion: no-preference\)\s*\{[^@]*animation:/,
+    /@media \(prefers-reduced-motion: no-preference\)\s*\{[^@]*transform:/,
   );
+  assert.match(
+    sheet,
+    /@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*is-stepping[^}]*transform: none/,
+  );
+  // The check's motion (Web Animations) becomes one fade under reduced motion.
+  const motion = readFileSync(
+    new URL("../src/components/workout/set-motion.ts", import.meta.url),
+    "utf8",
+  );
+  assert.match(motion, /prefers-reduced-motion: reduce/);
   const line = readFileSync(
     new URL("../src/components/workout/SetLine.tsx", import.meta.url),
     "utf8",

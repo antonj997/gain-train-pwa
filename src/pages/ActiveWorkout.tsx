@@ -299,7 +299,10 @@ function Editor({
         ...current,
         exercises: current.exercises.map((ex) =>
           ex.sets.some((s) => s.id === setId)
-            ? { ...ex, sets: ex.sets.map((s) => (s.id === setId ? edit(s) : s)) }
+            ? {
+                ...ex,
+                sets: ex.sets.map((s) => (s.id === setId ? edit(s) : s)),
+              }
             : ex,
         ),
       })),
@@ -316,7 +319,8 @@ function Editor({
       return {
         setId: set.id,
         title,
-        label: lastChecked && lastChecked !== ex.id ? `${ex.name} · ${what}` : what,
+        label:
+          lastChecked && lastChecked !== ex.id ? `${ex.name} · ${what}` : what,
       };
     }
     return null;
@@ -373,32 +377,36 @@ function Editor({
         onRetry={() => change(w)}
       />
       <NumberPadContext.Provider value={editing ? null : padApi}>
-      {w.exercises.map((ex) => (
-        <ExerciseCard
-          key={ex.id}
-          exercise={ex}
-          lastSession={previous.get(ex.exerciseId)}
-          bodyWeightKg={bodyWeightKg}
-          // Only the card holding the next set needs to know which it is.
-          nextSetId={
-            ex.sets.some((s) => s.id === nextSet?.id) ? nextSet?.id : undefined
-          }
-          unlockChecked={editing}
-          defaults={defaults.get(ex.exerciseId)}
-          planNote={planNote(w.plan, ex.exerciseId)}
-          onChange={update}
-          onReorderExercises={w.exercises.length > 1 ? openReorder : undefined}
-          onRemove={requestRemove}
-          onChangeExercise={setChanging}
-          onSetDone={setDone}
-          records={recordLabels}
-          restChip={!editing}
-          cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
-          onCardioFields={cardioFields.setFields}
-          repHold={repHold.holdFor(ex.exerciseId)}
-          onRepHold={repHold.setHold}
-        />
-      ))}
+        {w.exercises.map((ex) => (
+          <ExerciseCard
+            key={ex.id}
+            exercise={ex}
+            lastSession={previous.get(ex.exerciseId)}
+            bodyWeightKg={bodyWeightKg}
+            // Only the card holding the next set needs to know which it is.
+            nextSetId={
+              ex.sets.some((s) => s.id === nextSet?.id)
+                ? nextSet?.id
+                : undefined
+            }
+            unlockChecked={editing}
+            defaults={defaults.get(ex.exerciseId)}
+            planNote={planNote(w.plan, ex.exerciseId)}
+            onChange={update}
+            onReorderExercises={
+              w.exercises.length > 1 ? openReorder : undefined
+            }
+            onRemove={requestRemove}
+            onChangeExercise={setChanging}
+            onSetDone={setDone}
+            records={recordLabels}
+            restChip={!editing}
+            cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
+            onCardioFields={cardioFields.setFields}
+            repHold={repHold.holdFor(ex.exerciseId)}
+            onRepHold={repHold.setHold}
+          />
+        ))}
       </NumberPadContext.Provider>
       <ReorderExercisesSheet
         open={reorderOpen}

@@ -21,10 +21,14 @@ const token = (el: Element, name: string) =>
 /** The ✓ pressed in: 0.88 in 60 ms, held until the finger lifts. */
 export function pressCheck(check: HTMLElement | null) {
   if (!check || reduced()) return null;
-  return play(check, [{ transform: "scale(1)" }, { transform: "scale(0.88)" }], {
-    duration: MOTION.press,
-    fill: "forwards",
-  });
+  return play(
+    check,
+    [{ transform: "scale(1)" }, { transform: "scale(0.88)" }],
+    {
+      duration: MOTION.press,
+      fill: "forwards",
+    },
+  );
 }
 
 /** A press that did not check the set lets go in 120 ms. */
@@ -52,11 +56,11 @@ export function playCheck(row: HTMLElement, wasNext: boolean) {
       // Not rendered yet: the drawn length of the 24px tick.
     }
     tick.style.strokeDasharray = String(length);
-    play(
-      tick,
-      [{ strokeDashoffset: length }, { strokeDashoffset: 0 }],
-      { duration: MOTION.stroke, delay: 40, fill: "backwards" },
-    );
+    play(tick, [{ strokeDashoffset: length }, { strokeDashoffset: 0 }], {
+      duration: MOTION.stroke,
+      delay: 40,
+      fill: "backwards",
+    });
   }
   // The row keeps its old tone (and fades its ring) while the green sweeps
   // over it from the ✓; at the end the sweep is the row's own done tone.

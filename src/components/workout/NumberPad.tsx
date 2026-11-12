@@ -105,7 +105,8 @@ export default function NumberPad({
   const field = target.field;
   const format = padFormat(field, unit, mark);
   const text = set
-    ? (getSetInputText(set, field) ?? padText(shownValue(set, field, unit), mark))
+    ? (getSetInputText(set, field) ??
+      padText(shownValue(set, field, unit), mark))
     : "";
   // `fresh` until the first key: the next digit replaces what is shown.
   const key = `${target.setId}:${field}`;
@@ -153,10 +154,12 @@ export default function NumberPad({
 
   // A tap outside the pad and the fields, focus on another field, or Escape.
   const selfClick = useRef(false);
+  const drag = useRef<{ y0: number; t0: number; dy: number } | null>(null);
   useEffect(() => {
     const inside = (node: EventTarget | null) =>
       node instanceof Element &&
-      (!!container.current?.contains(node) || !!node.closest("[data-pad-field]"));
+      (!!container.current?.contains(node) ||
+        !!node.closest("[data-pad-field]"));
     const onClick = (event: MouseEvent) => {
       if (!selfClick.current && !inside(event.target)) closeRef.current();
     };
@@ -206,12 +209,7 @@ export default function NumberPad({
     if (after.text !== entry.text) write(after.text);
   };
   const step = (direction: 1 | -1) => {
-    const value = stepPadValue(
-      padValue(entry.text),
-      direction,
-      field,
-      unit,
-    );
+    const value = stepPadValue(padValue(entry.text), direction, field, unit);
     const nextText = padText(value, mark);
     setEntry({ key, text: nextText, fresh: true });
     write(nextText);
@@ -264,7 +262,6 @@ export default function NumberPad({
 
   // A drag on the handle moves the pad (and the dock above it) down: let go
   // past 90 px, or faster than 0.6 px/ms, and it closes; else it springs back.
-  const drag = useRef<{ y0: number; t0: number; dy: number } | null>(null);
   const grabDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     drag.current = { y0: event.clientY, t0: event.timeStamp, dy: 0 };
     try {

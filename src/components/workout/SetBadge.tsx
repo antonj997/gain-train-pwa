@@ -21,7 +21,8 @@ export default function SetBadge({
     text: badge.text,
     old: null,
   });
-  if (shown.text !== badge.text) setShown({ text: badge.text, old: shown.text });
+  if (shown.text !== badge.text)
+    setShown({ text: badge.text, old: shown.text });
   return (
     <button
       type="button"

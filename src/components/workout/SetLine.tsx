@@ -359,7 +359,9 @@ export default function SetLine({
     const gestures: SetInputGestures = {
       tap: () => pad.open(set.id, field),
       stepStart: () => {
-        stepping.current = { value: field === "weight" ? shownWeight : set.reps };
+        stepping.current = {
+          value: field === "weight" ? shownWeight : set.reps,
+        };
         input()?.parentElement?.classList.add("is-stepping");
       },
       step: (total, delta) => {
