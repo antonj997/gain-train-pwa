@@ -482,6 +482,7 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 /* A movable planned day: the finger holds it without scrolling the page,
    selecting text or opening the callout. */
 .day-cell.week-move {
+  z-index: 1;
   cursor: pointer;
   touch-action: none;
   user-select: none;
