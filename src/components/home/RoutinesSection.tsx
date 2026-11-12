@@ -16,6 +16,7 @@ import {
 } from "@/components/library/RoutineMenu";
 import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
 import { useWithUndo } from "@/hooks/useMessages";
+import MotionList from "@/components/motion/MotionList";
 
 /** Your routines' list, where a deleted routine leaves its Undo. */
 const TRAIN_SCOPE = "routines:train";
@@ -105,7 +106,7 @@ export default function RoutinesSection({
         </Link>
       </div>
       {cards.length ? (
-        <div className="routine-cards">
+        <MotionList className="routine-cards">
           {cards.map((slot) =>
             slot.kind === "undo" ? (
               <UndoPlaceholder key={`u${slot.entry.id}`} entry={slot.entry} />
@@ -113,7 +114,7 @@ export default function RoutinesSection({
               renderRoutine(slot.item, slot.index)
             ),
           )}
-        </div>
+        </MotionList>
       ) : (
         <div className="card col-12">
           <h3 className="card-title">{t("home.emptyRoutinesTitle")}</h3>

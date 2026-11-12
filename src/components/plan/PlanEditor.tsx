@@ -40,6 +40,7 @@ import { localizedDate, weekdayNames } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { errorMessage } from "@/lib/errors";
 import { t } from "@/i18n";
+import Reveal from "@/components/motion/Reveal";
 
 /** The Plan subscreen's list, where a deleted plan leaves its Undo. */
 export const PLANS_SCOPE = "plans";
@@ -267,22 +268,26 @@ export default function PlanEditor({
             onChange={(e) => set({ name: e.target.value })}
           />
         </label>
-        {paused && (
-          <p className="plan-paused-note" role="status">
-            {t("plan.pausedNote")}
-          </p>
-        )}
+        <Reveal>
+          {paused && (
+            <p className="plan-paused-note" role="status">
+              {t("plan.pausedNote")}
+            </p>
+          )}
+        </Reveal>
         <PlanPeriodPicker
           startDate={draft.startDate}
           endDate={draft.endDate}
           today={today}
           onChange={set}
         />
-        {problem && draft.name.trim() && (
-          <p className="field-error" role="alert">
-            {problem}
-          </p>
-        )}
+        <Reveal>
+          {problem && draft.name.trim() && (
+            <p className="field-error" role="alert">
+              {problem}
+            </p>
+          )}
+        </Reveal>
         <PlanCycle plan={draft} onChange={setDraft} />
         <PlanTemplateGrid
           plan={draft}
@@ -353,11 +358,13 @@ export default function PlanEditor({
         )}
         {/* Last, so it can stick to the bottom edge of the long form. */}
         <div className="sheet-footer">
-          {error && (
-            <p className="field-error" role="alert">
-              {error}
-            </p>
-          )}
+          <Reveal>
+            {error && (
+              <p className="field-error" role="alert">
+                {error}
+              </p>
+            )}
+          </Reveal>
           <button
             type="button"
             className="btn-primary btn-block"

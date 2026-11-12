@@ -2,6 +2,17 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { capturePointer } from "@/lib/pointer-capture";
+import { MOTION, SPRING, play, playSpring } from "@/lib/motion";
+import {
+  CLOSE_SPEED,
+  FLING_EASE,
+  closeDuration,
+  dragIntent,
+  holdsScroll,
+  releaseSpeed,
+  sheetOffset,
+  sheetRelease,
+} from "@/lib/sheet-drag";
 import { coarsePointer, opensKeyboard } from "@/lib/touch";
 import { t } from "@/i18n";
 import MessageSlot from "@/components/messages/MessageSlot";
@@ -33,83 +44,204 @@ type DialogContentProps = React.ComponentPropsWithoutRef<
   size?: "sheet" | "full";
 };
 
-/** How far (px) a sheet must be pulled, or how fast (px/ms) flicked, to close. */
-const CLOSE_DISTANCE = 96;
-const CLOSE_SPEED = 0.6;
+/** Where a press must not start a sheet drag: fields and things that drag themselves. */
+const OWN_GESTURE =
+  "input, textarea, select, [contenteditable=''], [contenteditable='true'], [data-no-sheet-drag]";
+function ownsGesture(target: Element, sheet: HTMLElement) {
+  if (target.closest(OWN_GESTURE)) return true;
+  // A sort handle or any other control that takes the touch for itself.
+  for (
+    let el: Element | null = target;
+    el && el !== sheet;
+    el = el.parentElement
+  )
+    if (getComputedStyle(el).touchAction === "none") return true;
+  return false;
+}
+
+const phoneSheet = () =>
+  typeof window.matchMedia !== "function" ||
+  !window.matchMedia("(min-width: 640px)").matches;
+
+type Drag = {
+  id: number;
+  x0: number;
+  y0: number;
+  fromTop: boolean;
+  dragging: boolean;
+  offset: number;
+  samples: { y: number; t: number }[];
+};
 
 /**
- * Lets the grab handle drag its sheet down. Past the distance or speed above,
- * releasing clicks the handle, so Radix closes the dialog and the close
- * animation continues from where the finger let go. A shorter drag springs
- * back. After any drag the browser's own trailing click is swallowed; a plain
- * tap still closes.
+ * Drags a bottom sheet down with the finger, 1:1: from the handle or the
+ * title at any time, and from anywhere else while the content is scrolled to
+ * its top (a scrolled list scrolls first). The backdrop lightens as it goes.
+ * Let go past 90px or flicked down faster than 0.6 px/ms, it closes from
+ * where it is (as fast as the finger was going); otherwise it springs back
+ * (stiffness 380, damping 34) from the finger's speed. Pointer events drive
+ * it; a touchmove listener only keeps iOS from scrolling while it may be a
+ * drag. The click after a drag is swallowed; a tap on the handle closes.
  */
-function useDragToClose(content: React.RefObject<HTMLDivElement>) {
-  const drag = React.useRef<{
-    id: number;
-    startY: number;
-    lastY: number;
-    lastT: number;
-    speed: number;
-    moved: boolean;
-    close: boolean;
-  } | null>(null);
-  const suppressClick = React.useRef(false);
-  const setOffset = (y: number, animate: boolean) => {
-    const el = content.current;
-    if (!el) return;
-    el.style.transition = animate ? "translate var(--gt-motion)" : "none";
-    el.style.translate = y ? `0 ${y}px` : "";
-  };
-  return {
-    onPointerDown(event: React.PointerEvent<HTMLButtonElement>) {
-      if (event.button !== 0) return;
-      capturePointer(event.currentTarget, event.pointerId);
-      drag.current = {
-        id: event.pointerId,
-        startY: event.clientY,
-        lastY: event.clientY,
-        lastT: event.timeStamp,
-        speed: 0,
-        moved: false,
-        close: false,
+function useSheetDrag(
+  close: React.RefObject<HTMLButtonElement>,
+  overlay: React.RefObject<HTMLDivElement>,
+) {
+  const detach = React.useRef<(() => void) | null>(null);
+  return React.useCallback(
+    (sheet: HTMLDivElement | null) => {
+      detach.current?.();
+      detach.current = null;
+      if (!sheet) return;
+      let g: Drag | null = null;
+      let back: Animation | null = null;
+      let swallowUntil = 0;
+      const atTop = () => sheet.scrollTop <= 0;
+      const setOffset = (y: number) => {
+        sheet.style.translate = y ? `0 ${y}px` : "";
+        const scrim = overlay.current;
+        if (scrim) {
+          const h = sheet.offsetHeight || 1;
+          scrim.style.opacity = y > 0 ? String(Math.max(0, 1 - y / h)) : "";
+        }
       };
-      suppressClick.current = false;
+      const down = (event: PointerEvent) => {
+        if (!event.isPrimary || !phoneSheet()) return;
+        if (event.pointerType === "mouse" && event.button !== 0) return;
+        const target = event.target as Element;
+        const onHandle = !!close.current?.contains(target);
+        if (!onHandle && ownsGesture(target, sheet)) return;
+        g = {
+          id: event.pointerId,
+          x0: event.clientX,
+          y0: event.clientY,
+          fromTop: onHandle || !!target.closest(".dialog-header"),
+          dragging: false,
+          offset: 0,
+          samples: [{ y: event.clientY, t: event.timeStamp }],
+        };
+      };
+      const move = (event: PointerEvent) => {
+        if (!g || event.pointerId !== g.id) return;
+        if (!g.dragging) {
+          const intent = dragIntent({
+            dx: event.clientX - g.x0,
+            dy: event.clientY - g.y0,
+            fromTop: g.fromTop,
+            atTop: atTop(),
+          });
+          if (intent === "pending") return;
+          if (intent === "none") {
+            g = null;
+            return;
+          }
+          // From here the sheet is under the finger: no jump by the slop.
+          g.dragging = true;
+          g.y0 = event.clientY;
+          back?.cancel();
+          back = null;
+          capturePointer(sheet, g.id);
+          sheet.classList.add("is-dragging");
+          overlay.current?.classList.add("is-dragging");
+        }
+        g.samples.push({ y: event.clientY, t: event.timeStamp });
+        if (g.samples.length > 12) g.samples.shift();
+        g.offset = sheetOffset(event.clientY - g.y0);
+        setOffset(g.offset);
+      };
+      const settle = (gesture: Drag, speed: number) => {
+        sheet.classList.remove("is-dragging");
+        overlay.current?.classList.remove("is-dragging");
+        swallowUntil = performance.now() + 400;
+        if (sheetRelease(gesture.offset, speed) === "close") {
+          // The close animation (CSS, data-state="closed") runs from here,
+          // for what is left of the way and no slower than the fling.
+          const ms = closeDuration(gesture.offset, sheet.offsetHeight, speed);
+          sheet.style.animationDuration = `${ms}ms`;
+          if (speed > CLOSE_SPEED)
+            sheet.style.animationTimingFunction = FLING_EASE;
+          swallowUntil = 0;
+          close.current?.click();
+          return;
+        }
+        const from = gesture.offset;
+        setOffset(0);
+        if (overlay.current)
+          play(
+            overlay.current,
+            [
+              { opacity: Math.max(0, 1 - from / (sheet.offsetHeight || 1)) },
+              { opacity: 1 },
+            ],
+            {
+              duration: MOTION.scrim,
+              easing: "linear",
+            },
+          );
+        back = playSpring(
+          sheet,
+          SPRING.settle,
+          from,
+          0,
+          (y) => ({ translate: `0 ${y}px` }),
+          // The spring starts at the finger's speed (px/s).
+          { velocity: speed * 1000 },
+        );
+      };
+      const up = (event: PointerEvent) => {
+        if (!g || event.pointerId !== g.id) return;
+        const gesture = g;
+        g = null;
+        if (gesture.dragging) settle(gesture, releaseSpeed(gesture.samples));
+      };
+      const cancel = (event: PointerEvent) => {
+        if (!g || event.pointerId !== g.id) return;
+        const gesture = g;
+        g = null;
+        if (gesture.dragging) settle({ ...gesture, offset: 0 }, 0);
+      };
+      // iOS scrolls unless the first touchmove is cancelled; keep the content
+      // still while the press may yet be a drag, and while it is one.
+      const touchMove = (event: TouchEvent) => {
+        if (!g || !event.cancelable) return;
+        const touch = event.touches[0];
+        if (!touch) return;
+        if (
+          g.dragging ||
+          holdsScroll({
+            dx: touch.clientX - g.x0,
+            dy: touch.clientY - g.y0,
+            fromTop: g.fromTop,
+            atTop: atTop(),
+          })
+        )
+          event.preventDefault();
+      };
+      const click = (event: MouseEvent) => {
+        if (performance.now() < swallowUntil) {
+          swallowUntil = 0;
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      };
+      sheet.addEventListener("pointerdown", down);
+      sheet.addEventListener("pointermove", move);
+      sheet.addEventListener("pointerup", up);
+      sheet.addEventListener("pointercancel", cancel);
+      sheet.addEventListener("touchmove", touchMove, { passive: false });
+      sheet.addEventListener("click", click, true);
+      detach.current = () => {
+        back?.cancel();
+        sheet.removeEventListener("pointerdown", down);
+        sheet.removeEventListener("pointermove", move);
+        sheet.removeEventListener("pointerup", up);
+        sheet.removeEventListener("pointercancel", cancel);
+        sheet.removeEventListener("touchmove", touchMove);
+        sheet.removeEventListener("click", click, true);
+      };
     },
-    onPointerMove(event: React.PointerEvent<HTMLButtonElement>) {
-      const d = drag.current;
-      if (!d || d.id !== event.pointerId) return;
-      const dy = Math.max(0, event.clientY - d.startY);
-      const dt = Math.max(1, event.timeStamp - d.lastT);
-      d.speed = (event.clientY - d.lastY) / dt;
-      d.lastY = event.clientY;
-      d.lastT = event.timeStamp;
-      if (dy > 4) d.moved = true;
-      if (d.moved) setOffset(dy, false);
-    },
-    onPointerUp(event: React.PointerEvent<HTMLButtonElement>) {
-      const d = drag.current;
-      if (!d || d.id !== event.pointerId) return;
-      drag.current = null;
-      if (!d.moved) return;
-      const dy = Math.max(0, event.clientY - d.startY);
-      if (dy > CLOSE_DISTANCE || d.speed > CLOSE_SPEED)
-        event.currentTarget.click();
-      else setOffset(0, true);
-      suppressClick.current = true;
-      window.setTimeout(() => (suppressClick.current = false), 400);
-    },
-    onPointerCancel() {
-      drag.current = null;
-      setOffset(0, true);
-    },
-    onClick(event: React.MouseEvent<HTMLButtonElement>) {
-      if (suppressClick.current) {
-        suppressClick.current = false;
-        event.preventDefault();
-      }
-    },
-  };
+    [close, overlay],
+  );
 }
 
 // Every dialog is a bottom sheet on phones and a centred panel from 640px up.
@@ -132,19 +264,22 @@ const DialogContent = React.forwardRef<
     ref,
   ) => {
     const content = React.useRef<HTMLDivElement>(null);
+    const closeRef = React.useRef<HTMLButtonElement>(null);
+    const overlayRef = React.useRef<HTMLDivElement>(null);
+    const attachDrag = useSheetDrag(closeRef, overlayRef);
     const setRefs = React.useCallback(
       (node: HTMLDivElement | null) => {
         (content as React.MutableRefObject<HTMLDivElement | null>).current =
           node;
+        attachDrag(node);
         if (typeof ref === "function") ref(node);
         else if (ref) ref.current = node;
       },
-      [ref],
+      [ref, attachDrag],
     );
-    const handle = useDragToClose(content);
     return (
       <DialogPrimitive.Portal>
-        <DialogOverlay data-backdrop={backdrop} />
+        <DialogOverlay ref={overlayRef} data-backdrop={backdrop} />
         <DialogPrimitive.Content
           ref={setRefs}
           className={classes(
@@ -173,9 +308,9 @@ const DialogContent = React.forwardRef<
         >
           {children}
           <DialogPrimitive.Close
+            ref={closeRef}
             className="dialog-handle"
             aria-label={t("dialog.close")}
-            {...handle}
           >
             <span className="dialog-handle-bar" aria-hidden="true" />
           </DialogPrimitive.Close>

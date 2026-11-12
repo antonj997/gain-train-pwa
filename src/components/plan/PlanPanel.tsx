@@ -32,6 +32,7 @@ import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { t } from "@/i18n";
 import { categoryLabel } from "@/lib/catalogue-labels";
+import MotionList from "@/components/motion/MotionList";
 
 /** Which editor is open: a plan or a group, an existing one or "new". */
 type Editing =
@@ -133,7 +134,7 @@ export default function PlanPanel() {
           {t("plan.plans")}
         </h2>
         {planSlots.length > 0 && (
-          <div className="list">
+          <MotionList className="list">
             {planSlots.map((slot) => {
               if (slot.kind === "undo")
                 return (
@@ -187,7 +188,7 @@ export default function PlanPanel() {
                 </div>
               );
             })}
-          </div>
+          </MotionList>
         )}
         <button
           type="button"

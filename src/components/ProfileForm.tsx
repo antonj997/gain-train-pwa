@@ -5,6 +5,7 @@ import { useProfile } from "@/contexts/useProfile";
 import { parseBodyWeightInput } from "@/lib/profile";
 import "@/styles/profile.css";
 import { formatDecimal, t } from "@/i18n";
+import Reveal from "@/components/motion/Reveal";
 
 export default function ProfileForm() {
   const { user } = useAuth();
@@ -74,21 +75,27 @@ export default function ProfileForm() {
         <p className="small-note" id="profile-weight-help">
           {t("profile.clearHint")}
         </p>
-        {fieldError && (
-          <p className="error-text" role="alert" id="profile-weight-error">
-            {fieldError}
-          </p>
-        )}
-        {error && !fieldError && (
-          <p className="error-text" role="alert">
-            {error}
-          </p>
-        )}
-        {!error && (
-          <p className="small-note profile-save-state" role="status">
-            {saveMessage}
-          </p>
-        )}
+        <Reveal>
+          {fieldError && (
+            <p className="error-text" role="alert" id="profile-weight-error">
+              {fieldError}
+            </p>
+          )}
+        </Reveal>
+        <Reveal>
+          {error && !fieldError && (
+            <p className="error-text" role="alert">
+              {error}
+            </p>
+          )}
+        </Reveal>
+        <Reveal>
+          {!error && (
+            <p className="small-note profile-save-state" role="status">
+              {saveMessage}
+            </p>
+          )}
+        </Reveal>
         {status === "error" && user && (
           <button className="text-button" type="button" onClick={retrySync}>
             {t("profile.retry")}

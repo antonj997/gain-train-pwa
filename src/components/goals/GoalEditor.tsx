@@ -13,6 +13,7 @@ import { shiftDate } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
 import { parseSetNumber } from "@/lib/set-input";
 import { formatDecimal, t } from "@/i18n";
+import Reveal from "@/components/motion/Reveal";
 
 const kinds = (): { value: Goal["kind"]; label: string }[] => [
   { value: "lift", label: t("goals.lift") },
@@ -218,16 +219,20 @@ export default function GoalEditor({
             onChange={(e) => setByDate(e.target.value)}
           />
         </label>
-        {problem && (
-          <p className="row-sub" role="status">
-            {problem}
-          </p>
-        )}
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
+        <Reveal>
+          {problem && (
+            <p className="row-sub" role="status">
+              {problem}
+            </p>
+          )}
+        </Reveal>
+        <Reveal>
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+        </Reveal>
         <button
           type="button"
           className="btn-primary btn-block"

@@ -9,17 +9,18 @@ import {
 } from "@/lib/message-store";
 import { messageRole, type PageMessage } from "@/lib/messages";
 import { motionMs } from "@/lib/slow-motion";
-import { reducedMotion, useMessageState } from "@/hooks/useMessages";
+import { useMessageState } from "@/hooks/useMessages";
+import { MOTION, settled } from "@/lib/motion";
+import { foldAway, growIn } from "@/lib/presence";
 import { t } from "@/i18n";
 
 const EMPTY: readonly PageMessage[] = [];
-const OPEN_MS = 240;
 
 /**
  * Where banners show: under a page header, the workout's top bar or an open
  * sheet's title. Only the topmost mounted slot draws them. A banner opens by
- * growing its height, so the content under it moves down instead of being
- * covered, and closes the same way.
+ * growing its height with a fade (220ms), so the content under it moves down
+ * instead of being covered, and folds away the same way (180ms).
  */
 export default function MessageSlot({ priority = 1 }: { priority?: number }) {
   const [id, setId] = useState<number | null>(null);
@@ -68,48 +69,29 @@ function MessageBanner({
   onGone?: () => void;
 }) {
   const wrap = useRef<HTMLDivElement>(null);
-  // Opens from zero height: the content under it slides down.
+  // Opens from no height (220ms): the content under it slides down.
   useLayoutEffect(() => {
     if (leaving) return;
     markMessageShown(m.id);
-    const el = wrap.current;
-    if (!el || reducedMotion() || typeof el.animate !== "function") return;
-    const height = el.getBoundingClientRect().height;
-    el.animate(
-      [
-        { height: "0px", opacity: 0 },
-        { height: `${height}px`, opacity: 1 },
-      ],
-      { duration: OPEN_MS, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" },
-    );
+    growIn(wrap.current);
     // Once per banner.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Closes to zero height, then leaves the DOM.
+  // Folds to no height (180ms), then leaves the DOM.
   useEffect(() => {
     if (!leaving) return;
-    const el = wrap.current;
-    if (!el || reducedMotion() || typeof el.animate !== "function") {
-      onGone?.();
-      return;
-    }
-    const height = el.getBoundingClientRect().height;
-    const animation = el.animate(
-      [
-        { height: `${height}px`, opacity: 1 },
-        { height: "0px", opacity: 0 },
-      ],
-      { duration: OPEN_MS, easing: "ease-in", fill: "forwards" },
-    );
     let done = false;
     const finish = () => {
       if (done) return;
       done = true;
       onGone?.();
     };
-    animation.finished.then(finish, finish);
+    void settled(foldAway(wrap.current)).then(finish);
     // A backgrounded tab may never run the animation.
-    const fallback = window.setTimeout(finish, motionMs(OPEN_MS + 400));
+    const fallback = window.setTimeout(
+      finish,
+      motionMs(MOTION.bannerOut + 400),
+    );
     return () => window.clearTimeout(fallback);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leaving]);

@@ -2,16 +2,19 @@
  * A damped spring sampled into keyframe values, for Web Animations that should
  * settle like a spring (the week strip's lifted day). Pure, so it is tested.
  * Stiffness `k` and damping `c` are per unit mass; the values are sampled at
- * 60 fps from a 240 Hz simulation and always end exactly on `to`.
+ * 60 fps from a 240 Hz simulation and always end exactly on `to`. A spring
+ * can start moving: `velocity` is in units per second (a released sheet's
+ * finger speed), toward `to` when it has the sign of `to - from`.
  */
 export function springValues(
   k: number,
   c: number,
   from = 0,
   to = 1,
+  velocity = 0,
 ): { values: number[]; duration: number } {
   let x = from;
-  let v = 0;
+  let v = velocity;
   const dt = 1 / 240;
   const values: number[] = [];
   for (let i = 0; i < 480; i++) {

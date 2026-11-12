@@ -14,6 +14,7 @@ import {
 } from "@/lib/feedback";
 import { localizedMoment } from "@/lib/dates";
 import { useT } from "@/i18n/useT";
+import Reveal from "@/components/motion/Reveal";
 
 type Change = {
   id: string;
@@ -213,11 +214,13 @@ export default function ReportDetailSheet({
             onChange={(event) => setNote(event.target.value)}
           />
         </label>
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
+        <Reveal>
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+        </Reveal>
         <button
           type="button"
           className="btn-danger"

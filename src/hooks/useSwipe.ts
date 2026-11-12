@@ -14,6 +14,7 @@ import { setTipBlocker, tipUsed } from "@/lib/tip-store";
 import type { TipId } from "@/lib/tips";
 import { motionMs } from "@/lib/slow-motion";
 import { reducedMotion } from "@/hooks/useMessages";
+import { EASE, MOTION } from "@/lib/motion";
 
 /**
  * The one swipe for boxed items (routine cards, workouts in History's week
@@ -88,7 +89,7 @@ if (typeof document !== "undefined")
     true,
   );
 
-const SPRING = "cubic-bezier(0.2, 1.3, 0.4, 1)";
+const SPRING = EASE.swipe;
 const SWALLOW_CLICK_MS = 400;
 
 export function useSwipe(options: SwipeOptions) {
@@ -112,7 +113,7 @@ export function useSwipe(options: SwipeOptions) {
 
   /** Moves the front to `x` on a spring (or at once with reduced motion). */
   const animateTo = useCallback(
-    (x: number, duration = 320, easing = SPRING) => {
+    (x: number, duration: number = MOTION.settle, easing: string = SPRING) => {
       const el = front.current;
       const from = drawn.current;
       animation.current?.cancel();
@@ -196,7 +197,7 @@ export function useSwipe(options: SwipeOptions) {
       } else if (result.action === "open") {
         if (o.tip) tipUsed(o.tip);
         setOpenSide(result.side);
-        void animateTo(result.offset, 280, "cubic-bezier(0.2, 0.9, 0.3, 1)");
+        void animateTo(result.offset, MOTION.open, EASE.swipeOpen);
       } else {
         setOpenSide(null);
         void animateTo(0);

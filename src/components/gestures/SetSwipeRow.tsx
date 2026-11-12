@@ -11,10 +11,14 @@ import { bubbleScale, commitThreshold, type SwipeConfig } from "@/lib/swipe";
 import { motionMs } from "@/lib/slow-motion";
 import { registerTipTarget } from "@/lib/tip-store";
 import { reducedMotion } from "@/hooks/useMessages";
-import { MOTION, play as playMotion, settled } from "@/lib/motion";
+import { EASE, MOTION, play as playMotion, settled } from "@/lib/motion";
 
 /** The parts of the delete, in ms: the row out and the bubble's gulp side by side, then the collapse. */
-const SET_DELETE_TIMING = { slide: 220, bubble: 330, collapse: 240 };
+const SET_DELETE_TIMING = {
+  slide: MOTION.binSlide,
+  bubble: MOTION.binGulp,
+  collapse: MOTION.rowOut,
+};
 
 const finished = (animation: Animation, ms: number) =>
   Promise.race([
@@ -88,14 +92,14 @@ function SetSwipeRow({
         { transform: "scale(1.16)" },
         { transform: "scale(1)" },
       ],
-      { duration: 220, easing: "ease-out" },
+      { duration: MOTION.arm, easing: "ease-out" },
     );
     r?.animate(
       [
         { transform: "scale(0.8)", opacity: 0.55 },
         { transform: "scale(1.9)", opacity: 0 },
       ],
-      { duration: 380, easing: "ease-out" },
+      { duration: MOTION.ring, easing: "ease-out" },
     );
   };
 
@@ -119,10 +123,10 @@ function SetSwipeRow({
           all.map((el) =>
             finished(
               el.animate([{ opacity: 1 }, { opacity: 0 }], {
-                duration: 180,
+                duration: MOTION.reduced,
                 fill: "forwards",
               }),
-              180,
+              MOTION.reduced,
             ),
           ),
         );
@@ -142,9 +146,9 @@ function SetSwipeRow({
             { transform: "translate3d(0, 0, 0)" },
             { transform: `translate3d(${-commitThreshold(width)}px, 0, 0)` },
           ],
-          { duration: 200, easing: "ease-out", fill: "forwards" },
+          { duration: MOTION.binLead, easing: "ease-out", fill: "forwards" },
         ),
-        200,
+        MOTION.binLead,
       );
     }
     const from = fromSheet ? -commitThreshold(width) : swipe.offset();
@@ -156,7 +160,7 @@ function SetSwipeRow({
       ],
       {
         duration: slide,
-        easing: "cubic-bezier(0.4, 0, 1, 1)",
+        easing: EASE.in,
         fill: "forwards",
       },
     );
@@ -174,7 +178,7 @@ function SetSwipeRow({
       ],
       {
         duration: gulp,
-        easing: "cubic-bezier(0.3, 0.7, 0.2, 1)",
+        easing: EASE.gulp,
         fill: "forwards",
       },
     );
@@ -191,7 +195,7 @@ function SetSwipeRow({
             ],
             {
               duration: collapse,
-              easing: "cubic-bezier(0.3, 0.7, 0.2, 1)",
+              easing: EASE.collapse,
               fill: "forwards",
             },
           ),
@@ -226,7 +230,7 @@ function SetSwipeRow({
       setBubble(0);
       if (b && !reducedMotion() && typeof b.animate === "function")
         b.animate([{ transform: from }, { transform: "scale(0)" }], {
-          duration: 200,
+          duration: MOTION.pop,
           easing: "ease-out",
         });
     },

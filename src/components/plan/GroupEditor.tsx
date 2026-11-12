@@ -8,6 +8,7 @@ import type { RoutineGroup } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
 import { t } from "@/i18n";
 import { categoryLabel } from "@/lib/catalogue-labels";
+import Reveal from "@/components/motion/Reveal";
 
 const suggestable = categories.filter((c) => c !== "Other");
 
@@ -128,11 +129,13 @@ export default function GroupEditor({
             ))}
           </div>
         </section>
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
+        <Reveal>
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+        </Reveal>
         <button
           type="button"
           className="btn-primary btn-block"

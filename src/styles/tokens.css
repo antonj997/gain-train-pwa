@@ -100,6 +100,34 @@
   --gt-ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
   --gt-ease-in: cubic-bezier(0.4, 0, 1, 1);
   --gt-fade: 120ms linear;
+  /* The motion table (DESIGN.md → Motion). src/lib/motion.ts holds the same
+     numbers for Web Animations (MOTION, EASE); tests/motion-tokens.test.ts
+     keeps the two equal. Every duration is real time: the admin slow motion
+     slows the running animations themselves, and reduced motion swaps the
+     movement for a fade of --gt-dur-fade. */
+  --gt-ease-collapse: cubic-bezier(0.3, 0, 0.2, 1);
+  --gt-ease-sweep: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --gt-dur-fade: 120ms;
+  --gt-dur-sheet-in: 340ms;
+  --gt-dur-sheet-out: 240ms;
+  --gt-dur-scrim: 200ms;
+  --gt-dur-banner-in: 220ms;
+  --gt-dur-banner-out: 180ms;
+  --gt-dur-row-in: 200ms;
+  --gt-dur-row-out: 240ms;
+  --gt-dur-rise: 200ms;
+  --gt-dur-rise-step: 15ms;
+  --gt-dur-pop: 200ms;
+  --gt-dur-morph: 300ms;
+  --gt-dur-morph-out: 180ms;
+  --gt-dur-morph-in: 220ms;
+  --gt-dur-step: 200ms;
+  --gt-dur-lap: 1200ms;
+  --gt-dur-turn: 5000ms;
+  --gt-dur-live: 2000ms;
+  --gt-dur-theme: 650ms;
+  --gt-dur-theme-fade: 500ms;
+  --gt-dur-quick: 150ms;
 
   /* The rest bar and the next-set chip are the only floating controls. The
      shadows are translucent neutrals, so they read the same in both themes. */

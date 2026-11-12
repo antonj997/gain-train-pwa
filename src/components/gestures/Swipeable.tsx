@@ -4,6 +4,7 @@ import { useSwipe } from "@/hooks/useSwipe";
 import { commitThreshold, type SwipeConfig } from "@/lib/swipe";
 import type { TipId } from "@/lib/tips";
 import { reducedMotion } from "@/hooks/useMessages";
+import { MOTION } from "@/lib/motion";
 
 /** Each revealed button's width. */
 export const ACTION_WIDTH = 80;
@@ -76,7 +77,7 @@ export default function Swipeable({
             { transform: "scale(1.18)" },
             { transform: "scale(1)" },
           ],
-          { duration: 220, easing: "ease-out" },
+          { duration: MOTION.arm, easing: "ease-out" },
         );
     },
     onCommit: (side) => {

@@ -53,6 +53,7 @@ import {
 } from "@/data/record-rank";
 import { t } from "@/i18n";
 import { workoutTitle } from "@/lib/workout-name";
+import MotionList from "@/components/motion/MotionList";
 /** "This week", or the Monday–Sunday span such as "19–25 Oct". */
 function weekTitle(week: string, now: string) {
   if (week === weekStart(now)) return t("history.thisWeek");
@@ -337,7 +338,7 @@ export default function History() {
             {weekTitle(week, now)} · {countLabel(items.length, "workout")} ·{" "}
             {countLabel(sets, "set")}
           </h2>
-          <div className="grouped">
+          <MotionList className="grouped">
             {interleave(
               items,
               undos.filter((u) => u.scope === historyScope(week)),
@@ -407,7 +408,7 @@ export default function History() {
                 </Swipeable>
               );
             })}
-          </div>
+          </MotionList>
         </section>
       ))}
       {!period && (
