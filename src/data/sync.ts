@@ -28,8 +28,28 @@ function isRejectedByServer(error: unknown) {
   return code === "P0001" || code.startsWith("22") || code.startsWith("23");
 }
 
+/**
+ * True when a payload uses something a server without the latest migration
+ * (20261112090000) refuses: a set with no load. Such a refusal is not the
+ * record's fault, so it is sent again on every sync until the server takes it.
+ */
+export function needsNewerServer(payload: unknown) {
+  const exercises = (payload as { exercises?: unknown } | null)?.exercises;
+  return (
+    Array.isArray(exercises) &&
+    exercises.some(
+      (exercise) =>
+        Array.isArray((exercise as { sets?: unknown })?.sets) &&
+        (exercise as { sets: unknown[] }).sets.some(
+          (set) => (set as { load?: unknown } | null)?.load === "none",
+        ),
+    )
+  );
+}
+
 /** The server's reason, in words that say what to do about it. */
-function rejectionMessage(error: ServerError) {
+function rejectionMessage(error: ServerError, payload?: unknown) {
+  if (needsNewerServer(payload)) return t("err.serverBehind");
   const message = String(error?.message ?? "");
   if (message === "Invalid record name or size") return t("err.invalidName");
   return message || t("err.serverRejected");
@@ -134,6 +154,15 @@ async function run(
   changed: () => void,
   active: () => boolean,
 ) {
+  // Records the server refused only for being newer than it are tried again
+  // once per sync, so they go through as soon as the server is updated.
+  await transact(account, (s) => {
+    for (const record of Object.values(s.records))
+      if (record.retryOnSync) {
+        delete record.syncError;
+        delete record.retryOnSync;
+      }
+  });
   for (let i = 0; i < 100 && active(); i++) {
     let op: Operation | undefined;
     await transact(account, (s) => {
@@ -177,7 +206,15 @@ async function run(
       await transact(account, (s) => {
         s.outbox = s.outbox.filter((x) => x.opId !== sent.opId);
         const current = s.records[sent.id];
-        if (current) current.syncError = rejectionMessage(error as ServerError);
+        if (current) {
+          current.syncError = rejectionMessage(
+            error as ServerError,
+            sent.payload,
+          );
+          if (needsNewerServer(sent.payload) && !sent.deleted)
+            current.retryOnSync = true;
+          else delete current.retryOnSync;
+        }
       });
       changed();
       continue;

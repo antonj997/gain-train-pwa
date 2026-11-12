@@ -35,7 +35,9 @@ export function improvedSince(
     hasExtraWeight(prev) !== hasExtraWeight(cur)
   )
     return false;
-  const loaded = cur.load !== "bodyweight" || hasExtraWeight(cur);
+  // Plain bodyweight and "none" carry no weight to compare.
+  const loaded =
+    cur.load === "weight" || cur.load === "assisted" || hasExtraWeight(cur);
   const sign = cur.load === "assisted" ? -1 : 1;
   const before = loaded ? sign * (prev.weight ?? 0) : 0;
   const now = loaded ? sign * (cur.weight ?? 0) : 0;

@@ -381,6 +381,11 @@ button.ex-row-main {
   padding: 2px 8px 2px 6px;
   font-size: var(--gt-fs-1);
 }
+/* Estimated (e1RM) records only: quieter than a real weight or rep record. */
+.record-pill.is-quiet {
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
 
 /* Goal item: a progress ring. */
 .goal-ring {
