@@ -459,3 +459,116 @@
   justify-content: space-between;
   gap: var(--gt-space-2);
 }
+
+/* What the calendar's marks mean: Workout, Planned, Today. */
+.history-footer {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-1) var(--gt-space-4);
+  margin: 0;
+  padding: var(--gt-space-2) var(--gt-space-1) var(--gt-space-1);
+  list-style: none;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.calendar-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-mark {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+.legend-mark.is-trained {
+  background-color: var(--gt-done);
+}
+.legend-mark.is-planned {
+  box-shadow: inset 0 0 0 2px var(--gt-done);
+}
+.legend-mark.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+.history-caption-line {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 44px;
+}
+
+/* The chosen period under its own heading, with four tiles. */
+.period-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+  padding: var(--gt-space-3) var(--gt-space-4) var(--gt-space-4);
+}
+.period-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
+.period-title {
+  margin: 0;
+  min-width: 0;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.period-detail {
+  font-variant-numeric: tabular-nums;
+}
+.period-head .text-button {
+  flex: none;
+  min-height: 44px;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
+.period-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+.period-tile {
+  min-width: 0;
+  padding: var(--gt-space-2) 10px;
+  border-radius: var(--gt-radius-tile);
+  background-color: var(--gt-surface-2);
+}
+.period-tile dt {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+}
+.period-tile dd {
+  margin: 0;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-5);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.period-tile dd.is-long {
+  font-size: var(--gt-fs-4);
+}
+.period-tile dd small {
+  margin-left: 2px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+}
+.period-tile.is-record dd {
+  color: var(--gt-warm-fg);
+}
