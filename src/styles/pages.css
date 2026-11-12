@@ -325,10 +325,281 @@ label.row {
 .page-header-bar.align-first-line > .profile-btn {
   margin-top: calc((2px + var(--gt-fs-6) * 1.15 - 44px) / 2);
 }
-/* This week: the whole card is a link to History. */
+/* This week: the head is a link to History and its tap area stretches over
+   the card; planned days are buttons above it (tap: the day sheet; hold until
+   the ring lifts, then drag to another day). */
 .week-card {
+  position: relative;
   color: var(--gt-ink);
+}
+.week-card-link {
+  color: inherit;
   text-decoration: none;
+}
+.week-card-link::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  content: "";
+}
+.week-card-link:focus-visible {
+  outline: none;
+}
+.week-card:has(.week-card-link:focus-visible) {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.week-days-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.week-card .week {
+  gap: 6px;
+}
+.week-days .day {
+  position: relative;
+}
+.week-days .day:has(> .week-move) {
+  z-index: 1;
+}
+/* A movable planned day: the finger holds it without scrolling the page,
+   selecting text or opening the callout. */
+.day-cell.week-move {
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.day-cell.week-move:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+/* Today with a planned workout keeps its green outline inside the accent ring. */
+.week-card .day-cell.is-planned.is-today {
+  box-shadow:
+    inset 0 0 0 2px var(--gt-done),
+    0 0 0 2px var(--gt-accent);
+}
+/* While its ring is lifted or sliding, the day shows no outline of its own
+   (today keeps its accent ring). */
+.week-card .week-days .day-cell.is-ghosted {
+  box-shadow: none;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
+.week-card .week-days .day-cell.is-ghosted.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+.week-card .week-days .day-cell.is-drop-target {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-ink);
+}
+.week-card .week-days .day-cell.is-drop-bad {
+  opacity: 0.45;
+}
+/* The day the sheet is about: its outline gets an accent halo. */
+.week-card .week-days .day-cell.is-selected-day {
+  box-shadow:
+    inset 0 0 0 2px var(--gt-done),
+    0 0 0 2px var(--gt-surface),
+    0 0 0 4px var(--gt-accent);
+}
+/* A skipped day carries a small moon at its corner. */
+.week-moon {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  color: var(--gt-ink-2);
+  animation: week-fade-in 180ms ease-out 120ms both;
+}
+.week-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: none;
+  border-radius: var(--gt-radius-day);
+  box-shadow: inset 0 0 0 2px var(--gt-done);
+  pointer-events: none;
+}
+.week-ring[data-on] {
+  display: block;
+}
+.week-ring.is-lifted {
+  background-color: color-mix(in srgb, var(--gt-done) 22%, transparent);
+  box-shadow:
+    inset 0 0 0 2px var(--gt-done),
+    0 10px 24px rgb(0 0 0 / 0.3);
+}
+.week-bubble {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 4;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 15px;
+  background-color: var(--gt-ink);
+  color: var(--gt-ground);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  line-height: 30px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--gt-motion);
+}
+.week-bubble[data-on] {
+  opacity: 1;
+}
+/* The line under the strip: the totals, or for a moment what just changed. */
+.week-status.is-change {
+  color: var(--gt-ink);
+  animation: week-fade-in 160ms ease-out both;
+}
+.week-undo {
+  position: relative;
+  z-index: 1;
+  min-height: 48px;
+}
+@keyframes week-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .week-moon,
+  .week-status.is-change {
+    animation-duration: 120ms;
+    animation-delay: 0ms;
+  }
+}
+
+/* The day sheet: ‹ date › at the top, the workout, two actions and Done.
+   Its backdrop stays light so the strip above shows each step. */
+.day-sheet .dialog-header {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.day-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+}
+.day-sheet-date {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  text-align: center;
+}
+.day-sheet-date strong {
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  line-height: 1.25;
+}
+.day-sheet-date[data-dir="1"] {
+  animation: day-date-from-right 200ms var(--gt-ease-out) both;
+}
+.day-sheet-date[data-dir="-1"] {
+  animation: day-date-from-left 200ms var(--gt-ease-out) both;
+}
+@keyframes day-date-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+}
+@keyframes day-date-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .day-sheet-date[data-dir] {
+    animation: week-fade-in 120ms linear both;
+  }
+}
+.day-step {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-accent);
+  cursor: pointer;
+  transition: transform var(--gt-motion);
+}
+.day-step:active:not(:disabled) {
+  transform: scale(0.9);
+}
+.day-step:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.day-step:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.day-sheet-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-item);
+  background-color: var(--gt-routine-fill);
+}
+.day-sheet-item .routine-badge-count {
+  border-color: var(--gt-routine-fill);
+}
+.day-sheet-tile {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.day-sheet-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.day-sheet-text strong {
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.day-sheet-menu {
+  border-radius: var(--gt-radius-item);
+  background-color: var(--gt-surface-2);
+  gap: 0;
+}
+.day-sheet-menu .sheet-menu-item {
+  min-height: 56px;
+  padding: 0 var(--gt-space-4);
+}
+.day-sheet-menu .sheet-menu-item + .sheet-menu-item {
+  border-top: 1px solid var(--gt-line);
+  border-radius: 0;
 }
 .week-card-head {
   display: flex;

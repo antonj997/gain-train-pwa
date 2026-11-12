@@ -135,7 +135,7 @@ export default function Home() {
       <RoutinesSection
         completed={completed}
         day={day}
-        exclude={!running && pick.kind !== "none" ? pick.routineId : null}
+        exclude={!running && pick.kind === "planned" ? pick.routineId : null}
         starting={starting}
         onStart={(routine) => void start(false, routine)}
       />

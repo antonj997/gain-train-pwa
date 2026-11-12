@@ -129,7 +129,7 @@ button.ex-row-main {
   overflow-wrap: anywhere;
 }
 
-/* Routine item: a surface-2 card with a layers tile and a round play button. */
+/* Routine item: a surface-2 card with a routine badge and a round play button. */
 .routine-card {
   display: flex;
   align-items: center;
@@ -159,15 +159,52 @@ button.ex-row-main {
   outline: 3px solid var(--gt-accent);
   outline-offset: 3px;
 }
-.routine-tile {
+/* Routine badge: a 48px tile tinted by the leading exercise's category with
+   its 30px movement icon (56px / 34px on the Today card) and the exercise
+   count in a small pill at the bottom-right corner. No mosaic. */
+.routine-badge:not([data-tone]) {
+  --tone-bg: var(--gt-accent-soft);
+  --tone-fg: var(--gt-accent);
+}
+.routine-badge {
+  position: relative;
   display: grid;
   flex: none;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--gt-radius-tile);
-  background-color: var(--gt-accent-soft);
-  color: var(--gt-accent);
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--tone-bg);
+  color: var(--tone-fg);
+}
+.routine-badge.is-lg {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+.routine-badge svg {
+  display: block;
+}
+.routine-badge-count {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid var(--gt-routine-fill);
+  border-radius: 999px;
+  background-color: var(--gt-ink);
+  color: var(--gt-surface);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.today-card .routine-badge-count {
+  border-color: var(--gt-accent-soft);
 }
 .routine-card-text {
   display: flex;

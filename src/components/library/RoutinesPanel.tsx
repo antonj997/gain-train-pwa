@@ -271,6 +271,7 @@ export default function RoutinesPanel({
             return (
               <RoutineCard
                 key={r.id}
+                exercises={r.payload.exercises}
                 title={
                   <>
                     {r.payload.name}
