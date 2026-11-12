@@ -1,6 +1,7 @@
 import type { NavDirection } from "@/lib/page-transition";
 import { motionMs } from "@/lib/slow-motion";
 import { sweepSlowMotion } from "@/lib/slow-motion-player";
+import { MOTION } from "@/lib/motion";
 
 /**
  * Page slides. A navigation from a tab, the Settings gear or a Back button runs
@@ -143,7 +144,7 @@ export function animatePageEntry(main: HTMLElement, direction: NavDirection) {
   if (typeof main.animate !== "function") return;
   try {
     const css = getComputedStyle(document.documentElement);
-    const duration = ms(css.getPropertyValue("--gt-page-duration"), 260);
+    const duration = ms(css.getPropertyValue("--gt-page-duration"), MOTION.page);
     const easing = css.getPropertyValue("--gt-ease-out").trim() || "ease-out";
     // A pop has no old page left to slide away, so the page under it drifts in.
     const shift =
@@ -210,7 +211,7 @@ export function playMorphFallback(main: HTMLElement) {
   if (typeof main.animate !== "function") return true;
   try {
     const css = getComputedStyle(document.documentElement);
-    const duration = ms(css.getPropertyValue("--gt-page-duration"), 260);
+    const duration = ms(css.getPropertyValue("--gt-page-duration"), MOTION.page);
     const easing = css.getPropertyValue("--gt-ease-out").trim() || "ease-out";
     const reduced = duration < 200;
     main.animate(

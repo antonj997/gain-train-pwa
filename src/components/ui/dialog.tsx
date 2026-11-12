@@ -103,7 +103,7 @@ function useSheetDrag(
     (sheet: HTMLDivElement | null) => {
       detach.current?.();
       detach.current = null;
-      if (!sheet) return;
+      if (typeof sheet?.addEventListener !== "function") return;
       let g: Drag | null = null;
       let back: Animation | null = null;
       let swallowUntil = 0;
