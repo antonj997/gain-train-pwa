@@ -278,6 +278,120 @@ label.row {
   font-size: var(--gt-fs-2);
   color: var(--gt-ink-2);
 }
+/* The card's parts: the state line, the workout with its badge, a thin
+   progress bar of checked sets. */
+.home-page .resume-card .resume-body {
+  flex: 1;
+  gap: 10px;
+}
+.home-page .resume-card span.resume-state,
+.home-page .resume-card span.resume-text,
+.home-page .resume-card span.resume-main {
+  color: inherit;
+  font-size: inherit;
+}
+.resume-main {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  min-width: 0;
+}
+.resume-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.resume-bar {
+  display: block;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 2px;
+  background-color: color-mix(in srgb, var(--gt-accent) 18%, transparent);
+}
+.resume-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background-color: var(--gt-accent);
+}
+/* Off screen, the turning border and the pulsing dot wait. */
+.home-page .resume-card.is-running.is-running[data-offscreen],
+.home-page .resume-card[data-offscreen] .resume-live::after {
+  animation-play-state: paused;
+}
+/* Back from the workout: one quick lap, then the usual 5 s turn. */
+@media (prefers-reduced-motion: no-preference) {
+  .resume-card.is-running.is-returning {
+    animation:
+      resume-turn 1.2s cubic-bezier(0.3, 0, 0.2, 1) 300ms 1,
+      resume-turn 5s linear 1.5s infinite;
+  }
+}
+/* Card → top bar. While <html data-nav-dir="morph"> the tapped card and the
+   workout's bar share a view-transition-name, so the browser grows one into
+   the other (300ms on the ease-out curve); the name moves with it. The rest
+   of Train fades and drifts 12px up; the workout's content rises 12px. With
+   reduced motion no names are set and the pages cross-fade in 120ms. */
+@media (prefers-reduced-motion: no-preference) {
+  html[data-nav-dir="morph"] .resume-card.is-morph-source,
+  html[data-nav-dir="morph"] .top-bar {
+    view-transition-name: workout-head;
+  }
+  html[data-nav-dir="morph"] .resume-card.is-morph-source .resume-title,
+  html[data-nav-dir="morph"] .top-bar-title {
+    view-transition-name: workout-title;
+  }
+}
+html[data-nav-dir="morph"]::view-transition-group(workout-head),
+html[data-nav-dir="morph"]::view-transition-group(workout-title) {
+  animation-duration: calc(var(--gt-page-duration) + 40ms);
+  animation-timing-function: var(--gt-ease-out);
+}
+html[data-nav-dir="morph"]::view-transition-old(workout-head),
+html[data-nav-dir="morph"]::view-transition-new(workout-head),
+html[data-nav-dir="morph"]::view-transition-old(workout-title),
+html[data-nav-dir="morph"]::view-transition-new(workout-title) {
+  height: 100%;
+  animation-duration: calc(var(--gt-page-duration) + 40ms);
+  animation-timing-function: var(--gt-ease-out);
+}
+html[data-nav-dir="morph"]::view-transition-old(root) {
+  animation: gt-morph-out 180ms ease-out both;
+}
+html[data-nav-dir="morph"]::view-transition-new(root) {
+  animation: gt-morph-in 220ms var(--gt-ease-out) 120ms both;
+}
+@keyframes gt-morph-out {
+  to {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+}
+@keyframes gt-morph-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-nav-dir="morph"]::view-transition-old(root) {
+    animation: gt-morph-fade-out 120ms linear both;
+  }
+  html[data-nav-dir="morph"]::view-transition-new(root) {
+    animation: gt-morph-fade-in 120ms linear both;
+  }
+}
+@keyframes gt-morph-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes gt-morph-fade-in {
+  from {
+    opacity: 0;
+  }
+}
 .resume-play {
   flex: none;
   width: 44px;
