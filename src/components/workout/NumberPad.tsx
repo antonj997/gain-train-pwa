@@ -33,6 +33,7 @@ import { fromUnit, toUnit, type WeightUnit } from "@/lib/units";
 import { formatDecimal } from "@/i18n";
 import { useT } from "@/i18n/useT";
 import { SPRING, playSpring } from "@/lib/motion";
+import { primeRestSound } from "@/lib/rest-sound";
 import Segmented from "@/components/ui/Segmented";
 import { playStep } from "@/components/workout/set-motion";
 
@@ -241,6 +242,8 @@ export default function NumberPad({
     }
   };
   const onNext = () => {
+    // A tap: the rest's tone may play after the check below (iPhone Safari).
+    primeRestSound();
     if (next.kind === "field") return moveTo(next.target);
     if (next.kind === "close") return close();
     const headId = next.setId;
@@ -306,12 +309,8 @@ export default function NumberPad({
       className="number-pad"
       role="group"
       aria-label={t("pad.title")}
-      // Taps on the pad leave focus in the field it types.
-      onPointerDown={(event) => {
-        if (event.pointerType !== "mouse" || event.button === 0)
-          if (!(event.target as Element).closest(".number-pad-grab"))
-            event.preventDefault();
-      }}
+      // Taps on the pad leave focus in the field it types. Not on
+      // pointerdown: WebKit would drop the tap's click.
       onMouseDown={(event) => event.preventDefault()}
     >
       <button

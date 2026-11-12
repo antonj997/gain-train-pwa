@@ -302,7 +302,13 @@ function ExerciseCard({
       else
         document
           .querySelector(`[data-set-id="${CSS.escape(setId)}"]`)
-          ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          ?.scrollIntoView({
+            block: "nearest",
+            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+              .matches
+              ? "auto"
+              : "smooth",
+          });
     },
     [pad, mode],
   );
