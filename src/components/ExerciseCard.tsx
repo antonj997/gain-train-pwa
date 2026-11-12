@@ -1,5 +1,13 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
-import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { ChevronDown, MoreHorizontal, Plus, Timer } from "lucide-react";
 import {
   type Exercise,
@@ -59,6 +67,8 @@ import {
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
+import { NumberPadContext } from "@/components/workout/number-pad-context";
+import { padFields } from "@/lib/number-pad";
 import SetSwipeRow from "@/components/gestures/SetSwipeRow";
 import { useTipTarget } from "@/hooks/useTipTarget";
 import { motionMs } from "@/lib/slow-motion";
@@ -101,8 +111,8 @@ export type ExerciseCardProps = {
   onRemove: (exercise: Exercise) => void;
   /** Opens the shared "Swap exercise" picker for this card. */
   onChangeExercise: (exercise: Exercise) => void;
-  /** Called when a set is newly checked as done. */
-  onSetDone?: () => void;
+  /** Called with the exercise's id when a set is newly checked as done. */
+  onSetDone?: (exerciseId: string) => void;
   /**
    * The records the workout's checked sets hold so far, by set id, as the
    * label a screen reader hears (liveWorkoutPrs). The same Map while nothing
@@ -236,7 +246,7 @@ function ExerciseCard({
     changeSets(next);
     const was = sets.find((s) => s.id === setId);
     const now = next.find((s) => s.id === setId);
-    if (was && !was.done && now?.done) onSetDone?.();
+    if (was && !was.done && now?.done) onSetDone?.(ex.id);
   });
   // Swipe left on a set (or Delete in its sheet) removes it with its drops.
   const deleteSet = useStableCallback((setId: string) =>
@@ -271,6 +281,30 @@ function ExerciseCard({
   const openSet = useCallback(
     (setId: string) => setSheet({ kind: "set", setId }),
     [],
+  );
+  // Add set: the new row grows in, then its first field takes the number
+  // pad (a live workout) or just comes into view.
+  const pad = useContext(NumberPadContext);
+  const [entering, setEntering] = useState<string | null>(null);
+  const addSet = () => {
+    const next = appendSet(ex, defaults);
+    setEntering(next.sets[next.sets.length - 1].id);
+    onChange(next);
+  };
+  const latestSets = useRef(sets);
+  latestSets.current = sets;
+  const entered = useCallback(
+    (setId: string) => {
+      setEntering((current) => (current === setId ? null : current));
+      const added = latestSets.current.find((s) => s.id === setId);
+      const fields = added && mode === "log" ? padFields(added) : [];
+      if (pad && fields.length) pad.open(setId, fields[0]);
+      else
+        document
+          .querySelector(`[data-set-id="${CSS.escape(setId)}"]`)
+          ?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    },
+    [pad, mode],
   );
   const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
   // "Reps + hold" changes the count to reps and is remembered for the exercise.
@@ -404,6 +438,8 @@ function ExerciseCard({
           onDelete={deleteSet}
           register={registerDelete}
           tip={tips && i === 0}
+          entering={entering === s.id}
+          onEntered={entered}
         >
           <SetLineMemo
             set={s}
@@ -449,7 +485,7 @@ function ExerciseCard({
         <button
           type="button"
           className="ex-add-set"
-          onClick={() => onChange(appendSet(ex, defaults))}
+          onClick={addSet}
         >
           <Plus size={18} aria-hidden="true" />
           {t("exercise.addSet")}

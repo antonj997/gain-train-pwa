@@ -53,7 +53,8 @@ export function RestControl({
 }
 
 /**
- * The rest timer as a plain on/off switch; its time shows only while it is on.
+ * The rest timer as a plain on/off switch; its time, and whether a short
+ * sound marks the end of a rest, show only while it is on.
  * Off keeps the time it had, for when it is switched on again.
  */
 export function RestSettings({
@@ -87,6 +88,15 @@ export function RestSettings({
           <RestControl
             seconds={preferences.restSeconds}
             onChange={(restSeconds) => onChange({ restSeconds })}
+          />
+        </div>
+      )}
+      {on && (
+        <div className="rest-setting rest-setting-sound">
+          <Switch
+            label={t("settings.restSound")}
+            checked={preferences.restSound}
+            onChange={(restSound) => onChange({ restSound })}
           />
         </div>
       )}

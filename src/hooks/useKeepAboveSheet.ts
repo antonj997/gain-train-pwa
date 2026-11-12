@@ -4,6 +4,11 @@ import { centreScrollDelta } from "@/lib/keep-above-sheet";
 // Radix mounts the sheet a render after it opens, so give it a few frames.
 const FRAMES_TO_WAIT = 10;
 
+// The number pad moves from row to row: the space it publishes is removed a
+// frame late, and only if no sheet took it over, so the page never shrinks
+// (and jumps) between two rows.
+let owners = 0;
+
 /** How far the sheet still has to slide up; 0 when its transform cannot be read. */
 function slideOffset(element: HTMLElement) {
   try {
@@ -41,6 +46,7 @@ export function useKeepAboveSheet(
   useEffect(() => {
     if (!rowId) return;
     const root = document.documentElement;
+    owners++;
     let frame = 0;
     let waited = 0;
     let observer: ResizeObserver | undefined;
@@ -90,7 +96,10 @@ export function useKeepAboveSheet(
     return () => {
       cancelAnimationFrame(frame);
       observer?.disconnect();
-      root.style.removeProperty("--sheet-space");
+      owners--;
+      requestAnimationFrame(() => {
+        if (!owners) root.style.removeProperty("--sheet-space");
+      });
     };
   }, [rowId, sheet]);
 }

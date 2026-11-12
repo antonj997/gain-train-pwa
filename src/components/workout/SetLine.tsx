@@ -514,7 +514,12 @@ export default function SetLine({
         // mark, else the up arrow, once the set is checked.
         <span className="set-slot">
           {set.done && record ? (
-            <RecordMark label={record} />
+            // The mark pops in once as the set is checked, with one light
+            // sweep across it (set-motion.ts).
+            <span className="set-record-pop">
+              <RecordMark label={record} />
+              <span className="set-record-sheen" aria-hidden="true" />
+            </span>
           ) : set.done && improved ? (
             <ImprovedMark />
           ) : null}

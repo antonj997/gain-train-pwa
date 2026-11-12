@@ -84,7 +84,7 @@ export function playCheck(row: HTMLElement, wasNext: boolean) {
       delay: 80,
       fill: "backwards",
     });
-  const record = row.querySelector<HTMLElement>(".set-slot .set-record");
+  const record = row.querySelector<HTMLElement>(".set-slot .set-record-pop");
   if (record) {
     playSpring(
       record,
