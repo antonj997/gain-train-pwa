@@ -3,6 +3,7 @@ import { Pause, Play } from "lucide-react";
 import { notify, offerUndo } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import GoalEditor from "@/components/goals/GoalEditor";
 import CellSheet from "@/components/plan/CellSheet";
 import PlanCycle from "@/components/plan/PlanCycle";
 import PlanGoalLinks from "@/components/plan/PlanGoalLinks";
@@ -75,6 +76,9 @@ export default function PlanEditor({
     return saved;
   });
   const [target, setTarget] = useState<Target | null>(null);
+  // "+ New goal": the goal editor, a fresh form each time; the saved goal is linked.
+  const [newGoal, setNewGoal] = useState(0);
+  const [goalOpen, setGoalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
@@ -313,13 +317,15 @@ export default function PlanEditor({
             onPick={(date) => setTarget({ date })}
           />
         )}
-        {goals.length > 0 && (
-          <PlanGoalLinks
-            goals={goals}
-            linkedIds={draft.goalIds}
-            onChange={(goalIds) => set({ goalIds })}
-          />
-        )}
+        <PlanGoalLinks
+          goals={goals}
+          linkedIds={draft.goalIds}
+          onChange={(goalIds) => set({ goalIds })}
+          onNew={() => {
+            setNewGoal((n) => n + 1);
+            setGoalOpen(true);
+          }}
+        />
         {plan && (
           <button
             type="button"
@@ -381,6 +387,22 @@ export default function PlanEditor({
         onChoose={choose}
         onClose={() => setTarget(null)}
       />
+      {newGoal > 0 && (
+        <GoalEditor
+          key={newGoal}
+          open={goalOpen}
+          goal={null}
+          defaultByDate={validPeriod ? draft.endDate : undefined}
+          onSaved={(id) =>
+            setDraft((d) =>
+              d.goalIds.includes(id)
+                ? d
+                : { ...d, goalIds: [...d.goalIds, id] },
+            )
+          }
+          onClose={() => setGoalOpen(false)}
+        />
+      )}
       <ConfirmDialog
         open={deleting}
         title={t("plan.deleteTitle", { name: plan?.name ?? "" })}

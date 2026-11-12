@@ -1419,17 +1419,45 @@ details[open] > .session-summary > svg {
   flex-direction: column;
   gap: var(--gt-space-1);
 }
+/* A template day: 78px tall with a 26–28px icon over the name (v5 F3). */
 .day-cell.plan-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   height: auto;
-  min-height: 52px;
-  padding: 2px;
+  min-height: 78px;
+  padding: 6px 2px;
   font-size: var(--gt-fs-1);
   font-weight: 600;
   line-height: 1.15;
   text-align: center;
   cursor: pointer;
 }
-.plan-cell > span {
+.plan-cell > svg,
+.plan-cell-icon {
+  flex: none;
+}
+.plan-cell-icon {
+  display: grid;
+  place-items: center;
+  color: var(--tone-fg, var(--gt-accent));
+}
+.plan-cell.is-set > svg {
+  color: var(--gt-accent);
+}
+.day-cell.plan-cell.is-empty {
+  background-color: transparent;
+  box-shadow: none;
+  outline: 1.5px dashed var(--gt-line-strong);
+  outline-offset: -1.5px;
+  color: var(--gt-ink-3);
+}
+.day-cell.plan-cell.is-rest {
+  background-color: transparent;
+}
+.plan-cell > .plan-cell-text {
   display: -webkit-box;
   max-width: 100%;
   overflow: hidden;
@@ -1473,6 +1501,26 @@ details[open] > .session-summary > svg {
 .plan-grid-week.is-deload .plan-cell.is-set {
   box-shadow: inset 0 0 0 2px var(--gt-deload);
   color: var(--gt-ink-2);
+}
+/* The plan's goals: "+ New goal" sits at the heading's end and ends the list. */
+.plan-goals-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
+.plan-new-goal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  font-weight: 600;
+}
+.plan-new-goal-row .row-title {
+  color: var(--gt-accent);
+}
+.plan-new-goal-row > svg:first-child {
+  color: var(--gt-accent);
 }
 .plan-copy-week {
   align-self: flex-start;

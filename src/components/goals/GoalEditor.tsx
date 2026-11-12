@@ -22,15 +22,23 @@ const kinds = (): { value: Goal["kind"]; label: string }[] => [
 const text = (value: number | undefined) =>
   value === undefined ? "" : formatDecimal(Number(value.toFixed(2)));
 
-/** Creates, edits or deletes one goal. `goal` is null for a new one. */
+/**
+ * Creates, edits or deletes one goal. `goal` is null for a new one. The plan
+ * editor opens it with `defaultByDate` (the plan's last day) and links the
+ * saved goal through `onSaved`.
+ */
 export default function GoalEditor({
   open,
   goal,
   onClose,
+  defaultByDate,
+  onSaved,
 }: {
   open: boolean;
   goal: GoalItem | null;
   onClose: () => void;
+  defaultByDate?: string;
+  onSaved?: (id: string) => void;
 }) {
   const { save, deleteRecord } = useData();
   const { bodyWeightKg } = useProfile();
@@ -51,7 +59,12 @@ export default function GoalEditor({
         }
       : null,
   );
-  const [byDate, setByDate] = useState(goal?.byDate ?? shiftDate(today, 90));
+  const [byDate, setByDate] = useState(
+    goal?.byDate ??
+      (defaultByDate && defaultByDate >= today
+        ? defaultByDate
+        : shiftDate(today, 90)),
+  );
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -113,7 +126,9 @@ export default function GoalEditor({
       ...(goal?.reachedOn && !changed ? { reachedOn: goal.reachedOn } : {}),
     };
     try {
-      await save(goal?.id ?? crypto.randomUUID(), "goal", payload);
+      const id = goal?.id ?? crypto.randomUUID();
+      await save(id, "goal", payload);
+      onSaved?.(id);
       notify.success(t("goals.saved"));
       onClose();
     } catch (cause) {
