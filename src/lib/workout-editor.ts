@@ -90,7 +90,7 @@ export function getSetIssues(set: WorkoutSet): SetIssues {
       set.weight > 10000
     )
       issues.weight = t("issue.addedRange");
-  } else if (set.load !== "bodyweight") {
+  } else if (set.load !== "bodyweight" && set.load !== "none") {
     if (set.weight === null) issues.weight = t("issue.kgRequired");
     else if (
       !Number.isFinite(set.weight) ||

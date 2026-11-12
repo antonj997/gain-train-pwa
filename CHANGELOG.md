@@ -1,5 +1,12 @@
 # Changelog
 
+## 12 November 2026 — mockup v5, part 4a: the data model, Sets per muscle group and one record badge
+
+- **Data model** (synced; needs migration `20261112090000_rir_no_load_hold_weight_note.sql`): an optional **RIR** per set (0, 1, 2 or 3 meaning 3+), a load **None** for planks, stretches and mobility work (no weight, no bodyweight; volume, records and estimated maxes skip it), **weighted holds** (a timed hold may carry a weight, or bodyweight plus weight, never assistance) and an optional **workout note** of up to 1000 characters. Until the migration is applied, a workout with a None set waits with a sync notice and is sent again on every sync; everything else syncs as before.
+- **Targets** for double progression: `suggestTarget` in `src/data/targets.ts` (the workout screen shows it in a later part).
+- **Progress.** “Sets per muscle group” for this week replaces the volume tile: hard working sets per group (secondary groups count half), a 10–20 guide band, and groups under it muted. Volume is now a line under the tiles.
+- **History.** One record badge per workout with the count (“2 records”), quieter when the only records are estimated 1RMs. Records are ranked: heaviest weight, then a rep record (more reps at a load done before), then the estimated 1RM. The workout's details show one chip on each exercise's record set instead of a pill per exercise, the set's RIR (“RIR 2”) and the workout's note.
+
 ## 12 November 2026 — mockup v5, part 2: motion and input in the workout
 
 - **Set check.** The ✓ presses in and springs back, the tick draws itself, the green tone sweeps across the row from the ✓, the ↑ slides into its slot and a new record mark pops once with a light sweep; the next set's ring fades in. Unchecking pulls the tone back. “3 of 9 sets” rolls. All within about 300 ms and never in the way of the next tap; vibrate-on-check still applies.

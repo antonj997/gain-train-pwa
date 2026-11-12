@@ -42,8 +42,15 @@ import PageHeader from "@/components/PageHeader";
 import WorkoutRow from "@/components/items/WorkoutRow";
 import RecordPill from "@/components/items/RecordPill";
 import Sheet from "@/components/ui/Sheet";
-import { newBestWorkoutIds } from "@/data/analytics";
-import { prEvents } from "@/data/exercise-records";
+import {
+  RECORD_KINDS,
+  rankedKindsText,
+  rankedRecords,
+  recordBadges,
+  recordBadgeText,
+  type RecordBadge as RecordBadgeInfo,
+  type RecordKind,
+} from "@/data/record-rank";
 import { t } from "@/i18n";
 import { workoutTitle } from "@/lib/workout-name";
 /** "This week", or the Monday–Sunday span such as "19–25 Oct". */
@@ -93,8 +100,9 @@ export default function History() {
     },
     [planned],
   );
-  const prs = useMemo(() => prEvents(records), [records]);
-  const bests = useMemo(() => newBestWorkoutIds(prs), [prs]);
+  // One record per exercise per workout, strongest first; one badge per workout.
+  const prs = useMemo(() => rankedRecords(records), [records]);
+  const bests = useMemo(() => recordBadges(prs), [prs]);
   const [{ weightUnit }] = useTrainingPreferences();
   const period = historyCalendarBounds(calendar, now);
   const filtered = filterBySelection(records, calendar, now);
@@ -384,7 +392,14 @@ export default function History() {
                     meta={meta}
                     badge={
                       bests.has(r.id) ? (
-                        <RecordPill small>{t("history.newBest")}</RecordPill>
+                        <RecordBadge
+                          badge={bests.get(r.id)!}
+                          kinds={RECORD_KINDS.filter((kind) =>
+                            prs.some(
+                              (pr) => pr.workoutId === r.id && pr.top === kind,
+                            ),
+                          )}
+                        />
                       ) : undefined
                     }
                     onClick={() => setParams({ workout: r.id })}
@@ -460,5 +475,27 @@ export default function History() {
         onConfirm={() => void remove()}
       />
     </div>
+  );
+}
+
+/** A workout row's one record badge: "2 records", muted when only estimates. */
+function RecordBadge({
+  badge,
+  kinds,
+}: {
+  badge: RecordBadgeInfo;
+  kinds: RecordKind[];
+}) {
+  const text = recordBadgeText(badge);
+  return (
+    <span title={rankedKindsText(kinds)}>
+      <RecordPill small quiet={badge.quiet}>
+        {text}
+        <span className="sr-only">
+          {": "}
+          {badge.quiet ? t("records.countQuiet") : rankedKindsText(kinds)}
+        </span>
+      </RecordPill>
+    </span>
   );
 }

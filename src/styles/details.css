@@ -96,6 +96,42 @@
   flex: none;
   margin-left: auto;
 }
+/* The set's reps in reserve, after its result: muted, like a footnote. */
+.done-rir {
+  flex: none;
+  color: var(--gt-ink-3);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+/* The record chip of an estimated (e1RM) record: muted, not warm. */
+.done-pr.is-quiet {
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
+.done-pr {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+/* The whole workout's note, at the top of its details. */
+.workout-note {
+  margin: 0;
+  padding: var(--gt-space-3) var(--gt-space-4);
+  border-radius: var(--gt-radius-lg);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.workout-note-label {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+}
 
 /* The exercise page's History: a card per session that opens the workout. */
 .session-card {

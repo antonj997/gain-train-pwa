@@ -5,6 +5,23 @@ export function hasExtraWeight(set: WorkoutSet): boolean {
   return set.load === "bodyweight" && set.extraWeight === true;
 }
 
+/**
+ * True when the set's weight field means something: a weight, the added
+ * weight on bodyweight or the assistance. Plain bodyweight and "none" have no
+ * weight to show or type.
+ */
+export function hasWeightField(set: WorkoutSet): boolean {
+  return (
+    set.load === "weight" || set.load === "assisted" || hasExtraWeight(set)
+  );
+}
+
+/**
+ * A timed hold may be held with any load but assisted: bodyweight (with or
+ * without added weight), a plain weight such as a kettlebell, or none.
+ */
+export const holdAllowsLoad = (load: WorkoutSet["load"]) => load !== "assisted";
+
 export function changeSetLoad(
   set: WorkoutSet,
   load: WorkoutSet["load"],
@@ -13,16 +30,15 @@ export function changeSetLoad(
   const result = { ...set, load, weight: null };
   delete result.extraWeight;
   delete result.bodyWeightKg;
-  if (load !== "bodyweight" && result.measure === "seconds") {
+  const leavesHold = result.measure === "seconds" && !holdAllowsLoad(load);
+  if (leavesHold) {
     result.measure = "reps";
     result.reps = null;
   }
   return clearSetInputText(
     result,
     "weight",
-    ...(set.measure === "seconds" && load !== "bodyweight"
-      ? ["reps" as const]
-      : []),
+    ...(leavesHold ? ["reps" as const] : []),
   );
 }
 
@@ -33,7 +49,12 @@ export function changeSetMeasure(
   if (set.done || (set.measure ?? "reps") === measure) return set;
   const result = { ...set, measure, reps: null };
   delete result.bodyWeightKg;
-  if (measure === "seconds" && set.load !== "bodyweight") {
+  // Switching the count to Hold makes weighted and assisted sets bodyweight
+  // holds, as before; a load-free set stays load-free. A hold can still be
+  // given a weight afterwards (changeSetLoad keeps it a hold).
+  const toBodyweight =
+    measure === "seconds" && (set.load === "weight" || set.load === "assisted");
+  if (toBodyweight) {
     result.load = "bodyweight";
     result.weight = null;
     delete result.extraWeight;
@@ -41,9 +62,7 @@ export function changeSetMeasure(
   return clearSetInputText(
     result,
     "reps",
-    ...(measure === "seconds" && set.load !== "bodyweight"
-      ? ["weight" as const]
-      : []),
+    ...(toBodyweight ? ["weight" as const] : []),
   );
 }
 

@@ -72,18 +72,8 @@ function summaryFor({ records, progress, now, range }: Props) {
       change: metricChange(current.workingSets, previous.workingSets),
     },
     {
-      label: t("progress.volume"),
-      value: tonnes
-        ? formatFixed(volume / scale, 1)
-        : String(Math.round(volume)),
-      unit: volumeUnit,
-      change: withUnit(
-        metricChange(volume / scale, previousVolume / scale, tonnes ? 1 : 0),
-        volumeUnit,
-      ),
-    },
-    {
       label: t("progress.timeTrained"),
+      wide: true,
       value: current.minutes ? durationLabel(current.minutes) : "—",
       change: withUnit(
         metricChange(current.minutes ?? 0, previous.minutes ?? 0),
@@ -91,8 +81,25 @@ function summaryFor({ records, progress, now, range }: Props) {
       ),
     },
   ];
+  // Tonnage says little across exercises, so it is a line under the tiles,
+  // not a headline; Sets per muscle group took its tile.
+  const volumeText = `${
+    tonnes ? formatFixed(volume / scale, 1) : String(Math.round(volume))
+  } ${volumeUnit}`;
+  const volumeChange = withUnit(
+    metricChange(volume / scale, previousVolume / scale, tonnes ? 1 : 0),
+    volumeUnit,
+  );
   const improving = improvementRate(progress, period.start, period.end);
-  return { period, current, previous, tiles, improving };
+  return {
+    period,
+    current,
+    previous,
+    tiles,
+    improving,
+    volume: current.volume > 0 || previous.volume > 0 ? volumeText : null,
+    volumeChange,
+  };
 }
 
 /**
@@ -103,22 +110,23 @@ function summaryFor({ records, progress, now, range }: Props) {
 function ProgressSummary(props: Props) {
   const { records, progress, now, range } = props;
   const { language } = useT();
-  const { period, current, previous, tiles, improving } = useMemo(
-    () => summaryFor({ records, progress, now, range }),
-    // The tiles' words follow the language too.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [records, progress, now, range, language],
-  );
+  const { period, current, previous, tiles, improving, volume, volumeChange } =
+    useMemo(
+      () => summaryFor({ records, progress, now, range }),
+      // The tiles' words follow the language too.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [records, progress, now, range, language],
+    );
   return (
     <section className="progress-summary" aria-label={t("progress.summary")}>
       <div className="tiles">
         {tiles.map((tile) => (
-          <div className="card tile" key={tile.label}>
+          <div
+            className={"card tile" + (tile.wide ? " tile-wide" : "")}
+            key={tile.label}
+          >
             <span className="row-sub">{tile.label}</span>
-            <strong className="tile-value">
-              {tile.value}
-              {tile.unit && <span className="tile-unit"> {tile.unit}</span>}
-            </strong>
+            <strong className="tile-value">{tile.value}</strong>
             <small
               className={
                 "tile-change" + (tile.change.startsWith("↑") ? " up" : " flat")
@@ -145,6 +153,11 @@ function ProgressSummary(props: Props) {
             ),
             "min",
           )}
+        </p>
+      )}
+      {volume !== null && (
+        <p className="row-sub progress-volume">
+          {t("progress.volumeLine", { value: volume })} · {volumeChange}
         </p>
       )}
       <p className="row-sub">

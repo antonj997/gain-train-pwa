@@ -197,7 +197,12 @@ test("applying reps puts unchecked timed sets back on reps", () => {
   assert.equal(result[1], checked);
 });
 
-test("a timed exercise only allows the bodyweight keys", () => {
-  assert.deepEqual(allowedLoadKeys("seconds"), ["bw", "bwplus"]);
-  assert.deepEqual(allowedLoadKeys("reps"), KEYS);
+test("a timed hold allows every load but assisted; reps allow all of them", () => {
+  assert.deepEqual(allowedLoadKeys("seconds"), [
+    "weight",
+    "bw",
+    "bwplus",
+    "none",
+  ]);
+  assert.deepEqual(allowedLoadKeys("reps"), [...KEYS, "none"]);
 });
