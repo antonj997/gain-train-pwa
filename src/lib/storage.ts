@@ -52,6 +52,8 @@ export const storageKeys = {
   /** "en" or "sv"; absent until this device has chosen. */
   language: "gt-language",
   restSeconds: "gt-rest-seconds",
+  /** The rest time to go back to when the rest timer is switched on again. */
+  restLastSeconds: "gt-rest-last-seconds",
   haptics: "gt-haptics",
   weeklyGoal: "gt-weekly-goal",
   /** "kg" or "lb"; weights are stored in kg either way. */

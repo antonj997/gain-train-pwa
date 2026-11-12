@@ -2,14 +2,10 @@ import { Minus, Moon, Plus, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/useTheme";
 import { LANGUAGES, LANGUAGE_NAMES } from "@/i18n";
 import { useT } from "@/i18n/useT";
-import Segmented from "@/components/ui/Segmented";
+import { RestSettings } from "@/components/settings/RestControl";
 import Sheet from "@/components/ui/Sheet";
 import Switch from "@/components/ui/Switch";
-import {
-  canVibrate,
-  restLabel,
-  type TrainingPreferences,
-} from "@/lib/preferences";
+import { canVibrate, type TrainingPreferences } from "@/lib/preferences";
 
 type Preferences = TrainingPreferences;
 type SheetProps = {
@@ -18,8 +14,6 @@ type SheetProps = {
   preferences: Preferences;
   onChange: (patch: Partial<Preferences>) => void;
 };
-
-const REST_OPTIONS = [0, 30, 60, 90, 120, 180];
 
 export function GoalSheet({
   open,
@@ -81,33 +75,31 @@ export function RestSheet({
 }: SheetProps) {
   const { t } = useT();
   return (
-    <Sheet
-      open={open}
-      onClose={onClose}
-      title={t("settings.restTimer")}
-      description={t("settings.restDescription")}
-    >
-      <Segmented
-        label={t("settings.restTime")}
-        value={String(preferences.restSeconds)}
-        options={REST_OPTIONS.map((seconds) => ({
-          value: String(seconds),
-          label: restLabel(seconds),
-        }))}
-        onChange={(value) => onChange({ restSeconds: Number(value) })}
-      />
-      {/* iPhone Safari has no vibration, so the setting would do nothing there. */}
-      {canVibrate() && (
-        <>
-          <Switch
-            label={t("settings.vibrate")}
-            checked={preferences.haptics}
-            onChange={(haptics) => onChange({ haptics })}
-          />
-          <p className="small-note">{t("settings.vibrateNote")}</p>
-        </>
-      )}
+    <Sheet open={open} onClose={onClose} title={t("settings.restTimer")}>
+      <RestSettings preferences={preferences} onChange={onChange} />
+      <button type="button" className="btn-primary" onClick={onClose}>
+        {t("common.done")}
+      </button>
     </Sheet>
+  );
+}
+
+/** Vibrate on a checked set; iPhone Safari has no vibration, so it is hidden there. */
+export function VibrateSetting({
+  preferences,
+  onChange,
+}: Pick<SheetProps, "preferences" | "onChange">) {
+  const { t } = useT();
+  if (!canVibrate()) return null;
+  return (
+    <div className="rest-setting">
+      <Switch
+        label={t("settings.vibrate")}
+        hint={t("settings.vibrateNote")}
+        checked={preferences.haptics}
+        onChange={(haptics) => onChange({ haptics })}
+      />
+    </div>
   );
 }
 
