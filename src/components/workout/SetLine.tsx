@@ -1,11 +1,18 @@
-import { useEffect, useRef, useState } from "react";
-import { Check } from "lucide-react";
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { type WorkoutSet, validSet } from "@/data/model";
 import { isDrop, type SetBadgeInfo } from "@/data/drops";
 import { getSetIssues } from "@/lib/workout-editor";
 import { bodyWeightForSet } from "@/lib/set-editing";
 import { hasExtraWeight } from "@/lib/set-load";
-import { motionMs } from "@/lib/slow-motion";
+import { padFields, stepPadValue, type PadField } from "@/lib/number-pad";
+import type { SetInputGestures } from "@/lib/set-input";
 import {
   formatWeightValue,
   fromUnit,
@@ -35,6 +42,15 @@ import { HOLD_MAX } from "@/lib/rep-hold";
 import SetNumberInput from "@/components/SetNumberInput";
 import SetBadge from "@/components/workout/SetBadge";
 import { ImprovedMark, RecordMark } from "@/components/DoneSetList";
+import { NumberPadContext } from "@/components/workout/number-pad-context";
+import {
+  playCheck,
+  playNext,
+  playStep,
+  playUncheck,
+  pressCheck,
+  releaseCheck,
+} from "@/components/workout/set-motion";
 import "@/styles/workout.css";
 // The module translator, not a hook: the workout page remounts on a new
 // language, and tests render this row with a minimal hook host.
@@ -195,22 +211,8 @@ export default function SetLine({
   onToggleDone?: (setId: string) => void;
   onFocus?: () => void;
 }) {
-  const [checkedNow, setCheckedNow] = useState(false);
   const [lockedAttempt, setLockedAttempt] = useState(false);
   const [hintShown, setHintShown] = useState(false);
-  const wasDone = useRef(set.done);
-  useEffect(() => {
-    if (set.done && !wasDone.current) {
-      setCheckedNow(true);
-      const timeout = window.setTimeout(
-        () => setCheckedNow(false),
-        motionMs(200),
-      );
-      wasDone.current = set.done;
-      return () => window.clearTimeout(timeout);
-    }
-    wasDone.current = set.done;
-  }, [set.done]);
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
   const locked = set.done && !unlocked;
@@ -218,6 +220,37 @@ export default function SetLine({
   // The notices belong to this row: they go away once a tap or focus lands
   // anywhere outside it.
   const row = useRef<HTMLDivElement>(null);
+  // The check's motion plays when the set changes state, not on first show.
+  const was = useRef({ done: set.done, next });
+  const press = useRef<Animation | null>(null);
+  useLayoutEffect(() => {
+    const before = was.current;
+    was.current = { done: set.done, next };
+    const el = row.current;
+    if (!el || mode !== "log") return;
+    if (set.done !== before.done) {
+      press.current?.cancel();
+      press.current = null;
+      if (set.done) playCheck(el, before.next);
+      else playUncheck(el);
+    } else if (next && !before.next && !set.done) playNext(el);
+  }, [set.done, next, mode]);
+  const pressDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (!event.isPrimary || event.button !== 0) return;
+    press.current?.cancel();
+    press.current = pressCheck(event.currentTarget);
+  };
+  const pressUp = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    const check = event.currentTarget;
+    // The click comes after the finger lifts: if it checked the set, the
+    // check's spring has taken over by the next frame.
+    requestAnimationFrame(() => {
+      if (!press.current) return;
+      press.current.cancel();
+      press.current = null;
+      releaseCheck(check);
+    });
+  };
   const noticeShown = lockedAttempt || hintShown;
   useEffect(() => {
     if (!noticeShown) return;
@@ -311,6 +344,52 @@ export default function SetLine({
     onChange(changeSetNumber(set, field, value, unfinishedText, unlocked));
   };
 
+  // The live workout's number pad: a tap on the load or reps opens it there
+  // (on a touch screen it replaces the phone's keyboard), and a drag up or
+  // down on the field steps the value without it, one tick per step.
+  const pad = useContext(NumberPadContext);
+  const padded = pad && mode === "log" && !locked ? padFields(set) : [];
+  const stepping = useRef<{ value: number | null } | null>(null);
+  const padProps = (field: PadField) => {
+    if (!pad || !padded.includes(field)) return {};
+    const input = () =>
+      row.current?.querySelector<HTMLInputElement>(
+        `input[data-pad-field="${field}"]`,
+      ) ?? null;
+    const gestures: SetInputGestures = {
+      tap: () => pad.open(set.id, field),
+      stepStart: () => {
+        stepping.current = { value: field === "weight" ? shownWeight : set.reps };
+        input()?.parentElement?.classList.add("is-stepping");
+      },
+      step: (total, delta) => {
+        const value = stepPadValue(
+          stepping.current?.value ?? null,
+          total,
+          field,
+          unit,
+        );
+        if (field === "weight") {
+          const kg = value === null ? null : fromUnit(value, unit);
+          typedWeight.current =
+            kg === null || value === null ? null : { kg, value, unit };
+          updateNumber("weight", kg);
+        } else updateNumber("reps", value);
+        playStep(input(), delta);
+      },
+      stepEnd: () => {
+        stepping.current = null;
+        input()?.parentElement?.classList.remove("is-stepping");
+      },
+    };
+    return {
+      ...(pad.coarse ? { inputMode: "none" as const } : {}),
+      "data-pad-field": field,
+      gestures,
+      onKeyboardFocus: pad.coarse ? () => pad.open(set.id, field) : undefined,
+    };
+  };
+
   const shownMetrics = cardio ? cardioFields.fields : [];
   const inputs = cardio ? cardioInputs(cardioFields) : [];
 
@@ -327,7 +406,6 @@ export default function SetLine({
     drop && "is-drop",
     next && "is-next",
     editing && "is-editing",
-    checkedNow && "is-just-checked",
   ]
     .filter(Boolean)
     .join(" ");
@@ -356,6 +434,7 @@ export default function SetLine({
         readOnly={locked}
         onLockedAttempt={() => setLockedAttempt(true)}
         onValueChange={(value, text) => updateNumber("reps", value, text)}
+        {...padProps("reps")}
       />
       {set.done && timed && set.reps !== null && (
         <span className="set-marker set-seconds" aria-hidden="true">
@@ -407,6 +486,8 @@ export default function SetLine({
       className={classes}
       onFocusCapture={onFocus}
     >
+      {/* The green tone that sweeps across the row from the ✓ as it is checked. */}
+      {mode === "log" && <span className="set-sweep" aria-hidden="true" />}
       {next && <span className="sr-only">{t("set.nextSr")}</span>}
       <SetBadge
         badge={badge}
@@ -556,6 +637,7 @@ export default function SetLine({
                     kg === null || value === null ? null : { kg, value, unit };
                   updateNumber("weight", kg, text);
                 }}
+                {...padProps("weight")}
               />
               {marker === "kg" && (
                 <span
@@ -582,6 +664,10 @@ export default function SetLine({
           <button
             type="button"
             className={`set-check${showLock ? " unlock-highlight" : ""}`}
+            onPointerDown={pressDown}
+            onPointerUp={pressUp}
+            onPointerCancel={pressUp}
+            onPointerLeave={pressUp}
             aria-label={
               set.done
                 ? t("set.uncheck", { label })
@@ -605,7 +691,20 @@ export default function SetLine({
               else onToggleDone?.(set.id);
             }}
           >
-            <Check size={21} />
+            {/* Lucide's check, drawn as a stroke when the set is checked. */}
+            <svg
+              width="21"
+              height="21"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
           </button>
           {showHint && !hintShown && (
             <span id={hintId} className="sr-only">

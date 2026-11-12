@@ -2,6 +2,19 @@ import { z } from "zod";
 import type { WorkoutSet } from "../data/model";
 import { capturePointer, releasePointer } from "./pointer-capture";
 import { isTap, type TapPoint } from "./touch";
+import { dragIntent, dragSteps } from "./drag-step";
+
+/**
+ * What a press on an editable field can do besides select text: a tap (the
+ * number pad opens) and a drag up or down that steps the value (`step` gets
+ * the steps made so far and the change since the last call).
+ */
+export type SetInputGestures = {
+  tap?: () => void;
+  stepStart?: () => void;
+  step?: (total: number, delta: number) => void;
+  stepEnd?: () => void;
+};
 
 // Raw unfinished input belongs to local editor recovery, never saved records.
 export const setInputTextSchema = z.object({
@@ -145,12 +158,17 @@ function inputCaretAtPoint(input: HTMLInputElement, clientX: number) {
 export function createSetInputSelection(
   pointAt = inputCaretAtPoint,
   onLockedAttempt: () => void = () => {},
+  gestures: () => SetInputGestures = () => ({}),
 ) {
   let gesture: {
     input: HTMLInputElement;
     pointerId: number;
     x: number;
+    y: number;
     anchor: number;
+    /** Undecided, a drag that steps the value, or a text selection. */
+    mode: "pending" | "step" | "select";
+    steps: number;
   } | null = null;
   let suppressClick = false;
   // A locked field's gesture: scrolling comes first, so it is only watched,
@@ -175,6 +193,8 @@ export function createSetInputSelection(
     gesture = null;
     endTap();
     if (active) releasePointer(active.input, active.pointerId);
+    if (active?.mode === "step") gestures().stepEnd?.();
+    return active;
   };
   return {
     onPointerDown(event: PointerInputEvent) {
@@ -201,13 +221,37 @@ export function createSetInputSelection(
         input,
         pointerId: event.pointerId,
         x: event.clientX,
+        y: event.clientY,
         anchor: pointAt(input, event.clientX),
+        mode: "pending",
+        steps: 0,
       };
       capturePointer(input, event.pointerId);
     },
     onPointerMove(event: PointerInputEvent) {
       if (!gesture || gesture.pointerId !== event.pointerId) return;
       event.preventDefault();
+      const handlers = gestures();
+      if (gesture.mode === "pending") {
+        const dx = event.clientX - gesture.x;
+        const intent = handlers.step
+          ? dragIntent(dx, event.clientY - gesture.y)
+          : Math.abs(dx) < 4
+            ? "pending"
+            : "select";
+        if (intent === "pending") return;
+        gesture.mode = intent;
+        if (intent === "step") handlers.stepStart?.();
+      }
+      if (gesture.mode === "step") {
+        const steps = dragSteps(gesture.y, event.clientY);
+        if (steps !== gesture.steps) {
+          const delta = steps - gesture.steps;
+          gesture.steps = steps;
+          handlers.step?.(steps, delta);
+        }
+        return;
+      }
       if (Math.abs(event.clientX - gesture.x) < 4) return;
       const target = pointAt(gesture.input, event.clientX);
       gesture.input.setSelectionRange(
@@ -233,7 +277,8 @@ export function createSetInputSelection(
       }
       if (gesture?.pointerId !== event.pointerId) return;
       event.preventDefault();
-      release();
+      // A press that did not step the value is a tap: the pad opens.
+      if (release()?.mode !== "step") gestures().tap?.();
     },
     onPointerCancel(event: PointerInputEvent) {
       // The browser took the touch over to scroll.
@@ -248,7 +293,9 @@ export function createSetInputSelection(
       return tap !== null || timeStamp - lastPointerAt < 1000;
     },
     onLostPointerCapture() {
+      const active = gesture;
       gesture = null;
+      if (active?.mode === "step") gestures().stepEnd?.();
     },
     onClick(event: {
       currentTarget: HTMLInputElement;
@@ -264,6 +311,8 @@ export function createSetInputSelection(
         event.currentTarget.select();
       suppressClick = false;
     },
-    dispose: release,
+    dispose: () => {
+      release();
+    },
   };
 }

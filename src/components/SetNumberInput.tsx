@@ -10,6 +10,7 @@ import {
   createSetInputSelection,
   parseSetNumber,
   isSetInputEditKey,
+  type SetInputGestures,
 } from "../lib/set-input";
 import { formatDecimal } from "../i18n";
 
@@ -30,6 +31,13 @@ type Props = Omit<
    * themselves ("400" shows 4:00); see timerEntry() in lib/cardio.ts.
    */
   entry?: "number" | "timer";
+  /**
+   * The workout's number pad: a tap (and, on a touch screen, focus that is
+   * not a tap) opens it, and a drag up or down steps the value.
+   */
+  gestures?: SetInputGestures;
+  /** Focus that came from a keyboard or assistive technology, not a tap. */
+  onKeyboardFocus?: () => void;
 };
 
 // Shown with the language's decimal mark; typing accepts both "," and ".".
@@ -45,6 +53,8 @@ export default function SetNumberInput({
   parse = parseSetNumber,
   format = plainText,
   entry = "number",
+  gestures,
+  onKeyboardFocus,
   className = "",
   ...props
 }: Props) {
@@ -62,8 +72,14 @@ export default function SetNumberInput({
     setDraft({ value, inputText, text: inputText ?? textFor(value) });
   const warning = useRef(onLockedAttempt);
   warning.current = onLockedAttempt;
+  const gesturesRef = useRef(gestures);
+  gesturesRef.current = gestures;
   const selection = useRef(
-    createSetInputSelection(undefined, () => warning.current?.()),
+    createSetInputSelection(
+      undefined,
+      () => warning.current?.(),
+      () => gesturesRef.current ?? {},
+    ),
   );
   useEffect(() => {
     const current = selection.current;
@@ -97,10 +113,13 @@ export default function SetNumberInput({
       value={draft.text}
       onFocus={(event) => {
         // A tap's own pointerup decides on the notice; this is keyboard focus.
+        const fromPointer = selection.current.pointerFocus(event.timeStamp);
         if (props.readOnly) {
-          if (!selection.current.pointerFocus(event.timeStamp))
-            onLockedAttempt?.();
-        } else event.currentTarget.select();
+          if (!fromPointer) onLockedAttempt?.();
+        } else {
+          event.currentTarget.select();
+          if (!fromPointer) onKeyboardFocus?.();
+        }
       }}
       onKeyDown={(event) => {
         if (props.readOnly && isSetInputEditKey(event)) {

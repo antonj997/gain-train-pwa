@@ -1,10 +1,17 @@
-import { memo, useEffect, useRef, type ReactNode } from "react";
+import {
+  memo,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type ReactNode,
+} from "react";
 import { Trash2 } from "lucide-react";
 import { useSwipe } from "@/hooks/useSwipe";
 import { bubbleScale, commitThreshold, type SwipeConfig } from "@/lib/swipe";
 import { motionMs } from "@/lib/slow-motion";
 import { registerTipTarget } from "@/lib/tip-store";
 import { reducedMotion } from "@/hooks/useMessages";
+import { MOTION, play as playMotion, settled } from "@/lib/motion";
 
 /** The parts of the delete, in ms: the row out and the bubble's gulp side by side, then the collapse. */
 const SET_DELETE_TIMING = { slide: 220, bubble: 330, collapse: 240 };
@@ -25,8 +32,11 @@ const finished = (animation: Animation, ms: number) =>
  * trailing edge as the row follows the finger; at the threshold it snaps to
  * full size with a pop and a ring. Released past it, the row slides out,
  * the bubble gulps (1.12) and shrinks away, and only then does the row fold
- * up and the rows under it slide up. About 0.6 s; no undo. The Set sheet's
- * Delete plays the same (`register`). With reduced motion the row fades out.
+ * up and the rows under it slide up. About 0.6 s; no undo. Past the
+ * threshold the row brakes (0.35 px per px), and a fling to the left (over
+ * 0.5 px/ms) deletes short of it. The Set sheet's Delete plays the same
+ * (`register`). With reduced motion the row fades out. A new set's row
+ * (`entering`) grows in from nothing, then calls `onEntered`.
  */
 function SetSwipeRow({
   setId,
@@ -34,6 +44,8 @@ function SetSwipeRow({
   onDelete,
   register,
   tip,
+  entering = false,
+  onEntered,
   children,
 }: {
   setId: string;
@@ -43,6 +55,10 @@ function SetSwipeRow({
   /** Hands the card this row's delete, for the Set sheet. */
   register: (setId: string, play: (() => void) | null) => void;
   tip?: boolean;
+  /** Just added: grows in from no height (200 ms) when it mounts. */
+  entering?: boolean;
+  /** The grow-in ended (or there was none to play). */
+  onEntered?: (setId: string) => void;
   children: ReactNode;
 }) {
   const bubble = useRef<HTMLSpanElement>(null);
@@ -55,6 +71,8 @@ function SetSwipeRow({
       kind: "commit",
       threshold: commitThreshold(width),
       max: Math.round(width * 0.7),
+      band: 0.35,
+      fling: 0.5,
     },
   });
   const setBubble = (scale: number) => {
@@ -223,6 +241,29 @@ function SetSwipeRow({
     register(setId, () => void playRef.current(true));
     return () => register(setId, null);
   }, [register, setId]);
+  // A new row grows from no height to its own, fading in.
+  const enteredRef = useRef(onEntered);
+  enteredRef.current = onEntered;
+  useLayoutEffect(() => {
+    const box = swipe.rootRef.current;
+    if (!entering || !box) return;
+    const height = box.getBoundingClientRect().height;
+    box.style.overflow = "hidden";
+    const grow = playMotion(
+      box,
+      [
+        { height: "0px", opacity: 0 },
+        { height: `${height}px`, opacity: 1 },
+      ],
+      { duration: MOTION.rowIn, easing: "ease-out" },
+    );
+    void settled(grow).then(() => {
+      box.style.overflow = "";
+      enteredRef.current?.(setId);
+    });
+    // Only on mount: the row is new once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div ref={swipe.rootRef} className="set-swipe" data-set-swipe={setId}>

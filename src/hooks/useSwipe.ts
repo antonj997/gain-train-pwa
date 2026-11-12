@@ -39,11 +39,20 @@ type Gesture = {
   axis: "pending" | "x" | "y";
   offset: number;
   armed: boolean;
-  lastX: number;
-  lastT: number;
-  velocity: number;
+  /** Recent positions, for the release speed. */
+  samples: { x: number; t: number }[];
   config: SwipeConfig;
 };
+
+/** The speed (px/ms) over the last VELOCITY_WINDOW ms before `at`: 0 after a pause. */
+const VELOCITY_WINDOW = 80;
+function releaseVelocity(samples: { x: number; t: number }[], at: number) {
+  const recent = samples.filter((s) => at - s.t <= VELOCITY_WINDOW);
+  if (recent.length < 2) return 0;
+  const first = recent[0];
+  const last = recent[recent.length - 1];
+  return (last.x - first.x) / Math.max(1, last.t - first.t);
+}
 
 export type SwipeOptions = {
   /** The sides for an item this wide; read when a drag starts. */
@@ -206,9 +215,7 @@ export function useSwipe(options: SwipeOptions) {
         axis: "pending",
         offset: drawn.current,
         armed: false,
-        lastX: event.clientX,
-        lastT: event.timeStamp,
-        velocity: 0,
+        samples: [{ x: event.clientX, t: event.timeStamp }],
         config: opts.current.config(box.getBoundingClientRect().width),
       };
     };
@@ -231,10 +238,8 @@ export function useSwipe(options: SwipeOptions) {
         box.classList.add("is-swiping");
         setTipBlocker("drag", true);
       }
-      const dt = Math.max(1, event.timeStamp - g.lastT);
-      g.velocity = (event.clientX - g.lastX) / dt;
-      g.lastX = event.clientX;
-      g.lastT = event.timeStamp;
+      g.samples.push({ x: event.clientX, t: event.timeStamp });
+      if (g.samples.length > 12) g.samples.shift();
       g.offset = resistedOffset(g.base + dx, g.config);
       const armed = isArmed(g.offset, g.config, g.armed);
       if (armed !== g.armed) {
@@ -252,7 +257,13 @@ export function useSwipe(options: SwipeOptions) {
       end();
       if (gesture.axis !== "x") return;
       swallowUntil.current = performance.now() + SWALLOW_CLICK_MS;
-      finish(settle(gesture.offset, gesture.velocity, gesture.config));
+      finish(
+        settle(
+          gesture.offset,
+          releaseVelocity(gesture.samples, event.timeStamp),
+          gesture.config,
+        ),
+      );
     };
 
     const cancel = (event: PointerEvent) => {

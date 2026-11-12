@@ -55,6 +55,8 @@ export const storageKeys = {
   /** The rest time to go back to when the rest timer is switched on again. */
   restLastSeconds: "gt-rest-last-seconds",
   haptics: "gt-haptics",
+  /** "false" when the rest timer should stay silent; a sound plays otherwise. */
+  restSound: "gt-rest-sound",
   weeklyGoal: "gt-weekly-goal",
   /** "kg" or "lb"; weights are stored in kg either way. */
   weightUnit: "gt-weight-unit",

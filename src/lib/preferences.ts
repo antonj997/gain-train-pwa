@@ -13,6 +13,8 @@ export type TrainingPreferences = {
   weeklyGoal: number | null;
   /** How weights are shown and typed; they are stored in kg either way. */
   weightUnit: WeightUnit;
+  /** A short sound when a rest runs out (on unless switched off). */
+  restSound: boolean;
 };
 export function parseWeeklyGoal(value: string | null): number | null {
   if (value === null || value.trim() === "") return null;
@@ -24,6 +26,7 @@ export function normalizeTrainingPreferences(
   haptics: string | null,
   weeklyGoal: string | null = null,
   weightUnit: string | null = null,
+  restSound: string | null = null,
 ): TrainingPreferences {
   const value = Number(rest);
   return {
@@ -32,6 +35,7 @@ export function normalizeTrainingPreferences(
     haptics: haptics === "true",
     weeklyGoal: parseWeeklyGoal(weeklyGoal),
     weightUnit: parseWeightUnit(weightUnit),
+    restSound: restSound !== "false",
   };
 }
 export function readTrainingPreferences(): TrainingPreferences {
@@ -40,6 +44,7 @@ export function readTrainingPreferences(): TrainingPreferences {
     local.getItem(storageKeys.haptics),
     local.getItem(storageKeys.weeklyGoal),
     local.getItem(storageKeys.weightUnit),
+    local.getItem(storageKeys.restSound),
   );
 }
 export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
@@ -51,6 +56,7 @@ export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
     next.weeklyGoal === null ? null : String(next.weeklyGoal),
   );
   writeStored(storageKeys.weightUnit, next.weightUnit);
+  writeStored(storageKeys.restSound, next.restSound ? null : "false");
   // Labels built outside React read the unit from its module, so it changes first.
   setCurrentWeightUnit(next.weightUnit);
   window.dispatchEvent(new Event(TRAINING_PREFERENCES_EVENT));
