@@ -117,8 +117,9 @@ export default function NumberPad({
   // A checked, deleted or no longer typed field closes the pad.
   const gone = !set || set.done || !fields.includes(field);
   useEffect(() => {
-    if (gone) setTarget(null);
-  }, [gone, setTarget]);
+    // Only if the pad is still there: Check has already moved it on.
+    if (gone) setTarget((current) => (current === target ? null : current));
+  }, [gone, target, setTarget]);
 
   /** Typed text that is not a finished number ("87,") is cleaned up on leaving. */
   const commit = (at: PadTarget | null) => {
@@ -254,9 +255,8 @@ export default function NumberPad({
         clickCheck(headId);
         return;
       }
-      const after = padAfterCheck(w.exercises, headId);
+      setTarget(padAfterCheck(w.exercises, headId));
       clickCheck(headId);
-      setTarget(after);
     }, 0);
   };
 
