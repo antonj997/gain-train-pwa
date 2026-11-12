@@ -98,5 +98,23 @@ export function useWorkoutActions(
         failed: t("home.restoreFailed"),
       });
     }, t("actions.abandonRetry"));
-  return { busy, complete, abandon };
+  /**
+   * Finish on a workout with no checked set: nothing to save, so it is gone
+   * at once, like a deleted one, and Train says so on its status line. No
+   * Undo: there is nothing in it to get back.
+   */
+  const discardEmpty = () =>
+    runLocked(async () => {
+      await autosave.flush();
+      navigate("/", { replace: true });
+      try {
+        await deleteRecord(id);
+      } catch (cause) {
+        notify.error(errorMessage(cause, t("actions.abandonFailed")));
+        return;
+      }
+      rest.skip();
+      notify(t("workout.emptyDiscarded"), { key: "empty-discarded" });
+    }, t("actions.abandonRetry"));
+  return { busy, complete, abandon, discardEmpty };
 }

@@ -1,13 +1,15 @@
 import type { Ref } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowDown, Trash2 } from "lucide-react";
 import type { WorkoutSet } from "@/data/model";
 import { isDrop, type SetBadgeInfo } from "@/data/drops";
 import { allowedLoadKeys, loadKeyOf, type LoadKey } from "@/lib/load-keys";
+import { useProfile } from "@/contexts/useProfile";
 import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import { useT } from "@/i18n/useT";
 import { t, type MessageKey } from "@/i18n";
-import { getWeightUnit } from "@/lib/units";
+import { formatWeight, getWeightUnit } from "@/lib/units";
 
 type BodyProps = {
   badge: SetBadgeInfo;
@@ -16,7 +18,6 @@ type BodyProps = {
   set: WorkoutSet;
   /** How many drops follow this set. */
   dropCount: number;
-  exerciseDefault: LoadKey;
   /** Cardio sets have no load, and no drops. */
   cardio?: boolean;
   onSection: (section: WorkoutSet["section"]) => void;
@@ -49,7 +50,6 @@ function SetSheetBody({
   badge,
   set,
   dropCount,
-  exerciseDefault,
   cardio = false,
   onSection,
   onLoadKey,
@@ -63,8 +63,21 @@ function SetSheetBody({
   );
   const canAddDrop = !cardio && !set.done && set.section === "working";
   const { t } = useT();
+  const { bodyWeightKg } = useProfile();
+  const unit = getWeightUnit();
   return (
     <>
+      {/* Adding goes first; deleting is last and set apart. */}
+      {canAddDrop && (
+        <button
+          type="button"
+          className="btn-secondary set-sheet-add-drop"
+          onClick={onAddDrop}
+        >
+          <ArrowDown size={20} aria-hidden="true" />
+          {drop ? t("set.addAnotherDrop") : t("set.addDrop")}
+        </button>
+      )}
       {drop ? (
         <p className="sheet-note">{t("set.dropNote")}</p>
       ) : (
@@ -77,7 +90,7 @@ function SetSheetBody({
             value={set.section}
             options={SECTION_OPTIONS.map((option) => ({
               ...option,
-              label: t(option.label, { unit: getWeightUnit() }),
+              label: t(option.label),
               disabled: set.done,
             }))}
             onChange={onSection}
@@ -94,15 +107,21 @@ function SetSheetBody({
             value={key}
             options={LOAD_OPTIONS.map((option) => ({
               ...option,
-              label: t(option.label),
+              label: t(option.label, { unit }),
               disabled: set.done || !allowed.includes(option.value),
             }))}
             onChange={onLoadKey}
           />
+          {/* What BW stands for, and the weight it counts. */}
           <p className="sheet-hint">
-            {key === exerciseDefault
-              ? t("set.sameAsExercise")
-              : t("set.differsFromExercise")}
+            {bodyWeightKg === null ? (
+              <>
+                {t("set.bwExplainNotSet")}{" "}
+                <Link to="/settings">{t("set.bwSetInSettings")}</Link>
+              </>
+            ) : (
+              t("set.bwExplain", { weight: formatWeight(bodyWeightKg, unit) })
+            )}
           </p>
         </div>
       )}
@@ -113,18 +132,14 @@ function SetSheetBody({
             : t("set.uncheckToChangeTypeLoad")}
         </p>
       )}
-      <div className="sheet-actions">
-        {canAddDrop && (
-          <button type="button" className="btn-secondary" onClick={onAddDrop}>
-            <Plus size={18} aria-hidden="true" />
-            {drop ? t("set.addAnotherDrop") : t("set.addDrop")}
-          </button>
-        )}
-        <button type="button" className="btn-danger" onClick={onDelete}>
-          <Trash2 size={18} aria-hidden="true" />
-          {deleteLabel(set, dropCount)}
-        </button>
-      </div>
+      <button
+        type="button"
+        className="btn-danger set-sheet-delete"
+        onClick={onDelete}
+      >
+        <Trash2 size={20} aria-hidden="true" />
+        {deleteLabel(set, dropCount)}
+      </button>
     </>
   );
 }

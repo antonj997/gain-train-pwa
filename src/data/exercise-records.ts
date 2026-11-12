@@ -1,6 +1,11 @@
 // One exercise's sessions and records, for the exercise page and the marks in
 // a finished workout. Pure, so it is tested (tests/exercise-records.test.ts).
-import { type RecordDoc, type WorkoutSet, validSet } from "./model";
+import {
+  type RecordDoc,
+  type Workout,
+  type WorkoutSet,
+  validSet,
+} from "./model";
 import { isDrop } from "./drops";
 import { estimate } from "./estimate";
 import { completedWorkouts } from "./selectors";
@@ -314,4 +319,33 @@ export function workoutPrs(
   workoutId: string,
 ): ExercisePr[] {
   return prEvents(records).filter((event) => event.workoutId === workoutId);
+}
+
+/**
+ * The record marks a workout earns so far, by set id: its checked sets
+ * counted as if it were finished now, against every other finished workout.
+ * For the workout screen, live or while editing a finished one; at most one
+ * set per exercise, like workoutPrs.
+ */
+export function liveWorkoutPrs(
+  records: Record<string, RecordDoc> | readonly RecordDoc[],
+  workout: { id: string; payload: Workout },
+): Map<string, PrKind[]> {
+  const list = Array.isArray(records)
+    ? (records as readonly RecordDoc[])
+    : Object.values(records as Record<string, RecordDoc>);
+  const others = list.filter((record) => record.id !== workout.id);
+  const asFinished: RecordDoc = {
+    id: workout.id,
+    kind: "workout",
+    revision: 0,
+    deleted: false,
+    localVersion: 0,
+    dirty: false,
+    payload: { ...workout.payload, status: "completed" },
+  };
+  const marks = new Map<string, PrKind[]>();
+  for (const pr of workoutPrs([...others, asFinished], workout.id))
+    marks.set(pr.set.id, pr.kinds);
+  return marks;
 }

@@ -1,6 +1,6 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { memo, useCallback, useEffect, useId, useRef, useState } from "react";
-import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Plus, Timer } from "lucide-react";
 import {
   type Exercise,
   type WorkoutSet,
@@ -67,6 +67,8 @@ import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 import CardioFieldsSheet from "@/components/workout/CardioFieldsSheet";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
+import { RestSheet } from "@/components/settings/PreferenceSheets";
+import { restLabel } from "@/lib/preferences";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import type { WeightUnit } from "@/lib/units";
 import { useT } from "@/i18n/useT";
@@ -102,6 +104,14 @@ export type ExerciseCardProps = {
   /** Called when a set is newly checked as done. */
   onSetDone?: () => void;
   /**
+   * The records the workout's checked sets hold so far, by set id, as the
+   * label a screen reader hears (liveWorkoutPrs). The same Map while nothing
+   * changes, so memoised cards skip a render.
+   */
+  records?: ReadonlyMap<string, string>;
+  /** Shows the rest chip at the left of the card's foot: a live workout. */
+  restChip?: boolean;
+  /**
    * A cardio exercise's chosen fields (useCardioFields). Without them the
    * exercise's defaults show and "Fields…" is not offered.
    */
@@ -122,6 +132,7 @@ type OpenSheet =
   | { kind: "menu" }
   | { kind: "reorder" }
   | { kind: "fields" }
+  | { kind: "rest" }
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
@@ -167,6 +178,8 @@ function ExerciseCard({
   onRemove,
   onChangeExercise,
   onSetDone,
+  records,
+  restChip = false,
   cardioFields: chosenFields,
   onCardioFields,
   repHold = false,
@@ -178,7 +191,8 @@ function ExerciseCard({
   const { t } = useT();
   const [sheet, setSheet] = useState<OpenSheet>(null);
   // The unit is the device's; the kg heading switches it for every screen.
-  const [{ weightUnit }, setPreferences] = useTrainingPreferences();
+  const [preferences, setPreferences] = useTrainingPreferences();
+  const { weightUnit } = preferences;
   const setSheetRef = useRef<HTMLDivElement>(null);
   const openSetId = sheet?.kind === "set" ? sheet.setId : null;
   useKeepAboveSheet(openSetId, setSheetRef);
@@ -353,6 +367,8 @@ function ExerciseCard({
               {t("exercise.colPrevious")}
             </span>
           )}
+          {/* Over the arrow and record column. */}
+          {mode === "log" && <span aria-hidden="true" />}
           {/* The headings pick the unit and the count; the rest of Load and
               count is in the exercise's menu. */}
           <button
@@ -397,6 +413,7 @@ function ExerciseCard({
             badge={setBadge(sets, i)}
             previous={previousOf(i)}
             improved={improved?.has(s.id) ?? false}
+            record={records?.get(s.id)}
             marker={loadMarker(s, defaultKey)}
             bodyWeightKg={mode === "log" ? bodyWeightKg : null}
             weightUnit={weightUnit}
@@ -412,14 +429,32 @@ function ExerciseCard({
           />
         </SetSwipeRow>
       ))}
-      <button
-        type="button"
-        className="btn-quiet ex-add-set"
-        onClick={() => onChange(appendSet(ex, defaults))}
-      >
-        <Plus size={18} aria-hidden="true" />
-        {t("exercise.addSet")}
-      </button>
+      {/* Add set on the right, in thumb reach; the rest chip on the left. */}
+      <div className="ex-foot">
+        {restChip && mode === "log" && (
+          <button
+            type="button"
+            className="rest-chip"
+            data-off={preferences.restSeconds > 0 ? undefined : ""}
+            aria-haspopup="dialog"
+            aria-label={t("exercise.restChip", {
+              time: restLabel(preferences.restSeconds),
+            })}
+            onClick={() => setSheet({ kind: "rest" })}
+          >
+            <Timer size={16} aria-hidden="true" />
+            {restLabel(preferences.restSeconds)}
+          </button>
+        )}
+        <button
+          type="button"
+          className="ex-add-set"
+          onClick={() => onChange(appendSet(ex, defaults))}
+        >
+          <Plus size={18} aria-hidden="true" />
+          {t("exercise.addSet")}
+        </button>
+      </div>
       {shown && (
         <SetSheet
           open={openSetId !== null}
@@ -431,7 +466,6 @@ function ExerciseCard({
           dropCount={
             isDrop(shown) ? 0 : dropGroup(sets, shownIndex).end - shownIndex - 1
           }
-          exerciseDefault={defaultKey}
           cardio={isCardioSet(shown)}
           onSection={(section) =>
             changeSets(changeSection(sets, shown.id, section))
@@ -520,6 +554,14 @@ function ExerciseCard({
           name={ex.name}
           value={cardioFields}
           onChange={(fields) => onCardioFields(ex.exerciseId, fields)}
+        />
+      )}
+      {restChip && mode === "log" && (
+        <RestSheet
+          open={sheet?.kind === "rest"}
+          onClose={close}
+          preferences={preferences}
+          onChange={setPreferences}
         />
       )}
       <ReorderSetsSheet
