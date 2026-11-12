@@ -291,7 +291,9 @@ test("malformed payloads are cleaned up instead of failing the add", () => {
   // Values are stripped before checking, so only the bad string is left out.
   const sets = copy.routine.exercises[0].sets;
   assert.equal(sets.length, 6);
-  assert.equal(sets[2].measure, "reps");
+  // A weighted hold is a valid set now: it stays a hold.
+  assert.equal(sets[2].measure, "seconds");
+  assert.equal(sets[2].load, "weight");
   assert.equal(sets[3].extraWeight, undefined);
   assert.equal(sets[4].extraWeight, true);
   assert.equal(sets[5].measure, "cardio");

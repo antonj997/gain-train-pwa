@@ -147,13 +147,15 @@ type Progress = ExerciseProgress;
 type ProgressPoint = Progress["points"][number];
 
 /** Ids of the workouts that set a PR for any exercise (see prEvents). */
-export function newBestWorkoutIds(events: readonly ExercisePr[]) {
+export function newBestWorkoutIds(
+  events: readonly Pick<ExercisePr, "workoutId">[],
+) {
   return new Set(events.map((event) => event.workoutId));
 }
 
 /** The latest PR of each exercise set from `start` to `end`, newest first. */
-export function recentBests(
-  events: readonly ExercisePr[],
+export function recentBests<T extends Pick<ExercisePr, "exerciseId" | "date">>(
+  events: readonly T[],
   start: string,
   end: string,
   limit = 4,

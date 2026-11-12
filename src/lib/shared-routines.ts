@@ -275,8 +275,9 @@ export function parseSharedSet(value: unknown, id: string): WorkoutSet | null {
   if (set.measure === "cardio") delete set.extraWeight;
   else {
     if (set.extraWeight && set.load !== "bodyweight") delete set.extraWeight;
-    if (set.measure === "seconds" && set.load !== "bodyweight")
+    if (set.measure === "seconds" && set.load === "assisted")
       set.measure = "reps";
+    if (set.load === "none") set.weight = null;
   }
   return set;
 }

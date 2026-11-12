@@ -7,14 +7,30 @@ import { HOLD_MAX, holdLabel } from "../lib/rep-hold";
 import { normalizeDrops } from "./drops";
 import { t } from "../i18n";
 import { formatWeightValue, getWeightUnit } from "../lib/units";
+/** Every load a set can have. Older apps know the first three only. */
+export const SET_LOADS = ["weight", "bodyweight", "assisted", "none"] as const;
+/** The highest reps in reserve a set stores; it reads "3+". */
+export const RIR_MAX = 3;
+/** A whole-workout note's longest length, in characters. */
+export const WORKOUT_NOTE_MAX = 1000;
 export const setSchema = z.object({
   id: z.string().uuid(),
   reps: z.number().int().min(0).max(10000).nullable(),
   weight: z.number().min(0).max(10000).nullable(),
   bodyWeightKg: z.number().finite().positive().max(1000).optional(),
   extraWeight: z.boolean().optional(),
-  load: z.enum(["weight", "bodyweight", "assisted"]),
+  /**
+   * "none": no load at all, neither weight nor bodyweight, for planks,
+   * stretches and mobility work. Its weight is always null, and volume,
+   * records and estimated maxes skip it.
+   */
+  load: z.enum(SET_LOADS),
   measure: z.enum(["reps", "seconds", "cardio"]).optional(),
+  /**
+   * Optional reps in reserve, picked after the set: 0, 1, 2 or 3, where 3
+   * means "3 or more". Absent (or null) when nobody chose one. See rir.ts.
+   */
+  rir: z.number().int().min(0).max(RIR_MAX).nullish(),
   /** Cardio sets (gym machines) only: reps and weight stay null. */
   durationSec: z.number().int().min(0).max(CARDIO_MAX.durationSec).nullish(),
   distanceM: z.number().finite().min(0).max(CARDIO_MAX.distanceM).nullish(),
@@ -48,6 +64,10 @@ export const exerciseSchema = z.object({
 // or the library's cardioFields and repHold: they are new optional fields that
 // older apps keep as they are (keepUnknownFields) and nothing existing changed
 // meaning.
+// Not bumped for load "none", a load on a timed hold, a set's rir or the
+// workout's note either: rir and note are optional fields older apps keep, and
+// a record with load "none" or a weighted hold fails an older app's validation,
+// so it parks the row (sync's quarantine) instead of misreading it.
 export const SCHEMA_VERSION = 2;
 const schemaVersion = z.number().int().positive().optional();
 export const workoutSchema = z.object({
@@ -61,6 +81,8 @@ export const workoutSchema = z.object({
   completedAt: z.number().finite().min(0).optional(),
   status: z.enum(["draft", "completed"]),
   exercises: z.array(exerciseSchema).max(100),
+  /** Optional plain-text note on the whole workout, written when it is finished. */
+  note: z.string().max(WORKOUT_NOTE_MAX).nullish(),
   /**
    * Set when the workout was started inside a plan's phase: the week, whether
    * it was a deload week and the planned working weights it prefilled, by
@@ -259,6 +281,11 @@ interface RecordBase {
   conflict?: RemoteDoc;
   /** Set when the server refused this change; it is resent after the next edit or a retry. */
   syncError?: string;
+  /**
+   * The refusal came from a server older than the record (see
+   * needsNewerServer in sync.ts): the record is sent again on the next sync.
+   */
+  retryOnSync?: boolean;
 }
 // Checking `kind` narrows `payload`, so callers need no casts.
 export type WorkoutRecord = RecordBase & { kind: "workout"; payload: Workout };
@@ -369,6 +396,15 @@ const validHold = (s: WorkoutSet) =>
   s.holdSec === null ||
   s.holdSec === undefined ||
   (Number.isInteger(s.holdSec) && s.holdSec >= 0 && s.holdSec <= HOLD_MAX);
+const validRir = (s: WorkoutSet) =>
+  s.rir === null ||
+  s.rir === undefined ||
+  (Number.isInteger(s.rir) && s.rir >= 0 && s.rir <= RIR_MAX);
+/**
+ * A checked set's values make sense. A timed hold may carry any load but
+ * assisted: bodyweight, bodyweight plus weight, a plain weight (a kettlebell
+ * held for time) or none. A set with no load has no weight.
+ */
 export function validSet(s: WorkoutSet) {
   if (s.measure === "cardio") return validCardioSet(s);
   return (
@@ -378,15 +414,18 @@ export function validSet(s: WorkoutSet) {
     s.reps > 0 &&
     Number.isInteger(s.reps) &&
     s.reps <= 10000 &&
-    (s.measure !== "seconds" || s.load === "bodyweight") &&
+    validRir(s) &&
+    (s.measure !== "seconds" || s.load !== "assisted") &&
     (s.extraWeight !== true || s.load === "bodyweight") &&
     (!hasExtraWeight(s) ||
       (s.weight !== null &&
         Number.isFinite(s.weight) &&
         s.weight > 0 &&
         s.weight <= 10000)) &&
-    (s.load === "bodyweight" ||
-      (s.weight !== null && s.weight >= 0 && s.weight <= 10000))
+    (s.load === "none"
+      ? s.weight === null
+      : s.load === "bodyweight" ||
+        (s.weight !== null && s.weight >= 0 && s.weight <= 10000))
   );
 }
 export class RecordValidationError extends Error {}
@@ -464,6 +503,8 @@ export function validate(kind: Kind, payload: unknown): Payload {
       cardioFields: t("val.cardioFields"),
       repHold: t("val.repHold"),
       load: t("val.load"),
+      rir: t("val.rir"),
+      note: t("val.note"),
       section: t("val.section"),
       exercises: t("val.exercises"),
       sets: t("val.sets"),
@@ -514,8 +555,10 @@ export function validate(kind: Kind, payload: unknown): Payload {
           throw new RecordValidationError(t("val.extraBodyweightOnly"));
         if (hasExtraWeight(s) && s.weight !== null && s.weight <= 0)
           throw new RecordValidationError(t("val.addedWeightRange"));
-        if (s.measure === "seconds" && s.load !== "bodyweight")
+        if (s.measure === "seconds" && s.load === "assisted")
           throw new RecordValidationError(t("val.timedBodyweight"));
+        if (s.load === "none" && s.weight !== null)
+          throw new RecordValidationError(t("val.noLoadWeight"));
         if (s.done && !validSet(s))
           throw new RecordValidationError(t("val.checkedInvalid"));
       }
@@ -552,7 +595,11 @@ const labelLift = (s: WorkoutSet) => {
         ? ` · ${t("label.sec", { n: s.reps })}`
         : ` × ${s.reps}`)
     );
+  // A weighted hold: "24 kg · 45 sec".
+  if (s.measure === "seconds" && s.load === "weight")
+    return `${kg} ${unit} · ${t("label.sec", { n: s.reps })}`;
   if (s.measure === "seconds") return t("label.sec", { n: s.reps });
+  if (s.load === "none") return t("label.noneReps", { n: s.reps });
   if (s.load === "bodyweight") return t("label.bwReps", { n: s.reps });
   if (s.load === "assisted") return t("label.assist", { kg, unit, n: s.reps });
   return t("label.weight", { kg, unit, n: s.reps });

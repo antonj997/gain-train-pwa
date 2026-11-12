@@ -33,7 +33,9 @@ export function setKindLabel(set: WorkoutSet) {
         : t("sharedPreview.bodyweight")
       : set.load === "assisted"
         ? t("sharedPreview.assisted")
-        : t("sharedPreview.weight");
+        : set.load === "none"
+          ? t("sharedPreview.noLoad")
+          : t("sharedPreview.weight");
   const count =
     set.measure === "seconds"
       ? t("sharedPreview.seconds")

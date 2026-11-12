@@ -498,7 +498,6 @@ export const en = {
   "history.restoreFailed":
     "Could not restore the workout. Try restoring a backup.",
   "history.deleteFailed": "Could not delete this workout. Try again.",
-  "history.newBest": "New best",
   "history.chooseDateToBegin":
     "Choose a date on the calendar to begin your range.",
   "history.noneOnDay": "No workouts on this day",
@@ -1333,6 +1332,8 @@ export const en = {
   "err.eraseLog": "Could not erase this account's log.",
   "err.invalidName":
     "The name is missing or longer than 100 characters, or the record is too large to sync.",
+  "err.serverBehind":
+    "Saved on this phone. The server doesn't take sets with no load yet; it syncs once the server is updated.",
   "err.serverRejected": "The server rejected this change.",
   "err.notBackup": "This is not a Gain Train backup.",
   "err.backupDamaged": "This backup is damaged or from an unsupported version.",
@@ -1357,7 +1358,7 @@ export const en = {
   "val.cardioFields": "The chosen cardio fields could not be read.",
   "val.holdSec": "A hold must be whole seconds from 0 to 600, or blank.",
   "val.repHold": "The exercises counted as reps + hold could not be read.",
-  "val.load": "Choose weight, bodyweight or assisted load.",
+  "val.load": "Choose weight, bodyweight, assisted or no load.",
   "val.section": "Choose working, warm-up or cool-down for this set.",
   "val.exercises": "Use no more than 100 exercises in a session.",
   "val.sets": "Use no more than 100 sets per exercise.",
@@ -1392,7 +1393,7 @@ export const en = {
   "val.addedWeightRange":
     "Added weight must be greater than 0 and no more than 10000 kg.",
   "val.timedBodyweight":
-    "Timed sets use bodyweight. Choose bodyweight to log seconds.",
+    "Timed sets can't be assisted. Choose bodyweight, weight or no load to log seconds.",
   "val.checkedInvalid":
     "Checked sets need positive reps or seconds and a valid weight or bodyweight load. Uncheck the set to leave it unfinished.",
   "val.completeOne":
@@ -1704,4 +1705,37 @@ export const en = {
   "history.tileSets": "Sets",
   "history.tileVolume": "Volume",
   "history.tileRecords": "Records",
+
+  // Phase 4a: loads, RIR, targets, muscle sets, ranked records, notes
+  "val.noLoadWeight":
+    "A set with no load has no weight. Clear the weight or choose another load.",
+  "val.rir": "Reps in reserve must be 0, 1, 2 or 3+.",
+  "val.note": "Keep the workout note to 1000 characters.",
+  "label.noneReps": "{n} reps",
+  "load.headingNone": "None",
+  "set.optNone": "None",
+  "sharedPreview.noLoad": "No load",
+  "rir.label": "RIR {value}",
+  "rir.name": "Reps in reserve",
+  "target.label": "Target {value}",
+  "records.repRecord": "Rep record",
+  "records.e1rmRecord": "Est. 1RM record",
+  "records.short.heaviest": "Record",
+  "records.short.reps": "Reps",
+  "records.short.e1rm": "e1RM",
+  "records.count": { one: "{count} record", other: "{count} records" },
+  "records.countQuiet": "Estimated records only",
+  "muscle.title": "Sets per muscle group",
+  "muscle.week": "Week {week} · guide {min}–{max}",
+  "muscle.weekLabel":
+    "Hard sets per muscle group in week {week}. The guide is {min} to {max} sets a week.",
+  "muscle.row": "{group}: {sets} sets, {status}",
+  "muscle.under": "under the guide",
+  "muscle.in": "within the guide",
+  "muscle.over": "over the guide",
+  "muscle.empty": "No working sets this week yet.",
+  "muscle.note":
+    "Working sets only. A set counts in full for the exercise's main group and half for the others it trains.",
+  "progress.volumeLine": "Volume {value}",
+  "details.note": "Note",
 };

@@ -166,7 +166,8 @@ export const sv = {
   "home.suggestOldestRoutine": "Eller {name}, rutinen du kört längst sedan",
   "home.suggestFirstRoutine": "Eller {name}, din första rutin",
   "week.dayLabel": "{day}: {title}",
-  "week.dayHint": "Tryck för fler val, håll in och dra till en annan dag för att flytta.",
+  "week.dayHint":
+    "Tryck för fler val, håll in och dra till en annan dag för att flytta.",
   "week.dragTo": "{name} → {day}",
   "week.swapWith": "Byter med {name}",
   "week.passed": "Redan passerad",
@@ -499,7 +500,6 @@ export const sv = {
   "history.restoreFailed":
     "Kunde inte återställa passet. Prova att återställa en säkerhetskopia.",
   "history.deleteFailed": "Kunde inte radera passet. Försök igen.",
-  "history.newBest": "Nytt rekord",
   "history.chooseDateToBegin":
     "Välj ett datum i kalendern för att börja ditt intervall.",
   "history.noneOnDay": "Inga pass den här dagen",
@@ -1343,6 +1343,8 @@ export const sv = {
   "err.eraseLog": "Kunde inte radera kontots logg.",
   "err.invalidName":
     "Namnet saknas eller är längre än 100 tecken, eller så är posten för stor för att synkas.",
+  "err.serverBehind":
+    "Sparat på telefonen. Servern tar inte emot set utan belastning än; det synkas när servern är uppdaterad.",
   "err.serverRejected": "Servern avvisade ändringen.",
   "err.notBackup": "Det här är inte en säkerhetskopia från Gain Train.",
   "err.backupDamaged":
@@ -1368,7 +1370,7 @@ export const sv = {
   "val.holdSec":
     "Ett håll måste vara hela sekunder från 0 till 600, eller tomt.",
   "val.repHold": "Övningarna som räknas som reps + håll kunde inte läsas.",
-  "val.load": "Välj vikt, kroppsvikt eller assisterad belastning.",
+  "val.load": "Välj vikt, kroppsvikt, assisterad eller ingen belastning.",
   "val.section": "Välj arbetsset, uppvärmning eller nedvarvning för setet.",
   "val.exercises": "Använd högst 100 övningar per pass.",
   "val.sets": "Använd högst 100 set per övning.",
@@ -1400,7 +1402,7 @@ export const sv = {
   "val.extraBodyweightOnly": "Extra vikt finns bara för kroppsviktsset.",
   "val.addedWeightRange": "Extra vikt måste vara över 0 och högst 10000 kg.",
   "val.timedBodyweight":
-    "Tidsset använder kroppsvikt. Välj kroppsvikt för att logga sekunder.",
+    "Tidsset kan inte vara assisterade. Välj kroppsvikt, vikt eller ingen belastning för att logga sekunder.",
   "val.checkedInvalid":
     "Ikryssade set behöver positiva reps eller sekunder och en giltig vikt eller kroppsvikt. Kryssa ur setet för att lämna det ofärdigt.",
   "val.completeOne":
@@ -1713,4 +1715,37 @@ export const sv = {
   "history.tileSets": "Set",
   "history.tileVolume": "Volym",
   "history.tileRecords": "Rekord",
+
+  // Phase 4a: loads, RIR, targets, muscle sets, ranked records, notes
+  "val.noLoadWeight":
+    "Ett set utan belastning har ingen vikt. Töm vikten eller välj en annan belastning.",
+  "val.rir": "Reps kvar måste vara 0, 1, 2 eller 3+.",
+  "val.note": "Passets anteckning får vara högst 1000 tecken.",
+  "label.noneReps": "{n} reps",
+  "load.headingNone": "Ingen",
+  "set.optNone": "Ingen",
+  "sharedPreview.noLoad": "Ingen belastning",
+  "rir.label": "RIR {value}",
+  "rir.name": "Reps kvar i tanken",
+  "target.label": "Mål {value}",
+  "records.repRecord": "Repsrekord",
+  "records.e1rmRecord": "Rekord i uppsk. 1RM",
+  "records.short.heaviest": "Rekord",
+  "records.short.reps": "Reps",
+  "records.short.e1rm": "e1RM",
+  "records.count": { one: "{count} rekord", other: "{count} rekord" },
+  "records.countQuiet": "Bara uppskattade rekord",
+  "muscle.title": "Set per muskelgrupp",
+  "muscle.week": "v. {week} · riktmärke {min}–{max}",
+  "muscle.weekLabel":
+    "Hårda set per muskelgrupp vecka {week}. Riktmärket är {min} till {max} set i veckan.",
+  "muscle.row": "{group}: {sets} set, {status}",
+  "muscle.under": "under riktmärket",
+  "muscle.in": "inom riktmärket",
+  "muscle.over": "över riktmärket",
+  "muscle.empty": "Inga arbetsset den här veckan än.",
+  "muscle.note":
+    "Bara arbetsset. Ett set räknas helt för övningens huvudgrupp och till hälften för de andra den tränar.",
+  "progress.volumeLine": "Volym {value}",
+  "details.note": "Anteckning",
 } satisfies Messages;

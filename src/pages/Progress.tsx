@@ -10,16 +10,16 @@ import {
   progressFor,
   recentBests,
 } from "@/data/analytics";
-import { prEvents } from "@/data/exercise-records";
+import { rankedKindsText, rankedRecords } from "@/data/record-rank";
 import { labelSet, today } from "@/data/model";
 import { historyPeriod } from "@/data/summary";
 import GoalStrip from "@/components/goals/GoalStrip";
 import PageHeader from "@/components/PageHeader";
 import ProgressSummary from "@/components/ProgressSummary";
+import MuscleSets from "@/components/MuscleSets";
 import Sparkline from "@/components/Sparkline";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { localizedDate } from "@/lib/dates";
-import { prKindsText } from "@/lib/record-labels";
 import { exercisePath, historyPath } from "@/lib/routes";
 import { countLabel } from "@/lib/labels";
 import { totalsLabel } from "@/lib/cardio";
@@ -108,7 +108,7 @@ export default function Progress() {
       .filter((row) => row.sessions > 0)
       .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name));
   }, [items, cardioItems, period.start, period.end, t, fieldsFor]);
-  const prs = useMemo(() => prEvents(records), [records]);
+  const prs = useMemo(() => rankedRecords(records), [records]);
   const bests = useMemo(
     () => recentBests(prs, period.start, period.end),
     [prs, period.start, period.end],
@@ -168,6 +168,7 @@ export default function Progress() {
       </section>
       {hasData && (
         <>
+          <MuscleSets records={records} now={now} />
           <ProgressSummary
             records={records}
             progress={items}
@@ -190,7 +191,7 @@ export default function Progress() {
                       aria-label={t("progress.recordOpen", {
                         name: best.name,
                         set,
-                        kinds: prKindsText(best.kinds),
+                        kinds: rankedKindsText(best.kinds),
                         date:
                           best.date === now
                             ? t("common.todayCap")
@@ -201,7 +202,7 @@ export default function Progress() {
                               }),
                       })}
                     >
-                      <RecordPill>
+                      <RecordPill quiet={best.top === "e1rm"}>
                         {best.name} {set}
                       </RecordPill>
                     </Link>

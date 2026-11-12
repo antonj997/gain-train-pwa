@@ -8,12 +8,18 @@ import {
 import { t, type MessageKey } from "../i18n";
 import { getWeightUnit } from "./units";
 
-export type LoadKey = "weight" | "bw" | "bwplus" | "assisted";
-export type LoadMarker = "none" | "bw" | "plus" | "minus" | "kg";
+/** A set's load as the Set sheet offers it; "none" is no load at all ("Ingen"). */
+export type LoadKey = "weight" | "bw" | "bwplus" | "assisted" | "none";
+/**
+ * What a set's load field shows besides its number. "none" here means no
+ * marker; a set with no load ("none" load key) shows "noload".
+ */
+export type LoadMarker = "none" | "bw" | "plus" | "minus" | "kg" | "noload";
 type Measure = "reps" | "seconds";
 
 export function loadKeyOf(set: WorkoutSet): LoadKey {
   if (set.load === "assisted") return "assisted";
+  if (set.load === "none") return "none";
   if (set.load === "bodyweight") return hasExtraWeight(set) ? "bwplus" : "bw";
   return "weight";
 }
@@ -23,6 +29,7 @@ export function withLoadKey(set: WorkoutSet, key: LoadKey): WorkoutSet {
   if (set.done) return set;
   if (key === "weight") return changeSetLoad(set, "weight");
   if (key === "assisted") return changeSetLoad(set, "assisted");
+  if (key === "none") return changeSetLoad(set, "none");
   return changeExtraWeight(changeSetLoad(set, "bodyweight"), key === "bwplus");
 }
 
@@ -54,6 +61,7 @@ const MARKERS: Record<LoadKey, LoadMarker> = {
   bwplus: "plus",
   assisted: "minus",
   weight: "kg",
+  none: "noload",
 };
 
 /**
@@ -77,6 +85,7 @@ const HEADINGS = {
   bw: "load.headingBw",
   bwplus: "load.headingPlusKg",
   assisted: "load.headingAssist",
+  none: "load.headingNone",
 } as const satisfies Record<LoadKey, MessageKey>;
 
 /** The load column's heading: "kg" (or "lb"), "BW", "+kg" or "Assist" in English. */
@@ -95,7 +104,7 @@ export function countHeading(sets: WorkoutSet[], hold = false): string {
   return t(hold ? "load.headingRepsHold" : "load.headingReps");
 }
 
-/** Sets every unchecked set to the measure; seconds makes them bodyweight. */
+/** Sets every unchecked set to the measure; seconds makes weighted and assisted sets bodyweight. */
 export function applyExerciseCount(
   sets: WorkoutSet[],
   measure: Measure,
@@ -103,8 +112,9 @@ export function applyExerciseCount(
   return sets.map((set) => changeSetMeasure(set, measure));
 }
 
+/** The loads a set with this count can have. A hold can't be assisted. */
 export function allowedLoadKeys(measure: Measure): LoadKey[] {
   return measure === "seconds"
-    ? ["bw", "bwplus"]
-    : ["weight", "bw", "bwplus", "assisted"];
+    ? ["weight", "bw", "bwplus", "none"]
+    : ["weight", "bw", "bwplus", "assisted", "none"];
 }

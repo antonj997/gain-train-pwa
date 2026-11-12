@@ -2,8 +2,12 @@ import { ArrowUp, Trophy } from "lucide-react";
 import { setBadge } from "@/data/drops";
 import { labelSet, type WorkoutSet } from "@/data/model";
 import { cardioLabel, isCardioSet, type DistanceUnit } from "@/lib/cardio";
-import type { PrKind } from "@/data/exercise-records";
-import { recordKindsLabel } from "@/lib/record-labels";
+import {
+  rankedKindsLabel,
+  recordKindShort,
+  type RecordKind,
+} from "@/data/record-rank";
+import { rirLabel } from "@/lib/rir";
 import { t } from "@/i18n";
 
 /** A set's result as the workout screen's checked row reads it: "82.5 kg × 5", the × muted. */
@@ -42,8 +46,12 @@ type Props = {
   sets: WorkoutSet[];
   /** A set to highlight, such as the one a record link points to. */
   highlight?: string | null;
-  /** The PR set of each exercise in this workout and its records, by set id. */
-  records?: ReadonlyMap<string, readonly PrKind[]>;
+  /**
+   * The record set of each exercise in this workout and its kinds, strongest
+   * first, by set id (recordSetKinds in record-rank.ts). The chip names the
+   * strongest; an e1RM-only record is quieter.
+   */
+  records?: ReadonlyMap<string, readonly RecordKind[]>;
   /** Sets that beat the same set last time (see improvedSetIds): a small up arrow. */
   improved?: ReadonlySet<string>;
   /** Cardio: the unit the exercise's distance shows in. Every value a set holds is listed. */
@@ -54,7 +62,8 @@ type Props = {
  * A finished exercise's checked sets, read-only, in the active workout's
  * checked-row style: the set's badge (number, W, C or ↓ for a drop), then the
  * result with a muted ×. A set that beat the same set last time has a small
- * up arrow; an exercise's PR set carries a PR chip.
+ * up arrow; an exercise's record set carries one record chip, and a set with
+ * reps in reserve shows it muted ("RIR 2").
  */
 export default function DoneSetList({
   sets,
@@ -69,6 +78,7 @@ export default function DoneSetList({
       {done.map((set, index) => {
         const badge = setBadge(done, index);
         const kinds = records?.get(set.id);
+        const rir = rirLabel(set);
         return (
           <li
             key={set.id}
@@ -87,14 +97,19 @@ export default function DoneSetList({
               <span className="sr-only">{badge.name}</span>
             </span>
             <DoneSetValue set={set} distanceUnit={distanceUnit} />
+            {rir && <span className="done-rir">{rir}</span>}
             {improved?.has(set.id) && <ImprovedMark />}
             {kinds?.length ? (
               <span
-                className="stat-chip warm done-pr"
-                title={recordKindsLabel(kinds)}
+                className={
+                  "stat-chip warm done-pr" +
+                  (kinds[0] === "e1rm" ? " is-quiet" : "")
+                }
+                title={rankedKindsLabel(kinds)}
               >
-                <span aria-hidden="true">{t("records.pr")}</span>
-                <span className="sr-only">{recordKindsLabel(kinds)}</span>
+                <Trophy size={12} strokeWidth={2.25} aria-hidden="true" />
+                <span aria-hidden="true">{recordKindShort(kinds[0])}</span>
+                <span className="sr-only">{rankedKindsLabel(kinds)}</span>
               </span>
             ) : null}
           </li>
