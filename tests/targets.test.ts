@@ -106,11 +106,7 @@ test("without a range or a kept target, last target is worked out from the sessi
   // A chain: 80×5 → target 80×6, hit → 82.5×6, did 82.5×6 → hit again.
   assert.deepEqual(
     suggestTarget(
-      [
-        set({ reps: 6, weight: 82.5 }),
-        set({ reps: 6 }),
-        set({ reps: 5 }),
-      ],
+      [set({ reps: 6, weight: 82.5 }), set({ reps: 6 }), set({ reps: 5 })],
       {},
       "kg",
     ),
@@ -376,6 +372,9 @@ test("targetLabel reads the target in the set's words", () => {
     "Target BW × 11",
   );
   setCurrentLanguage("sv");
-  assert.equal(targetLabel({ weight: 87.5, reps: 5 }, set()), "Mål 87,5 kg × 5");
+  assert.equal(
+    targetLabel({ weight: 87.5, reps: 5 }, set()),
+    "Mål 87,5 kg × 5",
+  );
   setCurrentLanguage("en");
 });

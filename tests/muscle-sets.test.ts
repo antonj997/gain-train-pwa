@@ -60,7 +60,9 @@ test("hard sets are checked working sets; drops ride with their set", () => {
   );
   // A plank with no load is still a working set.
   assert.ok(
-    isHardSet(set({ load: "none", weight: null, measure: "seconds", reps: 60 })),
+    isHardSet(
+      set({ load: "none", weight: null, measure: "seconds", reps: 60 }),
+    ),
   );
 });
 
@@ -115,7 +117,10 @@ test("this week's sets by group, listing groups trained in the four weeks before
   // 2026-11-12 is a Thursday; the week runs 9–15 November.
   const records = [
     record("2026-11-09", [
-      exercise("builtin:bench-press", Array.from({ length: 12 }, () => set())),
+      exercise(
+        "builtin:bench-press",
+        Array.from({ length: 12 }, () => set()),
+      ),
     ]),
     record("2026-11-11", [exercise("builtin:squat", [set(), set()])]),
     // Last week: Barbell Row, so Back is listed with 0 sets (and Arms with its half).
@@ -162,7 +167,10 @@ test("custom exercises count by their own categories; the scale grows past 24", 
   const records = [
     custom,
     record("2026-11-10", [
-      exercise(custom.id, Array.from({ length: 30 }, () => set())),
+      exercise(
+        custom.id,
+        Array.from({ length: 30 }, () => set()),
+      ),
     ]),
   ];
   const week = weeklyMuscleSets(records, "2026-11-15");
