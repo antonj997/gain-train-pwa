@@ -2559,7 +2559,7 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   position: relative;
   height: 12px;
   border-radius: 999px;
-  background-color: var(--gt-surface-2);
+  background-color: var(--gt-line);
 }
 /* The guide band sits over the track as an outlined, lightly tinted box. */
 .muscle-guide {

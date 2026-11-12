@@ -43,6 +43,7 @@ import WorkoutRow from "@/components/items/WorkoutRow";
 import RecordPill from "@/components/items/RecordPill";
 import Sheet from "@/components/ui/Sheet";
 import {
+  RECORD_KINDS,
   rankedKindsText,
   rankedRecords,
   recordBadges,
@@ -393,13 +394,11 @@ export default function History() {
                       bests.has(r.id) ? (
                         <RecordBadge
                           badge={bests.get(r.id)!}
-                          kinds={[
-                            ...new Set(
-                              prs
-                                .filter((pr) => pr.workoutId === r.id)
-                                .map((pr) => pr.top),
+                          kinds={RECORD_KINDS.filter((kind) =>
+                            prs.some(
+                              (pr) => pr.workoutId === r.id && pr.top === kind,
                             ),
-                          ]}
+                          )}
                         />
                       ) : undefined
                     }
