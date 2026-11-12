@@ -36,6 +36,7 @@ export default function HistoryCalendar({
   onChange,
   picking,
   onPicking,
+  periodShown = false,
 }: {
   value: HistoryCalendarState;
   now: string;
@@ -46,6 +47,11 @@ export default function HistoryCalendar({
   /** The month picker is open (from the month title or History's ⋯). */
   picking: boolean;
   onPicking: (open: boolean) => void;
+  /**
+   * History shows the chosen period under its own heading, with Clear: the
+   * footer then leaves out its caption and Clear.
+   */
+  periodShown?: boolean;
 }) {
   const { month, mode, display, selectedDate, from, to, activeBound } = value;
   const cells = calendarCells(month);
@@ -140,8 +146,8 @@ export default function HistoryCalendar({
 
   const footer = (
     <HistoryFooter
-      caption={caption}
-      canReset={canReset}
+      caption={periodShown ? null : caption}
+      canReset={canReset && !periodShown}
       resetTitle={
         heat
           ? t("history.clearToYear")

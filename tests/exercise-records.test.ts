@@ -4,6 +4,7 @@ import type { RecordDoc, Workout, WorkoutSet } from "../src/data/model";
 import {
   exerciseRecords,
   exerciseSessions,
+  liveWorkoutPrs,
   prEvents,
   workoutPrs,
 } from "../src/data/exercise-records";
@@ -346,4 +347,34 @@ test("PR events: oldest first, per exercise, named as the exercise is now", () =
       [ID, c.id, "Bench"],
     ],
   );
+});
+
+test("live PRs: a draft's checked sets count as if finished now; unchecked never do", () => {
+  const before = workout([set({ weight: 100, reps: 5 })], "2026-10-01");
+  const heavy = set({ weight: 110, reps: 3 });
+  const open = set({ weight: 150, reps: 5, done: false });
+  const draft = workout([set({ weight: 90 }), heavy, open], "2026-10-08", {
+    status: "draft",
+  });
+  const marks = liveWorkoutPrs([before, draft], draft as never);
+  assert.deepEqual([...marks.keys()], [heavy.id]);
+  assert.deepEqual(marks.get(heavy.id), ["heaviest"]);
+  // The first session of an exercise has nothing to beat.
+  assert.equal(liveWorkoutPrs([draft], draft as never).size, 0);
+});
+
+test("live PRs: an edited finished workout is judged as edited, not as saved", () => {
+  const before = workout([set({ weight: 100, reps: 5 })], "2026-10-01");
+  const saved = workout([set({ weight: 100, reps: 5 })], "2026-10-08");
+  assert.equal(liveWorkoutPrs([before, saved], saved as never).size, 0);
+  const edited = structuredClone(saved) as Extract<
+    RecordDoc,
+    { kind: "workout" }
+  >;
+  edited.payload.exercises[0].sets[0].weight = 105;
+  const marks = liveWorkoutPrs([before, saved], edited);
+  assert.deepEqual(marks.get(edited.payload.exercises[0].sets[0].id), [
+    "heaviest",
+    "setVolume",
+  ]);
 });

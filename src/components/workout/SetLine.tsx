@@ -34,7 +34,7 @@ import {
 import { HOLD_MAX } from "@/lib/rep-hold";
 import SetNumberInput from "@/components/SetNumberInput";
 import SetBadge from "@/components/workout/SetBadge";
-import { ImprovedMark } from "@/components/DoneSetList";
+import { ImprovedMark, RecordMark } from "@/components/DoneSetList";
 import "@/styles/workout.css";
 // The module translator, not a hook: the workout page remounts on a new
 // language, and tests render this row with a minimal hook host.
@@ -130,6 +130,7 @@ export default function SetLine({
   badge,
   previous,
   improved = false,
+  record,
   marker,
   bodyWeightKg = null,
   weightUnit,
@@ -150,8 +151,13 @@ export default function SetLine({
   name: string;
   badge: SetBadgeInfo;
   previous?: string;
-  /** Checked and better than the same set last time: a small up arrow by Previous. */
+  /** Checked and better than the same set last time: a small up arrow between Previous and the load. */
   improved?: boolean;
+  /**
+   * The records this checked set holds so far ("Heaviest weight"): a record
+   * mark in the arrow's place. A string, so a memoised row compares it.
+   */
+  record?: string;
   /** How this set's load differs from the exercise's default load. */
   marker: LoadMarker;
   bodyWeightKg?: number | null;
@@ -413,12 +419,6 @@ export default function SetLine({
             <>
               <span className="sr-only">{t("set.previousSr") + " "}</span>
               {previous}
-              {improved && set.done && (
-                <>
-                  {" "}
-                  <ImprovedMark />
-                </>
-              )}
             </>
           ) : (
             <>
@@ -426,6 +426,17 @@ export default function SetLine({
               <span className="sr-only">{t("set.noPrevious")}</span>
             </>
           )}
+        </span>
+      )}
+      {mode === "log" && !cardio && (
+        // Its own narrow column between Previous and the load: the record
+        // mark, else the up arrow, once the set is checked.
+        <span className="set-slot">
+          {set.done && record ? (
+            <RecordMark label={record} />
+          ) : set.done && improved ? (
+            <ImprovedMark />
+          ) : null}
         </span>
       )}
       {cardio ? (

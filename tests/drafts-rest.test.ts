@@ -9,7 +9,11 @@ import {
   readRestEnd,
   extendRestEnd,
 } from "../src/lib/drafts.ts";
-import { normalizeTrainingPreferences } from "../src/lib/preferences.ts";
+import {
+  normalizeTrainingPreferences,
+  restWhenOn,
+  stepRest,
+} from "../src/lib/preferences.ts";
 import { newSet } from "../src/data/model.ts";
 
 function storage() {
@@ -133,4 +137,23 @@ test("workout recovery keeps the stored version it was based on", () => {
     "k",
   );
   assert.equal(parseWorkoutRecovery({ workout: { name: 1 } }), null);
+});
+test("the rest control steps 15 s to 3:00, 30 s to 5:00, then a minute, within 0:15–10:00", () => {
+  assert.equal(stepRest(120, 1), 135);
+  assert.equal(stepRest(120, -1), 105);
+  assert.equal(stepRest(180, 1), 210);
+  assert.equal(stepRest(300, 1), 360);
+  assert.equal(stepRest(360, -1), 300);
+  assert.equal(stepRest(15, -1), 15);
+  assert.equal(stepRest(600, 1), 600);
+  // A time between steps goes to the next step either way.
+  assert.equal(stepRest(100, 1), 105);
+  assert.equal(stepRest(100, -1), 90);
+});
+test("a rest timer switched on again gets its last time, else 2:00", () => {
+  assert.equal(restWhenOn("90"), 90);
+  assert.equal(restWhenOn(null), 120);
+  assert.equal(restWhenOn("0"), 120);
+  assert.equal(restWhenOn("9000"), 120);
+  assert.equal(restWhenOn("abc"), 120);
 });

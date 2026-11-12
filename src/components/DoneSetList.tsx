@@ -1,4 +1,4 @@
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Trophy } from "lucide-react";
 import { setBadge } from "@/data/drops";
 import { labelSet, type WorkoutSet } from "@/data/model";
 import { cardioLabel, isCardioSet, type DistanceUnit } from "@/lib/cardio";
@@ -110,6 +110,16 @@ export function ImprovedMark() {
     <span className="set-up" title={t("set.improved")}>
       <ArrowUp size={14} strokeWidth={2.5} aria-hidden="true" />
       <span className="sr-only">{t("set.improved")}</span>
+    </span>
+  );
+}
+
+/** A set that holds a record: a small trophy in a warm circle, named for screen readers. */
+export function RecordMark({ label }: { label: string }) {
+  return (
+    <span className="set-record" title={label}>
+      <Trophy size={13} strokeWidth={2.25} aria-hidden="true" />
+      <span className="sr-only">{label}</span>
     </span>
   );
 }

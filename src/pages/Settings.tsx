@@ -22,7 +22,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useDisplayName } from "@/hooks/useDisplayName";
 import {
   GoalSheet,
-  RestSheet,
+  VibrateSetting,
   LanguageSheet,
   ThemeSheet,
 } from "@/components/settings/PreferenceSheets";
@@ -32,15 +32,14 @@ import { useT } from "@/i18n/useT";
 import { countLabel } from "@/lib/labels";
 import {
   readTrainingPreferences,
-  restLabel,
   saveTrainingPreferences,
 } from "@/lib/preferences";
+import { RestSettings } from "@/components/settings/RestControl";
 import { usePageBack } from "@/hooks/usePageTransitions";
 
 type SheetName =
   | "bodyweight"
   | "goal"
-  | "rest"
   | "theme"
   | "language"
   | "unit"
@@ -150,11 +149,14 @@ export default function Settings() {
             chevron
             onClick={() => setSheet("goal")}
           />
-          <ListRow
-            title={t("settings.restTimer")}
-            value={restLabel(preferences.restSeconds)}
-            chevron
-            onClick={() => setSheet("rest")}
+          {/* A plain on/off switch; the time shows only while it is on. */}
+          <RestSettings
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+          <VibrateSetting
+            preferences={preferences}
+            onChange={updatePreferences}
           />
           <ListRow
             title={t("unit.title")}
@@ -286,12 +288,6 @@ export default function Settings() {
       </Sheet>
       <GoalSheet
         open={sheet === "goal"}
-        onClose={closeSheet}
-        preferences={preferences}
-        onChange={updatePreferences}
-      />
-      <RestSheet
-        open={sheet === "rest"}
         onClose={closeSheet}
         preferences={preferences}
         onChange={updatePreferences}

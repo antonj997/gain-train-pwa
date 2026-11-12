@@ -1,21 +1,25 @@
 /* Workout screen styles for the Quiet visual system. Colours come from
    tokens.css only; spacing, type sizes, radii and motion use its tokens too.
 
-   A set row is one grid line (.set-line): badge, previous result, load, count
-   and the done button. Every control is 44px tall. The load and count fields
-   are only as wide as three digits need; Previous takes the rest and wraps
-   rather than truncates. A load marker ("+", "−", "kg") widens just its own
-   row's load field by what the marker needs. Below 360px the Previous column
-   is hidden so the rows never scroll sideways. */
+   A set row is one grid line (.set-line): badge, previous result, a narrow
+   slot for the ↑ arrow or record mark, load, count and the done button at the
+   far right (52px, in thumb reach). Every control is 44px tall. The load and
+   count fields are only as wide as three digits need; Previous takes the rest
+   and wraps rather than truncates. A load marker ("+", "−", "kg") widens just
+   its own row's load field by what the marker needs. A drop has the same
+   columns, so its done tone is as wide as its set's. Below 360px the Previous
+   column is hidden so the rows never scroll sideways. */
 
 .set-line,
 .set-columns {
   --set-load-w: 52px;
   --set-count-w: 48px;
+  --set-slot-w: 22px;
+  --set-check-w: 52px;
   display: grid;
   grid-template-columns:
-    44px minmax(0, 1fr) var(--set-load-w) var(--set-count-w)
-    44px;
+    44px minmax(0, 1fr) var(--set-slot-w) var(--set-load-w)
+    var(--set-count-w) var(--set-check-w);
   align-items: center;
   column-gap: var(--gt-space-1);
 }
@@ -54,8 +58,14 @@
 .set-columns[data-mode="plan"] {
   grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr);
 }
+/* Done: a green tone across the whole row, drops included; no rail. */
 .set-line.is-done {
   background-color: var(--gt-done-soft);
+}
+/* The next set to do: an accent ring and tone, its badge filled. */
+.set-line.is-next {
+  background-color: var(--gt-accent-soft);
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
 }
 /* The row whose Set sheet is open stays readable above the sheet. */
 .set-line.is-editing {
@@ -64,7 +74,8 @@
   outline-offset: -2px;
 }
 
-/* Badge: a 44px target around a smaller coloured chip. */
+/* Badge: a 44px target around a coloured chip; in a set row the chip fills
+   the target. */
 .set-badge {
   display: grid;
   place-items: center;
@@ -104,9 +115,16 @@
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-4);
 }
+.set-line .set-badge-chip {
+  width: 44px;
+  height: 44px;
+}
+.set-line.is-done .set-badge[data-tone="working"] .set-badge-chip {
+  background-color: color-mix(in srgb, var(--gt-done) 16%, transparent);
+}
 .set-line.is-next .set-badge[data-tone="working"] .set-badge-chip {
-  background-color: var(--gt-accent-soft);
-  color: var(--gt-accent);
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
 }
 .set-badge.is-editing .set-badge-chip {
   background-color: var(--gt-accent);
@@ -120,21 +138,47 @@
   min-width: 0;
   margin: 0;
   padding: 0;
+  padding-left: var(--gt-space-1);
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
   line-height: 1.2;
-  text-align: center;
+  text-align: left;
   text-wrap: balance;
   overflow-wrap: break-word;
 }
-/* A checked set that beat the same set last time: the arrow after Previous. */
-.set-line .set-previous .set-up {
-  vertical-align: -2px;
+/* The narrow column between Previous and the load: the ↑ of a checked set
+   that beat the same set last time, or the record mark in its place. */
+.set-slot {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: 44px;
+}
+.set-record {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+/* Reps + hold in lb with a marker is the widest row: the slot and the check
+   give Previous a little room back on a narrow phone. */
+@media (max-width: 379px) {
+  :is(.set-line, .set-columns).has-hold {
+    --set-slot-w: 16px;
+    --set-check-w: 44px;
+  }
 }
 @media (max-width: 359px) {
   .set-line,
   .set-columns {
-    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr) 44px;
+    --set-slot-w: 16px;
+    --set-check-w: 44px;
+    grid-template-columns:
+      44px var(--set-slot-w) minmax(0, 1fr) minmax(0, 1fr)
+      var(--set-check-w);
   }
   .set-line .set-previous {
     display: none;
@@ -154,7 +198,7 @@
    never under 16px: iOS Safari zooms into a smaller field on focus. */
 .set-line.is-cardio,
 .set-columns[data-kind="cardio"] {
-  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-columns: 44px minmax(0, 1fr) var(--set-check-w);
 }
 .set-line.is-cardio[data-mode="plan"],
 .set-columns[data-kind="cardio"][data-mode="plan"] {
@@ -368,11 +412,12 @@
   color: var(--gt-ink);
 }
 
-/* Done button. Drops and planned sets have an empty cell in its place. */
+/* Done button, 52px wide at the far right. Drops and planned sets have an
+   empty cell in its place. */
 .set-check {
   display: grid;
   place-items: center;
-  width: 44px;
+  width: 100%;
   height: 44px;
   padding: 0;
   border: 1px solid var(--gt-line-strong);
@@ -384,10 +429,14 @@
     border-color var(--gt-motion),
     color var(--gt-motion);
 }
+/* Checked: a green-tinted box with a green tick. */
 .set-check[aria-pressed="true"] {
-  border-color: var(--gt-done);
-  background-color: var(--gt-done);
-  color: var(--gt-on-accent);
+  border-color: transparent;
+  background-color: color-mix(in srgb, var(--gt-done) 24%, transparent);
+  color: var(--gt-done);
+}
+.set-line.is-next .set-check {
+  border-color: var(--gt-accent);
 }
 /* Not ready to check: still tappable, to show why under the row. */
 .set-check[aria-disabled="true"] {
@@ -401,7 +450,7 @@
 }
 .set-line-spacer {
   display: block;
-  width: 44px;
+  width: 100%;
   height: 44px;
 }
 @keyframes set-check-settle {
@@ -856,6 +905,10 @@
 .set-columns > span {
   min-width: 0;
 }
+.set-columns .set-previous-heading {
+  padding-left: var(--gt-space-1);
+  text-align: left;
+}
 .set-heading-btn {
   display: inline-flex;
   align-items: center;
@@ -870,9 +923,87 @@
   font-size: var(--gt-fs-2);
   font-weight: 600;
 }
-.ex-add-set {
-  width: 100%;
+/* The card's foot: the rest chip on the left, Add set on the right (48px). */
+.ex-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  min-height: 56px;
   margin-top: var(--gt-space-1);
+  padding-inline: var(--gt-space-1);
+}
+.ex-add-set {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  margin-left: auto;
+  padding: 0 14px 0 10px;
+  border: 0;
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
+.rest-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px 0 10px;
+  border: 0;
+  border-radius: 16px;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-2);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.rest-chip[data-off] {
+  color: var(--gt-ink-2);
+}
+/* The 32px chip keeps a 44px target. */
+.rest-chip::before {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+}
+
+/* The Set sheet: Add drop first, Delete last and set apart. */
+.btn-secondary.set-sheet-add-drop {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 52px;
+  font-size: var(--gt-fs-4);
+  font-weight: 400;
+}
+.set-sheet-add-drop svg {
+  color: var(--gt-ink-2);
+}
+.btn-danger.set-sheet-delete {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--gt-space-2);
+  font-size: var(--gt-fs-4);
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+/* Finish › Discard asks for a second tap in the same place. */
+.finish-discard.is-asking {
+  border-color: var(--gt-danger-fg);
+}
+@keyframes finish-discard-fade {
+  from {
+    opacity: 0.4;
+  }
+}
+.finish-discard-label {
+  animation: finish-discard-fade 120ms linear;
 }
 
 /* "Fields…" of a cardio exercise: one switch per field; the distance unit

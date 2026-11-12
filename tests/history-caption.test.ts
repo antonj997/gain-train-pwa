@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { historyCaption } from "../src/lib/history-caption";
+import {
+  historyCaption,
+  periodRangeLabel,
+  volumeTile,
+} from "../src/lib/history-caption";
 
 const base = {
   mode: "month" as const,
@@ -55,4 +59,20 @@ test("a range caption totals the workouts between both ends", () => {
     ),
     /3 workouts$/,
   );
+});
+
+test("a period's dates are short: one month once, two months each", () => {
+  assert.equal(periodRangeLabel("2026-11-02", "2026-11-09"), "2–9 Nov");
+  assert.equal(periodRangeLabel("2026-10-30", "2026-11-05"), "30 Oct–5 Nov");
+});
+
+test("the volume tile stays short: kg, then tonnes, whole from 100 t", () => {
+  assert.deepEqual(volumeTile(850.4, "kg"), { value: "850", unit: "kg" });
+  assert.deepEqual(volumeTile(18_640, "kg"), { value: "18.6", unit: "t" });
+  assert.deepEqual(volumeTile(99_960, "kg"), { value: "100", unit: "t" });
+  assert.deepEqual(volumeTile(186_400, "kg"), { value: "186", unit: "t" });
+  assert.deepEqual(volumeTile(1_234_000, "kg"), { value: "1234", unit: "t" });
+  assert.deepEqual(volumeTile(18_640, "lb"), { value: "41.1", unit: "k lb" });
+  assert.deepEqual(volumeTile(0, "kg"), { value: "0", unit: "kg" });
+  assert.deepEqual(volumeTile(999.6, "kg"), { value: "1.0", unit: "t" });
 });

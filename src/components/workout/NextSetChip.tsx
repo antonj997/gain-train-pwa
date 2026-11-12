@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { topBarRootMargin } from "@/lib/root-margin";
 import { useT } from "@/i18n/useT";
 
@@ -8,13 +8,15 @@ const reducedMotion = () =>
 
 /**
  * A floating "Next set" chip that shows only while the next set's row is out of
- * view. Tapping it centres the row and focuses its first field.
+ * view: just the button, its arrow pointing to where the row is. Tapping it
+ * centres the row and focuses its first field.
  */
 export default function NextSetChip({ setId }: { setId?: string }) {
-  const [offscreen, setOffscreen] = useState(false);
+  // Where the row is while out of view; null while it is in view.
+  const [offscreen, setOffscreen] = useState<"above" | "below" | null>(null);
   const { t } = useT();
   useEffect(() => {
-    setOffscreen(false);
+    setOffscreen(null);
     if (!setId) return;
     const row = document.querySelector(`[data-set-id="${setId}"]`);
     if (!row) return;
@@ -23,7 +25,13 @@ export default function NextSetChip({ setId }: { setId?: string }) {
       document.querySelector("[data-top-bar]")?.getBoundingClientRect()
         .bottom ?? 0;
     const onChange: IntersectionObserverCallback = ([entry]) =>
-      setOffscreen(!entry.isIntersecting);
+      setOffscreen(
+        entry.isIntersecting
+          ? null
+          : entry.boundingClientRect.top < (entry.rootBounds?.top ?? covered)
+            ? "above"
+            : "below",
+      );
     let observer: IntersectionObserver;
     try {
       observer = new IntersectionObserver(onChange, {
@@ -50,8 +58,12 @@ export default function NextSetChip({ setId }: { setId?: string }) {
   };
   return (
     <button type="button" className="next-set-chip" onClick={go}>
+      {offscreen === "above" ? (
+        <ArrowUp size={18} aria-hidden="true" />
+      ) : (
+        <ArrowDown size={18} aria-hidden="true" />
+      )}
       {t("workout.nextSet")}
-      <ArrowDown size={16} aria-hidden="true" />
     </button>
   );
 }

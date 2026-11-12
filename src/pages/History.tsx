@@ -5,7 +5,13 @@ import {
   createHistoryCalendar,
   filterBySelection,
   historyCalendarBounds,
+  historySelection,
 } from "@/lib/history-calendar";
+import { periodRangeLabel } from "@/lib/history-caption";
+import { daysBetween } from "@/lib/dates";
+import { summarize } from "@/data/summary";
+import PeriodSummary from "@/components/history/PeriodSummary";
+import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import { localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { errorMessage } from "@/lib/errors";
@@ -87,9 +93,32 @@ export default function History() {
     },
     [planned],
   );
-  const bests = useMemo(() => newBestWorkoutIds(prEvents(records)), [records]);
+  const prs = useMemo(() => prEvents(records), [records]);
+  const bests = useMemo(() => newBestWorkoutIds(prs), [prs]);
+  const [{ weightUnit }] = useTrainingPreferences();
   const period = historyCalendarBounds(calendar, now);
   const filtered = filterBySelection(records, calendar, now);
+  // A period of more than a day gets its own heading and totals.
+  const selection = historySelection(calendar);
+  const chosenPeriod =
+    selection?.kind === "dates"
+      ? { label: selection.label, days: selection.dates.length }
+      : selection?.kind === "range" && selection.from !== selection.to
+        ? {
+            label: periodRangeLabel(selection.from, selection.to),
+            days: daysBetween(selection.from, selection.to) + 1,
+          }
+        : null;
+  const periodIds = new Set(filtered.map((r) => r.id));
+  const periodTotals = chosenPeriod && {
+    sets: filtered.reduce((sum, r) => sum + doneSetCount(r.payload), 0),
+    volumeKg: summarize(
+      filtered.map((r) => r.payload),
+      1,
+      now,
+    ).volume,
+    records: prs.filter((pr) => periodIds.has(pr.workoutId)).length,
+  };
   // A week whose last workout was just deleted keeps its box for the Undo.
   const { undos } = useMessageState();
   const weeks = [
@@ -225,7 +254,22 @@ export default function History() {
         onChange={setCalendar}
         picking={picking}
         onPicking={setPicking}
+        periodShown={!!chosenPeriod}
       />
+      {chosenPeriod && periodTotals && (
+        <PeriodSummary
+          label={chosenPeriod.label}
+          days={chosenPeriod.days}
+          workouts={filtered.length}
+          sets={periodTotals.sets}
+          volumeKg={periodTotals.volumeKg}
+          records={periodTotals.records}
+          unit={weightUnit}
+          onClear={() =>
+            setCalendar(changeHistoryCalendar(calendar, { type: "reset" }, now))
+          }
+        />
+      )}
       {/* Choosing a period or a month: the calendar's rarer controls. */}
       <Sheet
         open={menu}

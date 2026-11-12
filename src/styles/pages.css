@@ -2027,3 +2027,68 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   flex: none;
   color: var(--gt-accent);
 }
+
+/* Settings › Rest timer: a plain switch row; the time row shows only while it
+   is on (components/settings/RestControl.tsx). In a list each part is a row;
+   in the rest chip's sheet they stack on their own. */
+.list .rest-setting {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 6px var(--gt-space-4);
+  border-bottom: 1px solid var(--gt-line);
+}
+.list .rest-setting:last-child {
+  border-bottom: 0;
+}
+.rest-setting .switch {
+  min-height: 44px;
+}
+.rest-setting .switch-label,
+.rest-setting-label {
+  font-weight: 400;
+}
+.rest-setting-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+}
+.list .rest-setting-time {
+  padding-left: var(--gt-space-5);
+}
+.rest-setting-label {
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+}
+/* The one rest-time control: − 2:00 +. */
+.rest-control {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 48px;
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+}
+.rest-control-step {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 46px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gt-accent);
+}
+.rest-control-step:disabled {
+  color: var(--gt-ink-3);
+}
+.rest-control-value {
+  min-width: 3.2em;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-5);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: center;
+}

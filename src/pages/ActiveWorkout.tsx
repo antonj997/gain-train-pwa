@@ -19,6 +19,8 @@ import {
 } from "@/data/model";
 import { doneSetCount, setCount } from "@/data/selectors";
 import { hasLoggedExercise } from "@/data/workouts";
+import { liveWorkoutPrs } from "@/data/exercise-records";
+import { recordKindsLabel } from "@/lib/record-labels";
 import { addExercises, type ExerciseTarget } from "@/lib/workout-editor";
 import { trainingHaptic } from "@/lib/preferences";
 import { historyPath } from "@/lib/routes";
@@ -148,7 +150,11 @@ function Editor({
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
   const rest = useRestTimer(account, id);
-  const { busy, complete, abandon } = useWorkoutActions(id, autosave, rest);
+  const { busy, complete, abandon, discardEmpty } = useWorkoutActions(
+    id,
+    autosave,
+    rest,
+  );
   // Only an edit of a finished workout has unsaved changes to compare.
   const dirty = useMemo(
     () => editing && JSON.stringify(w) !== JSON.stringify(initial),
@@ -160,6 +166,26 @@ function Editor({
     ex.sets.some((s) => s.done && !validSet(s)),
   );
   const nextSet = w.exercises.flatMap((ex) => ex.sets).find((s) => !s.done);
+  // The record marks the checked sets earn so far, as if finished now.
+  const liveRecords = useMemo(
+    () => liveWorkoutPrs(state.records, { id, payload: w }),
+    [state.records, id, w],
+  );
+  const recordsKey = [...liveRecords]
+    .map(([setId, kinds]) => `${setId}:${kinds.join(",")}`)
+    .join("|");
+  const recordLabels = useMemo(
+    () =>
+      new Map(
+        [...liveRecords].map(([setId, kinds]) => [
+          setId,
+          recordKindsLabel(kinds),
+        ]),
+      ),
+    // A new Map only when a mark changes, so unchanged cards skip a render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recordsKey],
+  );
   const fromRoutine = !!w.routineId;
   const { previous, defaults } = usePreviousResults(
     state.records,
@@ -259,7 +285,11 @@ function Editor({
         }
         onLeave={leave}
         onDetails={() => setDetails(true)}
-        onFinish={() => setFinish(true)}
+        // A workout with nothing checked has nothing to save: it goes at
+        // once, like a deleted one, and Train says so.
+        onFinish={() =>
+          !editing && completed === 0 ? void discardEmpty() : setFinish(true)
+        }
       />
       <WorkoutBanners
         changedElsewhere={autosave.changedElsewhere}
@@ -288,6 +318,8 @@ function Editor({
           onRemove={requestRemove}
           onChangeExercise={setChanging}
           onSetDone={setDone}
+          records={recordLabels}
+          restChip={!editing}
           cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
           onCardioFields={cardioFields.setFields}
           repHold={repHold.holdFor(ex.exerciseId)}
