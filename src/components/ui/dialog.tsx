@@ -59,6 +59,15 @@ function ownsGesture(target: Element, sheet: HTMLElement) {
   return false;
 }
 
+/** Whether the press is inside something scrolled down (the sheet or a list in it). */
+function scrolledDown(target: Element, sheet: HTMLElement) {
+  for (let el: Element | null = target; el; el = el.parentElement) {
+    if (el.scrollTop > 0) return true;
+    if (el === sheet) break;
+  }
+  return false;
+}
+
 const phoneSheet = () =>
   typeof window.matchMedia !== "function" ||
   !window.matchMedia("(min-width: 640px)").matches;
@@ -68,6 +77,8 @@ type Drag = {
   x0: number;
   y0: number;
   fromTop: boolean;
+  /** Nothing under the finger was scrolled down when it pressed. */
+  atTop: boolean;
   dragging: boolean;
   offset: number;
   samples: { y: number; t: number }[];
@@ -96,7 +107,8 @@ function useSheetDrag(
       let g: Drag | null = null;
       let back: Animation | null = null;
       let swallowUntil = 0;
-      const atTop = () => sheet.scrollTop <= 0;
+      // Set while the sheet tells the pressed element that the press is over.
+      let handing = false;
       const setOffset = (y: number) => {
         sheet.style.translate = y ? `0 ${y}px` : "";
         const scrim = overlay.current;
@@ -116,6 +128,7 @@ function useSheetDrag(
           x0: event.clientX,
           y0: event.clientY,
           fromTop: onHandle || !!target.closest(".dialog-header"),
+          atTop: !scrolledDown(target, sheet),
           dragging: false,
           offset: 0,
           samples: [{ y: event.clientY, t: event.timeStamp }],
@@ -128,7 +141,7 @@ function useSheetDrag(
             dx: event.clientX - g.x0,
             dy: event.clientY - g.y0,
             fromTop: g.fromTop,
-            atTop: atTop(),
+            atTop: g.atTop,
           });
           if (intent === "pending") return;
           if (intent === "none") {
@@ -137,6 +150,20 @@ function useSheetDrag(
           }
           // From here the sheet is under the finger: no jump by the slop.
           g.dragging = true;
+          // What was pressed lets go: a row's hold timer, a button's press.
+          handing = true;
+          try {
+            event.target?.dispatchEvent(
+              new PointerEvent("pointercancel", {
+                bubbles: true,
+                pointerId: g.id,
+                pointerType: event.pointerType,
+                isPrimary: true,
+              }),
+            );
+          } finally {
+            handing = false;
+          }
           g.y0 = event.clientY;
           back?.cancel();
           back = null;
@@ -192,10 +219,13 @@ function useSheetDrag(
         if (!g || event.pointerId !== g.id) return;
         const gesture = g;
         g = null;
-        if (gesture.dragging) settle(gesture, releaseSpeed(gesture.samples));
+        if (!gesture.dragging) return;
+        // A finger that stopped before it lifted has no speed left.
+        gesture.samples.push({ y: event.clientY, t: event.timeStamp });
+        settle(gesture, releaseSpeed(gesture.samples));
       };
       const cancel = (event: PointerEvent) => {
-        if (!g || event.pointerId !== g.id) return;
+        if (handing || !g || event.pointerId !== g.id) return;
         const gesture = g;
         g = null;
         if (gesture.dragging) settle({ ...gesture, offset: 0 }, 0);
@@ -212,7 +242,7 @@ function useSheetDrag(
             dx: touch.clientX - g.x0,
             dy: touch.clientY - g.y0,
             fromTop: g.fromTop,
-            atTop: atTop(),
+            atTop: g.atTop,
           })
         )
           event.preventDefault();
