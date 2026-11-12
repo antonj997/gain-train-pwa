@@ -93,3 +93,11 @@ test("canEditDay: a planned workout from today on", () => {
   assert.equal(isWorkoutCell("type:legs"), true);
   assert.equal(isWorkoutCell(REST), false);
 });
+
+test("springValues settles on the target and overshoots a little", async () => {
+  const { springValues } = await import("../src/lib/spring");
+  const { values, duration } = springValues(400, 26, 1, 1.12);
+  assert.equal(values.at(-1), 1.12);
+  assert.ok(Math.max(...values) > 1.12, "an underdamped spring overshoots");
+  assert.ok(duration > 100 && duration < 2000);
+});

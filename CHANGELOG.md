@@ -1,5 +1,15 @@
 # Changelog
 
+## 12 November 2026 — mockup v5, part 3: Train, the day sheet, the plan's week and goals
+
+- **Routine badges** replace the layers tile: 48px, tinted by the routine's leading exercise, with its 30px movement icon and the exercise count (56px / 34px on the Today card). Train, Library and the day sheet.
+- **Today card on a day with nothing planned** (no plan, an empty day or a rest day): “Empty workout · Add exercises as you go” with **Start empty workout**; the routine you did longest ago stays one quiet tap below.
+- **Day sheet** from a planned day in the week strip: ‹ › step the workout one day at a time with a live preview in the strip, **Do this workout today** (was “Start now instead of today” in the mockup), **Skip, make it a rest day** with an Undo slot under the strip. No calendar dialog.
+- **Hold and drag** a planned day in the week strip (pointer events, works with touch on iPhone): its ring lifts, a label says where it goes, past days and days outside the plan refuse it, and a busy day swaps. Changes are dated overrides on the plan, so the synced record keeps its shape (no migration).
+- **Workout in progress** comes first on Train with the workout's badge and a progress bar. Its rotating border and pulsing dot stay and pause off screen; tapping it grows the card into the workout's top bar (shared view-transition-name; a rise-in fallback without the API), and coming back it shrinks back and turns one quick lap.
+- **Plan editor**: week cells are 78px with a 26–28px icon; **+ New goal** in the goals heading and last in the list creates a goal linked to the plan.
+- Code: `src/data/plan-moves.ts` (moveDay, skipDay, restoreDay, canMoveTo, canEditDay), `src/lib/spring.ts`, `src/components/items/RoutineBadge.tsx`, `src/components/home/DaySheet.tsx`, `WeekCard`, `ResumeCards`, `TodayCard`; `morphToWorkout` in `src/lib/view-transition.ts`; `PlanTemplateGrid`, `PlanGoalLinks`, `GoalEditor` (`defaultByDate`, `onSaved`).
+
 ## 7 November 2026 — redesign part 1C: gestures, tips and messages that never cover anything
 
 - **Only boxed items swipe**, on one shared primitive. A **routine card** (Train's Your routines and Library → Routines) swipes right to a green Start layer and starts on release past the threshold, and left to More (its ⋯ menu) and Delete. A **workout in History's week box** swipes left to Repeat and Delete. A **set** swipes left to delete with the bin bubble: a round red bubble grows at the row's end, pops to full size with a ring at the threshold, and on release the row slides out, the bubble gulps and shrinks away, and only then does the row fold up (about 0.6 s, no Undo). Delete set in the Set sheet plays the same. Sets are still checked only with ✓. Vertical scrolling always wins an unclear drag (`touch-action: pan-y`, no preventDefault); the front resists past its travel, snaps at the threshold and springs back short of it; slow motion slows it and reduced motion skips it (a deleted set fades).
