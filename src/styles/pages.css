@@ -591,7 +591,6 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 /* The line under the strip: the totals, or for a moment what just changed. */
 .week-status.is-change {
   color: var(--gt-ink);
-  animation: week-fade-in var(--gt-motion) both;
 }
 .week-undo {
   position: relative;
@@ -604,8 +603,7 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .week-moon,
-  .week-status.is-change {
+  .week-moon {
     animation-duration: var(--gt-dur-fade) !important;
     animation-delay: 0ms;
   }

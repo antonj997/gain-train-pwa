@@ -47,6 +47,7 @@ import DaySheet from "@/components/home/DaySheet";
 import { reducedMotion, useUndoEntries } from "@/hooks/useMessages";
 import { useTipTarget } from "@/hooks/useTipTarget";
 import { EASE as EASE_CURVES, MOTION, SPRING } from "@/lib/motion";
+import MotionList from "@/components/motion/MotionList";
 
 type Props = {
   /** Finished workouts, newest first. */
@@ -695,23 +696,27 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
       <p className="sr-only" id={hintId}>
         {t("week.dayHint")}
       </p>
-      {undos.length ? (
-        undos.map((entry) => (
-          <UndoPlaceholder
-            key={`u${entry.id}`}
-            entry={entry}
-            className="week-undo"
-          />
-        ))
-      ) : (
-        <p
-          key={status ? `s${status.id}` : "totals"}
-          className={"row-sub week-status" + (status ? " is-change" : "")}
-          role="status"
-        >
-          {status?.text ?? totalsLine}
-        </p>
-      )}
+      {/* The line under the strip and the Undo slot that takes its place
+          share the banner motion: one grows or shrinks into the other. */}
+      <MotionList className="week-foot" kind="banner">
+        {undos.length ? (
+          undos.map((entry) => (
+            <UndoPlaceholder
+              key={`u${entry.id}`}
+              entry={entry}
+              className="week-undo"
+            />
+          ))
+        ) : (
+          <p
+            key={status ? `s${status.id}` : "totals"}
+            className={"row-sub week-status" + (status ? " is-change" : "")}
+            role="status"
+          >
+            {status?.text ?? totalsLine}
+          </p>
+        )}
+      </MotionList>
       {sheet && (
         <DaySheet
           open={sheetOpen && !!sheetEntry}
