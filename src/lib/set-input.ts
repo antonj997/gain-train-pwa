@@ -214,8 +214,14 @@ export function createSetInputSelection(
         return;
       }
       event.preventDefault();
-      input.focus({ preventScroll: true });
-      input.select();
+      // A field the number pad types on a touch screen never takes focus: on
+      // iPhone each move of focus (and the checked field going away) hides
+      // and shows the keyboard state and shifts the view, so the pad would
+      // seem to close and open. The pad draws the field's ring itself.
+      if (input.inputMode !== "none") {
+        input.focus({ preventScroll: true });
+        input.select();
+      }
       suppressClick = true;
       gesture = {
         input,

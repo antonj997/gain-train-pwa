@@ -263,3 +263,19 @@ test("locked fields allow copy, select-all and browser shortcuts, while mode cha
     undefined,
   );
 });
+
+test("a number pad field on a touch screen (inputmode none) never takes focus from a tap, but the tap still opens the pad", () => {
+  const host = input();
+  Object.assign(host.field, { inputMode: "none" });
+  let taps = 0;
+  const selection = createSetInputSelection(
+    () => 0,
+    undefined,
+    () => ({ tap: () => taps++ }),
+  );
+  selection.onPointerDown(host.event(10, 20));
+  assert.deepEqual(host.focus, []);
+  assert.equal(host.selects(), 0);
+  selection.onPointerUp(host.event(10, 20));
+  assert.equal(taps, 1);
+});
