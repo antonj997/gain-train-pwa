@@ -18,7 +18,7 @@ import { changeSetMeasure, hasExtraWeight } from "./set-load";
 import { loadKeyOf, withLoadKey } from "./load-keys";
 import { CARDIO_MAX, isCardioSet } from "./cardio";
 import { HOLD_MAX } from "./rep-hold";
-import { getSetInputText } from "./set-input";
+import { getSetInputText, isUnfinishedInput } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
 import { autoWorkoutName, type CategoryLookup } from "./workout-name";
 import { withWorkoutNote } from "./workout-note";
@@ -59,17 +59,15 @@ function getCardioIssues(set: WorkoutSet): SetIssues {
   if (bad(set.heartRate, CARDIO_MAX.heartRate))
     issues.heartRate = t("issue.heartRate");
   // Text that is not a number yet ("20:", "3.") is not a value either.
-  if (getSetInputText(set, "durationSec") !== undefined)
+  if (isUnfinishedInput(set, "durationSec"))
     issues.durationSec = t("issue.timeFormat");
-  if (getSetInputText(set, "distanceM") !== undefined)
+  if (isUnfinishedInput(set, "distanceM"))
     issues.distanceM = t("issue.distance");
-  if (getSetInputText(set, "level") !== undefined)
-    issues.level = t("issue.level");
-  if (getSetInputText(set, "calories") !== undefined)
-    issues.calories = t("issue.calories");
-  if (getSetInputText(set, "inclinePct") !== undefined)
+  if (isUnfinishedInput(set, "level")) issues.level = t("issue.level");
+  if (isUnfinishedInput(set, "calories")) issues.calories = t("issue.calories");
+  if (isUnfinishedInput(set, "inclinePct"))
     issues.inclinePct = t("issue.incline");
-  if (getSetInputText(set, "heartRate") !== undefined)
+  if (isUnfinishedInput(set, "heartRate"))
     issues.heartRate = t("issue.heartRate");
   return issues;
 }
@@ -108,10 +106,9 @@ export function getSetIssues(set: WorkoutSet): SetIssues {
     (!Number.isInteger(hold) || hold < 0 || hold > HOLD_MAX)
   )
     issues.holdSec = t("issue.holdRange");
-  if (getSetInputText(set, "reps") !== undefined) issues.reps = repsRange;
-  if (getSetInputText(set, "weight") !== undefined)
-    issues.weight = t("issue.weightRange");
-  if (!timed && getSetInputText(set, "holdSec") !== undefined)
+  if (isUnfinishedInput(set, "reps")) issues.reps = repsRange;
+  if (isUnfinishedInput(set, "weight")) issues.weight = t("issue.weightRange");
+  if (!timed && isUnfinishedInput(set, "holdSec"))
     issues.holdSec = t("issue.holdRange");
   return issues;
 }

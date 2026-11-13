@@ -1,5 +1,14 @@
 # Changelog
 
+## 13 November 2026 — code review: number pad, repeat, sync and dead code
+
+- **Number pad.** Fields never take focus on a touch screen, so the pad no longer blinks on iPhone; it stays open through a row's ✓, moves to the next open set of the exercise and closes at the end of it. The phone's own keyboard closes when the pad opens, and a keyboard attached to a touch screen types on the pad. The pad's Check and a row's ✓ now share one path that finishes what was typed first. Text kept beside a value while typing ("87," for 87) is no longer a fault, so no error line flashes under the row and the ✓ is not held back (`isUnfinishedInput` in `src/lib/set-input.ts`). The text is tidied when the pad leaves the field, also by a tap on another field. A drag on the handle that springs back no longer closes the pad.
+- **Repeat** a finished workout no longer copies its note.
+- **Sync.** Abandon-and-start and restoring an abandoned workout clear an earlier server rejection, so the change is sent without Retry. The download page size is one constant (`PULL_PAGE_SIZE` in `sync.ts`).
+- **Swedish.** Four autosave messages and one backup error were English only.
+- **Speed.** The workout screen no longer rebuilds earlier results after each autosave, and targets read earlier workouts once for all sets.
+- **Removed, unused:** the old PR model (`prEvents`, `workoutPrs`, `liveWorkoutPrs`, `newBestWorkoutIds`, `record-labels.ts`; History and the workout use `record-rank.ts`), `planHoldsRoutine`, `parseKm`, `undoRemaining`, `fillChanges`, `stripSharedRoutine`, `useMotionScale`, `visualDelay`, `tipSeen`, `CARDIO_KEYS`, `FEEDBACK_KINDS`, `DEFAULT_WORKOUT_NAME`, their tests, 16 unused strings in each language and unused imports.
+
 ## 12 November 2026 — mockup v5, part 5: motion across the app
 
 - **Sheets** open over 340ms on the sheet curve and close over 240ms on the ease-in; the backdrop fades over 200ms. A sheet drags down with the finger from its handle or title, or from anywhere while what is under the finger is scrolled to its top (a scrolled list scrolls first); the backdrop lightens as it goes. Let go past 90px or flicked down faster than 0.6 px/ms, it closes from where it is, as fast as the finger went; otherwise it springs back (380/34) from the finger's speed. Starting a drag cancels the pressed row's hold, so no menu opens under the finger. This applies to every sheet, the workout's included. The page behind does not scale (it would re-anchor the tab bar and sticky headers).

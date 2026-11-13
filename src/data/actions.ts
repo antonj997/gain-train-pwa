@@ -179,9 +179,7 @@ export function importRecordsIn(
     }
     result[old ? "restored" : "added"]++;
     if (old && old.kind !== r.kind)
-      throw new RecordValidationError(
-        "A backup record does not match its saved record type.",
-      );
+      throw new RecordValidationError(t("err.backupKindMismatch"));
     s.records[r.id] = {
       ...old,
       id: r.id,

@@ -7,6 +7,10 @@ import {
   validate,
 } from "./model";
 import { t } from "../i18n";
+
+/** Rows per download page; `syncAccount` stops paging on a shorter page. */
+export const PULL_PAGE_SIZE = 200;
+
 export interface Transport {
   push: (op: Operation) => Promise<{ record: RemoteDoc; conflict?: boolean }>;
   pull: (cursor: number) => Promise<RemoteDoc[]>;
@@ -256,7 +260,7 @@ async function run(
       }
     });
     if (rows.length) changed();
-    if (rows.length < 200) break;
+    if (rows.length < PULL_PAGE_SIZE) break;
   }
 }
 

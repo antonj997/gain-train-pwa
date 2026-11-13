@@ -1,9 +1,7 @@
 import { useCallback, useSyncExternalStore } from "react";
 import { useAuth } from "@/contexts/useAuth";
 import {
-  motionScale,
   readSlowMotion,
-  subscribeMotionScale,
   subscribeSlowMotionSetting,
   writeSlowMotion,
   type SlowMotionScale,
@@ -36,9 +34,4 @@ export function useSlowMotionSetting() {
     [userId],
   );
   return { userId, stored, set };
-}
-
-/** The slow-motion scale in effect right now (1 when off). */
-export function useMotionScale() {
-  return useSyncExternalStore(subscribeMotionScale, motionScale);
 }

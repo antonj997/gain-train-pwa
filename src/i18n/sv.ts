@@ -57,14 +57,10 @@ export const sv = {
   "common.done": "Klar",
   "common.off": "Av",
   "common.cancel": "Avbryt",
-  "common.close": "Stäng",
-  "common.save": "Spara",
   "common.saving": "Sparar…",
   "common.delete": "Radera",
   "common.edit": "Redigera",
-  "common.start": "Starta",
   "common.retry": "Försök igen",
-  "common.undo": "Ångra",
   "common.today": "i dag",
   "common.todayCap": "I dag",
 
@@ -176,7 +172,6 @@ export const sv = {
   "week.moved": "{name} flyttat till {day}",
   "week.swapped": "{a} och {b} har bytt dag",
   "week.skipped": "{name} överhoppat · vila {day}",
-  "week.skippedUndo": "{name} överhoppat",
   "week.changeFailed": "Kunde inte ändra schemat. Försök igen.",
   "week.restoreFailed": "Kunde inte ta tillbaka passet.",
   "daySheet.earlier": "En dag tidigare",
@@ -278,7 +273,6 @@ export const sv = {
   "workout.retrySaving": "Försök spara igen",
   "workout.restDone": "Vila klar",
   "workout.dismiss": "Stäng",
-  "workout.restRemaining": "Vilotid kvar",
   "workout.skip": "Hoppa över",
   "workout.nextSet": "Nästa set",
   "workout.rest": "Vila",
@@ -505,6 +499,11 @@ export const sv = {
     "Återställde ändringar som inte var sparade. Spara för att behålla dem, eller lämna för att slänga dem.",
   "autosave.recoveredDraft":
     "Återställde osparade värden. Rätta eventuella fel och försök spara igen.",
+  "autosave.keptRetry":
+    "Osparade värden finns kvar på mobilen. Försök spara igen.",
+  "autosave.keepOpenRetry": "Låt skärmen vara öppen och försök spara igen.",
+  "autosave.kept": "Osparade värden finns kvar på mobilen.",
+  "autosave.keepOpenFix": "Låt skärmen vara öppen tills det är rättat.",
   "syncLoop.serverDown":
     "Sparat på mobilen. Synken försöker igen när servern är tillgänglig.",
   "dialog.close": "Stäng",
@@ -527,8 +526,6 @@ export const sv = {
     "Välj ett annat datum i kalendern eller logga ditt nästa pass.",
   "history.logWorkout": "Logga ett pass",
   "history.pleaseWait": "Vänta…",
-  "history.repeatWorkout": "Kör passet igen",
-  "history.editWorkout": "Redigera passet",
   "history.deleteWorkout": "Radera passet",
   "history.deleteTitle": "Radera {name}?",
   "history.thisWorkout": "det här passet",
@@ -662,7 +659,6 @@ export const sv = {
   "cardio.avgIncline": "Snittlutning {n} %",
   "cardio.inclineValue": "{n} % lutning",
   "cardio.fieldsTitle": "Välj fält",
-  "cardio.fieldsFor": "Fält för {name}",
   "cardio.metricTime": "Tid",
   "cardio.metricDistance": "Distans",
   "cardio.metricPace": "Tempo",
@@ -817,7 +813,6 @@ export const sv = {
   "exercise.records": "Rekord",
   "exercise.also": "även {categories}",
   "exercise.hiddenChip": "Dold",
-  "exercise.favouriteNamed": "Favoritmarkera {name}",
   "exercise.notFoundTitle": "Övningen hittades inte",
   "exercise.notFoundText":
     "Den kan ha tagits bort. Set du har loggat finns kvar i Historik.",
@@ -826,9 +821,7 @@ export const sv = {
   "exercise.neverTitle": "Inte loggad än",
   "exercise.neverText":
     "Logga ett set {name} så visas resultat, pass och rekord här.",
-  "exercise.openSession": "Öppna {name}, {date}",
   "exercise.historyNote": "Alla avslutade pass med {name}, nyaste först.",
-  "exercise.openExercise": "Öppna {name}",
   "records.e1rm": "Bästa uppsk. 1RM",
   "records.heaviest": "Tyngsta vikt",
   "records.mostReps": "Flest reps",
@@ -944,7 +937,6 @@ export const sv = {
   "exercises.delete": "Radera övning",
   "exercises.mine": "Min",
   "exercises.shared": "Delad",
-  "exercises.editNamed": "Redigera {name}",
   "exercises.unhideNamed": "Visa {name} igen",
   "exercises.unhide": "Visa igen",
   "exercises.unfavouriteNamed": "Ta bort {name} från favoriter",
@@ -1309,6 +1301,8 @@ export const sv = {
   "err.backupTooLarge": "Säkerhetskopian är för stor.",
   "err.backupInvalidId":
     "Säkerhetskopian innehåller ett ogiltigt post-id eller en ogiltig typ.",
+  "err.backupKindMismatch":
+    "En post i säkerhetskopian har en annan typ än den sparade posten.",
   "err.backupStarted":
     "Ett pass pågår redan. Avsluta eller avbryt det innan du återställer en säkerhetskopia med ett annat startat pass. Inga poster ändrades.",
   "err.nothingToRestore":
@@ -1506,8 +1500,6 @@ export const sv = {
       "{count} synkade poster kräver en nyare version av Gain Train. Stäng och öppna appen igen för att uppdatera; de visas när appen kan läsa dem.",
   },
   "issues.rejectedTitle": "Ändringar som servern inte godtog",
-  "issues.rejectedText":
-    "De ligger kvar på mobilen. Redigerar du en skickas den igen; Försök igen skickar alla, till exempel efter en uppdatering av appen.",
   "issues.retryFailed": "Kunde inte försöka igen.",
   "issues.chooseTitle": "Välj vilken version du vill behålla",
   "issues.changedElsewhere":
@@ -1543,7 +1535,6 @@ export const sv = {
   "auth.eyebrow": "Konto",
   "auth.titleUpdate": "Välj ett nytt lösenord",
   "auth.titleReset": "Återställ ditt lösenord",
-  "auth.titleSignup": "Skapa ett konto",
   "auth.titleSignin": "Logga in för att synka",
   "auth.textUpdate":
     "Ange ett nytt lösenord för ditt konto. Använd minst 8 tecken.",
@@ -1745,7 +1736,6 @@ export const sv = {
   "set.optNone": "Ingen",
   "sharedPreview.noLoad": "Ingen belastning",
   "rir.label": "RIR {value}",
-  "rir.name": "Reps kvar i tanken",
   "target.label": "Mål {value}",
   "records.repRecord": "Repsrekord",
   "records.e1rmRecord": "Rekord i uppsk. 1RM",

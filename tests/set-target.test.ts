@@ -2,7 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { WorkoutSet } from "../src/data/model";
 import {
-  fillChanges,
   fillFrom,
   targetRowText,
   targetSource,
@@ -136,10 +135,4 @@ test("fillFrom leaves a checked or cardio set, and fills only what matches", () 
   );
   assert.equal(plank.weight, 10);
   assert.equal(plank.reps, 65);
-});
-
-test("fillChanges is false when the set already holds the values", () => {
-  const last = set({ weight: 85, reps: 5, done: true });
-  assert.equal(fillChanges(set(), last), true);
-  assert.equal(fillChanges(set({ weight: 85, reps: 5 }), last), false);
 });

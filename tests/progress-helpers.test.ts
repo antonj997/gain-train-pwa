@@ -1,12 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { RecordDoc, WorkoutSet } from "../src/data/model";
-import {
-  newBestWorkoutIds,
-  recentBests,
-  sparklinePoints,
-} from "../src/data/analytics";
-import { prEvents } from "../src/data/exercise-records";
+import { recentBests, sparklinePoints } from "../src/data/analytics";
+import { rankedRecords } from "../src/data/record-rank";
 import { historyPeriod } from "../src/data/summary";
 
 const set = (overrides: Partial<WorkoutSet> = {}): WorkoutSet => ({
@@ -40,62 +36,6 @@ const workout = (
   },
 });
 
-test("a workout is a new best only when it sets a PR over every earlier session", () => {
-  const records = [
-    workout("a", "2026-10-01", [set({ weight: 100 })]),
-    workout("b", "2026-10-08", [set({ weight: 105 })]),
-    workout("c", "2026-10-15", [set({ weight: 100 })]),
-    workout("d", "2026-10-22", [set({ weight: 110 })]),
-  ];
-  assert.deepEqual([...newBestWorkoutIds(prEvents(records))].sort(), [
-    "b",
-    "d",
-  ]);
-});
-
-test("the first session of an exercise is a starting point, not a best", () => {
-  assert.equal(
-    newBestWorkoutIds(prEvents([workout("a", "2026-10-01", [set()])])).size,
-    0,
-  );
-});
-
-test("a drop's reps never make a set-volume best", () => {
-  // The drop's 90 × 10 = 900 would beat 100 × 3 = 300; 90 × 3 does not.
-  const records = [
-    workout("a", "2026-10-01", [set({ weight: 100, reps: 3 })]),
-    workout("b", "2026-10-08", [
-      set({ weight: 90, reps: 3 }),
-      set({ weight: 90, reps: 10, drop: true }),
-    ]),
-  ];
-  assert.equal(newBestWorkoutIds(prEvents(records)).size, 0);
-});
-
-test("a better estimated 1RM alone is no longer a new best", () => {
-  // 95 × 5 estimates 110.8 over 100 × 3's 110, but is lighter and 475 < 600.
-  const records = [
-    workout("a", "2026-10-01", [
-      set({ weight: 100, reps: 3 }),
-      set({ weight: 60, reps: 10 }),
-    ]),
-    workout("b", "2026-10-08", [set({ weight: 95, reps: 5 })]),
-  ];
-  assert.equal(newBestWorkoutIds(prEvents(records)).size, 0);
-});
-
-test("unchecked, warm-up and deleted work does not count", () => {
-  const deleted = workout("d", "2026-10-22", [set({ weight: 200 })]);
-  deleted.deleted = true;
-  const records = [
-    workout("a", "2026-10-01", [set({ weight: 100 })]),
-    workout("b", "2026-10-08", [set({ weight: 150, done: false })]),
-    workout("c", "2026-10-15", [set({ weight: 150, section: "warmup" })]),
-    deleted,
-  ];
-  assert.equal(newBestWorkoutIds(prEvents(records)).size, 0);
-});
-
 test("recent bests keep the latest per exercise inside the period, newest first", () => {
   const squat = "builtin:squat";
   const records = [
@@ -105,7 +45,7 @@ test("recent bests keep the latest per exercise inside the period, newest first"
     workout("s1", "2026-10-02", [set({ weight: 120 })], squat),
     workout("s2", "2026-10-09", [set({ weight: 130 })], squat),
   ];
-  const bests = recentBests(prEvents(records), "2026-10-05", "2026-10-31");
+  const bests = recentBests(rankedRecords(records), "2026-10-05", "2026-10-31");
   assert.deepEqual(
     bests.map((b) => [b.exerciseId, b.workoutId]),
     [
@@ -114,7 +54,7 @@ test("recent bests keep the latest per exercise inside the period, newest first"
     ],
   );
   assert.equal(
-    recentBests(prEvents(records), "2026-10-05", "2026-10-31", 1).length,
+    recentBests(rankedRecords(records), "2026-10-05", "2026-10-31", 1).length,
     1,
   );
 });

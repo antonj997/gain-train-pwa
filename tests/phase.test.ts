@@ -20,7 +20,6 @@ import {
   phaseEnd,
   phaseWeek,
   phaseWeeks,
-  planHoldsRoutine,
   planStartFor,
   progressionWeeks,
   trimProgression,
@@ -157,22 +156,6 @@ test("week 1 copies to the other weeks; a new cycle length keeps kinds in step",
     "normal",
   ]);
   assert.equal("weekKinds" in kindsForCycle(p, 2), false);
-});
-
-test("a plan holds a routine through a day, a dated change or a group", () => {
-  const groups = [
-    { id: "g1", name: "Legday", routineIds: ["r-legs"], categories: [] },
-  ];
-  assert.equal(planHoldsRoutine(plan(), ROUTINE, groups), true);
-  assert.equal(planHoldsRoutine(plan(), "r-legs", groups), false);
-  assert.equal(
-    planHoldsRoutine(
-      plan({ overrides: { "2026-11-05": "group:g1" } }),
-      "r-legs",
-      groups,
-    ),
-    true,
-  );
 });
 
 const set = (

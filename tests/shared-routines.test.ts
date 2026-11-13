@@ -10,7 +10,6 @@ import {
   parseSharedSet,
   sharedRoutineChanged,
   sharedRoutineSummary,
-  stripSharedRoutine,
   toSharedRoutineInsert,
   toSharedSet,
   toSharedSets,
@@ -399,7 +398,6 @@ test("a published payload and its update carry no weights or reps", () => {
     set({ measure: "seconds", load: "bodyweight", reps: 45 }),
   );
   const payload = buildSharedPayload(r, sharerRecords);
-  assert.deepEqual(stripSharedRoutine(payload), payload);
   const insert = toSharedRoutineInsert(r, sharerRecords);
   for (const ex of insert.payload.exercises)
     for (const s of ex.sets) {

@@ -3,8 +3,6 @@ import type { Workout } from "../data/model";
 import { LANGUAGES, t, translate } from "../i18n";
 import { categoryLabel } from "./catalogue-labels";
 
-/** The name a workout gets when nobody names it, as stored before languages existed. */
-export const DEFAULT_WORKOUT_NAME = "Workout";
 /** The default name in every language, so a renamed default is still "unnamed". */
 const DEFAULT_NAMES = new Set(
   LANGUAGES.map((language) => translate(language, "workout.defaultName")),

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createSetInputSelection,
+  isUnfinishedInput,
   parseSetNumber,
   changeSetNumber,
   getSetInputText,
@@ -278,4 +279,21 @@ test("a number pad field on a touch screen (inputmode none) never takes focus fr
   assert.equal(host.selects(), 0);
   selection.onPointerUp(host.event(10, 20));
   assert.equal(taps, 1);
+});
+
+test('text kept beside a value (the number pad\'s "87,") is no fault; text with no value is unfinished', () => {
+  const typed = changeSetNumber(
+    newSet({ reps: 5, weight: 80, load: "weight" }),
+    "weight",
+    87,
+    "87,",
+  );
+  assert.equal(getSetInputText(typed, "weight"), "87,");
+  assert.equal(isUnfinishedInput(typed, "weight"), false);
+  assert.equal(validSet(typed), true);
+  assert.deepEqual(getSetIssues(typed), {});
+  const broken = changeSetNumber(typed, "weight", null, "8x");
+  assert.equal(isUnfinishedInput(broken, "weight"), true);
+  assert.equal(validSet(broken), false);
+  assert.ok(getSetIssues(broken).weight);
 });

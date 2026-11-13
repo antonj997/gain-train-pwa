@@ -57,6 +57,8 @@ export function restoreRemovedWorkout(state: LocalState, id: string) {
     deleted: false,
     localVersion: record.localVersion + 1,
     dirty: true,
+    // A new local version supersedes any earlier server rejection.
+    syncError: undefined,
   };
 }
 
@@ -92,6 +94,8 @@ export function createWorkout(
         deleted: true,
         localVersion: record.localVersion + 1,
         dirty: true,
+        // A new local version supersedes any earlier server rejection.
+        syncError: undefined,
       };
     }
   }

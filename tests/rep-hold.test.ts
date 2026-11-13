@@ -12,7 +12,7 @@ import { countHeading } from "../src/lib/load-keys";
 import { plannedSummary } from "../src/lib/routine-preview";
 import { mergeLibraries } from "../src/data/exercises";
 import { getSetIssues } from "../src/lib/workout-editor";
-import { changeSetNumber, hasSetInputText } from "../src/lib/set-input";
+import { changeSetNumber, hasUnfinishedInput } from "../src/lib/set-input";
 import {
   labelSet,
   newSet,
@@ -77,7 +77,7 @@ test("a hold is optional, whole seconds from 0 to 600", () => {
     /600/,
   );
   const typing = changeSetNumber(set({ done: false }), "holdSec", null, "2.");
-  assert.equal(hasSetInputText(typing), true);
+  assert.equal(hasUnfinishedInput(typing), true);
   assert.ok(getSetInputText(typing));
   const workout = {
     name: "W",

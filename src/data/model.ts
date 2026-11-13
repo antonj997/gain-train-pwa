@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { hasSetInputText } from "../lib/set-input";
+import { hasUnfinishedInput } from "../lib/set-input";
 import { hasExtraWeight } from "../lib/set-load";
 import { isIsoDay, isoDate } from "../lib/dates";
 import { CARDIO_MAX, cardioLabel } from "../lib/cardio";
@@ -378,7 +378,7 @@ const inRange = (value: number | null | undefined, max: number) =>
 /** A cardio set has a time and no reps or weight; its other values are optional. */
 function validCardioSet(s: WorkoutSet) {
   return (
-    !hasSetInputText(s) &&
+    !hasUnfinishedInput(s) &&
     s.reps === null &&
     s.weight === null &&
     typeof s.durationSec === "number" &&
@@ -408,7 +408,7 @@ const validRir = (s: WorkoutSet) =>
 export function validSet(s: WorkoutSet) {
   if (s.measure === "cardio") return validCardioSet(s);
   return (
-    !hasSetInputText(s) &&
+    !hasUnfinishedInput(s) &&
     validHold(s) &&
     s.reps !== null &&
     s.reps > 0 &&
@@ -537,7 +537,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
   if (kind === "workout" || kind === "routine") {
     if (
       (payload as Workout | Routine).exercises.some((ex) =>
-        ex.sets.some(hasSetInputText),
+        ex.sets.some(hasUnfinishedInput),
       )
     )
       throw new RecordValidationError(t("val.finishEntering"));

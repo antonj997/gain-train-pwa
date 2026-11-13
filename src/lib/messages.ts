@@ -138,13 +138,3 @@ export function interleave<T>(
   while (e < sorted.length) out.push({ kind: "undo", entry: sorted[e++] });
   return out;
 }
-
-/** How much of an undo placeholder's time is left, 0–1. */
-export function undoRemaining(
-  entry: { expiresAt: number },
-  ms: number,
-  now: number,
-) {
-  if (!(ms > 0)) return 0;
-  return Math.max(0, Math.min(1, (entry.expiresAt - now) / ms));
-}
