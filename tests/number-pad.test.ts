@@ -173,20 +173,28 @@ test("Next goes kg → reps → each drop → check the set", () => {
   });
 });
 
-test("after a check the pad goes to the first open set's first field, outside that set's drops", () => {
+test("after a check the pad goes to the next open set below in the same exercise, never to another exercise", () => {
   assert.deepEqual(padAfterCheck([bench, dips], "s1"), {
     setId: "s2",
     field: "weight",
   });
-  const done = {
-    sets: bench.sets.map((s) => (s.id === "s2" ? s : { ...s, done: true })),
+  // The last set of an exercise: the pad closes rather than jumping to Dips.
+  assert.equal(padAfterCheck([bench, dips], "s2"), null);
+  // Only sets below: an open set above the checked one is not revisited.
+  const firstOpen = {
+    sets: [set({ id: "a" }), set({ id: "b" }), set({ id: "c", done: true })],
   };
-  assert.deepEqual(padAfterCheck([done, dips], "s2"), {
-    setId: "p1",
-    field: "reps",
-  });
+  assert.equal(padAfterCheck([firstOpen], "b"), null);
+  // Checked sets below are passed over.
+  const gap = {
+    sets: [set({ id: "a" }), set({ id: "b", done: true }), set({ id: "c" })],
+  };
+  assert.deepEqual(padAfterCheck([gap], "a"), { setId: "c", field: "weight" });
   // The next open set has no field the pad types (a timed hold): the pad closes.
-  assert.equal(padAfterCheck([{ sets: [set({ id: "a" })] }, plank], "a"), null);
+  assert.equal(
+    padAfterCheck([{ sets: [set({ id: "a" }), ...plank.sets] }], "a"),
+    null,
+  );
   // Nothing left.
   assert.equal(
     padAfterCheck([{ sets: [set({ id: "a", done: true })] }], "a"),
