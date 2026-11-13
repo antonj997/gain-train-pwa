@@ -234,8 +234,10 @@ test("a running workout's records are History's, as if it were finished now", ()
   ]);
   // Nothing before it: no record.
   assert.equal(
-    liveRankedRecords([draft], { id: draft.id, payload: draft.payload as never })
-      .length,
+    liveRankedRecords([draft], {
+      id: draft.id,
+      payload: draft.payload as never,
+    }).length,
     0,
   );
   // Editing a finished workout compares with the others, not itself.

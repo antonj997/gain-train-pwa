@@ -89,10 +89,7 @@ test("other loads read the target in the set's own words", () => {
 
 test("fillFrom fills the weight and reps of an unchecked set in one go", () => {
   const last = set({ weight: 85, reps: 5, done: true });
-  const filled = fillFrom(
-    set(),
-    targetSource({ weight: 87.5, reps: 5 }, last),
-  );
+  const filled = fillFrom(set(), targetSource({ weight: 87.5, reps: 5 }, last));
   assert.equal(filled.weight, 87.5);
   assert.equal(filled.reps, 5);
   // From last time's result as it is.
@@ -112,10 +109,7 @@ test("fillFrom leaves a checked or cardio set, and fills only what matches", () 
   const cardio = set({ measure: "cardio", load: "weight" });
   assert.equal(fillFrom(cardio, last), cardio);
   // A weight is not an added weight: only the reps carry over.
-  const plus = fillFrom(
-    set({ load: "bodyweight", extraWeight: true }),
-    last,
-  );
+  const plus = fillFrom(set({ load: "bodyweight", extraWeight: true }), last);
   assert.equal(plus.weight, null);
   assert.equal(plus.reps, 5);
   // No load: nothing to weigh, the reps still fill.
@@ -123,10 +117,7 @@ test("fillFrom leaves a checked or cardio set, and fills only what matches", () 
   assert.equal(none.weight, null);
   assert.equal(none.reps, 5);
   // Seconds are not reps.
-  const hold = fillFrom(
-    set({ load: "bodyweight", measure: "seconds" }),
-    last,
-  );
+  const hold = fillFrom(set({ load: "bodyweight", measure: "seconds" }), last);
   assert.equal(hold.reps, null);
   // A hold with added weight fills both from a hold with added weight.
   const plank = fillFrom(
