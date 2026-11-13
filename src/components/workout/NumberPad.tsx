@@ -119,11 +119,19 @@ export default function NumberPad({
   if (entry.key !== key || entry.text !== text)
     setEntry({ key, text, fresh: true });
 
-  // A checked, deleted or no longer typed field closes the pad.
+  // The set it types was checked some other way than the pad's own Bocka or
+  // the row's ✓ (which move it first): it moves on to the next open set of the
+  // exercise, or closes at the end of it. A deleted or no longer typed field
+  // closes it.
   const gone = !set || set.done || !fields.includes(field);
   useEffect(() => {
-    // Only if the pad is still there: Check has already moved it on.
-    if (gone) setTarget((current) => (current === target ? null : current));
+    if (!gone) return;
+    setTarget((current) => {
+      if (current !== target) return current;
+      const w = latest.current.workout;
+      const here = locate(w, target.setId);
+      return here?.set.done ? padAfterCheck(w.exercises, target.setId) : null;
+    });
   }, [gone, target, setTarget]);
 
   /** Typed text that is not a finished number ("87,") is cleaned up on leaving. */
@@ -178,7 +186,8 @@ export default function NumberPad({
     return () => input.removeAttribute("data-pad-target");
   }, [target]);
 
-  // A tap outside the pad and the fields, focus on another field, or Escape.
+  // Only a tap outside the pad and the set fields closes it (or Escape, or a
+  // drag on its handle): moving focus by itself never does.
   const selfClick = useRef(false);
   const drag = useRef<{ y0: number; t0: number; dy: number } | null>(null);
   useEffect(() => {
@@ -197,24 +206,13 @@ export default function NumberPad({
       if (check) return checkRef.current(check);
       if (!inside(node)) closeRef.current();
     };
-    const onFocus = (event: FocusEvent) => {
-      const node = event.target;
-      if (
-        node instanceof Element &&
-        node.matches("input, textarea, select") &&
-        !inside(node)
-      )
-        closeRef.current();
-    };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") closeRef.current();
     };
     document.addEventListener("click", onClick, true);
-    document.addEventListener("focusin", onFocus, true);
     document.addEventListener("keydown", onKey);
     return () => {
       document.removeEventListener("click", onClick, true);
-      document.removeEventListener("focusin", onFocus, true);
       document.removeEventListener("keydown", onKey);
     };
   }, [container]);
