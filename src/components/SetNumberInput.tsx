@@ -103,6 +103,15 @@ export default function SetNumberInput({
       onPointerCancel={selection.current.onPointerCancel}
       onLostPointerCapture={selection.current.onLostPointerCapture}
       onClick={selection.current.onClick}
+      // The number pad's fields on a touch screen: the tap is handled on
+      // pointerup, and stopping the touch's end keeps iOS from focusing them.
+      onTouchEnd={(event) => {
+        if (
+          event.cancelable &&
+          event.currentTarget.getAttribute("inputmode") === "none"
+        )
+          event.preventDefault();
+      }}
       className={`set-number-input ${className}`.trim()}
       type="text"
       dir="ltr"

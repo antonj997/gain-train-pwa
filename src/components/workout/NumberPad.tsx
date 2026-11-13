@@ -175,13 +175,19 @@ export default function NumberPad({
     setTarget(next);
   };
 
-  // The field it types keeps focus and a ring, and the pad follows focus.
+  // The field it types gets a ring. With a mouse and keyboard it also keeps
+  // focus, so typing still works; on a touch screen no field holds focus
+  // (inputmode none), since every move of focus makes iPhone hide and show
+  // its keyboard state and shift the view, and the pad would seem to blink.
   useEffect(() => {
     const input = inputFor(target);
     if (!input) return;
     input.setAttribute("data-pad-target", "");
     const active = document.activeElement;
-    if (active !== input && !pad.current?.contains(active))
+    if (input.getAttribute("inputmode") === "none") {
+      if (active instanceof HTMLElement && active.matches("[data-pad-field]"))
+        active.blur();
+    } else if (active !== input && !pad.current?.contains(active))
       input.focus({ preventScroll: true });
     return () => input.removeAttribute("data-pad-target");
   }, [target]);
