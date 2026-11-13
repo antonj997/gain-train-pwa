@@ -181,30 +181,25 @@ export function padNext(exercises: PadExercise[], current: PadTarget): PadNext {
 }
 
 /**
- * Where the pad goes once a set is checked: the first field of the first
- * unchecked set in the workout outside that set's group, or nowhere when that
- * set has no field the pad types (or every set is checked).
+ * Where the pad goes once a set is checked: the first field of the next
+ * unchecked set below that set's group in the same exercise. Nowhere (the pad
+ * closes) at the end of the exercise, when that set has no field the pad
+ * types, or when every set below is checked: it never jumps to another
+ * exercise.
  */
 export function padAfterCheck(
   exercises: PadExercise[],
   checkedId: string,
 ): PadTarget | null {
   const found = locate(exercises, checkedId);
-  const group = found ? dropGroup(found.sets, found.index) : null;
-  for (const exercise of exercises)
-    for (let i = 0; i < exercise.sets.length; i++) {
-      const set = exercise.sets[i];
-      if (set.done) continue;
-      if (
-        found &&
-        group &&
-        exercise.sets === found.sets &&
-        i >= group.start &&
-        i < group.end
-      )
-        continue;
-      const fields = padFields(set);
-      return fields.length ? { setId: set.id, field: fields[0] } : null;
-    }
+  if (!found) return null;
+  const { sets } = found;
+  const group = dropGroup(sets, found.index);
+  for (let i = group.end; i < sets.length; i++) {
+    const set = sets[i];
+    if (set.done) continue;
+    const fields = padFields(set);
+    return fields.length ? { setId: set.id, field: fields[0] } : null;
+  }
   return null;
 }

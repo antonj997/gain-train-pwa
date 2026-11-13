@@ -11,7 +11,7 @@ import {
 import { Check, ChevronRight, Delete } from "lucide-react";
 import type { Workout, WorkoutSet } from "@/data/model";
 import { labelSet } from "@/data/model";
-import { setBadge } from "@/data/drops";
+import { dropGroup, setBadge } from "@/data/drops";
 import { previousResult, type LastSession } from "@/data/workouts";
 import { groupComplete } from "@/lib/workout-editor";
 import { changeSetNumber, getSetInputText } from "@/lib/set-input";
@@ -142,6 +142,26 @@ export default function NumberPad({
   };
   const closeRef = useRef(close);
   closeRef.current = close;
+  /**
+   * A tap on a row's ✓ while the pad is open. Checking the set the pad types
+   * (or its drops) moves the pad to the next open set of that exercise, or
+   * closes it at the end of the exercise. Any other ✓ leaves the pad where it
+   * is, and so does a check the row refuses (an incomplete set).
+   */
+  const onRowCheck = (button: HTMLElement) => {
+    const setId = button.closest("[data-set-id]")?.getAttribute("data-set-id");
+    const { workout: w, target: at } = latest.current;
+    const head = setId ? locate(w, setId) : null;
+    if (!head || head.set.done || !at) return;
+    const { start, end } = dropGroup(head.exercise.sets, head.index);
+    const group = head.exercise.sets.slice(start, end);
+    if (!group.some((s) => s.id === at.setId)) return;
+    if (!groupComplete(head.exercise.sets, head.index)) return;
+    commit(at);
+    setTarget(padAfterCheck(w.exercises, head.set.id));
+  };
+  const checkRef = useRef(onRowCheck);
+  checkRef.current = onRowCheck;
   const moveTo = (next: PadTarget | null) => {
     commit(latest.current.target);
     setTarget(next);
@@ -167,7 +187,15 @@ export default function NumberPad({
       (!!container.current?.contains(node) ||
         !!node.closest("[data-pad-field], [data-pad-keep]"));
     const onClick = (event: MouseEvent) => {
-      if (!selfClick.current && !inside(event.target)) closeRef.current();
+      if (selfClick.current) return;
+      const node = event.target;
+      // A row's own ✓ keeps the pad: checking the set it types moves it on.
+      const check =
+        node instanceof Element
+          ? node.closest<HTMLElement>(".set-check")
+          : null;
+      if (check) return checkRef.current(check);
+      if (!inside(node)) closeRef.current();
     };
     const onFocus = (event: FocusEvent) => {
       const node = event.target;
@@ -259,8 +287,15 @@ export default function NumberPad({
         clickCheck(headId);
         return;
       }
-      setTarget(padAfterCheck(w.exercises, headId));
+      const after = padAfterCheck(w.exercises, headId);
+      setTarget(after);
       clickCheck(headId);
+      // The end of the exercise: the pad closes and the field lets go.
+      if (!after) {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && active.matches("[data-pad-field]"))
+          active.blur();
+      }
     }, 0);
   };
 
