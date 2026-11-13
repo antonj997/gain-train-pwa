@@ -23,6 +23,7 @@ import { useDisplayName } from "@/hooks/useDisplayName";
 import {
   GoalSheet,
   VibrateSetting,
+  AskRirSetting,
   LanguageSheet,
   ThemeSheet,
 } from "@/components/settings/PreferenceSheets";
@@ -155,6 +156,10 @@ export default function Settings() {
             onChange={updatePreferences}
           />
           <VibrateSetting
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+          <AskRirSetting
             preferences={preferences}
             onChange={updatePreferences}
           />

@@ -15,6 +15,8 @@ export type TrainingPreferences = {
   weightUnit: WeightUnit;
   /** A short sound when a rest runs out (on unless switched off). */
   restSound: boolean;
+  /** After a set is checked, offer reps in reserve for a few seconds (off unless switched on). */
+  askRir: boolean;
 };
 export function parseWeeklyGoal(value: string | null): number | null {
   if (value === null || value.trim() === "") return null;
@@ -27,6 +29,7 @@ export function normalizeTrainingPreferences(
   weeklyGoal: string | null = null,
   weightUnit: string | null = null,
   restSound: string | null = null,
+  askRir: string | null = null,
 ): TrainingPreferences {
   const value = Number(rest);
   return {
@@ -36,6 +39,7 @@ export function normalizeTrainingPreferences(
     weeklyGoal: parseWeeklyGoal(weeklyGoal),
     weightUnit: parseWeightUnit(weightUnit),
     restSound: restSound !== "false",
+    askRir: askRir === "true",
   };
 }
 export function readTrainingPreferences(): TrainingPreferences {
@@ -45,6 +49,7 @@ export function readTrainingPreferences(): TrainingPreferences {
     local.getItem(storageKeys.weeklyGoal),
     local.getItem(storageKeys.weightUnit),
     local.getItem(storageKeys.restSound),
+    local.getItem(storageKeys.askRir),
   );
 }
 export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
@@ -57,6 +62,7 @@ export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
   );
   writeStored(storageKeys.weightUnit, next.weightUnit);
   writeStored(storageKeys.restSound, next.restSound ? null : "false");
+  writeStored(storageKeys.askRir, next.askRir ? "true" : null);
   // Labels built outside React read the unit from its module, so it changes first.
   setCurrentWeightUnit(next.weightUnit);
   window.dispatchEvent(new Event(TRAINING_PREFERENCES_EVENT));

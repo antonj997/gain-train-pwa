@@ -1,5 +1,6 @@
 import { type Workout, today } from "@/data/model";
 import { selectInputValue } from "@/lib/set-editing";
+import { WORKOUT_NOTE_MAX } from "@/lib/workout-note";
 import Sheet from "@/components/ui/Sheet";
 import { useT } from "@/i18n/useT";
 
@@ -8,7 +9,7 @@ type BodyProps = {
   onChange: (workout: Workout) => void;
 };
 
-/** The details sheet's fields: name, date and an optional duration. */
+/** The details sheet's fields: name, date, an optional duration and the workout's note. */
 function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
   const { t } = useT();
   return (
@@ -51,6 +52,18 @@ function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
               duration: e.target.value === "" ? null : Number(e.target.value),
             })
           }
+        />
+      </label>
+      {/* The same note as the Finish sheet's; it is saved trimmed. */}
+      <label className="sheet-field">
+        <span className="sheet-label">{t("workout.noteLabel")}</span>
+        <textarea
+          className="finish-note"
+          rows={2}
+          maxLength={WORKOUT_NOTE_MAX}
+          placeholder={t("workout.note")}
+          value={w.note ?? ""}
+          onChange={(e) => onChange({ ...w, note: e.target.value })}
         />
       </label>
     </>

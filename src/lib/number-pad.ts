@@ -7,7 +7,7 @@
  */
 import type { WorkoutSet } from "../data/model";
 import { dropGroup, isDrop } from "../data/drops";
-import { hasExtraWeight } from "./set-load";
+import { hasWeightField } from "./set-load";
 import type { WeightUnit } from "./units";
 export { DRAG_SLOP, DRAG_STEP_PX, dragIntent, dragSteps } from "./drag-step";
 
@@ -126,13 +126,13 @@ export function padStepLabel(
 
 /**
  * The fields of a set the pad types, in Next's order. A plain bodyweight set
- * has no load to type, a timed set counts seconds (its own field) and cardio
- * keeps its own inputs.
+ * and a set with no load have no load to type, a timed set counts seconds
+ * (its own field) and cardio keeps its own inputs.
  */
 export function padFields(set: WorkoutSet): PadField[] {
   if (set.measure === "cardio") return [];
   const fields: PadField[] = [];
-  if (set.load !== "bodyweight" || hasExtraWeight(set)) fields.push("weight");
+  if (hasWeightField(set)) fields.push("weight");
   if (set.measure !== "seconds") fields.push("reps");
   return fields;
 }

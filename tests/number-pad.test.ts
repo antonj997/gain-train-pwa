@@ -116,6 +116,19 @@ test("the pad types a load and reps; plain bodyweight only reps, holds and cardi
   );
   assert.deepEqual(padFields(set({ measure: "seconds" })), ["weight"]);
   assert.deepEqual(padFields(set({ measure: "cardio" })), []);
+  // No load: only the reps; a plank with no load: nothing.
+  assert.deepEqual(padFields(set({ load: "none", weight: null })), ["reps"]);
+  assert.deepEqual(
+    padFields(set({ load: "none", weight: null, measure: "seconds" })),
+    [],
+  );
+  // A plank with added weight types the weight; its seconds keep the keyboard.
+  assert.deepEqual(
+    padFields(
+      set({ load: "bodyweight", extraWeight: true, measure: "seconds" }),
+    ),
+    ["weight"],
+  );
 });
 
 const bench = {

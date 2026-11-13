@@ -1365,3 +1365,264 @@
   top: 0;
   left: 0;
 }
+
+/* ---- Mockup v5, phase 4b: targets, RIR, no load, the Finish sheet ---- */
+
+/* Previous is a button on an unchecked set: one tap fills the set with its
+   target, else with last time's result. The target sits under it: accent on
+   the next set, quieter on the others. */
+.set-line button.set-previous {
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--gt-radius-sm);
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color var(--gt-motion);
+}
+.set-line button.set-previous:active {
+  background-color: color-mix(in srgb, var(--gt-accent) 12%, transparent);
+}
+.set-target {
+  display: block;
+  margin-top: 2px;
+  color: var(--gt-ink-3);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  /* It wraps after "Target" if at all; the value (joined by no-break
+     spaces) may run into the empty slot column of an open set. */
+  overflow-wrap: normal;
+  white-space: normal;
+}
+.set-target.is-next {
+  color: var(--gt-accent);
+}
+
+/* A deload week: a small tag by the exercise's name. */
+.ex-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--gt-space-2);
+  row-gap: 2px;
+  min-width: 0;
+}
+.ex-tag {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--gt-cool-bg);
+  color: var(--gt-cool-fg);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* No load: no field to type, a muted dash in the load column. */
+.set-noload {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  color: var(--gt-ink-3);
+  font-size: var(--gt-fs-4);
+}
+
+/* The set's RIR, small and muted under its result. */
+.set-rir {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  left: 0;
+  z-index: 1;
+  color: var(--gt-ink-3);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* A rep record or an estimated 1RM: a quieter mark than the heaviest weight's
+   warm circle. */
+.set-record.is-quiet {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px
+    color-mix(in srgb, var(--gt-warm-fg) 45%, transparent);
+  color: color-mix(in srgb, var(--gt-warm-fg) 80%, var(--gt-ink-2));
+}
+
+/* Ask for RIR after a check: a compact line under the row for 4 s. It grows
+   in below the row, so it covers nothing. */
+.set-rir-ask {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 var(--gt-space-1);
+}
+.set-rir-ask-title {
+  flex: none;
+  margin-right: var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.set-rir-choice,
+.set-rir-skip {
+  flex: none;
+  min-width: 44px;
+  height: 40px;
+  padding: 0 var(--gt-space-2);
+  border: 1px solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  touch-action: manipulation;
+}
+.set-rir-choice[aria-pressed="true"] {
+  border-color: var(--gt-accent);
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+}
+.set-rir-skip {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  padding: 0;
+  border-color: transparent;
+  background: none;
+  color: var(--gt-ink-2);
+}
+
+/* The Set sheet's quiet way to RIR until it is used. */
+.set-sheet-add-rir {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 var(--gt-space-1);
+  border: 0;
+  background: none;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
+
+/* The number pad's Target key, under Previous in its head. */
+.number-pad-target {
+  position: relative;
+  margin-top: 4px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+/* A 44px target around the small chip. */
+.number-pad-target::before {
+  content: "";
+  position: absolute;
+  inset: -8px -4px;
+}
+
+/* The Finish sheet: tiles that count up, record pills, the note. */
+.finish-tiles strong {
+  display: inline-block;
+  font-size: var(--gt-fs-5);
+  letter-spacing: -0.02em;
+  transform-origin: 0 60%;
+  white-space: nowrap;
+}
+/* The counted value is a span inside: it reads as the value, not the label. */
+.finish-tiles strong span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+.finish-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.finish-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  max-width: 100%;
+  padding: 0 10px;
+  overflow: hidden;
+  border-radius: 14px;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.finish-pill > span[aria-hidden="true"]:not(.finish-pill-sheen) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.finish-pill.is-quiet {
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
+.finish-pill svg {
+  flex: none;
+}
+.finish-pill-sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    var(--gt-sheen),
+    transparent
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.finish-note {
+  display: block;
+  min-height: 64px;
+  border-color: var(--gt-line-strong);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  resize: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.finish-note::placeholder {
+  color: var(--gt-ink-3);
+}
+.finish-note:focus {
+  border-color: var(--gt-accent);
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 0;
+}
+
+/* Five loads on one line in the Set sheet: a step smaller, never wrapped. */
+.set-sheet-loads .segmented button {
+  padding: 0 2px;
+  font-size: var(--gt-fs-2);
+  white-space: nowrap;
+}

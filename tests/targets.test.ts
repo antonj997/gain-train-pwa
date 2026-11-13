@@ -7,6 +7,7 @@ import {
   suggestTarget,
   targetHistory,
   targetLabel,
+  workoutTargets,
 } from "../src/data/targets";
 import { setCurrentLanguage } from "../src/i18n";
 import { KG_PER_LB } from "../src/lib/units";
@@ -377,4 +378,49 @@ test("targetLabel reads the target in the set's words", () => {
     "Mål 87,5 kg × 5",
   );
   setCurrentLanguage("en");
+});
+
+test("workoutTargets gives each working set its target, lighter in a deload week", () => {
+  const records = [
+    record("2026-11-01", [set({ reps: 5 }), set({ reps: 4 })]),
+    record("2026-11-08", [set({ reps: 6 }), set({ reps: 5 })]),
+  ];
+  const sets = [
+    set({ done: false, section: "warmup" }),
+    set({ done: false }),
+    set({ done: false, drop: true }),
+    set({ done: false }),
+  ];
+  const payload = {
+    ...(records[0].payload as Workout),
+    date: "2026-11-12",
+    status: "draft" as const,
+    exercises: [
+      {
+        id: crypto.randomUUID(),
+        exerciseId: "builtin:bench-press",
+        name: "Bench Press",
+        sets,
+      },
+    ],
+  };
+  const current = { id: crypto.randomUUID(), payload };
+  const targets = workoutTargets(records, current, "kg");
+  // The warm-up and the drop have none.
+  assert.deepEqual([...targets.keys()], [sets[1].id, sets[3].id]);
+  assert.deepEqual(targets.get(sets[1].id)!.target, { weight: 82.5, reps: 6 });
+  assert.equal(targets.get(sets[1].id)!.last.reps, 6);
+  const deload = workoutTargets(
+    records,
+    {
+      ...current,
+      payload: {
+        ...payload,
+        plan: { planId: PLAN, week: 4, weeks: 8, deload: true },
+      },
+    },
+    "kg",
+  );
+  // 10 % lighter than last time's 80 kg, the same reps.
+  assert.deepEqual(deload.get(sets[1].id)!.target, { weight: 72.5, reps: 6 });
 });

@@ -21,6 +21,7 @@ import { HOLD_MAX } from "./rep-hold";
 import { getSetInputText } from "./set-input";
 import { toggleSetCompletion } from "./set-editing";
 import { autoWorkoutName, type CategoryLookup } from "./workout-name";
+import { withWorkoutNote } from "./workout-note";
 import { t } from "../i18n";
 
 export type SetIssues = Partial<
@@ -179,7 +180,8 @@ export function finishWorkout(
         : null),
     exercises,
   };
-  return validate("workout", result);
+  // The note is typed as it comes; it is saved trimmed, or not at all.
+  return validate("workout", withWorkoutNote(result, workout.note));
 }
 
 /** True when the set and each of its drops have values that can be checked. */

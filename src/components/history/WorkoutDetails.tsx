@@ -15,20 +15,10 @@ import { lastSessions, priorWorkouts } from "@/data/workouts";
 import type { Workout } from "@/data/model";
 import { completedWorkouts, doneSetCount } from "@/data/selectors";
 import { summarize } from "@/data/summary";
-import { countLabel, durationLabel } from "@/lib/labels";
+import { countLabel, durationLabel, volumeLabel } from "@/lib/labels";
 import { exercisePath, workoutPath } from "@/lib/routes";
-import { getWeightUnit, weightTotal } from "@/lib/units";
 import { workoutNoteOf } from "@/lib/workout-note";
-import { formatFixed, t } from "@/i18n";
-
-/** "1.7 t", "830 kg", or in pounds "3.8 k lb". */
-function volumeLabel(kg: number) {
-  const unit = getWeightUnit();
-  const value = weightTotal(kg, unit);
-  return value >= 1000
-    ? `${formatFixed(value / 1000, 1)} ${unit === "lb" ? "k lb" : "t"}`
-    : `${Math.round(value)} ${unit}`;
-}
+import { t } from "@/i18n";
 
 type Props = {
   id: string;

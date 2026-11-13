@@ -103,6 +103,24 @@ export function VibrateSetting({
   );
 }
 
+/** After a checked set, offer reps in reserve for a few seconds (off by default). */
+export function AskRirSetting({
+  preferences,
+  onChange,
+}: Pick<SheetProps, "preferences" | "onChange">) {
+  const { t } = useT();
+  return (
+    <div className="rest-setting">
+      <Switch
+        label={t("settings.askRir")}
+        hint={t("settings.askRirNote")}
+        checked={preferences.askRir}
+        onChange={(askRir) => onChange({ askRir })}
+      />
+    </div>
+  );
+}
+
 export function ThemeSheet({
   open,
   onClose,

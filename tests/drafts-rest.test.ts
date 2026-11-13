@@ -95,6 +95,7 @@ test("rest and haptics stay off for absent or malformed preferences", () => {
     weeklyGoal: null,
     weightUnit: "kg",
     restSound: true,
+    askRir: false,
   });
   assert.deepEqual(normalizeTrainingPreferences("-10", "yes"), {
     restSeconds: 0,
@@ -102,6 +103,7 @@ test("rest and haptics stay off for absent or malformed preferences", () => {
     weeklyGoal: null,
     weightUnit: "kg",
     restSound: true,
+    askRir: false,
   });
   assert.deepEqual(normalizeTrainingPreferences("90", "true"), {
     restSeconds: 90,
@@ -109,6 +111,7 @@ test("rest and haptics stay off for absent or malformed preferences", () => {
     weeklyGoal: null,
     weightUnit: "kg",
     restSound: true,
+    askRir: false,
   });
 });
 
@@ -118,6 +121,15 @@ test("the rest sound is on unless switched off", () => {
   assert.equal(sound(null), true);
   assert.equal(sound("true"), true);
   assert.equal(sound("false"), false);
+});
+
+test("asking for reps in reserve is off unless switched on", () => {
+  const ask = (raw: string | null) =>
+    normalizeTrainingPreferences("90", null, null, null, null, raw).askRir;
+  assert.equal(ask(null), false);
+  assert.equal(ask("false"), false);
+  assert.equal(ask("yes"), false);
+  assert.equal(ask("true"), true);
 });
 
 test("workout recovery keeps the stored version it was based on", () => {

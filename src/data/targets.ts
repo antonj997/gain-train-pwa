@@ -245,3 +245,34 @@ export function targetLabel(target: SetTarget, set: WorkoutSet) {
   };
   return t("target.label", { value: labelSet(shown, false) });
 }
+
+/** A set's target in a running workout, with the set it builds on. */
+export type WorkoutSetTarget = {
+  target: SetTarget;
+  /** Last time's set the target steps from: its load kind and measure. */
+  last: WorkoutSet;
+};
+
+/**
+ * Every set's target in a workout, by set id (sets without one are left
+ * out): each set against the same set in earlier sessions (targetHistory),
+ * in the plan's deload week lightened (deloadFor). For the workout screen,
+ * which shows it under Previous and fills it in with one tap.
+ */
+export function workoutTargets(
+  records: Record<string, RecordDoc> | readonly RecordDoc[],
+  current: { id: string; payload: Workout },
+  unit: WeightUnit,
+): Map<string, WorkoutSetTarget> {
+  const deload = deloadFor(records, current.payload);
+  const targets = new Map<string, WorkoutSetTarget>();
+  current.payload.exercises.forEach((exercise, exerciseIndex) =>
+    exercise.sets.forEach((set, setIndex) => {
+      if (isDrop(set) || set.section !== "working" || isCardioSet(set)) return;
+      const history = targetHistory(records, current, exerciseIndex, setIndex);
+      const target = suggestTarget(history, { deload }, unit);
+      if (target) targets.set(set.id, { target, last: history[0] });
+    }),
+  );
+  return targets;
+}

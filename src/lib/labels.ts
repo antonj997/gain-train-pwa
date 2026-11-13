@@ -1,4 +1,5 @@
-import { t, type MessageKey } from "../i18n";
+import { formatFixed, t, type MessageKey } from "../i18n";
+import { getWeightUnit, weightTotal } from "./units";
 
 const NOUNS = {
   set: "count.set",
@@ -31,6 +32,14 @@ export function durationLabel(minutes: number) {
   const m = total % 60;
   if (!h) return t("duration.minutes", { m });
   return m ? t("duration.hoursMinutes", { h, m }) : t("duration.hours", { h });
+}
+/** A workout's volume: "1.7 t", "830 kg", or in pounds "3.8 k lb". */
+export function volumeLabel(kg: number) {
+  const unit = getWeightUnit();
+  const value = weightTotal(kg, unit);
+  return value >= 1000
+    ? `${formatFixed(value / 1000, 1)} ${unit === "lb" ? "k lb" : "t"}`
+    : `${Math.round(value)} ${unit}`;
 }
 /** The Finish sheet's one-line summary of what saving keeps and leaves out. */
 export function finishSummary(completed: number, unchecked: number) {

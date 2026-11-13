@@ -10,6 +10,7 @@ import type { Workout, WorkoutSet } from "@/data/model";
 import type { LastSession } from "@/data/workouts";
 import type { PadTarget } from "@/lib/number-pad";
 import type { WeightUnit } from "@/lib/units";
+import type { FillSource } from "@/lib/set-target";
 import { EASE, MOTION, play, settled } from "@/lib/motion";
 import { useKeepAboveSheet } from "@/hooks/useKeepAboveSheet";
 import NumberPad from "@/components/workout/NumberPad";
@@ -38,6 +39,7 @@ export default function WorkoutDock({
     previous: Map<string, LastSession>;
     unit: WeightUnit;
     changeSet: (setId: string, change: (set: WorkoutSet) => WorkoutSet) => void;
+    targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
   };
 }) {
   const root = useRef<HTMLDivElement>(null);

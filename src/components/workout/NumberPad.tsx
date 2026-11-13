@@ -30,6 +30,7 @@ import {
   type PadTarget,
 } from "@/lib/number-pad";
 import { fromUnit, toUnit, type WeightUnit } from "@/lib/units";
+import { fillFrom, type FillSource } from "@/lib/set-target";
 import { formatDecimal } from "@/i18n";
 import { useT } from "@/i18n/useT";
 import { SPRING, playSpring } from "@/lib/motion";
@@ -80,6 +81,7 @@ export default function NumberPad({
   previous,
   unit,
   changeSet,
+  targets,
   container,
   dropFrom,
 }: {
@@ -90,6 +92,8 @@ export default function NumberPad({
   previous: Map<string, LastSession>;
   unit: WeightUnit;
   changeSet: (setId: string, change: (set: WorkoutSet) => WorkoutSet) => void;
+  /** Each set's target by set id: the pad's Target key fills it in. */
+  targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
   /** The dock that slides with the pad: a drag on the handle moves it. */
   container: RefObject<HTMLDivElement>;
   /** Where a drag let go, for the slide out. */
@@ -161,7 +165,7 @@ export default function NumberPad({
     const inside = (node: EventTarget | null) =>
       node instanceof Element &&
       (!!container.current?.contains(node) ||
-        !!node.closest("[data-pad-field]"));
+        !!node.closest("[data-pad-field], [data-pad-keep]"));
     const onClick = (event: MouseEvent) => {
       if (!selfClick.current && !inside(event.target)) closeRef.current();
     };
@@ -217,18 +221,15 @@ export default function NumberPad({
     write(nextText);
     playStep(inputFor(target), direction);
   };
-  const same = () => {
-    if (!prior) return;
-    changeSet(set.id, (s) => {
-      let result = s;
-      if (fields.includes("weight") && prior.weight !== null)
-        result = changeSetNumber(result, "weight", prior.weight);
-      if (fields.includes("reps") && prior.reps !== null)
-        result = changeSetNumber(result, "reps", prior.reps);
-      return result;
-    });
+  // Same as last, or the target: both fields at once, the pad stays.
+  const fill = (source: FillSource | undefined) => {
+    if (!source) return;
+    changeSet(set.id, (s) => fillFrom(s, source));
     setEntry((e) => ({ ...e, fresh: true }));
+    for (const f of fields) playStep(inputFor({ setId: set.id, field: f }), 1);
   };
+  const same = () => fill(prior);
+  const goal = targets?.get(set.id);
   const clickCheck = (setId: string) => {
     selfClick.current = true;
     try {
@@ -335,6 +336,17 @@ export default function NumberPad({
               ? t("pad.previous", { value: labelSet(prior) })
               : t("pad.noPrevious")}
           </p>
+          {/* The Target key: fills the set's target in one tap. */}
+          {goal && (
+            <button
+              type="button"
+              className="number-pad-target"
+              aria-label={t("pad.fillTarget", { value: goal.text })}
+              onClick={() => fill(goal.source)}
+            >
+              {goal.text}
+            </button>
+          )}
         </div>
         <Segmented<PadField>
           label={t("pad.field")}
