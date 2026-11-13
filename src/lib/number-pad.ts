@@ -69,6 +69,19 @@ export function padValue(text: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+/**
+ * What a hardware key does on the pad while no field holds focus (a touch
+ * screen with a keyboard attached): a digit, the decimal mark (either "." or
+ * ","), backspace, or Enter for the pad's Next. Null for any other key.
+ */
+export function padKeyFor(key: string): PadKey | "next" | null {
+  if (/^[0-9]$/.test(key)) return key as PadKey;
+  if (key === "." || key === ",") return "decimal";
+  if (key === "Backspace") return "backspace";
+  if (key === "Enter") return "next";
+  return null;
+}
+
 /** The text after one key. Keys that would break the format do nothing. */
 export function pressPadKey(
   entry: PadEntry,

@@ -17,6 +17,7 @@ import { groupComplete } from "@/lib/workout-editor";
 import { changeSetNumber, getSetInputText } from "@/lib/set-input";
 import {
   padAfterCheck,
+  padKeyFor,
   padFields,
   padFormat,
   padNext,
@@ -185,7 +186,12 @@ export default function NumberPad({
     input.setAttribute("data-pad-target", "");
     const active = document.activeElement;
     if (input.getAttribute("inputmode") === "none") {
-      if (active instanceof HTMLElement && active.matches("[data-pad-field]"))
+      // Whatever field had focus lets go, also one the phone's own keyboard
+      // types (a hold, a timed set, cardio): that keyboard closes for the pad.
+      if (
+        active instanceof HTMLElement &&
+        active.matches("input, textarea, select")
+      )
         active.blur();
     } else if (active !== input && !pad.current?.contains(active))
       input.focus({ preventScroll: true });
@@ -195,6 +201,7 @@ export default function NumberPad({
   // Only a tap outside the pad and the set fields closes it (or Escape, or a
   // drag on its handle): moving focus by itself never does.
   const selfClick = useRef(false);
+  const keysRef = useRef<((key: PadKey | "next") => void) | null>(null);
   const drag = useRef<{ y0: number; t0: number; dy: number } | null>(null);
   useEffect(() => {
     const inside = (node: EventTarget | null) =>
@@ -213,7 +220,25 @@ export default function NumberPad({
       if (!inside(node)) closeRef.current();
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeRef.current();
+      if (event.key === "Escape") return closeRef.current();
+      // A keyboard attached to a touch screen: no field holds focus there, so
+      // its keys type on the pad. A focused field takes its own typing.
+      const active = document.activeElement;
+      if (
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        (active instanceof HTMLElement &&
+          (active.isContentEditable ||
+            active.matches("input, textarea, select")))
+      )
+        return;
+      const padKey = padKeyFor(event.key);
+      if (!padKey) return;
+      // Enter on a focused button (the pad's own keys) presses that button.
+      if (padKey === "next" && active instanceof HTMLButtonElement) return;
+      event.preventDefault();
+      keysRef.current?.(padKey);
     };
     document.addEventListener("click", onClick, true);
     document.addEventListener("keydown", onKey);
@@ -302,6 +327,8 @@ export default function NumberPad({
       }
     }, 0);
   };
+
+  keysRef.current = (k) => (k === "next" ? onNext() : press(k));
 
   // A drag on the handle moves the pad (and the dock above it) down: let go
   // past 90 px, or faster than 0.6 px/ms, and it closes; else it springs back.

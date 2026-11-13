@@ -5,6 +5,7 @@ import {
   dragIntent,
   dragSteps,
   padAfterCheck,
+  padKeyFor,
   padFields,
   padFormat,
   padNext,
@@ -200,4 +201,15 @@ test("after a check the pad goes to the next open set below in the same exercise
     padAfterCheck([{ sets: [set({ id: "a", done: true })] }], "a"),
     null,
   );
+});
+
+test("hardware keys map to pad keys: digits, either decimal mark, Backspace and Enter for Next", () => {
+  assert.equal(padKeyFor("7"), "7");
+  assert.equal(padKeyFor("."), "decimal");
+  assert.equal(padKeyFor(","), "decimal");
+  assert.equal(padKeyFor("Backspace"), "backspace");
+  assert.equal(padKeyFor("Enter"), "next");
+  assert.equal(padKeyFor("a"), null);
+  assert.equal(padKeyFor("Tab"), null);
+  assert.equal(padKeyFor("10"), null);
 });
