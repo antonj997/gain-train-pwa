@@ -59,5 +59,6 @@ export function usePreviousResults(
       ),
     [defaultsKey],
   );
-  return { previous, defaults };
+  // historyKey: changes only when another finished workout does.
+  return { previous, defaults, historyKey };
 }

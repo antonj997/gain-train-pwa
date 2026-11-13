@@ -14,9 +14,14 @@
 // Each needs something earlier to beat: an exercise's first session holds no
 // record. Sets with no load ("none"), timed holds and cardio hold none.
 //
-// This is History's model. The workout screen's live record mark still uses
-// prEvents() (heaviest weight and best set volume) in exercise-records.ts.
-import { validSet, type RecordDoc, type WorkoutSet } from "./model";
+// History and the workout screen share it: the workout's live record mark and
+// the Finish sheet's record pills use liveRankedRecords below.
+import {
+  validSet,
+  type RecordDoc,
+  type Workout,
+  type WorkoutSet,
+} from "./model";
 import { isDrop } from "./drops";
 import { estimate } from "./estimate";
 import { completedWorkouts } from "./selectors";
@@ -187,6 +192,36 @@ export function workoutRecords(
     (event) => event.workoutId === workoutId,
   );
 }
+
+/**
+ * The records a workout holds so far, as if it were finished now: for the
+ * workout screen while it runs (the record mark on a checked set, the Finish
+ * sheet's pills) or while a finished one is edited. Only its checked, valid
+ * sets count; earlier finished workouts are what it beats, as in History.
+ */
+export function liveRankedRecords(
+  records: Record<string, RecordDoc> | readonly RecordDoc[],
+  workout: { id: string; payload: Workout },
+): RankedRecord[] {
+  const list = Array.isArray(records)
+    ? (records as readonly RecordDoc[])
+    : Object.values(records as Record<string, RecordDoc>);
+  const others = list.filter((record) => record.id !== workout.id);
+  const asFinished: RecordDoc = {
+    id: workout.id,
+    kind: "workout",
+    revision: 0,
+    deleted: false,
+    localVersion: 0,
+    dirty: false,
+    payload: { ...workout.payload, status: "completed" },
+  };
+  return workoutRecords([...others, asFinished], workout.id);
+}
+
+/** True for a record shown quietly: a rep record or an estimated 1RM, not the heaviest weight. */
+export const quietRecord = (kinds: readonly RecordKind[]) =>
+  kinds[0] !== "heaviest";
 
 /** One badge per workout id: the count of records and how loud it is. */
 export function recordBadges(

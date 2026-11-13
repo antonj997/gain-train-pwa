@@ -341,3 +341,37 @@ test("a refusal for load none is retried on the next sync, others wait for an ed
   assert.equal(state.records[id].syncError, undefined);
   assert.equal(state.records[id].dirty, false);
 });
+
+test("finishing saves the note trimmed, or drops a blank one", async () => {
+  const { finishWorkout } = await import("../src/lib/workout-editor");
+  const base = {
+    name: "Push",
+    date: "2026-11-01",
+    duration: 30,
+    startedAt: null,
+    status: "draft" as const,
+    exercises: [
+      {
+        id: crypto.randomUUID(),
+        exerciseId: "builtin:bench-press",
+        name: "Bench Press",
+        sets: [
+          {
+            id: crypto.randomUUID(),
+            reps: 5,
+            weight: 80,
+            load: "weight" as const,
+            section: "working" as const,
+            done: true,
+          },
+        ],
+      },
+    ],
+  };
+  assert.equal(
+    finishWorkout({ ...base, note: "  Felt strong \n" }).note,
+    "Felt strong",
+  );
+  assert.equal("note" in finishWorkout({ ...base, note: "   " }), false);
+  assert.equal("note" in finishWorkout(base), false);
+});

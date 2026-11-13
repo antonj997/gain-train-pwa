@@ -47,6 +47,13 @@ import {
   withLoadKey,
 } from "@/lib/load-keys";
 import { improvedSetIds } from "@/data/set-improvement";
+import {
+  quietRecord,
+  rankedKindsLabel,
+  type RecordKind,
+} from "@/data/record-rank";
+import { fillFrom, shortSetText, type FillSource } from "@/lib/set-target";
+import { withRir } from "@/lib/rir";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import {
@@ -114,11 +121,20 @@ export type ExerciseCardProps = {
   /** Called with the exercise's id when a set is newly checked as done. */
   onSetDone?: (exerciseId: string) => void;
   /**
-   * The records the workout's checked sets hold so far, by set id, as the
-   * label a screen reader hears (liveWorkoutPrs). The same Map while nothing
-   * changes, so memoised cards skip a render.
+   * The records the workout's checked sets hold so far, by set id, strongest
+   * kind first (liveRankedRecords: one set per exercise). The same Map while
+   * nothing changes, so memoised cards skip a render.
    */
-  records?: ReadonlyMap<string, string>;
+  records?: ReadonlyMap<string, readonly RecordKind[]>;
+  /**
+   * Each set's target (double progression) by set id: the text under
+   * Previous ("Target 87.5 × 5") and what a tap on it fills in.
+   */
+  targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
+  /** The workout is in a plan's deload week: a Deload tag by the name. */
+  deload?: boolean;
+  /** After a set is checked, offer its reps in reserve for a few seconds. */
+  askRir?: boolean;
   /** Shows the rest chip at the left of the card's foot: a live workout. */
   restChip?: boolean;
   /**
@@ -160,6 +176,13 @@ const keepTogether = (label: string, narrow = false) =>
     .replace(/× (\d)/, "×\u00a0$1")
     .replace(/· (\d+) s$/, "·\u00a0$1\u00a0s");
 
+/** The record mark's screen reader label, or nothing. */
+const recordLabel = (kinds: readonly RecordKind[] | undefined) =>
+  kinds?.length ? rankedKindsLabel(kinds) : undefined;
+/** A rep record or estimated 1RM: a quieter mark than the heaviest weight. */
+const quietMark = (kinds: readonly RecordKind[] | undefined) =>
+  !!kinds?.length && quietRecord(kinds);
+
 /** SetLine skips a render when nothing it shows changed; its callbacks are stable. */
 const SetLineMemo = memo(SetLine, (a, b) => {
   for (const key of Object.keys(b) as (keyof typeof b)[])
@@ -189,6 +212,9 @@ function ExerciseCard({
   onChangeExercise,
   onSetDone,
   records,
+  targets,
+  deload = false,
+  askRir = false,
   restChip = false,
   cardioFields: chosenFields,
   onCardioFields,
@@ -327,7 +353,32 @@ function ExerciseCard({
       : undefined;
   const previousOf = (index: number) => {
     const result = previousResult(lastSession?.sets ?? [], sets, index);
-    return result ? keepTogether(labelSet(result), hold) : undefined;
+    if (!result) return undefined;
+    // A hold reads short, as its target does: "+10 · 60 s".
+    if (result.measure === "seconds")
+      return shortSetText(result, result)
+        .replace(/ · /g, "\u00a0·\u00a0")
+        .replace(/(\d) s$/, "$1\u00a0s");
+    return keepTogether(labelSet(result), hold);
+  };
+  // A tap on Previous fills the set in one go with what it shows: the next
+  // set's target, else last time's result.
+  const fillSet = useStableCallback((setId: string) => {
+    const index = sets.findIndex((s) => s.id === setId);
+    if (index < 0) return;
+    const source =
+      (setId === nextSetId ? targets?.get(setId)?.source : undefined) ??
+      previousResult(lastSession?.sets ?? [], sets, index);
+    if (!source) return;
+    const next = fillFrom(sets[index], source);
+    if (next !== sets[index]) updateSet(next);
+  });
+  /** The target in the Set sheet's words: "87.5 kg × 5". */
+  const targetOf = (index: number) => {
+    const found = sets[index] && targets?.get(sets[index].id);
+    return found
+      ? labelSet({ ...sets[index], ...found.source } as WorkoutSet, false)
+      : undefined;
   };
 
   return (
@@ -340,9 +391,17 @@ function ExerciseCard({
       <div className="ex-head">
         <ExerciseAvatar exerciseId={ex.exerciseId} />
         <div className="ex-titles">
-          <h2 id={headingId} className="ex-title">
-            {ex.name}
-          </h2>
+          <div className="ex-title-row">
+            <h2 id={headingId} className="ex-title">
+              {ex.name}
+            </h2>
+            {deload && mode === "log" && (
+              <span className="ex-tag" title={t("workout.deloadTagSr")}>
+                <span aria-hidden="true">{t("workout.deloadTag")}</span>
+                <span className="sr-only">{t("workout.deloadTagSr")}</span>
+              </span>
+            )}
+          </div>
           {mode === "log" && lastSession && (
             <p className="ex-last">
               {t("exercise.last")}{" "}
@@ -455,7 +514,17 @@ function ExerciseCard({
             badge={setBadge(sets, i)}
             previous={previousOf(i)}
             improved={improved?.has(s.id) ?? false}
-            record={records?.get(s.id)}
+            record={recordLabel(records?.get(s.id))}
+            recordQuiet={quietMark(records?.get(s.id))}
+            // Only the next set shows its target, as the mockup does; a
+            // narrow Previous column has no room for one on every set.
+            target={
+              mode === "log" && !s.done && nextSetId === s.id
+                ? targets?.get(s.id)?.text
+                : undefined
+            }
+            onFill={mode === "log" ? fillSet : undefined}
+            askRir={askRir && mode === "log"}
             marker={loadMarker(s, defaultKey)}
             bodyWeightKg={mode === "log" ? bodyWeightKg : null}
             weightUnit={weightUnit}
@@ -500,6 +569,7 @@ function ExerciseCard({
           contentRef={setSheetRef}
           badge={setBadge(sets, shownIndex)}
           previous={previousOf(shownIndex)}
+          target={mode === "log" ? targetOf(shownIndex) : undefined}
           set={shown}
           dropCount={
             isDrop(shown) ? 0 : dropGroup(sets, shownIndex).end - shownIndex - 1
@@ -509,6 +579,9 @@ function ExerciseCard({
             changeSets(changeSection(sets, shown.id, section))
           }
           onLoadKey={(key) => updateSet(withLoadKey(shown, key))}
+          onRir={
+            mode === "log" ? (rir) => updateSet(withRir(shown, rir)) : undefined
+          }
           onAddDrop={() => {
             changeSets(addDrop(sets, shown.id));
             close();

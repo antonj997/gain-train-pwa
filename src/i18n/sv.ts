@@ -1767,4 +1767,27 @@ export const sv = {
     "Bara arbetsset. Ett set räknas helt för övningens huvudgrupp och till hälften för de andra den tränar.",
   "progress.volumeLine": "Volym {value}",
   "details.note": "Anteckning",
+
+  // Mockup v5, fas 4b: modellen i passvyn
+  "set.targetToday": "Mål i dag {value}",
+  "set.fillTarget": "Tryck för att fylla i målet",
+  "set.fillPrevious": "Tryck för att fylla i förra resultatet",
+  "set.noLoadSr": "{label}: ingen belastning",
+  "set.noneExplain": "Ingen = räknas utan belastning, till exempel planka.",
+  "set.rirTitle": "Reps kvar i tanken (RIR) · valfritt",
+  "set.addRir": "Lägg till RIR",
+  "set.rirNone": "Ingen RIR",
+  "set.rirAsk": "RIR?",
+  "set.rirAskLabel": "{label}: reps kvar i tanken",
+  "set.rirSkip": "Hoppa över",
+  "set.rirSr": "reps kvar i tanken {value}",
+  "pad.fillTarget": "Fyll i {value}",
+  "workout.deloadTag": "Deload",
+  "workout.deloadTagSr": "Deloadvecka: lättare mål",
+  "workout.note": "Anteckning för passet (valfritt)",
+  "workout.noteLabel": "Anteckning för passet",
+  "finish.recordsLabel": "Rekord i passet",
+  "settings.askRir": "Fråga efter RIR",
+  "settings.askRirNote":
+    "När du bockat ett set kan du välja reps kvar i tanken i 4 sekunder. Hoppa över lämnar det tomt.",
 } satisfies Messages;

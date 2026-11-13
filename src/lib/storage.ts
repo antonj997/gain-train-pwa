@@ -57,6 +57,8 @@ export const storageKeys = {
   haptics: "gt-haptics",
   /** "false" when the rest timer should stay silent; a sound plays otherwise. */
   restSound: "gt-rest-sound",
+  /** "true" when a checked set offers reps in reserve; off otherwise. */
+  askRir: "gt-ask-rir",
   weeklyGoal: "gt-weekly-goal",
   /** "kg" or "lb"; weights are stored in kg either way. */
   weightUnit: "gt-weight-unit",

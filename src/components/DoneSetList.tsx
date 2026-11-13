@@ -129,10 +129,19 @@ export function ImprovedMark() {
   );
 }
 
-/** A set that holds a record: a small trophy in a warm circle, named for screen readers. */
-export function RecordMark({ label }: { label: string }) {
+/**
+ * A set that holds a record: a small trophy in a warm circle, named for
+ * screen readers. `quiet` (a rep record or estimated 1RM) is a muted circle.
+ */
+export function RecordMark({
+  label,
+  quiet = false,
+}: {
+  label: string;
+  quiet?: boolean;
+}) {
   return (
-    <span className="set-record" title={label}>
+    <span className={"set-record" + (quiet ? " is-quiet" : "")} title={label}>
       <Trophy size={13} strokeWidth={2.25} aria-hidden="true" />
       <span className="sr-only">{label}</span>
     </span>

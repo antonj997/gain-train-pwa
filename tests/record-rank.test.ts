@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { RecordDoc, WorkoutSet } from "../src/data/model";
 import {
+  liveRankedRecords,
+  quietRecord,
   rankedKindsLabel,
   rankedRecords,
   recordBadgeText,
@@ -207,4 +209,48 @@ test("record words in both languages", () => {
   assert.equal(recordBadgeText({ count: 2 }), "2 rekord");
   assert.equal(recordKindShort("reps"), "Reps");
   setCurrentLanguage("en");
+});
+
+test("a running workout's records are History's, as if it were finished now", () => {
+  const first = workout("2026-11-01", [set({ weight: 100, reps: 5 })]);
+  const heavy = set({ weight: 102.5, reps: 5 });
+  const more = set({ weight: 100, reps: 7 });
+  const unchecked = set({ weight: 120, reps: 5, done: false });
+  const draft = workout("2026-11-04", [more, heavy, unchecked]);
+  (draft.payload as { status: string }).status = "draft";
+  const live = liveRankedRecords([first, draft], {
+    id: draft.id,
+    payload: draft.payload as never,
+  });
+  // One per exercise: the heaviest weight outranks the rep record; the
+  // unchecked 120 kg does not count.
+  assert.equal(live.length, 1);
+  assert.equal(live[0].top, "heaviest");
+  assert.equal(live[0].set.id, heavy.id);
+  assert.deepEqual(recordSetKinds(live).get(heavy.id), [
+    "heaviest",
+    "reps",
+    "e1rm",
+  ]);
+  // Nothing before it: no record.
+  assert.equal(
+    liveRankedRecords([draft], {
+      id: draft.id,
+      payload: draft.payload as never,
+    }).length,
+    0,
+  );
+  // Editing a finished workout compares with the others, not itself.
+  const saved = workout("2026-11-04", [more]);
+  const edited = liveRankedRecords([first, saved], {
+    id: saved.id,
+    payload: saved.payload as never,
+  });
+  assert.deepEqual(edited[0].kinds, ["reps", "e1rm"]);
+});
+
+test("only the heaviest weight is a loud mark; reps and e1RM are quiet", () => {
+  assert.equal(quietRecord(["heaviest", "reps"]), false);
+  assert.equal(quietRecord(["reps", "e1rm"]), true);
+  assert.equal(quietRecord(["e1rm"]), true);
 });

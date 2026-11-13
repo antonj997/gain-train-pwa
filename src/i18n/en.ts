@@ -1757,4 +1757,27 @@ export const en = {
     "Working sets only. A set counts in full for the exercise's main group and half for the others it trains.",
   "progress.volumeLine": "Volume {value}",
   "details.note": "Note",
+
+  // Mockup v5, phase 4b: the model in the workout screen
+  "set.targetToday": "Target today {value}",
+  "set.fillTarget": "Tap to fill in the target",
+  "set.fillPrevious": "Tap to fill in last time's result",
+  "set.noLoadSr": "{label}: no load",
+  "set.noneExplain": "None = counted without a load, for example a plank.",
+  "set.rirTitle": "Reps in reserve (RIR) · optional",
+  "set.addRir": "Add RIR",
+  "set.rirNone": "No RIR",
+  "set.rirAsk": "RIR?",
+  "set.rirAskLabel": "{label}: reps in reserve",
+  "set.rirSkip": "Skip",
+  "set.rirSr": "reps in reserve {value}",
+  "pad.fillTarget": "Fill in {value}",
+  "workout.deloadTag": "Deload",
+  "workout.deloadTagSr": "Deload week: lighter targets",
+  "workout.note": "Note for the workout (optional)",
+  "workout.noteLabel": "Workout note",
+  "finish.recordsLabel": "Records in this workout",
+  "settings.askRir": "Ask for RIR",
+  "settings.askRirNote":
+    "After you check a set, choose reps in reserve for 4 seconds. Skip leaves it empty.",
 };

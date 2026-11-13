@@ -20,8 +20,17 @@ import {
 } from "@/data/model";
 import { doneSetCount, setCount } from "@/data/selectors";
 import { hasLoggedExercise } from "@/data/workouts";
-import { liveWorkoutPrs } from "@/data/exercise-records";
-import { recordKindsLabel } from "@/lib/record-labels";
+import {
+  liveRankedRecords,
+  quietRecord,
+  rankedKindsLabel,
+  recordSetKinds,
+  type RankedRecord,
+} from "@/data/record-rank";
+import { workoutTargets } from "@/data/targets";
+import { summarize } from "@/data/summary";
+import { loadKeyOf } from "@/lib/load-keys";
+import { targetRowText, targetSource } from "@/lib/set-target";
 import { addExercises, type ExerciseTarget } from "@/lib/workout-editor";
 import { trainingHaptic } from "@/lib/preferences";
 import { historyPath } from "@/lib/routes";
@@ -43,7 +52,9 @@ import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import { reorderByIds } from "@/lib/exercise-order";
 import { notify } from "@/lib/message-store";
 import EditSaveDialog from "@/components/workout/EditSaveDialog";
-import FinishSheet from "@/components/workout/FinishSheet";
+import FinishSheet, {
+  type FinishRecord,
+} from "@/components/workout/FinishSheet";
 import NextSetChip from "@/components/workout/NextSetChip";
 import WorkoutDock from "@/components/workout/WorkoutDock";
 import { NumberPadContext } from "@/components/workout/number-pad-context";
@@ -90,6 +101,14 @@ export default function ActiveWorkout() {
     />
   );
 }
+
+/** A record as the Finish sheet's pill reads it: "Bench Press 90 kg × 5". */
+const finishRecord = (record: RankedRecord): FinishRecord => ({
+  id: record.set.id,
+  text: `${record.name} ${labelSet(record.set, false)}`,
+  label: rankedKindsLabel(record.kinds),
+  quiet: quietRecord(record.kinds),
+});
 
 /** A workout that cannot open here: the shared page header and a way back. */
 function WorkoutUnavailable({
@@ -176,33 +195,72 @@ function Editor({
     ex.sets.some((s) => s.done && !validSet(s)),
   );
   const nextSet = w.exercises.flatMap((ex) => ex.sets).find((s) => !s.done);
-  // The record marks the checked sets earn so far, as if finished now.
+  // The records the checked sets hold so far, as if finished now: History's
+  // ranked model, one per exercise (record-rank.ts).
   const liveRecords = useMemo(
-    () => liveWorkoutPrs(state.records, { id, payload: w }),
+    () => liveRankedRecords(state.records, { id, payload: w }),
     [state.records, id, w],
   );
-  const recordsKey = [...liveRecords]
-    .map(([setId, kinds]) => `${setId}:${kinds.join(",")}`)
+  const recordsKey = liveRecords
+    .map((record) => `${record.set.id}:${record.kinds.join(",")}`)
     .join("|");
-  const recordLabels = useMemo(
-    () =>
-      new Map(
-        [...liveRecords].map(([setId, kinds]) => [
-          setId,
-          recordKindsLabel(kinds),
-        ]),
-      ),
+  const recordKinds = useMemo(
+    () => recordSetKinds(liveRecords),
     // A new Map only when a mark changes, so unchanged cards skip a render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [recordsKey],
   );
   const fromRoutine = !!w.routineId;
-  const { previous, defaults } = usePreviousResults(
+  const { previous, defaults, historyKey } = usePreviousResults(
     state.records,
     id,
     initial,
     w.date,
   );
+  const [{ weightUnit, askRir }] = useTrainingPreferences();
+  // Each set's target (double progression, targets.ts), worked out again
+  // only when the other finished workouts or the shape of this one change:
+  // not on every typed value.
+  const latestRecords = useRef(state.records);
+  latestRecords.current = state.records;
+  const latestWorkout = useRef(w);
+  latestWorkout.current = w;
+  const shape = w.exercises
+    .map(
+      (ex) =>
+        `${ex.exerciseId}:` +
+        ex.sets
+          .map((s) =>
+            [s.id, s.section, s.drop ? 1 : 0, loadKeyOf(s), s.measure].join(
+              ",",
+            ),
+          )
+          .join(";"),
+    )
+    .join("|");
+  const planKey = JSON.stringify(w.plan ?? null);
+  const targets = useMemo(
+    () => {
+      const found = workoutTargets(
+        latestRecords.current,
+        { id, payload: latestWorkout.current },
+        weightUnit,
+      );
+      return new Map(
+        [...found].map(([setId, { target, last }]) => [
+          setId,
+          {
+            text: targetRowText(target, last),
+            source: targetSource(target, last),
+          },
+        ]),
+      );
+    },
+    // shape, historyKey and planKey stand in for the records they summarise.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [historyKey, shape, planKey, weightUnit, w.date, id],
+  );
+  const deloadWeek = !!w.plan?.deload;
 
   const cardioFields = useCardioFields();
   const repHold = useRepHold();
@@ -308,7 +366,6 @@ function Editor({
       })),
     [changeWith],
   );
-  const [{ weightUnit }] = useTrainingPreferences();
   const dockNext = useMemo((): DockNext | null => {
     for (const ex of w.exercises) {
       const index = ex.sets.findIndex((s) => !s.done);
@@ -327,6 +384,27 @@ function Editor({
     // The unit changes the label.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [w.exercises, lastChecked, weightUnit]);
+  // The Finish sheet's numbers, as it opens.
+  const finishVolume = useMemo(
+    () => (finish ? summarize([w], 1, w.date).volume : 0),
+    // Read as the sheet opens; typing the note must not recount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [finish],
+  );
+  const finishMinutes = useMemo(
+    () =>
+      w.duration ??
+      (w.startedAt
+        ? Math.max(0, Math.floor((Date.now() - w.startedAt) / 60000))
+        : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [finish],
+  );
+  const finishRecords = useMemo(
+    () => liveRecords.map(finishRecord),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recordsKey, weightUnit],
+  );
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
     else navigate(editing ? historyPath(id) : "/");
@@ -391,7 +469,15 @@ function Editor({
             }
             unlockChecked={editing}
             defaults={defaults.get(ex.exerciseId)}
-            planNote={planNote(w.plan, ex.exerciseId)}
+            // The Deload tag says it; a plain "Deload week" line would repeat it.
+            planNote={
+              deloadWeek && w.plan?.loads?.[ex.exerciseId] === undefined
+                ? undefined
+                : planNote(w.plan, ex.exerciseId)
+            }
+            deload={deloadWeek}
+            targets={editing ? undefined : targets}
+            askRir={!editing && askRir}
             onChange={update}
             onReorderExercises={
               w.exercises.length > 1 ? openReorder : undefined
@@ -399,7 +485,7 @@ function Editor({
             onRemove={requestRemove}
             onChangeExercise={setChanging}
             onSetDone={setDone}
-            records={recordLabels}
+            records={recordKinds}
             restChip={!editing}
             cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
             onCardioFields={cardioFields.setFields}
@@ -468,6 +554,7 @@ function Editor({
             previous,
             unit: weightUnit,
             changeSet,
+            targets,
           }}
         />
       )}
@@ -521,6 +608,12 @@ function Editor({
           onClose={() => setFinish(false)}
           completed={completed}
           unchecked={total - completed}
+          volumeKg={finishVolume}
+          minutes={finishMinutes}
+          records={finishRecords}
+          loudRecords={liveRecords.some((record) => record.top !== "e1rm")}
+          note={w.note ?? ""}
+          onNote={(note) => change({ ...w, note })}
           showRoutineSwitch={!fromRoutine}
           saveRoutine={routine}
           busy={busy}

@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import { useState, type Ref } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, Trash2 } from "lucide-react";
 import type { WorkoutSet } from "@/data/model";
@@ -10,11 +10,14 @@ import Segmented from "@/components/ui/Segmented";
 import { useT } from "@/i18n/useT";
 import { t, type MessageKey } from "@/i18n";
 import { formatWeight, getWeightUnit } from "@/lib/units";
+import { RIR_VALUES, rirOf, rirValueText } from "@/lib/rir";
 
 type BodyProps = {
   badge: SetBadgeInfo;
   /** The matching previous result, for example "97.5 × 5". */
   previous?: string;
+  /** Today's target for the set, for example "100 kg × 5". */
+  target?: string;
   set: WorkoutSet;
   /** How many drops follow this set. */
   dropCount: number;
@@ -22,6 +25,8 @@ type BodyProps = {
   cardio?: boolean;
   onSection: (section: WorkoutSet["section"]) => void;
   onLoadKey: (key: LoadKey) => void;
+  /** Sets or clears the set's reps in reserve; without it there is no RIR row. */
+  onRir?: (rir: number | null) => void;
   onAddDrop: () => void;
   onDelete: () => void;
 };
@@ -31,7 +36,10 @@ const LOAD_OPTIONS: { value: LoadKey; label: MessageKey }[] = [
   { value: "bw", label: "set.optBw" },
   { value: "bwplus", label: "set.optBwPlus" },
   { value: "assisted", label: "set.optAssist" },
+  { value: "none", label: "set.optNone" },
 ];
+
+type RirChoice = "off" | "0" | "1" | "2" | "3";
 
 const SECTION_OPTIONS: { value: WorkoutSet["section"]; label: MessageKey }[] = [
   { value: "warmup", label: "set.optWarmup" },
@@ -53,6 +61,7 @@ function SetSheetBody({
   cardio = false,
   onSection,
   onLoadKey,
+  onRir,
   onAddDrop,
   onDelete,
 }: BodyProps) {
@@ -65,6 +74,11 @@ function SetSheetBody({
   const { t } = useT();
   const { bodyWeightKg } = useProfile();
   const unit = getWeightUnit();
+  // RIR is optional and rare: one quiet "Add RIR" until it is used.
+  const rir = rirOf(set);
+  const [rirShown, setRirShown] = useState(rir !== null);
+  const rirAllowed =
+    !!onRir && !cardio && set.measure !== "seconds" && set.measure !== "cardio";
   return (
     <>
       {/* Adding goes first; deleting is last and set apart. */}
@@ -97,21 +111,56 @@ function SetSheetBody({
           />
         </div>
       )}
+      {rirAllowed &&
+        (rirShown || rir !== null ? (
+          <div className="sheet-field">
+            <span className="sheet-label" aria-hidden="true">
+              {t("set.rirTitle")}
+            </span>
+            <Segmented<RirChoice>
+              label={t("set.rirTitle")}
+              value={rir === null ? "off" : (String(rir) as RirChoice)}
+              options={[
+                { value: "off", label: "–" },
+                ...RIR_VALUES.map((value) => ({
+                  value: String(value) as RirChoice,
+                  label: rirValueText(value),
+                })),
+              ]}
+              onChange={(value) =>
+                onRir!(value === "off" ? null : Number(value))
+              }
+            />
+            <span className="sr-only">
+              {rir === null ? t("set.rirNone") : ""}
+            </span>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="set-sheet-add-rir"
+            onClick={() => setRirShown(true)}
+          >
+            {t("set.addRir")}
+          </button>
+        ))}
       {!cardio && (
         <div className="sheet-field">
           <span className="sheet-label" aria-hidden="true">
             {t("set.loadForSet")}
           </span>
-          <Segmented
-            label={t("set.loadForSet")}
-            value={key}
-            options={LOAD_OPTIONS.map((option) => ({
-              ...option,
-              label: t(option.label, { unit }),
-              disabled: set.done || !allowed.includes(option.value),
-            }))}
-            onChange={onLoadKey}
-          />
+          <div className="set-sheet-loads">
+            <Segmented
+              label={t("set.loadForSet")}
+              value={key}
+              options={LOAD_OPTIONS.map((option) => ({
+                ...option,
+                label: t(option.label, { unit }),
+                disabled: set.done || !allowed.includes(option.value),
+              }))}
+              onChange={onLoadKey}
+            />
+          </div>
           {/* What BW stands for, and the weight it counts. */}
           <p className="sheet-hint">
             {bodyWeightKg === null ? (
@@ -122,6 +171,8 @@ function SetSheetBody({
             ) : (
               t("set.bwExplain", { weight: formatWeight(bodyWeightKg, unit) })
             )}
+            {". "}
+            {t("set.noneExplain")}
           </p>
         </div>
       )}
@@ -165,9 +216,14 @@ export default function SetSheet({
       title={
         <span className="sheet-title-line">
           <span>{body.badge.title}</span>
-          {body.previous && (
+          {(body.previous || body.target) && (
             <span className="sheet-title-aside">
-              {t("set.lastTime", { value: body.previous })}
+              {[
+                body.previous && t("set.lastTime", { value: body.previous }),
+                body.target && t("set.targetToday", { value: body.target }),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </span>
           )}
         </span>
