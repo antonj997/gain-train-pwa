@@ -60,14 +60,10 @@ export const en = {
   "common.done": "Done",
   "common.off": "Off",
   "common.cancel": "Cancel",
-  "common.close": "Close",
-  "common.save": "Save",
   "common.saving": "Saving…",
   "common.delete": "Delete",
   "common.edit": "Edit",
-  "common.start": "Start",
   "common.retry": "Retry",
-  "common.undo": "Undo",
   "common.today": "today",
   "common.todayCap": "Today",
 
@@ -177,7 +173,6 @@ export const en = {
   "week.moved": "{name} moved to {day}",
   "week.swapped": "{a} and {b} swapped days",
   "week.skipped": "{name} skipped · rest {day}",
-  "week.skippedUndo": "{name} skipped",
   "week.changeFailed": "Couldn't change the plan. Try again.",
   "week.restoreFailed": "Couldn't bring the workout back.",
   "daySheet.earlier": "One day earlier",
@@ -278,7 +273,6 @@ export const en = {
   "workout.retrySaving": "Retry saving",
   "workout.restDone": "Rest done",
   "workout.dismiss": "Dismiss",
-  "workout.restRemaining": "Rest time remaining",
   "workout.skip": "Skip",
   "workout.nextSet": "Next set",
   "workout.rest": "Rest",
@@ -503,6 +497,10 @@ export const en = {
     "Recovered changes you had not saved. Save to keep them, or leave to discard them.",
   "autosave.recoveredDraft":
     "Recovered unsaved entries. Correct any errors, then retry saving.",
+  "autosave.keptRetry": "Unsaved entries are kept on this phone. Retry saving.",
+  "autosave.keepOpenRetry": "Keep this screen open and retry saving.",
+  "autosave.kept": "Unsaved entries are kept on this phone.",
+  "autosave.keepOpenFix": "Keep this screen open until corrected.",
   "syncLoop.serverDown":
     "Saved on this phone. Sync will retry when the server is available.",
   "dialog.close": "Close",
@@ -525,8 +523,6 @@ export const en = {
     "Choose another date on the calendar or log your next workout.",
   "history.logWorkout": "Log a workout",
   "history.pleaseWait": "Please wait…",
-  "history.repeatWorkout": "Repeat workout",
-  "history.editWorkout": "Edit workout",
   "history.deleteWorkout": "Delete workout",
   "history.deleteTitle": "Delete {name}?",
   "history.thisWorkout": "this workout",
@@ -658,7 +654,6 @@ export const en = {
   "cardio.avgIncline": "Avg incline {n} %",
   "cardio.inclineValue": "{n}% incline",
   "cardio.fieldsTitle": "Choose fields",
-  "cardio.fieldsFor": "Fields for {name}",
   "cardio.metricTime": "Time",
   "cardio.metricDistance": "Distance",
   "cardio.metricPace": "Pace",
@@ -814,7 +809,6 @@ export const en = {
   "exercise.records": "Records",
   "exercise.also": "also {categories}",
   "exercise.hiddenChip": "Hidden",
-  "exercise.favouriteNamed": "Favourite {name}",
   "exercise.notFoundTitle": "Exercise not found",
   "exercise.notFoundText":
     "It may have been deleted. Any sets you logged are still in History.",
@@ -823,9 +817,7 @@ export const en = {
   "exercise.neverTitle": "Not logged yet",
   "exercise.neverText":
     "Log a set of {name} and its results, sessions and records show up here.",
-  "exercise.openSession": "Open {name}, {date}",
   "exercise.historyNote": "Every finished workout with {name}, newest first.",
-  "exercise.openExercise": "Open {name}",
   "records.e1rm": "Best est. 1RM",
   "records.heaviest": "Heaviest weight",
   "records.mostReps": "Most reps",
@@ -939,7 +931,6 @@ export const en = {
   "exercises.delete": "Delete exercise",
   "exercises.mine": "Mine",
   "exercises.shared": "Shared",
-  "exercises.editNamed": "Edit {name}",
   "exercises.unhideNamed": "Unhide {name}",
   "exercises.unhide": "Unhide",
   "exercises.unfavouriteNamed": "Unfavourite {name}",
@@ -1298,6 +1289,8 @@ export const en = {
     "Could not find the saved record. Return to your log and try again.",
   "err.backupTooLarge": "Backup is too large.",
   "err.backupInvalidId": "Backup contains an invalid record ID or type.",
+  "err.backupKindMismatch":
+    "A backup record does not match its saved record type.",
   "err.backupStarted":
     "A workout is already in progress. Finish or abandon it before restoring a backup with another started workout. No backup records were changed.",
   "err.nothingToRestore":
@@ -1497,8 +1490,6 @@ export const en = {
       "{count} synced records need a newer version of Gain Train. Close and reopen the app to update; they appear once it can read them.",
   },
   "issues.rejectedTitle": "Changes the server didn't accept",
-  "issues.rejectedText":
-    "These stay saved on this phone. Editing one sends it again; Retry sends them all, for example after an app update.",
   "issues.retryFailed": "Could not retry.",
   "issues.chooseTitle": "Choose which version to keep",
   "issues.changedElsewhere":
@@ -1534,7 +1525,6 @@ export const en = {
   "auth.eyebrow": "Account",
   "auth.titleUpdate": "Choose a new password",
   "auth.titleReset": "Reset your password",
-  "auth.titleSignup": "Create an account",
   "auth.titleSignin": "Sign in to sync",
   "auth.textUpdate":
     "Enter a new password for your account. Use at least 8 characters.",
@@ -1735,7 +1725,6 @@ export const en = {
   "set.optNone": "None",
   "sharedPreview.noLoad": "No load",
   "rir.label": "RIR {value}",
-  "rir.name": "Reps in reserve",
   "target.label": "Target {value}",
   "records.repRecord": "Rep record",
   "records.e1rmRecord": "Est. 1RM record",

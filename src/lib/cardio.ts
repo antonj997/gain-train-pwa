@@ -47,8 +47,6 @@ export const METRIC_KEYS = {
   heartRate: "heartRate",
 } as const satisfies Record<Exclude<CardioMetric, "pace">, keyof WorkoutSet>;
 export type CardioKey = (typeof METRIC_KEYS)[keyof typeof METRIC_KEYS];
-export const CARDIO_KEYS = Object.values(METRIC_KEYS) as CardioKey[];
-
 const fieldSet = (
   fields: CardioMetric[],
   distanceUnit: DistanceUnit = "km",
@@ -241,9 +239,6 @@ export const distanceLabel = (meters: number, unit: DistanceUnit = "km") =>
 /** Metres as kilometres without trailing zeros: 3200 becomes "3.2". */
 export const formatKm = (meters: number | null | undefined) =>
   formatDistance(meters, "km");
-
-/** Kilometres as typed ("3.2" or "3,2") to whole metres. Blank is null; unfinished text is NaN. */
-export const parseKm = (text: string) => parseDistance(text, "km");
 
 /** What pace is per: a mile for miles, otherwise a kilometre. */
 export const paceUnit = (unit: DistanceUnit) =>

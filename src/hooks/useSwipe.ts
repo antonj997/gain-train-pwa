@@ -12,7 +12,6 @@ import {
 import { capturePointer, releasePointer } from "@/lib/pointer-capture";
 import { setTipBlocker, tipUsed } from "@/lib/tip-store";
 import type { TipId } from "@/lib/tips";
-import { motionMs } from "@/lib/slow-motion";
 import { reducedMotion } from "@/hooks/useMessages";
 import { EASE, MOTION } from "@/lib/motion";
 
@@ -317,7 +316,3 @@ export function useSwipe(options: SwipeOptions) {
     offset: () => drawn.current,
   };
 }
-
-/** A timer for something visual, stretched by slow motion. */
-export const visualDelay = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, motionMs(ms)));

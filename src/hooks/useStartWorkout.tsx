@@ -90,8 +90,9 @@ export function useStartWorkout() {
   /** A new running workout with the same exercises as a finished one, today. */
   const repeat = (workout: Workout) => {
     const now = Date.now();
-    // The plan mark belongs to the week it was planned for.
-    const { plan: _plan, ...rest } = workout;
+    // The plan mark belongs to the week it was planned for, and the note to
+    // the workout it was written about.
+    const { plan: _plan, note: _note, ...rest } = workout;
     return start({
       ...rest,
       date: today(),

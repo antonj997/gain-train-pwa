@@ -13,7 +13,7 @@ import {
   validate,
 } from "../src/data/model";
 import { cardioProgressFor, progressFor } from "../src/data/analytics";
-import { prEvents } from "../src/data/exercise-records";
+import { rankedRecords } from "../src/data/record-rank";
 import { summarize } from "../src/data/summary";
 import { catalogueById } from "../src/data/catalogue";
 import { initialSet } from "../src/data/workouts";
@@ -22,8 +22,8 @@ import {
   cardioTotals,
   formatDuration,
   formatKm,
+  parseDistance,
   parseDuration,
-  parseKm,
 } from "../src/lib/cardio";
 
 const cardio = (overrides: Partial<WorkoutSet> = {}): WorkoutSet => ({
@@ -97,11 +97,11 @@ test("time reads its digits from the right and is shown as mm:ss", () => {
 });
 
 test("distance is typed in km with a dot or comma and stored in metres", () => {
-  assert.equal(parseKm("3.2"), 3200);
-  assert.equal(parseKm("3,25"), 3250);
-  assert.equal(parseKm(""), null);
-  assert.ok(Number.isNaN(parseKm("3.2.1")));
-  assert.ok(Number.isNaN(parseKm("-1")));
+  assert.equal(parseDistance("3.2", "km"), 3200);
+  assert.equal(parseDistance("3,25", "km"), 3250);
+  assert.equal(parseDistance("", "km"), null);
+  assert.ok(Number.isNaN(parseDistance("3.2.1", "km")));
+  assert.ok(Number.isNaN(parseDistance("-1", "km")));
   assert.equal(formatKm(3200), "3.2");
   assert.equal(formatKm(5000), "5");
 });
@@ -191,8 +191,11 @@ test("issues follow the existing messages", () => {
     getSetIssues(cardio({ level: 150 })).level,
     "Enter a level from 0 to 100.",
   );
+  // Text that is not a number yet: the field's value is empty, as the
+  // input leaves it.
   const typing = {
     ...cardio(),
+    durationSec: null,
     inputText: { durationSec: "20:" },
   } as WorkoutSet;
   assert.ok(getSetIssues(typing).durationSec);
@@ -232,7 +235,7 @@ test("cardio is not a strength best, new best or volume", () => {
     ["builtin:bench-press"],
   );
   assert.deepEqual(
-    prEvents(records).filter(
+    rankedRecords(records).filter(
       (event) => event.exerciseId === "builtin:treadmill",
     ),
     [],

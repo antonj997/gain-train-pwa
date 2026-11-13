@@ -2,7 +2,6 @@ import type {
   Exercise,
   Plan,
   ProgressionItem,
-  RoutineGroup,
   WorkoutPlanMark,
   WorkoutSet,
 } from "./model";
@@ -204,26 +203,6 @@ export function trimProgression(plan: Plan): Plan["progression"] {
     if (!Object.keys(overrides).length) delete next.overrides;
     return next;
   });
-}
-
-/** True when the plan holds the routine on some day, itself or through a group. */
-export function planHoldsRoutine(
-  plan: Pick<Plan, "template" | "overrides">,
-  routineId: string,
-  groups: readonly RoutineGroup[],
-) {
-  const cells = [
-    ...plan.template.flat(),
-    ...Object.values(plan.overrides),
-  ].filter((c): c is string => !!c);
-  return cells.some(
-    (cell) =>
-      cell === routineId ||
-      (cell.startsWith("group:") &&
-        !!groups
-          .find((g) => g.id === cell.slice(6))
-          ?.routineIds.includes(routineId)),
-  );
 }
 
 /** What a workout started on `date` takes from a plan: its week and its planned loads. */

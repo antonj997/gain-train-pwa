@@ -123,9 +123,12 @@ export function useWorkoutAutosave(
                 cause.message === finishedElsewhereMessage()
                 ? finishedElsewhereMessage()
                 : errorMessage(cause, saveFailed()) +
-                    (job.retained
-                      ? " Unsaved entries are kept on this phone. Retry saving."
-                      : " Keep this screen open and retry saving."),
+                    " " +
+                    t(
+                      job.retained
+                        ? "autosave.keptRetry"
+                        : "autosave.keepOpenRetry",
+                    ),
             );
         });
     return queue.current;
@@ -187,9 +190,8 @@ export function useWorkoutAutosave(
       void flush();
       setError(
         errorMessage(cause, saveFailed()) +
-          (retained
-            ? " Unsaved entries are kept on this phone."
-            : " Keep this screen open until corrected."),
+          " " +
+          t(retained ? "autosave.kept" : "autosave.keepOpenFix"),
       );
       return;
     }

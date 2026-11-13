@@ -4,7 +4,7 @@ import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 import { cardioTotals, isCardioSet, type CardioTotals } from "../lib/cardio";
 import { estimate } from "./estimate";
-import { exerciseRecords, type ExercisePr } from "./exercise-records";
+import { exerciseRecords } from "./exercise-records";
 export { estimate };
 export function comparableSets(a: WorkoutSet, b: WorkoutSet) {
   if (
@@ -146,15 +146,8 @@ export type ExerciseProgress = ReturnType<typeof progressFor>[number];
 type Progress = ExerciseProgress;
 type ProgressPoint = Progress["points"][number];
 
-/** Ids of the workouts that set a PR for any exercise (see prEvents). */
-export function newBestWorkoutIds(
-  events: readonly Pick<ExercisePr, "workoutId">[],
-) {
-  return new Set(events.map((event) => event.workoutId));
-}
-
-/** The latest PR of each exercise set from `start` to `end`, newest first. */
-export function recentBests<T extends Pick<ExercisePr, "exerciseId" | "date">>(
+/** The latest record of each exercise set from `start` to `end`, newest first. */
+export function recentBests<T extends { exerciseId: string; date: string }>(
   events: readonly T[],
   start: string,
   end: string,

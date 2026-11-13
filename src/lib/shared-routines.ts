@@ -132,19 +132,6 @@ export function toSharedSet(set: unknown): SharedSet {
 export const toSharedSets = (sets: readonly unknown[]): SharedSet[] =>
   sets.map(toSharedSet);
 
-/** A shared payload with every set stripped of personal values. */
-export function stripSharedRoutine(
-  payload: SharedRoutinePayload,
-): SharedRoutinePayload {
-  return {
-    ...payload,
-    exercises: payload.exercises.map((ex) => ({
-      ...ex,
-      sets: toSharedSets(ex.sets),
-    })),
-  };
-}
-
 const customOf = (exercise: CustomExercise): SharedCustom => {
   const sharedFrom = exercise.sharedId ?? exercise.sharedFrom;
   return {

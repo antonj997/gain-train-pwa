@@ -33,19 +33,37 @@ export function usePreviousResults(
   // change: not after each autosave of this one, which reloads the log.
   const latest = useRef(records);
   latest.current = records;
+  // Each autosave stores a new copy of this workout, so `initial` is a new
+  // object every time. Only what places it among the others counts: a draft
+  // comes after them all, a finished one being edited by its own times.
+  const latestInitial = useRef(initial);
+  latestInitial.current = initial;
+  const orderKey =
+    initial.status === "completed"
+      ? [
+          initial.date,
+          initial.completedAt,
+          initial.startedAt,
+          initial.createdAt,
+        ].join(":")
+      : "draft";
   const historyKey = useMemo(() => finishedKey(records, id), [records, id]);
   const previous = useMemo(
     () =>
       lastSessions(
         priorWorkouts(
           Object.values(latest.current),
-          { ...latest.current[id], kind: "workout", payload: initial },
+          {
+            ...latest.current[id],
+            kind: "workout",
+            payload: latestInitial.current,
+          },
           date,
         ),
       ),
-    // historyKey stands in for the records it summarises.
+    // historyKey and orderKey stand in for the records they summarise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [historyKey, id, initial, date],
+    [historyKey, id, orderKey, date],
   );
   // The same defaults objects until a custom exercise actually changes.
   const defaultsKey = useMemo(

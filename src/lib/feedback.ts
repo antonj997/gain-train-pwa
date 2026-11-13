@@ -5,7 +5,6 @@
 export type FeedbackKind = "bug" | "feature";
 export type FeedbackStatus = "open" | "planned" | "done" | "wontfix";
 
-export const FEEDBACK_KINDS: readonly FeedbackKind[] = ["bug", "feature"];
 export const FEEDBACK_STATUSES: readonly FeedbackStatus[] = [
   "open",
   "planned",

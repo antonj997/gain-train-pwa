@@ -153,6 +153,3 @@ export function resetTips() {
   writeSeen(seen);
   quietUntil = Date.now() + PAUSE_MS;
 }
-
-/** Whether a tip was already seen here (a tip's target skips registering). */
-export const tipSeen = (id: TipId) => seen.has(id);

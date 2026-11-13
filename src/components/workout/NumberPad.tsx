@@ -151,23 +151,65 @@ export default function NumberPad({
   };
   const closeRef = useRef(close);
   closeRef.current = close;
+  // The pad's own click on a row's ✓ passes the handlers below untouched.
+  const selfClick = useRef(false);
+  const clickCheck = (setId: string) => {
+    selfClick.current = true;
+    try {
+      document
+        .querySelector<HTMLButtonElement>(
+          `[data-set-id="${CSS.escape(setId)}"] .set-check`,
+        )
+        ?.click();
+    } finally {
+      selfClick.current = false;
+    }
+  };
   /**
-   * A tap on a row's ✓ while the pad is open. Checking the set the pad types
-   * (or its drops) moves the pad to the next open set of that exercise, or
-   * closes it at the end of the exercise. Any other ✓ leaves the pad where it
-   * is, and so does a check the row refuses (an incomplete set).
+   * Checks the set the pad types, from the pad's Check or the row's own ✓:
+   * what is typed is finished first ("87," becomes 87), then, once React has
+   * drawn it, the row's ✓ checks the set (its hint, rest, haptics and motion)
+   * and the pad moves to the next open set of the exercise, or closes at the
+   * end of it. A set the row refuses (a value missing) keeps the pad.
+   */
+  const checkHead = (headId: string) => {
+    commit(latest.current.target);
+    window.setTimeout(() => {
+      const w = latest.current.workout;
+      const head = locate(w, headId);
+      if (!head) return;
+      if (!groupComplete(head.exercise.sets, head.index)) {
+        clickCheck(headId);
+        return;
+      }
+      const after = padAfterCheck(w.exercises, headId);
+      setTarget(after);
+      clickCheck(headId);
+      // The end of the exercise: the pad closes and the field lets go.
+      if (!after) {
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && active.matches("[data-pad-field]"))
+          active.blur();
+      }
+    }, 0);
+  };
+  /**
+   * A tap on a row's ✓ while the pad is open. The ✓ of the set the pad types
+   * (or of its drops' set) is taken over by `checkHead`; true then. Any other
+   * ✓ is left to the row, and the pad stays where it is.
    */
   const onRowCheck = (button: HTMLElement) => {
     const setId = button.closest("[data-set-id]")?.getAttribute("data-set-id");
     const { workout: w, target: at } = latest.current;
     const head = setId ? locate(w, setId) : null;
-    if (!head || head.set.done || !at) return;
+    if (!head || head.set.done || !at) return false;
     const { start, end } = dropGroup(head.exercise.sets, head.index);
     const group = head.exercise.sets.slice(start, end);
-    if (!group.some((s) => s.id === at.setId)) return;
-    if (!groupComplete(head.exercise.sets, head.index)) return;
-    commit(at);
-    setTarget(padAfterCheck(w.exercises, head.set.id));
+    if (!group.some((s) => s.id === at.setId)) return false;
+    // A tap: the rest's tone may play after the check (iPhone Safari).
+    primeRestSound();
+    checkHead(head.set.id);
+    return true;
   };
   const checkRef = useRef(onRowCheck);
   checkRef.current = onRowCheck;
@@ -175,6 +217,17 @@ export default function NumberPad({
     commit(latest.current.target);
     setTarget(next);
   };
+  // The pad also leaves a field when another one is tapped (the row opens it
+  // there): what was typed in the field it left is finished then too.
+  const commitRef = useRef(commit);
+  commitRef.current = commit;
+  const typed = useRef(target);
+  useEffect(() => {
+    const before = typed.current;
+    typed.current = target;
+    if (before.setId !== target.setId || before.field !== target.field)
+      commitRef.current(before);
+  }, [target]);
 
   // The field it types gets a ring. With a mouse and keyboard it also keeps
   // focus, so typing still works; on a touch screen no field holds focus
@@ -200,9 +253,10 @@ export default function NumberPad({
 
   // Only a tap outside the pad and the set fields closes it (or Escape, or a
   // drag on its handle): moving focus by itself never does.
-  const selfClick = useRef(false);
   const keysRef = useRef<((key: PadKey | "next") => void) | null>(null);
   const drag = useRef<{ y0: number; t0: number; dy: number } | null>(null);
+  // A drag on the handle ends with a click on it: that click is the drag's.
+  const dragged = useRef(false);
   useEffect(() => {
     const inside = (node: EventTarget | null) =>
       node instanceof Element &&
@@ -216,7 +270,14 @@ export default function NumberPad({
         node instanceof Element
           ? node.closest<HTMLElement>(".set-check")
           : null;
-      if (check) return checkRef.current(check);
+      if (check) {
+        // The pad checks that set itself, after finishing what was typed.
+        if (checkRef.current(check)) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        return;
+      }
       if (!inside(node)) closeRef.current();
     };
     const onKey = (event: KeyboardEvent) => {
@@ -287,45 +348,12 @@ export default function NumberPad({
   };
   const same = () => fill(prior);
   const goal = targets?.get(set.id);
-  const clickCheck = (setId: string) => {
-    selfClick.current = true;
-    try {
-      document
-        .querySelector<HTMLButtonElement>(
-          `[data-set-id="${CSS.escape(setId)}"] .set-check`,
-        )
-        ?.click();
-    } finally {
-      selfClick.current = false;
-    }
-  };
   const onNext = () => {
     // A tap: the rest's tone may play after the check below (iPhone Safari).
     primeRestSound();
     if (next.kind === "field") return moveTo(next.target);
     if (next.kind === "close") return close();
-    const headId = next.setId;
-    commit(target);
-    // After React has drawn the committed value, the row's own ✓ checks the
-    // set (its hint, rest, haptics and motion), and the pad moves on.
-    window.setTimeout(() => {
-      const w = latest.current.workout;
-      const head = locate(w, headId);
-      if (!head) return;
-      if (!groupComplete(head.exercise.sets, head.index)) {
-        clickCheck(headId);
-        return;
-      }
-      const after = padAfterCheck(w.exercises, headId);
-      setTarget(after);
-      clickCheck(headId);
-      // The end of the exercise: the pad closes and the field lets go.
-      if (!after) {
-        const active = document.activeElement;
-        if (active instanceof HTMLElement && active.matches("[data-pad-field]"))
-          active.blur();
-      }
-    }, 0);
+    checkHead(next.setId);
   };
 
   keysRef.current = (k) => (k === "next" ? onNext() : press(k));
@@ -334,6 +362,7 @@ export default function NumberPad({
   // past 90 px, or faster than 0.6 px/ms, and it closes; else it springs back.
   const grabDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     drag.current = { y0: event.clientY, t0: event.timeStamp, dy: 0 };
+    dragged.current = false;
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
@@ -351,6 +380,7 @@ export default function NumberPad({
     const d = drag.current;
     drag.current = null;
     if (!d || d.dy < 6) return;
+    dragged.current = true;
     const velocity = d.dy / Math.max(1, event.timeStamp - d.t0);
     if (container.current) container.current.style.transform = "";
     if (event.type === "pointerup" && (d.dy > 90 || velocity > 0.6)) {
@@ -385,7 +415,11 @@ export default function NumberPad({
         className="number-pad-grab"
         aria-label={t("pad.close")}
         onClick={(event) => {
-          if (event.detail === 0 || !drag.current) close();
+          // A tap (or the keyboard) closes; a drag already closed the pad
+          // or let it spring back.
+          const wasDrag = dragged.current;
+          dragged.current = false;
+          if (event.detail === 0 || !wasDrag) close();
         }}
         onPointerDown={grabDown}
         onPointerMove={grabMove}

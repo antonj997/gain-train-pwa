@@ -37,7 +37,19 @@ export function getSetInputText(set: WorkoutSet, field: InputField) {
   return (set as EditableSet).inputText?.[field];
 }
 
-export function hasSetInputText(set: WorkoutSet) {
+/**
+ * True when a field holds text that is not a number yet ("20:", "3x"): the
+ * field's value is empty and only the text is kept. Text kept beside a value
+ * ("87," or "87,50" for 87.5 while the number pad types) is only how the
+ * field reads for now, and is no fault.
+ */
+export function isUnfinishedInput(set: WorkoutSet, field: InputField) {
+  return (
+    getSetInputText(set, field) !== undefined && (set[field] ?? null) === null
+  );
+}
+
+export function hasUnfinishedInput(set: WorkoutSet) {
   return (
     [
       "weight",
@@ -50,7 +62,7 @@ export function hasSetInputText(set: WorkoutSet) {
       "heartRate",
       "holdSec",
     ] as const
-  ).some((field) => getSetInputText(set, field) !== undefined);
+  ).some((field) => isUnfinishedInput(set, field));
 }
 
 export function clearSetInputText(

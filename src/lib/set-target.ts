@@ -99,9 +99,3 @@ export function fillFrom(set: WorkoutSet, source: FillSource): WorkoutSet {
     next = changeSetNumber(next, "reps", source.reps);
   return next;
 }
-
-/** True when filling from `source` would change anything. */
-export function fillChanges(set: WorkoutSet, source: FillSource) {
-  const next = fillFrom(set, source);
-  return next.weight !== set.weight || next.reps !== set.reps;
-}

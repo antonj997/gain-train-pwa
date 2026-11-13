@@ -179,8 +179,20 @@ export function targetHistory(
   setIndex: number,
   limit = TARGET_LOOKBACK,
 ): WorkoutSet[] {
-  const exercise = current.payload.exercises[exerciseIndex];
-  if (!exercise?.sets[setIndex]) return [];
+  return historyIn(
+    earlierWorkouts(records, current),
+    current.payload,
+    exerciseIndex,
+    setIndex,
+    limit,
+  );
+}
+
+/** The finished workouts before `current`, newest first (priorWorkouts). */
+function earlierWorkouts(
+  records: Record<string, RecordDoc> | readonly RecordDoc[],
+  current: { id: string; payload: Workout },
+): WorkoutRecord[] {
   const list = Array.isArray(records)
     ? (records as readonly RecordDoc[])
     : Object.values(records as Record<string, RecordDoc>);
@@ -193,8 +205,21 @@ export function targetHistory(
     dirty: false,
     payload: current.payload,
   };
+  return priorWorkouts([...list], self, current.payload.date);
+}
+
+/** targetHistory over earlier workouts already found, so a workout's sets share them. */
+function historyIn(
+  earlier: readonly WorkoutRecord[],
+  workout: Workout,
+  exerciseIndex: number,
+  setIndex: number,
+  limit = TARGET_LOOKBACK,
+): WorkoutSet[] {
+  const exercise = workout.exercises[exerciseIndex];
+  if (!exercise?.sets[setIndex]) return [];
   const found: WorkoutSet[] = [];
-  for (const record of priorWorkouts([...list], self, current.payload.date)) {
+  for (const record of earlier) {
     if (found.length >= limit) break;
     if (record.payload.plan?.deload) continue;
     const prior = record.payload.exercises
@@ -266,10 +291,17 @@ export function workoutTargets(
 ): Map<string, WorkoutSetTarget> {
   const deload = deloadFor(records, current.payload);
   const targets = new Map<string, WorkoutSetTarget>();
+  // Found and sorted once, not again for every set.
+  const earlier = earlierWorkouts(records, current);
   current.payload.exercises.forEach((exercise, exerciseIndex) =>
     exercise.sets.forEach((set, setIndex) => {
       if (isDrop(set) || set.section !== "working" || isCardioSet(set)) return;
-      const history = targetHistory(records, current, exerciseIndex, setIndex);
+      const history = historyIn(
+        earlier,
+        current.payload,
+        exerciseIndex,
+        setIndex,
+      );
       const target = suggestTarget(history, { deload }, unit);
       if (target) targets.set(set.id, { target, last: history[0] });
     }),

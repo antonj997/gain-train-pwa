@@ -7,7 +7,6 @@ import {
   interleave,
   messageRole,
   removeMessage,
-  undoRemaining,
   type PageMessage,
   type UndoEntry,
 } from "../src/lib/messages";
@@ -67,7 +66,11 @@ test("over the cap the oldest message that is not an error goes first", () => {
 });
 
 test("removing by key clears every message of that kind, and nothing else", () => {
-  const list = [message(1, { key: "sync" }), message(2), message(3, { key: "sync" })];
+  const list = [
+    message(1, { key: "sync" }),
+    message(2),
+    message(3, { key: "sync" }),
+  ];
   assert.deepEqual(
     removeMessage(list, "sync").map((m) => m.id),
     [2],
@@ -130,12 +133,6 @@ test("a placeholder goes back where its item was; older ones first; past the end
     "#6",
   ]);
   assert.deepEqual(shape(interleave([], [entry(1, 2)])), ["#1"]);
-});
-
-test("the undo timer line runs from full to empty", () => {
-  assert.equal(undoRemaining({ expiresAt: 6000 }, 5000, 1000), 1);
-  assert.equal(undoRemaining({ expiresAt: 6000 }, 5000, 3500), 0.5);
-  assert.equal(undoRemaining({ expiresAt: 6000 }, 5000, 9000), 0);
 });
 
 test("the store: errors stay, keys replace, undo restores once and failures say so", async () => {

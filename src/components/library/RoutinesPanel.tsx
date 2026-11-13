@@ -17,11 +17,8 @@ import {
   ChevronRight,
   Globe,
   MoreHorizontal,
-  Pencil,
   Plus,
   Search,
-  Share2,
-  Trash2,
 } from "lucide-react";
 import RoutineCard from "@/components/items/RoutineCard";
 import {
@@ -38,8 +35,6 @@ import { draftKey, parseRoutineDraft } from "@/lib/drafts";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import ExercisePicker from "@/components/ExercisePicker";
 import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
-import ListRow from "@/components/ui/ListRow";
-import Sheet from "@/components/ui/Sheet";
 import { countLabel } from "@/lib/labels";
 import { lastUsedLabel } from "@/lib/library";
 import RoutinePlan from "@/components/RoutinePlan";
@@ -70,7 +65,7 @@ export default function RoutinesPanel({
 }: {
   request?: PanelRequest;
 }) {
-  const { state, save, deleteRecord } = useData();
+  const { state, save } = useData();
   const { account } = useAuth();
   const cardioFields = useCardioFields();
   const repHold = useRepHold();

@@ -1,9 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { RemoteDoc } from "./model";
-import type { Transport } from "./sync";
-
-/** Rows per download page; `syncAccount` stops paging on a shorter page. */
-export const PULL_PAGE_SIZE = 200;
+import { PULL_PAGE_SIZE, type Transport } from "./sync";
 
 /** The sync transport over Supabase: the `sync_gain_record` RPC and a `gain_records` cursor read. */
 export function supabaseTransport(client: SupabaseClient): Transport {
