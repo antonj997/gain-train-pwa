@@ -37,6 +37,7 @@ import {
 } from "@/lib/preferences";
 import { RestSettings } from "@/components/settings/RestControl";
 import { usePageBack } from "@/hooks/usePageTransitions";
+import Reveal from "@/components/motion/Reveal";
 
 type SheetName =
   | "bodyweight"
@@ -99,11 +100,13 @@ export default function Settings() {
         notices={false}
         leading={<BackButton onClick={back} />}
       />
-      {error && (
-        <div className="banner banner-danger" role="alert">
-          {error}
-        </div>
-      )}
+      <Reveal>
+        {error && (
+          <div className="banner banner-danger" role="alert">
+            {error}
+          </div>
+        )}
+      </Reveal>
       <SyncIssues />
 
       <div className="list">

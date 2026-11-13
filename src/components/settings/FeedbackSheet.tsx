@@ -23,6 +23,7 @@ import {
 } from "@/lib/feedback";
 import { useT } from "@/i18n/useT";
 import type { Language } from "@/i18n";
+import Reveal from "@/components/motion/Reveal";
 
 type Picked = { id: string; blob: Blob; url: string };
 
@@ -307,11 +308,13 @@ export default function FeedbackSheet({
           <p className="row-sub">
             {t("feedback.imagesNote", { max: FEEDBACK_LIMITS.images })}
           </p>
-          {imageNote && (
-            <p className="field-warning" role="status">
-              {imageNote}
-            </p>
-          )}
+          <Reveal>
+            {imageNote && (
+              <p className="field-warning" role="status">
+                {imageNote}
+              </p>
+            )}
+          </Reveal>
         </div>
 
         <div>
@@ -324,16 +327,20 @@ export default function FeedbackSheet({
           <p className="small-note">{t("feedback.includeDetailsNote")}</p>
         </div>
 
-        {problem && (
-          <p className="field-error" role="alert">
-            {problemText(problem, t)}
-          </p>
-        )}
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
+        <Reveal>
+          {problem && (
+            <p className="field-error" role="alert">
+              {problemText(problem, t)}
+            </p>
+          )}
+        </Reveal>
+        <Reveal>
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+        </Reveal>
         <button
           className="btn-primary"
           type="submit"

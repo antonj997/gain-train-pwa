@@ -259,7 +259,7 @@
 }
 @media (prefers-reduced-motion: no-preference) {
   .tip-bubble {
-    animation: gt-tip-in 200ms var(--gt-ease-out) both;
+    animation: gt-tip-in var(--gt-dur-pop) var(--gt-ease-out) both;
   }
 }
 @keyframes gt-tip-in {

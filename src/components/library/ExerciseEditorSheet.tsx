@@ -5,6 +5,7 @@ import type { CustomExercise } from "@/data/model";
 import { sameNamedExercise } from "@/lib/exercise-search";
 import { t } from "@/i18n";
 import { categoryLabel } from "@/lib/catalogue-labels";
+import Reveal from "@/components/motion/Reveal";
 
 export type ExerciseDraft = { id: string; data: CustomExercise };
 
@@ -77,11 +78,17 @@ export default function ExerciseEditorSheet({
               onChange={(e) => set({ name: e.target.value })}
             />
           </label>
-          {twin && (
-            <p id="exercise-name-twin" className="field-warning" role="status">
-              {t("editor.twin", { name: twin.name })}
-            </p>
-          )}
+          <Reveal>
+            {twin && (
+              <p
+                id="exercise-name-twin"
+                className="field-warning"
+                role="status"
+              >
+                {t("editor.twin", { name: twin.name })}
+              </p>
+            )}
+          </Reveal>
           <label>
             {t("facet.category")}
             <select
@@ -141,11 +148,13 @@ export default function ExerciseEditorSheet({
           >
             {busy ? t("common.saving") : t("editor.save")}
           </button>
-          {error && (
-            <p className="field-error" role="alert">
-              {error}
-            </p>
-          )}
+          <Reveal>
+            {error && (
+              <p className="field-error" role="alert">
+                {error}
+              </p>
+            )}
+          </Reveal>
           {!retained && (
             <p className="field-error" role="alert">
               {t("editor.storageUnavailable")}

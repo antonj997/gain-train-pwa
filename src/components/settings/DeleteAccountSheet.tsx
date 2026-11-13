@@ -5,6 +5,7 @@ import Sheet from "@/components/ui/Sheet";
 import { errorMessage } from "@/lib/errors";
 import { removeProfileCache } from "@/lib/profile";
 import { t } from "@/i18n";
+import Reveal from "@/components/motion/Reveal";
 
 /** Asks for "DELETE" (or "RADERA") before deleting the account; it stays open while deleting. */
 export default function DeleteAccountSheet({
@@ -44,11 +45,13 @@ export default function DeleteAccountSheet({
           onChange={(event) => setConfirmation(event.target.value)}
         />
       </label>
-      {deleteError && (
-        <p role="alert" className="error-text">
-          {deleteError}
-        </p>
-      )}
+      <Reveal>
+        {deleteError && (
+          <p role="alert" className="error-text">
+            {deleteError}
+          </p>
+        )}
+      </Reveal>
       <button className="btn-secondary" disabled={deleting} onClick={onClose}>
         {t("deleteAccount.keep")}
       </button>

@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/useAuth";
 import { isSyncOutage } from "@/lib/sync-health";
 import { needsSignInAgain } from "@/lib/auth-account";
 import { useT } from "@/i18n/useT";
+import MotionList from "@/components/motion/MotionList";
 
 /**
  * The sync, sign-in and conflict notices, as banners under a page's title.
@@ -105,8 +106,13 @@ export default function SyncNotices() {
         <Link to="/settings">{t("sync.openSettings")}</Link>
       </div>,
     );
-  if (!banners.length) return null;
   // No live region around the stack: the alerts inside announce themselves,
   // and a wrapping status region would read the whole stack again on any change.
-  return <div className="banners">{banners}</div>;
+  // The stack stays mounted (empty, it is not drawn) so a notice that comes
+  // or goes grows in or folds away and moves the page smoothly.
+  return (
+    <MotionList className="banners" kind="banner" fromEmpty>
+      {banners}
+    </MotionList>
+  );
 }

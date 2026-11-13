@@ -34,6 +34,7 @@ import {
 } from "@/lib/library";
 import { t, type MessageKey } from "@/i18n";
 import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
+import MotionList from "@/components/motion/MotionList";
 
 type Filter = ExerciseFilter | "shared";
 const filters = [
@@ -357,7 +358,10 @@ export default function ExercisesPanel({
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title}>
           <h2 className="group-title">{group.title}</h2>
-          <div className="flat-list">
+          <MotionList
+            className="flat-list"
+            resetKey={`${filter}|${category}|${equipment}|${search.trim()}`}
+          >
             {interleave(
               group.items,
               undos.filter((u) => u.scope === `exercises:${group.title}`),
@@ -380,7 +384,7 @@ export default function ExercisesPanel({
                 />
               ),
             )}
-          </div>
+          </MotionList>
         </section>
       ))}
       {/* A deleted exercise whose group went with it keeps its Undo here. */}

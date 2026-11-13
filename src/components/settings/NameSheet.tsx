@@ -5,6 +5,7 @@ import type { DisplayNameStatus } from "@/hooks/useDisplayName";
 import { DISPLAY_NAME_MAX, normalizeDisplayName } from "@/lib/display-name";
 import { errorMessage } from "@/lib/errors";
 import { t } from "@/i18n";
+import Reveal from "@/components/motion/Reveal";
 
 /** Settings → Name: the display name shown on what the user shares. */
 export default function NameSheet({
@@ -84,21 +85,27 @@ export default function NameSheet({
             }}
           />
         </label>
-        {error && (
-          <p className="field-error" role="alert">
-            {error}
-          </p>
-        )}
-        {!online && (
-          <p className="row-sub" role="status">
-            {t("name.offline")}
-          </p>
-        )}
-        {online && status === "error" && (
-          <p className="row-sub" role="status">
-            {t("name.loadFailed")}
-          </p>
-        )}
+        <Reveal>
+          {error && (
+            <p className="field-error" role="alert">
+              {error}
+            </p>
+          )}
+        </Reveal>
+        <Reveal>
+          {!online && (
+            <p className="row-sub" role="status">
+              {t("name.offline")}
+            </p>
+          )}
+        </Reveal>
+        <Reveal>
+          {online && status === "error" && (
+            <p className="row-sub" role="status">
+              {t("name.loadFailed")}
+            </p>
+          )}
+        </Reveal>
         <button className="btn-primary" type="submit" disabled={disabled}>
           {busy ? t("name.saving") : t("name.save")}
         </button>

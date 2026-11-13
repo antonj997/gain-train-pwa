@@ -1,17 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { runUndo } from "@/lib/message-store";
 import { UNDO_MS, type UndoEntry } from "@/lib/messages";
 import { motionScale } from "@/lib/slow-motion";
-import { reducedMotion } from "@/hooks/useMessages";
+import { MOTION } from "@/lib/motion";
+import { foldAway, growIn } from "@/lib/presence";
 import { UndoTimer } from "./MessageSlot";
 import { t } from "@/i18n";
-
-const COLLAPSE_MS = 220;
 
 /**
  * A removed item's place, kept for a few seconds: a dashed box reading
  * "Routine Legs A deleted" with Undo and a line that runs out, then it folds
- * away and the items under it slide up.
+ * away (180ms, like a banner) and the items under it slide up.
  */
 export default function UndoPlaceholder({
   entry,
@@ -24,22 +23,22 @@ export default function UndoPlaceholder({
   // Real milliseconds left; slow motion slows the animations by itself.
   const left = Math.max(0, entry.expiresAt - Date.now());
   const scale = motionScale();
+  // Standing alone it grows open in the space (a list grows it from the
+  // removed item's height instead: useListMotion).
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (el && !el.parentElement?.hasAttribute("data-list-motion")) growIn(el);
+  }, []);
   useEffect(() => {
     const el = box.current;
-    if (!el || reducedMotion() || typeof el.animate !== "function") return;
-    // Fold away just before the store lets it go.
+    if (!el) return;
+    // Fold away (180ms) just before the store lets it go.
     const timer = window.setTimeout(
       () => {
-        const height = el.getBoundingClientRect().height;
-        el.animate(
-          [
-            { height: `${height}px`, opacity: 1 },
-            { height: "0px", opacity: 0, marginBlock: "0px" },
-          ],
-          { duration: COLLAPSE_MS, easing: "ease-in", fill: "forwards" },
-        );
+        el.setAttribute("data-folded", "");
+        foldAway(el);
       },
-      Math.max(0, left - COLLAPSE_MS * scale),
+      Math.max(0, left - MOTION.bannerOut * scale),
     );
     return () => window.clearTimeout(timer);
     // Once per placeholder.

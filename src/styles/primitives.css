@@ -198,8 +198,12 @@
   color: var(--gt-ink-2);
 }
 
-/* Slide a sheet up from the bottom edge, or fade a panel in. The animation
-   duration is the motion token, so it is instant under reduced motion. */
+/* A sheet slides up over 340ms on the sheet curve and down over 240ms on the
+   ease-in; the backdrop fades over 200ms, linear, both ways. A drag sets the
+   close's duration and curve inline (a fling closes as fast as it went).
+   From 640px a panel fades and scales in on the same times. Reduced motion
+   keeps a 120ms fade of both (usability.css stops every other animation, so
+   these say !important). */
 @keyframes dialog-fade-in {
   from {
     opacity: 0;
@@ -233,21 +237,37 @@
   }
 }
 .dialog-overlay[data-state="open"] {
-  animation: dialog-fade-in var(--gt-motion);
+  animation: dialog-fade-in var(--gt-dur-scrim) linear;
 }
 .dialog-overlay[data-state="closed"] {
-  animation: dialog-fade-out var(--gt-motion);
+  animation: dialog-fade-out var(--gt-dur-scrim) linear both;
 }
 .dialog-content[data-state="open"] {
-  animation: sheet-up var(--gt-motion);
+  animation: sheet-up var(--gt-dur-sheet-in) var(--gt-ease-sheet);
 }
 .dialog-content[data-state="closed"] {
-  animation: sheet-down var(--gt-motion);
+  animation-name: sheet-down;
+  animation-duration: var(--gt-dur-sheet-out);
+  animation-timing-function: var(--gt-ease-in);
+  animation-fill-mode: both;
+}
+/* While a finger holds the sheet nothing else moves it. */
+.dialog-content.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+  -webkit-user-select: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .dialog-overlay,
-  .dialog-content {
-    animation: none !important;
+  .dialog-overlay[data-state],
+  .dialog-content[data-state] {
+    animation-name: dialog-fade-in !important;
+    animation-duration: var(--gt-dur-fade) !important;
+    animation-timing-function: linear !important;
+  }
+  .dialog-overlay[data-state="closed"],
+  .dialog-content[data-state="closed"] {
+    animation-name: dialog-fade-out !important;
+    animation-fill-mode: both;
   }
 }
 
