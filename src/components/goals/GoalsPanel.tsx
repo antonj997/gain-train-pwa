@@ -10,6 +10,7 @@ import { localizedDate } from "@/lib/dates";
 import type { TrainingPreferences } from "@/lib/preferences";
 import type { WeeklyGoalStats } from "@/lib/week-summary";
 import { useT } from "@/i18n/useT";
+import MotionList from "@/components/motion/MotionList";
 
 type Props = {
   open: GoalCardData[];
@@ -39,7 +40,7 @@ export default function GoalsPanel({
           <div className="section-head">
             <h2 id="active-goals-heading">{t("goals.active")}</h2>
           </div>
-          <div className="goal-list">
+          <MotionList className="goal-list">
             {open.map((card) => (
               <GoalCard
                 key={card.goal.id}
@@ -47,7 +48,7 @@ export default function GoalsPanel({
                 onOpen={() => onEdit(card.goal)}
               />
             ))}
-          </div>
+          </MotionList>
         </section>
       )}
       {open.length === 0 && reached.length === 0 && (
@@ -71,7 +72,7 @@ export default function GoalsPanel({
             <h2>{t("goals.reachedSection", { count: reached.length })}</h2>
             <ChevronDown size={20} aria-hidden="true" />
           </summary>
-          <div className="list">
+          <MotionList className="list">
             {reached.map(({ goal, insight }) => (
               <ListRow
                 key={goal.id}
@@ -87,7 +88,7 @@ export default function GoalsPanel({
                 onClick={() => onEdit(goal)}
               />
             ))}
-          </div>
+          </MotionList>
         </details>
       )}
       <GoalSheet

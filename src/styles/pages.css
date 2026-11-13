@@ -90,10 +90,23 @@ body::before {
   border: 1px solid var(--gt-line);
   background-color: var(--gt-surface);
 }
+/* The sync notices under a page header. Each notice brings its own space
+   above it (the header's 12px for the first, 8px between), so one that grows
+   in or folds away (useListMotion) moves the page without a jump; an empty
+   stack is not drawn. */
 .banners {
   display: flex;
   flex-direction: column;
-  gap: var(--gt-space-2);
+  margin-top: calc(-1 * var(--gt-space-3));
+}
+.banners:empty {
+  display: none;
+}
+.banners > * {
+  margin-top: var(--gt-space-2);
+}
+.banners > :first-child {
+  margin-top: var(--gt-space-3);
 }
 .banner > span {
   flex: 1;
@@ -324,8 +337,10 @@ label.row {
 @media (prefers-reduced-motion: no-preference) {
   .resume-card.is-running.is-returning {
     animation:
-      resume-turn 1.2s cubic-bezier(0.3, 0, 0.2, 1) 300ms 1,
-      resume-turn 5s linear 1.5s infinite;
+      resume-turn var(--gt-dur-lap) var(--gt-ease-collapse) var(--gt-dur-morph)
+        1,
+      resume-turn var(--gt-dur-turn) linear
+        calc(var(--gt-dur-morph) + var(--gt-dur-lap)) infinite;
   }
 }
 /* Card → top bar. While <html data-nav-dir="morph"> the tapped card and the
@@ -345,7 +360,7 @@ label.row {
 }
 html[data-nav-dir="morph"]::view-transition-group(workout-head),
 html[data-nav-dir="morph"]::view-transition-group(workout-title) {
-  animation-duration: calc(var(--gt-page-duration) + 40ms);
+  animation-duration: var(--gt-dur-morph);
   animation-timing-function: var(--gt-ease-out);
 }
 html[data-nav-dir="morph"]::view-transition-old(workout-head),
@@ -353,14 +368,15 @@ html[data-nav-dir="morph"]::view-transition-new(workout-head),
 html[data-nav-dir="morph"]::view-transition-old(workout-title),
 html[data-nav-dir="morph"]::view-transition-new(workout-title) {
   height: 100%;
-  animation-duration: calc(var(--gt-page-duration) + 40ms);
+  animation-duration: var(--gt-dur-morph);
   animation-timing-function: var(--gt-ease-out);
 }
 html[data-nav-dir="morph"]::view-transition-old(root) {
-  animation: gt-morph-out 180ms ease-out both;
+  animation: gt-morph-out var(--gt-dur-morph-out) var(--gt-ease-out) both;
 }
 html[data-nav-dir="morph"]::view-transition-new(root) {
-  animation: gt-morph-in 220ms var(--gt-ease-out) 120ms both;
+  animation: gt-morph-in var(--gt-dur-morph-in) var(--gt-ease-out)
+    var(--gt-dur-fade) both;
 }
 @keyframes gt-morph-out {
   to {
@@ -376,10 +392,10 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-nav-dir="morph"]::view-transition-old(root) {
-    animation: gt-morph-fade-out 120ms linear both;
+    animation: gt-morph-fade-out var(--gt-fade) both;
   }
   html[data-nav-dir="morph"]::view-transition-new(root) {
-    animation: gt-morph-fade-in 120ms linear both;
+    animation: gt-morph-fade-in var(--gt-fade) both;
   }
 }
 @keyframes gt-morph-fade-out {
@@ -530,7 +546,7 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   top: 3px;
   right: 3px;
   color: var(--gt-ink-2);
-  animation: week-fade-in 180ms ease-out 120ms both;
+  animation: week-fade-in var(--gt-motion) var(--gt-dur-fade) both;
 }
 .week-ring {
   position: absolute;
@@ -575,7 +591,6 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 /* The line under the strip: the totals, or for a moment what just changed. */
 .week-status.is-change {
   color: var(--gt-ink);
-  animation: week-fade-in 160ms ease-out both;
 }
 .week-undo {
   position: relative;
@@ -588,9 +603,8 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .week-moon,
-  .week-status.is-change {
-    animation-duration: 120ms;
+  .week-moon {
+    animation-duration: var(--gt-dur-fade) !important;
     animation-delay: 0ms;
   }
 }
@@ -624,10 +638,10 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   line-height: 1.25;
 }
 .day-sheet-date[data-dir="1"] {
-  animation: day-date-from-right 200ms var(--gt-ease-out) both;
+  animation: day-date-from-right var(--gt-dur-step) var(--gt-ease-out) both;
 }
 .day-sheet-date[data-dir="-1"] {
-  animation: day-date-from-left 200ms var(--gt-ease-out) both;
+  animation: day-date-from-left var(--gt-dur-step) var(--gt-ease-out) both;
 }
 @keyframes day-date-from-right {
   from {
@@ -643,7 +657,8 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 }
 @media (prefers-reduced-motion: reduce) {
   .day-sheet-date[data-dir] {
-    animation: week-fade-in 120ms linear both;
+    animation: week-fade-in var(--gt-fade) both;
+    animation-duration: var(--gt-dur-fade) !important;
   }
 }
 .day-step {
@@ -2281,28 +2296,28 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
 }
 @media (prefers-reduced-motion: no-preference) {
   main[data-entering] > .page > :not(.page-header):nth-child(-n + 9) {
-    animation: gt-rise 200ms var(--gt-ease-out) backwards;
+    animation: gt-rise var(--gt-dur-rise) var(--gt-ease-out) backwards;
   }
   main[data-entering] > .page > :nth-child(3) {
-    animation-delay: 15ms;
+    animation-delay: calc(var(--gt-dur-rise-step) * 1);
   }
   main[data-entering] > .page > :nth-child(4) {
-    animation-delay: 30ms;
+    animation-delay: calc(var(--gt-dur-rise-step) * 2);
   }
   main[data-entering] > .page > :nth-child(5) {
-    animation-delay: 45ms;
+    animation-delay: calc(var(--gt-dur-rise-step) * 3);
   }
   main[data-entering] > .page > :nth-child(6) {
-    animation-delay: 60ms;
+    animation-delay: calc(var(--gt-dur-rise-step) * 4);
   }
   main[data-entering] > .page > :nth-child(7) {
-    animation-delay: 75ms;
+    animation-delay: calc(var(--gt-dur-rise-step) * 5);
   }
   main[data-entering] > .page > :nth-child(8) {
-    animation-delay: 90ms;
+    animation-delay: calc(var(--gt-dur-rise-step) * 6);
   }
   main[data-entering] > .page > :nth-child(9) {
-    animation-delay: 105ms;
+    animation-delay: calc(var(--gt-dur-rise-step) * 7);
   }
 }
 

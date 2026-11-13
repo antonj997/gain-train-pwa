@@ -58,6 +58,8 @@ import {
   DialogCloseButton,
 } from "@/components/ui/dialog";
 import { t } from "@/i18n";
+import MotionList from "@/components/motion/MotionList";
+import Reveal from "@/components/motion/Reveal";
 
 /**
  * Library → Routines: the phase card (to the Plan subscreen), a card per
@@ -260,7 +262,7 @@ export default function RoutinesPanel({
         </label>
       )}
       {cards.length > 0 && (
-        <div className="routine-cards">
+        <MotionList className="routine-cards" resetKey={query?.trim() ?? ""}>
           {cards.map((slot) => {
             if (slot.kind === "undo")
               return (
@@ -329,24 +331,30 @@ export default function RoutinesPanel({
               />
             );
           })}
-        </div>
+        </MotionList>
       )}
-      {records.length > 0 && !shown.length && (
-        <p className="empty" role="status">
-          {t("routines.noMatch")}
-        </p>
-      )}
+      <Reveal>
+        {records.length > 0 && !shown.length && (
+          <p className="empty" role="status">
+            {t("routines.noMatch")}
+          </p>
+        )}
+      </Reveal>
       {!records.length && !edit && (
         <p className="empty">{t("routines.empty")}</p>
       )}
-      {edit && !open && (
-        <p className="draft-receipt" role="status">
-          {t("routines.unfinished", {
-            name: edit.data.name || t("routines.untitled"),
-          })}{" "}
-          {draft.retained ? t("routines.keptOnPhone") : t("routines.keepOpen")}
-        </p>
-      )}
+      <Reveal>
+        {edit && !open && (
+          <p className="draft-receipt" role="status">
+            {t("routines.unfinished", {
+              name: edit.data.name || t("routines.untitled"),
+            })}{" "}
+            {draft.retained
+              ? t("routines.keptOnPhone")
+              : t("routines.keepOpen")}
+          </p>
+        )}
+      </Reveal>
       <button type="button" className="btn-dashed" onClick={create}>
         <Plus size={20} aria-hidden="true" />
         {edit ? t("routines.resumeDraft") : t("routines.new")}
@@ -400,32 +408,34 @@ export default function RoutinesPanel({
                   }
                 />
               </label>
-              {edit.data.exercises.map((ex) => (
-                <RoutinePlan
-                  key={ex.id}
-                  exercise={ex}
-                  defaults={categories.get(ex.exerciseId)}
-                  onChange={update}
-                  onReorderExercises={
-                    edit.data.exercises.length > 1
-                      ? (exercise) => {
-                          setReorderFrom(exercise.id);
-                          setReorderOpen(true);
-                        }
-                      : undefined
-                  }
-                  onRemove={(exercise) =>
-                    hasLoggedExercise(exercise)
-                      ? setRemoving(exercise)
-                      : removeExercise(exercise)
-                  }
-                  onChangeExercise={setChanging}
-                  cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
-                  onCardioFields={cardioFields.setFields}
-                  repHold={repHold.holdFor(ex.exerciseId)}
-                  onRepHold={repHold.setHold}
-                />
-              ))}
+              <MotionList className="routine-editor-list" resetKey={edit.id}>
+                {edit.data.exercises.map((ex) => (
+                  <RoutinePlan
+                    key={ex.id}
+                    exercise={ex}
+                    defaults={categories.get(ex.exerciseId)}
+                    onChange={update}
+                    onReorderExercises={
+                      edit.data.exercises.length > 1
+                        ? (exercise) => {
+                            setReorderFrom(exercise.id);
+                            setReorderOpen(true);
+                          }
+                        : undefined
+                    }
+                    onRemove={(exercise) =>
+                      hasLoggedExercise(exercise)
+                        ? setRemoving(exercise)
+                        : removeExercise(exercise)
+                    }
+                    onChangeExercise={setChanging}
+                    cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
+                    onCardioFields={cardioFields.setFields}
+                    repHold={repHold.holdFor(ex.exerciseId)}
+                    onRepHold={repHold.setHold}
+                  />
+                ))}
+              </MotionList>
               <button
                 className="btn-secondary"
                 onClick={() => setPicker(true)}
@@ -460,11 +470,13 @@ export default function RoutinesPanel({
               </div>
               {/* Last, so it can stick to the bottom edge of the long form. */}
               <div className="sheet-footer">
-                {error && (
-                  <p className="field-error" role="alert">
-                    {error}
-                  </p>
-                )}
+                <Reveal>
+                  {error && (
+                    <p className="field-error" role="alert">
+                      {error}
+                    </p>
+                  )}
+                </Reveal>
                 <button
                   className="btn-primary"
                   disabled={

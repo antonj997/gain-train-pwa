@@ -18,10 +18,10 @@ import { workoutTitle } from "@/lib/workout-name";
 import { morphToWorkout, settledPath } from "@/lib/view-transition";
 import { reducedMotion } from "@/hooks/useMessages";
 import RoutineBadge from "@/components/items/RoutineBadge";
+import { EASE, MOTION } from "@/lib/motion";
 
 /** The card grows into the workout's top bar and shrinks back from it. */
-const MORPH_MS = 300;
-const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+const MORPH_MS = MOTION.morph;
 
 /**
  * Coming back from a workout: its card shrinks back from where the top bar
@@ -34,7 +34,7 @@ function useReturnMorph(card: HTMLElement | null, id: string) {
     const r = card.getBoundingClientRect();
     if (!r.width || !r.height) return;
     if (reducedMotion()) {
-      card.animate([{ opacity: 0 }, { opacity: 1 }], 120);
+      card.animate([{ opacity: 0 }, { opacity: 1 }], MOTION.reduced);
       return;
     }
     // The bar spans the top of the screen, about 56px tall.
@@ -51,7 +51,7 @@ function useReturnMorph(card: HTMLElement | null, id: string) {
         },
         { transformOrigin: "0 0", transform: "none", opacity: 1 },
       ],
-      { duration: MORPH_MS, easing: EASE },
+      { duration: MORPH_MS, easing: EASE.out },
     );
   }, [returning, card]);
   return returning;

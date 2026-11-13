@@ -46,6 +46,8 @@ import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
 import DaySheet from "@/components/home/DaySheet";
 import { reducedMotion, useUndoEntries } from "@/hooks/useMessages";
 import { useTipTarget } from "@/hooks/useTipTarget";
+import { EASE as EASE_CURVES, MOTION, SPRING } from "@/lib/motion";
+import MotionList from "@/components/motion/MotionList";
 
 type Props = {
   /** Finished workouts, newest first. */
@@ -63,9 +65,9 @@ const LIFT_MS = 350;
 const MOVE_SLOP = 8;
 /** Lifted, the ring grows a little and settles like a spring. */
 const LIFT_SCALE = 1.12;
-const SLIDE_MS = 260;
+const SLIDE_MS = MOTION.page;
 const STATUS_MS = 4000;
-const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+const EASE = EASE_CURVES.out;
 
 type Box = { x: number; y: number; w: number; h: number };
 type Press = {
@@ -240,7 +242,9 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     if (!el) return Promise.resolve();
     showRing(el, to);
     if (reducedMotion())
-      return finished(el.animate([{ opacity: 0 }, { opacity: 1 }], 120));
+      return finished(
+        el.animate([{ opacity: 0 }, { opacity: 1 }], MOTION.reduced),
+      );
     return finished(
       el.animate([{ transform: ringAt(from) }, { transform: ringAt(to) }], {
         duration: SLIDE_MS,
@@ -265,7 +269,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     if (start && ring && !reducedMotion()) {
       // From the finger: spring into the day while the lift settles.
       ring.classList.remove("is-lifted");
-      const spring = springValues(380, 30, start.x, b.x);
+      const spring = springValues(...SPRING.drop, start.x, b.x);
       const span = b.x - start.x || 1;
       main = finished(
         ring.animate(
@@ -304,8 +308,8 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
               { transform: ringAt(box, box.x, 0.6), opacity: 0 },
             ],
         {
-          duration: reducedMotion() ? 120 : 180,
-          easing: "ease-out",
+          duration: reducedMotion() ? MOTION.reduced : MOTION.slot,
+          easing: EASE_CURVES.out,
           fill: "forwards",
         },
       ),
@@ -407,7 +411,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     showRing(ring, p.box);
     ring.classList.add("is-lifted");
     if (!reducedMotion()) {
-      const spring = springValues(400, 26, 1, LIFT_SCALE);
+      const spring = springValues(...SPRING.lift, 1, LIFT_SCALE);
       ring.animate(
         spring.values.map((s) => ({ transform: ringAt(p.box, p.box.x, s) })),
         { duration: spring.duration, easing: "linear" },
@@ -517,7 +521,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
       setGhosted([]);
     };
     if (reducedMotion()) return back();
-    const spring = springValues(380, 30, p.x, p.box.x);
+    const spring = springValues(...SPRING.drop, p.x, p.box.x);
     const span = p.x - p.box.x || 1;
     void finished(
       ring.animate(
@@ -692,23 +696,27 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
       <p className="sr-only" id={hintId}>
         {t("week.dayHint")}
       </p>
-      {undos.length ? (
-        undos.map((entry) => (
-          <UndoPlaceholder
-            key={`u${entry.id}`}
-            entry={entry}
-            className="week-undo"
-          />
-        ))
-      ) : (
-        <p
-          key={status ? `s${status.id}` : "totals"}
-          className={"row-sub week-status" + (status ? " is-change" : "")}
-          role="status"
-        >
-          {status?.text ?? totalsLine}
-        </p>
-      )}
+      {/* The line under the strip and the Undo slot that takes its place
+          share the banner motion: one grows or shrinks into the other. */}
+      <MotionList className="week-foot" kind="banner">
+        {undos.length ? (
+          undos.map((entry) => (
+            <UndoPlaceholder
+              key={`u${entry.id}`}
+              entry={entry}
+              className="week-undo"
+            />
+          ))
+        ) : (
+          <p
+            key={status ? `s${status.id}` : "totals"}
+            className={"row-sub week-status" + (status ? " is-change" : "")}
+            role="status"
+          >
+            {status?.text ?? totalsLine}
+          </p>
+        )}
+      </MotionList>
       {sheet && (
         <DaySheet
           open={sheetOpen && !!sheetEntry}
