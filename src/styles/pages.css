@@ -785,6 +785,41 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   justify-content: space-between;
   gap: var(--gt-space-2);
 }
+/* The arrows in the head browse the weeks; they sit above the card's link. */
+.week-nav {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 2px;
+  margin-block: -10px;
+  margin-inline-end: -10px;
+}
+.week-nav-btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--gt-radius-sm);
+  background: transparent;
+  color: var(--gt-ink-2);
+  cursor: pointer;
+}
+.week-nav-btn:disabled {
+  color: var(--gt-ink-3);
+  opacity: 0.4;
+  cursor: default;
+}
+.week-nav-btn:focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+}
+@media (hover: hover) {
+  .week-nav-btn:not(:disabled):hover {
+    background: var(--gt-surface-2);
+    color: var(--gt-ink);
+  }
+}
 .week-card-title {
   font-size: var(--gt-fs-2);
   font-weight: 600;

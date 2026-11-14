@@ -1,5 +1,9 @@
 # Changelog
 
+## 14 November 2026 — the week strip's arrows browse the weeks
+
+- The arrow in the week card's head went to History; now › shows the next week in the strip itself, as far as a plan reaches, and ‹ appears on a week ahead to step back. A browsed week stays until the user steps back (no return after 1.2 s, as after a move). A tap elsewhere on the card still opens History. `browseLimit` in `src/lib/week-nav.ts`, tested.
+
 ## 14 November 2026 — Train's week strip follows a workout into another week
 
 - **Day sheet.** When ‹ › step a planned workout over the week's edge, the strip slides to that week (240ms, the days 30% of the strip's width from the new week's side while the old ones slide out, both fading) and shows it there with the selected day's ring; ‹ back over the edge slides back. The head reads that week (“Vecka 47 · 3 pass planerade” / “Week 47 · 3 workouts planned”) and the line under the strip its dates, since it has no totals yet. Past days and days outside the plan stay refused, as before. A polite live region says “Visar vecka 47” / “Showing week 47” on every change.

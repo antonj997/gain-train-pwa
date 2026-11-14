@@ -140,3 +140,19 @@ export function edgeHold(
  */
 export const resistance = (over: number, max = 12) =>
   over <= 0 ? 0 : (max * over) / (over + 2 * max);
+
+/**
+ * The furthest week (offset from today's) the strip can be browsed to: the
+ * last week any plan reaches, never before today's week. 0 when no plan
+ * reaches past this week, so there is nothing ahead to show.
+ */
+export function browseLimit<T extends PlanLike>(
+  plans: readonly T[],
+  today: string,
+): number {
+  let max = 0;
+  for (const plan of plans)
+    if (plan.endDate >= today)
+      max = Math.max(max, weekOffsetOf(plan.endDate, today));
+  return max;
+}
