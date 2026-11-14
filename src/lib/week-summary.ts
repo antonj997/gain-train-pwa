@@ -16,9 +16,16 @@ export type WeekDay = {
   today: boolean;
 };
 
-/** Monday to Sunday of the week that contains `now`, marking days with a workout. */
-export function weekStrip(dates: readonly string[], now: string): WeekDay[] {
-  const start = weekStart(now);
+/**
+ * Monday to Sunday of the week that contains `now`, or of the week `offset`
+ * weeks from it, marking days with a workout (and today, when it is shown).
+ */
+export function weekStrip(
+  dates: readonly string[],
+  now: string,
+  offset = 0,
+): WeekDay[] {
+  const start = shiftDate(weekStart(now), offset * 7);
   const counts = new Map<string, number>();
   for (const date of dates) counts.set(date, (counts.get(date) ?? 0) + 1);
   return weekdayNames("narrow").map((label, index) => {
