@@ -352,3 +352,21 @@ export const trimOverrides = (plan: Plan): Plan["overrides"] =>
       ([date]) => date >= plan.startDate && date <= plan.endDate,
     ),
   );
+
+/**
+ * The plan the app shows as "your plan" today: the one running, else the next
+ * to start, else a paused one whose period holds today. Null without one.
+ */
+export function currentPlan<T extends PlanLike & { name: string }>(
+  plans: readonly T[],
+  today: string,
+): T | null {
+  return (
+    plannedFor(plans, today)?.plan ??
+    plans.find((p) => !p.paused && p.startDate > today) ??
+    plans.find(
+      (p) => p.paused && p.startDate <= today && today <= p.endDate,
+    ) ??
+    null
+  );
+}
