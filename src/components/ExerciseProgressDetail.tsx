@@ -10,6 +10,7 @@ import {
 import {
   baseline,
   comparableSets,
+  isBodyLoad,
   exerciseStats,
   heaviestLift,
   type progressFor,
@@ -73,6 +74,11 @@ export default function ExerciseProgressDetail({
     .filter((point) => comparableSets(point.set, latest.set))
     .map((point) => ({ ...point, value: valueOf(point) }));
   const decimals = weighted ? 1 : 0;
+  // A bodyweight exercise is charted by the whole load once a bodyweight was
+  // logged with it; without one, only sessions at the same added weight compare.
+  const bodyLoad = isBodyLoad(latest.set);
+  const needsBodyweight =
+    bodyLoad && !weighted && points.length < item.points.length;
   const heaviest = heaviestLift(records, item.id);
   return (
     <div className="exercise-detail">
@@ -185,9 +191,13 @@ export default function ExerciseProgressDetail({
                     border: "1px solid var(--gt-line)",
                     borderRadius: 8,
                   }}
-                  labelFormatter={(_, payload) =>
-                    payload[0]?.payload.fullLabel ?? ""
-                  }
+                  labelFormatter={(_, payload) => {
+                    const point = payload[0]?.payload;
+                    // Sessions at different loads share the chart: name the set.
+                    return point
+                      ? `${point.fullLabel} · ${labelSet(point.set, false)}`
+                      : "";
+                  }}
                   formatter={(value) => [
                     formatFixed(Number(value), decimals),
                     metricLabel,
@@ -214,7 +224,7 @@ export default function ExerciseProgressDetail({
       <p className="row-sub">
         {weighted ? (
           <>
-            {t("detail.estimatedNote")}{" "}
+            {t(bodyLoad ? "detail.bodyLoadNote" : "detail.estimatedNote")}{" "}
             {base !== null
               ? t("detail.baseline", {
                   change: `${latestValue - base >= 0 ? "+" : ""}${formatFixed(latestValue - base, 1)}`,
@@ -228,6 +238,9 @@ export default function ExerciseProgressDetail({
           t("detail.repsNote")
         )}
       </p>
+      {needsBodyweight && (
+        <p className="row-sub">{t("detail.bodyweightHint")}</p>
+      )}
     </div>
   );
 }

@@ -641,6 +641,10 @@ export const sv = {
     "{metric} · skalan börjar på noll. Pass samma dag visas i den ordning de loggades.",
   "detail.chartLater": "Ditt diagram börjar efter ditt nästa jämförbara pass.",
   "detail.estimatedNote": "Uppskattad styrka använder arbetsset på 1–10 reps.",
+  "detail.bodyLoadNote":
+    "Uppskattad styrka för hela lasten: din kroppsvikt den dagen plus extravikt, minus assistans. Arbetsset på 1–10 reps.",
+  "detail.bodyweightHint":
+    "Ange din kroppsvikt i Inställningar så hamnar pass med olika extravikt i samma trend.",
   "detail.baseline":
     "{change} {unit} mot utgångsläget för minst 30 dagar sedan.",
   "detail.noBaseline": "Inget jämförbart utgångsläge från 30 dagar sedan än.",

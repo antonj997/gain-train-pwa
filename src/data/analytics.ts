@@ -3,24 +3,44 @@ import { isDrop } from "./drops";
 import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 import { cardioTotals, isCardioSet, type CardioTotals } from "../lib/cardio";
-import { estimate } from "./estimate";
+import { estimate, isBodyLoad, loadEstimate } from "./estimate";
 import { exerciseRecords } from "./exercise-records";
-export { estimate };
+export { estimate, isBodyLoad, loadEstimate };
+/**
+ * Whether two sets can share one trend. Sets with an estimated 1RM compare by
+ * it: weighted with weighted, and bodyweight with bodyweight whatever was
+ * added or assisted (loadEstimate counts the logged bodyweight). Without one,
+ * they compare by reps at the same load.
+ */
 export function comparableSets(a: WorkoutSet, b: WorkoutSet) {
   if (
-    a.load !== b.load ||
-    hasExtraWeight(a) !== hasExtraWeight(b) ||
     a.section !== b.section ||
     (a.measure ?? "reps") !== (b.measure ?? "reps")
   )
     return false;
-  const aEstimate = estimate(a),
-    bEstimate = estimate(b);
-  return aEstimate !== null || bEstimate !== null
-    ? aEstimate !== null && bEstimate !== null
-    : (a.load === "bodyweight" && !hasExtraWeight(a)) || a.weight === b.weight;
+  const aLoad = loadEstimate(a),
+    bLoad = loadEstimate(b);
+  if (aLoad !== null && bLoad !== null) return isBodyLoad(a) === isBodyLoad(b);
+  if (aLoad !== null || bLoad !== null) return false;
+  return (
+    a.load === b.load &&
+    hasExtraWeight(a) === hasExtraWeight(b) &&
+    ((a.load === "bodyweight" && !hasExtraWeight(a)) || a.weight === b.weight)
+  );
 }
-export function progressFor(records: RecordDoc[]) {
+/**
+ * Each exercise's best working set per session, oldest first. `bodyWeightKg`,
+ * the bodyweight set now, stands in for a bodyweight set checked before one
+ * was set, so its whole load can be estimated (loadEstimate) like the rest.
+ */
+export function progressFor(
+  records: RecordDoc[],
+  bodyWeightKg: number | null = null,
+) {
+  const withBody = (s: WorkoutSet) =>
+    bodyWeightKg && isBodyLoad(s) && !s.bodyWeightKg
+      ? { ...s, bodyWeightKg }
+      : s;
   const map = new Map<
     string,
     {
@@ -44,20 +64,23 @@ export function progressFor(records: RecordDoc[]) {
     for (const [exerciseId, ex] of grouped) {
       // A drop continues the set above it, so it is never a session's best set.
       // Cardio has no best set: it is listed by cardioProgressFor instead.
-      const sets = ex.sets.filter(
-        (s) =>
-          s.done &&
-          s.section === "working" &&
-          !isDrop(s) &&
-          !isCardioSet(s) &&
-          validSet(s),
-      );
+      const sets = ex.sets
+        .filter(
+          (s) =>
+            s.done &&
+            s.section === "working" &&
+            !isDrop(s) &&
+            !isCardioSet(s) &&
+            validSet(s),
+        )
+        .map(withBody);
       if (!sets.length) continue;
       const latestProfile = sets.at(-1)!;
       const top = sets
         .filter((s) => comparableSets(s, latestProfile))
         .sort(
-          (a, b) => (estimate(b) ?? b.reps ?? 0) - (estimate(a) ?? a.reps ?? 0),
+          (a, b) =>
+            (loadEstimate(b) ?? b.reps ?? 0) - (loadEstimate(a) ?? a.reps ?? 0),
         )[0];
       const item = map.get(exerciseId) ?? { name: ex.name, points: [] };
       item.name = ex.name;
@@ -65,7 +88,7 @@ export function progressFor(records: RecordDoc[]) {
         date: w.date,
         workoutId: record.id,
         set: top,
-        e1rm: estimate(top),
+        e1rm: loadEstimate(top),
       });
       map.set(exerciseId, item);
     }

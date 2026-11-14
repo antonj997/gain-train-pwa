@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useData } from "@/contexts/useData";
+import { useProfile } from "@/contexts/useProfile";
 import {
   cardioProgressFor,
   exerciseStats,
@@ -72,7 +73,11 @@ export default function Progress() {
   const goals = useGoals(preferences.weeklyGoal, now);
   const records = useMemo(() => Object.values(state.records), [state.records]);
   // Recomputed only when the log changes, not while typing in the search box.
-  const items = useMemo(() => progressFor(records), [records]);
+  const { bodyWeightKg } = useProfile();
+  const items = useMemo(
+    () => progressFor(records, bodyWeightKg),
+    [records, bodyWeightKg],
+  );
   const period = historyPeriod(range, now);
   const cardioItems = useMemo(() => cardioProgressFor(records), [records]);
   const { fieldsFor } = useCardioFields();
