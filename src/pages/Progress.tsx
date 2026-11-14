@@ -89,7 +89,8 @@ export default function Progress() {
           name: item.name,
           sessions: item.points.filter(inPeriod).length,
           best: t("progress.best", { set: labelSet(stats.best.set, false) }),
-          trend: stats.comparable.slice(-8).map(stats.valueOf),
+          // Every comparable session ever, not just the period's.
+          trend: stats.comparable.map(stats.valueOf),
         };
       }),
       ...cardioItems.map((item) => {
@@ -101,7 +102,7 @@ export default function Progress() {
           best: t("progress.latest", {
             value: totalsLabel(latest, fieldsFor(item.id).distanceUnit),
           }),
-          trend: item.sessions.slice(-8).map((x) => x.durationSec),
+          trend: item.sessions.map((x) => x.durationSec),
         };
       }),
     ]
@@ -235,7 +236,13 @@ export default function Progress() {
                     meta={`${row.best} · ${countLabel(row.sessions, "session")}`}
                     end={
                       <>
-                        <Sparkline values={row.trend} />
+                        {row.trend.length >= 2 ? (
+                          <Sparkline values={row.trend} />
+                        ) : (
+                          // One session is no trend: the space stays, so
+                          // the chevrons line up.
+                          <span className="sparkline" aria-hidden="true" />
+                        )}
                         <ChevronRight
                           className="chev"
                           size={20}
