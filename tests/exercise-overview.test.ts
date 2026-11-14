@@ -24,6 +24,10 @@ import {
 } from "../src/data/exercise-overview";
 import { setCurrentLanguage } from "../src/i18n";
 
+/** The verdict keeps each set on one line with no-break spaces. */
+const verdictOf = (overview: Parameters<typeof trendVerdict>[0]) =>
+  trendVerdict(overview).replace(/\u00a0/g, " ");
+
 let n = 0;
 const set = (overrides: Partial<WorkoutSet> = {}): WorkoutSet => ({
   id: `s${++n}`,
@@ -84,18 +88,18 @@ test("a weighted exercise opens on the top set and offers strength and volume", 
 });
 
 test("the verdict says how the top set's weight moved and over how long", () => {
-  assert.equal(trendVerdict(overviewOf(bench)), "Up 7.5 kg in 11 weeks");
+  assert.equal(verdictOf(overviewOf(bench)), "Up 7.5 kg in 11 weeks");
   const down = sessions(
     ["2026-11-01", [kg(90, 5)]],
     ["2026-11-11", [kg(85, 5)]],
   );
-  assert.equal(trendVerdict(overviewOf(down)), "Down 5 kg in 10 days");
+  assert.equal(verdictOf(overviewOf(down)), "Down 5 kg in 10 days");
   const reps = sessions(
     ["2026-10-21", [kg(80, 5)]],
     ["2026-11-11", [kg(80, 7)]],
   );
   assert.equal(
-    trendVerdict(overviewOf(reps)),
+    verdictOf(overviewOf(reps)),
     "Same weight, up 2 reps in 3 weeks",
   );
   const fewer = sessions(
@@ -103,21 +107,21 @@ test("the verdict says how the top set's weight moved and over how long", () => 
     ["2026-11-11", [kg(80, 5)]],
   );
   assert.equal(
-    trendVerdict(overviewOf(fewer)),
+    verdictOf(overviewOf(fewer)),
     "Same weight, down 1 rep in 7 days",
   );
   const same = sessions(
     ["2026-10-21", [kg(80, 5)]],
     ["2026-11-11", [kg(80, 5)]],
   );
-  assert.equal(trendVerdict(overviewOf(same)), "Same as 3 weeks ago");
+  assert.equal(verdictOf(overviewOf(same)), "Same as 3 weeks ago");
   const sameDay = sessions(
     ["2026-11-11", [kg(80, 5)]],
     ["2026-11-11", [kg(80, 5)]],
   );
-  assert.equal(trendVerdict(overviewOf(sameDay)), "Same as the first session");
+  assert.equal(verdictOf(overviewOf(sameDay)), "Same as the first session");
   const one = sessions(["2026-11-11", [kg(80, 5)]]);
-  assert.equal(trendVerdict(overviewOf(one)), "First session");
+  assert.equal(verdictOf(overviewOf(one)), "First session");
 });
 
 test("bodyweight verdicts name the sets when the added weight changed", () => {
@@ -126,31 +130,31 @@ test("bodyweight verdicts name the sets when the added weight changed", () => {
     ["2026-11-11", [plus(10, 7), plus(10, 5)]],
   );
   assert.equal(
-    trendVerdict(overviewOf(pull)),
+    verdictOf(overviewOf(pull)),
     "From BW × 8 to BW + 10 kg × 7 in 6 weeks",
   );
   const abs = sessions(
     ["2026-09-30", [bw(8), bw(8)]],
     ["2026-11-11", [bw(11), bw(10)]],
   );
-  assert.equal(trendVerdict(overviewOf(abs)), "Up 3 reps in 6 weeks");
+  assert.equal(verdictOf(overviewOf(abs)), "Up 3 reps in 6 weeks");
   const plank = sessions(
     ["2026-11-01", [bw(45, { measure: "seconds" })]],
     ["2026-11-11", [bw(60, { measure: "seconds" })]],
   );
-  assert.equal(trendVerdict(overviewOf(plank)), "Up 15 s in 10 days");
+  assert.equal(verdictOf(overviewOf(plank)), "Up 15 s in 10 days");
 });
 
 test("the verdict reads in Swedish", () => {
   setCurrentLanguage("sv");
   try {
-    assert.equal(trendVerdict(overviewOf(bench)), "Upp 7,5 kg på 11 veckor");
+    assert.equal(verdictOf(overviewOf(bench)), "Upp 7,5 kg på 11 veckor");
     const pull = sessions(
       ["2026-09-30", [bw(8)]],
       ["2026-11-11", [plus(10, 7)]],
     );
     assert.equal(
-      trendVerdict(overviewOf(pull)),
+      verdictOf(overviewOf(pull)),
       "Från KV × 8 till KV + 10 kg × 7 på 6 veckor",
     );
   } finally {

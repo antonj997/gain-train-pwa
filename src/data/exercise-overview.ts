@@ -302,6 +302,8 @@ function spanText(from: string, to: string) {
   return days > 0 ? countLabel(days, "day") : "";
 }
 
+const unbroken = (text: string) => text.replace(/ /g, "\u00a0");
+
 /**
  * One sentence on the trend from the first session to the latest: "Up 7.5 kg
  * in 11 weeks", "From BW × 8 to BW + 10 kg × 7 in 6 weeks", "Same weight, up 2
@@ -340,8 +342,9 @@ export function trendVerdict(overview: Overview) {
   if (Math.abs(load) <= EPSILON) return byCount(first.top, latest.top, true);
   if (kind === "bodyweight")
     return t("overview.verdictFrom", {
-      from: labelSet(first.top, false),
-      to: labelSet(latest.top, false),
+      // Each set stays on one line: the sentence wraps between them.
+      from: unbroken(labelSet(first.top, false)),
+      to: unbroken(labelSet(latest.top, false)),
       period,
     });
   return t(load > 0 ? "overview.verdictUp" : "overview.verdictDown", {
