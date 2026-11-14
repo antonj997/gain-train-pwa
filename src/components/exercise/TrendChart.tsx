@@ -28,7 +28,7 @@ type Props = {
   label: string;
 };
 
-const LEFT = 40;
+const LEFT = 44;
 const RIGHT = 12;
 const TOP = 12;
 /** The line's band. */
@@ -174,7 +174,8 @@ export default function TrendChart({
           <text
             className="trend-axis"
             aria-hidden="true"
-            x={LEFT - 6}
+            // Clear of the first bar, which is centred on the left edge.
+            x={LEFT - barWidth / 2 - 4}
             y={barBase - 2}
             textAnchor="end"
           >
