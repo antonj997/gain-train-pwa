@@ -1168,6 +1168,12 @@ details[open] > .session-summary > svg {
 .sparkline {
   flex: none;
 }
+/* An exercise with one session has no trend: the slot keeps its width. */
+span.sparkline {
+  display: block;
+  width: 64px;
+  height: 28px;
+}
 .exercise-detail {
   display: flex;
   flex-direction: column;
