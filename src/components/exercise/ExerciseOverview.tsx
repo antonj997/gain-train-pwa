@@ -226,7 +226,7 @@ export default function ExerciseOverview({
         <ul className="overview-stats">
           <li>
             <strong>{stats.last30}</strong>
-            <span>{t("overview.stat30")}</span>
+            <span>{t("overview.stat30", { count: stats.last30 })}</span>
           </li>
           <li>
             <strong>{formatFixed(stats.setsPerWeek, 1)}</strong>
@@ -234,7 +234,7 @@ export default function ExerciseOverview({
           </li>
           <li>
             <strong>{stats.total}</strong>
-            <span>{t("overview.statTotal")}</span>
+            <span>{t("overview.statTotal", { count: stats.total })}</span>
           </li>
         </ul>
       </section>
