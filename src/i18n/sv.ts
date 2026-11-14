@@ -174,6 +174,8 @@ export const sv = {
   "week.skipped": "{name} överhoppat · vila {day}",
   "week.changeFailed": "Kunde inte ändra schemat. Försök igen.",
   "week.restoreFailed": "Kunde inte ta tillbaka passet.",
+  "week.next": "Nästa vecka",
+  "week.previous": "Föregående vecka",
   "week.showing": "Visar vecka {week}",
   "week.planned": {
     one: "{count} pass planerat",

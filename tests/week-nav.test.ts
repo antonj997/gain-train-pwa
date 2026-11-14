@@ -18,6 +18,7 @@ import {
   weekRange,
   type EdgeInput,
   type EdgeState,
+  browseLimit,
 } from "../src/lib/week-nav";
 
 const row = (...cells: (string | null)[]) =>
@@ -255,4 +256,23 @@ test("resistance gives a little past the stop and never more than its max", () =
   assert.ok(resistance(10) > 0 && resistance(10) < 10);
   assert.ok(resistance(40) > resistance(20));
   assert.ok(resistance(10_000) < 12);
+});
+
+test("the head's arrows browse as far as the last week a plan reaches, never before today's", () => {
+  const today = "2026-11-14"; // Saturday, week 46
+  const plan = (startDate: string, endDate: string) =>
+    ({ id: startDate, startDate, endDate }) as never;
+  assert.equal(browseLimit([], today), 0);
+  // Ends this week: nothing ahead.
+  assert.equal(browseLimit([plan("2026-11-01", "2026-11-15")], today), 0);
+  // Ends on Monday 30 Nov, in the third week ahead.
+  assert.equal(browseLimit([plan("2026-11-01", "2026-11-30")], today), 3);
+  // A plan that is over does not count; the furthest plan wins.
+  assert.equal(
+    browseLimit(
+      [plan("2026-09-01", "2026-10-01"), plan("2026-11-01", "2026-11-22")],
+      today,
+    ),
+    1,
+  );
 });

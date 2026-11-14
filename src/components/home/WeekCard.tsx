@@ -64,6 +64,7 @@ import {
   resistance,
   weekDates,
   weekOffsetOf,
+  browseLimit,
   weekRange,
   type EdgeState,
 } from "@/lib/week-nav";
@@ -146,6 +147,9 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
   );
   // The week the strip shows, in weeks from today's (0 most of the time).
   const [shown, setShown] = useState(0);
+  // Weeks ahead opened with the head's arrows: the strip stays on them (no
+  // return to today's week) until the user steps back.
+  const [browsing, setBrowsing] = useState(false);
   const shownRef = useRef(0);
   const week = useMemo(() => {
     const dates = completed.map((r) => r.payload.date);
@@ -795,7 +799,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
   // Shown another week, the strip stays a moment once the sheet has closed or
   // the day is dropped, so the move can be seen, then goes back to today's.
   useEffect(() => {
-    if (shown === 0 || sheetOpen || drop) return;
+    if (shown === 0 || sheetOpen || drop || browsing) return;
     let timer = 0;
     const wait = () => {
       timer = window.setTimeout(
@@ -805,7 +809,19 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     };
     wait();
     return () => window.clearTimeout(timer);
-  }, [shown, sheetOpen, drop, showWeek]);
+  }, [shown, sheetOpen, drop, browsing, showWeek]);
+
+  // Back on today's week by any path, the strip follows moves again.
+  useEffect(() => {
+    if (shown === 0 && browsing) setBrowsing(false);
+  }, [shown, browsing]);
+  // The head's arrows: the next week, as far as a plan reaches, and back.
+  const lastWeek = browseLimit(plans, day);
+  const browse = (step: 1 | -1) => {
+    const next = Math.max(0, Math.min(lastWeek, shownRef.current + step));
+    setBrowsing(next > 0);
+    showWeek(next);
+  };
 
   const onDayClick = (date: string) => (event: ReactMouseEvent) => {
     // The click after a hold, a drag or a swipe on the day is not a tap.
@@ -858,27 +874,50 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
   const hintId = "week-strip-hint";
   return (
     <div ref={tipRef} className="card col-12 week-card">
-      <Link to="/history" className="week-card-link">
-        <span className="week-card-head">
+      <div className="week-card-head">
+        <Link to="/history" className="week-card-link">
           <span className={"week-card-title" + (goalMet ? " is-met" : "")}>
             {summary}
           </span>
-          <ChevronRight className="chev" size={18} aria-hidden="true" />
+          {/* Read as one link: the summary, each day, the totals, then where it goes. */}
+          <span className="sr-only">
+            {days
+              .map(
+                ({ entry, ...d }) =>
+                  localizedDate(d.date, { weekday: "long", day: "numeric" }) +
+                  (d.done ? t("home.dayDone") : "") +
+                  (d.today ? t("home.dayToday") : "") +
+                  (entry ? t("home.dayPlanned", { title: entry.title }) : ""),
+              )
+              .join("; ")}
+            . {shown === 0 ? totalsLine : rangeLine}. {t("home.weekOpen")}
+          </span>
+        </Link>
+        {/* Above the card's link: they browse the weeks here, not History. */}
+        <span className="week-nav">
+          {shown > 0 && (
+            <button
+              type="button"
+              className="week-nav-btn"
+              aria-label={t("week.previous")}
+              onClick={() => browse(-1)}
+            >
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+          )}
+          {lastWeek > 0 && (
+            <button
+              type="button"
+              className="week-nav-btn"
+              aria-label={t("week.next")}
+              disabled={shown >= lastWeek}
+              onClick={() => browse(1)}
+            >
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+          )}
         </span>
-        {/* Read as one link: the summary, each day, the totals, then where it goes. */}
-        <span className="sr-only">
-          {days
-            .map(
-              ({ entry, ...d }) =>
-                localizedDate(d.date, { weekday: "long", day: "numeric" }) +
-                (d.done ? t("home.dayDone") : "") +
-                (d.today ? t("home.dayToday") : "") +
-                (entry ? t("home.dayPlanned", { title: entry.title }) : ""),
-            )
-            .join("; ")}
-          . {shown === 0 ? totalsLine : rangeLine}. {t("home.weekOpen")}
-        </span>
-      </Link>
+      </div>
       {/* The strip holds a lifted day's pointer, so its moves, drop and cancel
           are heard here, also while the days slide to another week. */}
       <div
