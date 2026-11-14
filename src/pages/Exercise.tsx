@@ -13,6 +13,7 @@ import { useProfile } from "@/contexts/useProfile";
 import { useAuth } from "@/contexts/useAuth";
 import { cardioProgressFor, progressFor } from "@/data/analytics";
 import { exerciseRecords, exerciseSessions } from "@/data/exercise-records";
+import { exerciseOverview } from "@/data/exercise-overview";
 import { favouriteChange } from "@/data/exercises";
 import { today } from "@/data/model";
 import {
@@ -23,8 +24,8 @@ import {
 import { newWorkout } from "@/data/start";
 import { lastSessions } from "@/data/workouts";
 import CardioProgressDetail from "@/components/CardioProgressDetail";
-import ExerciseProgressDetail from "@/components/ExerciseProgressDetail";
 import ExerciseHistory from "@/components/exercise/ExerciseHistory";
+import ExerciseOverview from "@/components/exercise/ExerciseOverview";
 import ExerciseRecords from "@/components/exercise/ExerciseRecords";
 import LibraryExerciseMenu from "@/components/library/LibraryExerciseMenu";
 import PageHeader from "@/components/PageHeader";
@@ -105,6 +106,10 @@ export default function ExercisePage() {
   );
   const sessions = useMemo(() => exerciseSessions(records, id), [records, id]);
   const best = useMemo(() => exerciseRecords(records, id), [records, id]);
+  const overview = useMemo(
+    () => (strength ? exerciseOverview(sessions, bodyWeightKg) : null),
+    [strength, sessions, bodyWeightKg],
+  );
   // A deleted custom exercise still has its sessions, under the name it had.
   const name = exercise?.name ?? strength?.name ?? cardio?.name ?? null;
 
@@ -264,11 +269,15 @@ export default function ExercisePage() {
           <p>{t("exercise.neverText", { name })}</p>
         </div>
       )}
-      {logged && tab === "overview" && strength && (
-        <ExerciseProgressDetail
-          item={strength}
-          cutoffDate={daysAgo(30)}
+      {logged && tab === "overview" && overview && (
+        <ExerciseOverview
+          exerciseId={id}
+          name={name}
+          overview={overview}
+          sessions={sessions}
           records={records}
+          today={now}
+          onAllRecords={() => setParams({ tab: "records" }, { replace: true })}
         />
       )}
       {logged && tab === "overview" && !strength && cardio && (

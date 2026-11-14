@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { RecordDoc, Workout, WorkoutSet } from "../src/data/model";
-import { heaviestLift } from "../src/data/analytics";
+import { exerciseRecords } from "../src/data/exercise-records";
+
+const heaviestLift = (records: RecordDoc[], exerciseId: string) =>
+  exerciseRecords(records, exerciseId).heaviest;
 
 const ID = "builtin:bench-press";
 const set = (overrides: Partial<WorkoutSet> = {}): WorkoutSet => ({

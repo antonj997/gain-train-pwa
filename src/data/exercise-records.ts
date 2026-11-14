@@ -52,7 +52,7 @@ export type ValueRecord = RecordSet & { value: number };
 export type ExerciseRecords = {
   /** Best estimated one-rep max (Epley), in kg. */
   bestE1rm: ValueRecord | null;
-  /** Heaviest weight lifted; see heaviestLift() for the rule. */
+  /** Heaviest weight lifted; see heaviestOf() below for the rule. */
   heaviest: RecordSet | null;
   /** Most reps in one working set; a tie goes to the heavier weight. */
   mostReps: RecordSet | null;
