@@ -43,6 +43,8 @@ export const MOTION = {
   morphIn: 220,
   /** The day sheet's date steps 12px. */
   step: 200,
+  /** Train's week strip slides to another week (and back to today's). */
+  weekSlide: 240,
   lap: 1200,
   turn: 5000,
   live: 2000,

@@ -122,6 +122,7 @@
   --gt-dur-morph-out: 180ms;
   --gt-dur-morph-in: 220ms;
   --gt-dur-step: 200ms;
+  --gt-dur-week-slide: 240ms;
   --gt-dur-lap: 1200ms;
   --gt-dur-turn: 5000ms;
   --gt-dur-live: 2000ms;

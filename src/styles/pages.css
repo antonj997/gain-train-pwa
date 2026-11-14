@@ -460,6 +460,8 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
    the ring lifts, then drag to another day). */
 .week-card {
   position: relative;
+  /* The days sliding to another week stay inside the card (no page scroll). */
+  overflow-x: clip;
   color: var(--gt-ink);
 }
 .week-card-link {
@@ -587,6 +589,52 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 }
 .week-bubble[data-on] {
   opacity: 1;
+}
+/* The days leaving when the strip shows another week: a copy over the new
+   ones that slides out and fades (WeekCard plays it). */
+.week-days-out {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+/* A lifted day held past the strip's edge: that edge glows in the card's
+   padding with a chevron and fills over the hold before the strip steps a
+   week. */
+.week-edge {
+  position: absolute;
+  top: -8px;
+  bottom: 0;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  width: 12px;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--gt-motion);
+}
+.week-edge[data-side="start"] {
+  left: -15px;
+}
+.week-edge[data-side="end"] {
+  right: -15px;
+}
+.week-edge[data-on] {
+  opacity: 1;
+}
+.week-edge-fill {
+  position: absolute;
+  inset: 0;
+  background-color: color-mix(in srgb, var(--gt-accent) 45%, transparent);
+  transform: scaleY(0);
+  transform-origin: bottom;
+}
+.week-edge svg {
+  position: relative;
 }
 /* The line under the strip: the totals, or for a moment what just changed. */
 .week-status.is-change {

@@ -175,6 +175,11 @@ export const en = {
   "week.skipped": "{name} skipped · rest {day}",
   "week.changeFailed": "Couldn't change the plan. Try again.",
   "week.restoreFailed": "Couldn't bring the workout back.",
+  "week.showing": "Showing week {week}",
+  "week.planned": {
+    one: "{count} workout planned",
+    other: "{count} workouts planned",
+  },
   "daySheet.earlier": "One day earlier",
   "daySheet.later": "One day later",
   "daySheet.planned": "Planned",
