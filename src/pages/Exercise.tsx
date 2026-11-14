@@ -9,6 +9,7 @@ import {
 import { MoreHorizontal, Play, Star } from "lucide-react";
 import { notify } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
+import { useProfile } from "@/contexts/useProfile";
 import { useAuth } from "@/contexts/useAuth";
 import { cardioProgressFor, progressFor } from "@/data/analytics";
 import { exerciseRecords, exerciseSessions } from "@/data/exercise-records";
@@ -88,14 +89,15 @@ export default function ExercisePage() {
     },
   });
   const now = today();
+  const { bodyWeightKg } = useProfile();
   const records = useMemo(() => Object.values(state.records), [state.records]);
   const exercise = useMemo(
     () => libraryExercises(state.records, hidden).find((e) => e.id === id),
     [state.records, hidden, id],
   );
   const strength = useMemo(
-    () => progressFor(records).find((item) => item.id === id),
-    [records, id],
+    () => progressFor(records, bodyWeightKg).find((item) => item.id === id),
+    [records, bodyWeightKg, id],
   );
   const cardio = useMemo(
     () => cardioProgressFor(records).find((item) => item.id === id),

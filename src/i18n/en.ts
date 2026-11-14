@@ -637,6 +637,10 @@ export const en = {
     "{metric} · scale starts at zero. Same-day sessions use their recorded order.",
   "detail.chartLater": "Your chart starts after your next comparable session.",
   "detail.estimatedNote": "Estimated strength uses working sets of 1–10 reps.",
+  "detail.bodyLoadNote":
+    "Estimated strength of the whole load: your bodyweight on the day plus added weight, minus assistance. Working sets of 1–10 reps.",
+  "detail.bodyweightHint":
+    "Set your bodyweight in Settings and sessions with different added weight join one trend.",
   "detail.baseline": "{change} {unit} vs the baseline at least 30 days ago.",
   "detail.noBaseline": "No comparable baseline from 30 days ago yet.",
   "detail.timedNote":
