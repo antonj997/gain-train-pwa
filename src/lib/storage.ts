@@ -63,6 +63,8 @@ export const storageKeys = {
   /** "kg" or "lb"; weights are stored in kg either way. */
   weightUnit: "gt-weight-unit",
   persistRequested: "gt-persist-requested",
+  /** The chart metric an exercise's Overview was last left on ("top", "e1rm", ...). */
+  exerciseMetric: (exerciseId: string) => "gt-exercise-metric:" + exerciseId,
   /** The last crash the error screen showed, offered with a bug report. */
   lastError: "gt-last-error",
   deleted: (account: string) => "gt-deleted-" + account,

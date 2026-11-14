@@ -269,3 +269,272 @@
   font-weight: inherit;
   color: inherit;
 }
+
+/* The exercise page's Overview (strength): Latest, the trend and Records,
+   one card each. */
+.exercise-overview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-4);
+}
+.overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+  min-width: 0;
+}
+/* A card's small head: "Latest · 11 Nov" with "vs 4 Nov", or Records with All records. */
+.overview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 24px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.overview-head h2 {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.overview-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  margin: -10px calc(-1 * var(--gt-space-2)) -10px 0;
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  border-radius: var(--gt-radius-sm);
+  background: none;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+/* Latest: the checked-row look, tighter, with hairlines and a delta at the right. */
+.overview-sets .done-row {
+  min-height: 40px;
+  padding: 0;
+  border-top: 1px solid var(--gt-line);
+  border-radius: 0;
+}
+.overview-sets .done-row:first-child {
+  border-top: 0;
+}
+.overview-sets .done-row.is-drop {
+  border-top-style: dashed;
+}
+.set-delta {
+  display: inline-flex;
+  flex: none;
+  gap: 4px;
+  margin-left: auto;
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.set-delta.up {
+  color: var(--gt-done);
+}
+.set-delta.down {
+  color: var(--gt-danger-fg);
+}
+.set-delta.same {
+  color: var(--gt-ink-2);
+}
+.next-target {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--gt-space-3);
+  margin: 0;
+  padding: 10px var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.next-target strong {
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+/* The trend: a verdict, metric pills, the chart and one caption line. */
+.trend-verdict {
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.metric-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.metric-chip {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.metric-chip[aria-pressed="true"] {
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .metric-chip {
+    transition:
+      background-color var(--gt-dur-quick) ease-out,
+      color var(--gt-dur-quick) ease-out;
+  }
+}
+.trend-chart {
+  min-width: 0;
+}
+.trend-chart svg {
+  display: block;
+  overflow: visible;
+  border-radius: var(--gt-radius-sm);
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+.trend-chart svg:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 3px;
+}
+.trend-grid {
+  stroke: var(--gt-line);
+  stroke-width: 1;
+}
+.trend-axis,
+.trend-bar-label {
+  fill: var(--gt-ink-2);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.trend-bar-label.is-selected {
+  fill: var(--gt-ink);
+  font-size: var(--gt-fs-1);
+  font-weight: 700;
+}
+.trend-area {
+  fill: var(--gt-accent-soft);
+}
+.trend-line {
+  fill: none;
+  stroke: var(--gt-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.trend-point {
+  fill: var(--gt-surface);
+  stroke: var(--gt-accent);
+  stroke-width: 2;
+}
+.trend-point.is-best {
+  stroke: var(--gt-warm-fg);
+}
+.trend-point.is-selected {
+  fill: var(--gt-accent);
+}
+.trend-bar {
+  fill: var(--gt-line-strong);
+}
+.trend-bar.is-selected {
+  fill: var(--gt-accent);
+}
+.trend-caption {
+  min-height: 36px;
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-variant-numeric: tabular-nums;
+}
+.trend-caption strong {
+  color: var(--gt-ink);
+}
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gt-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.overview-stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.overview-stats strong {
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.overview-stats span {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+}
+/* Records: title at the left; the value, its pill and date at the right. */
+.overview-records {
+  display: flex;
+  flex-direction: column;
+}
+.overview-records > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--gt-space-3);
+  padding: var(--gt-space-2) 0;
+  border-top: 1px solid var(--gt-line);
+}
+.overview-records > div:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.overview-records dt {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.overview-records dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 0;
+  text-align: right;
+}
+.overview-record-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+.overview-record-value strong {
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.overview-records small,
+.overview-records time {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+}
+.overview-note {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+}

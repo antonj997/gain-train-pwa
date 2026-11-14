@@ -10,7 +10,7 @@ import {
   type RemoteDoc,
   type Operation,
 } from "../src/data/model";
-import { baseline, estimate, progressFor } from "../src/data/analytics";
+import { estimate, progressFor } from "../src/data/analytics";
 
 const workout = (): Workout => ({
   name: "Test",
@@ -211,24 +211,6 @@ test("bad dates and unfinished completed workouts are rejected; bodyweight needs
   );
   assert.equal(estimate(set), null);
 });
-test("30-day comparison uses the nearest session on or before the cutoff", () => {
-  assert.equal(
-    baseline(
-      [
-        { date: "2026-01-01", e1rm: 60 },
-        { date: "2026-05-01", e1rm: 80 },
-        { date: "2026-06-01", e1rm: 90 },
-      ],
-      "2026-05-15",
-    ),
-    80,
-  );
-  assert.equal(
-    baseline([{ date: "2026-06-01", e1rm: 90 }], "2026-05-15"),
-    null,
-  );
-});
-
 const rejection = (message: string) =>
   Object.assign(new Error(message), { code: "P0001" });
 

@@ -390,11 +390,6 @@ summary {
   color: var(--gt-ink-2);
   font-weight: 600;
 }
-.chart {
-  height: 180px;
-  width: 100%;
-  min-width: 0;
-}
 .auth-page {
   max-width: 430px;
   margin: 20px auto;

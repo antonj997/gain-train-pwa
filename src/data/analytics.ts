@@ -4,7 +4,6 @@ import { completedWorkouts } from "./selectors";
 import { hasExtraWeight } from "../lib/set-load";
 import { cardioTotals, isCardioSet, type CardioTotals } from "../lib/cardio";
 import { estimate, isBodyLoad, loadEstimate } from "./estimate";
-import { exerciseRecords } from "./exercise-records";
 export { estimate, isBodyLoad, loadEstimate };
 /**
  * Whether two sets can share one trend. Sets with an estimated 1RM compare by
@@ -154,16 +153,6 @@ export function cardioProgressFor(records: RecordDoc[]) {
     );
 }
 
-export function baseline(
-  points: { date: string; e1rm: number | null }[],
-  cutoff: string,
-) {
-  return (
-    points.filter((p) => p.date <= cutoff && p.e1rm !== null).at(-1)?.e1rm ??
-    null
-  );
-}
-
 /** One exercise's progress: its best working set per session, oldest first. */
 export type ExerciseProgress = ReturnType<typeof progressFor>[number];
 type Progress = ExerciseProgress;
@@ -231,16 +220,4 @@ export function sparklinePoints(
       return `${round(margin + i * step)},${round(y)}`;
     })
     .join(" ");
-}
-
-/**
- * The heaviest weight lifted in any completed set of an exercise: drops count,
- * warm-ups do not. A tie on weight goes to the set with the most reps, then
- * the most recent. Weighted sets and bodyweight sets with added weight are not
- * compared with each other: the kind of the latest such set decides. Null for
- * assisted, bodyweight-only, timed and cardio exercises. The rule lives in
- * exercise-records.ts, so Progress and the exercise's Records agree.
- */
-export function heaviestLift(records: RecordDoc[], exerciseId: string) {
-  return exerciseRecords(records, exerciseId).heaviest;
 }

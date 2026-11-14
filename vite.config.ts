@@ -107,8 +107,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (/node_modules\/(recharts|d3-|react-smooth)/.test(id))
-            return "charts";
           if (id.includes("node_modules/@supabase/")) return "cloud";
           if (/node_modules\/(react|react-dom|scheduler)\//.test(id))
             return "react";
