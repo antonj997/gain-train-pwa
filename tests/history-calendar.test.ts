@@ -7,6 +7,7 @@ import {
 } from "../src/lib/history-calendar";
 import { type RecordDoc, type Workout } from "../src/data/model";
 import * as calendar from "../src/lib/history-calendar";
+import { weekdayIndex } from "../src/lib/dates";
 
 test("history defaults to the heatmap, filtering to the last year until a day is chosen", () => {
   const now = "2026-10-26";
@@ -341,4 +342,41 @@ test("calendar marks multiple completed sessions on their logged day, excluding 
   assert.equal(dates.get("2026-10-18"), 2);
   assert.equal(dates.get("2026-10-17"), 1);
   assert.equal(dates.size, 2);
+});
+
+test("the month calendar always has six weeks, Monday first", () => {
+  for (const month of ["2026-02", "2026-03", "2026-11", "2027-01", "2015-02"]) {
+    const cells = calendar.sixWeekCells(month);
+    assert.equal(cells.length, 42, month);
+    assert.equal(weekdayIndex(cells[0].date), 0, month);
+    assert.ok(cells.filter((c) => c.inMonth).length >= 28, month);
+    assert.equal(cells[41].week, 5);
+  }
+  // November 2026 starts on a Sunday: six days of October first.
+  const nov = calendar.sixWeekCells("2026-11");
+  assert.equal(nov[0].date, "2026-10-26");
+  assert.equal(nov[6].date, "2026-11-01");
+  assert.equal(nov[41].date, "2026-12-06");
+  assert.deepEqual(calendar.sixWeekCells("2026-13"), []);
+});
+
+test("browsing goes forward as far as a running plan reaches", () => {
+  const now = "2026-11-12";
+  const plans = [
+    { endDate: "2027-01-17" },
+    { endDate: "2027-05-30", paused: true },
+    { endDate: "2025-06-01" },
+  ];
+  assert.equal(calendar.calendarMonthLimit(plans, now), "2027-01");
+  assert.equal(calendar.calendarMonthLimit([], now), "2026-11");
+  const max = calendar.calendarMonthLimit(plans, now);
+  const state = { ...calendar.createHistoryCalendar(now), display: "detailed" as const };
+  const go = (month: string, limit?: string) =>
+    calendar.changeHistoryCalendar(state, { type: "browse", month, max: limit }, now).month;
+  assert.equal(go("2026-12", max), "2026-12");
+  assert.equal(go("2027-01", max), "2027-01");
+  assert.equal(go("2027-02", max), "2027-01");
+  // Without a limit, or with one in the past, it stops at this month as before.
+  assert.equal(go("2026-12"), "2026-11");
+  assert.equal(go("2026-12", "2026-01"), "2026-11");
 });

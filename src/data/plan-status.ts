@@ -233,6 +233,27 @@ export const doneDatesOf = (records: Records) =>
 // ---------------------------------------------------------------- next workout
 
 /**
+ * The next `count` planned workout days from today to the plan's end, in date
+ * order. Today is left out once a workout is finished on it. A paused plan
+ * plans nothing.
+ */
+export function nextPlannedDays(
+  plan: PlanLike,
+  today: string,
+  doneToday: boolean,
+  count: number,
+  isWorkout: IsWorkout = isWorkoutCell,
+): string[] {
+  const days: string[] = [];
+  if (plan.paused || count <= 0) return days;
+  let date = plan.startDate > today ? plan.startDate : today;
+  if (date === today && doneToday) date = shiftDate(date, 1);
+  for (; date <= plan.endDate && days.length < count; date = shiftDate(date, 1))
+    if (isWorkout(planDay(plan, date).cell)) days.push(date);
+  return days;
+}
+
+/**
  * The next planned workout day from today to the plan's end, or null. Today is
  * left out once a workout is finished on it. A paused plan plans nothing.
  */
@@ -242,12 +263,7 @@ export function nextPlannedDay(
   doneToday: boolean,
   isWorkout: IsWorkout = isWorkoutCell,
 ): string | null {
-  if (plan.paused) return null;
-  let date = plan.startDate > today ? plan.startDate : today;
-  if (date === today && doneToday) date = shiftDate(date, 1);
-  for (; date <= plan.endDate; date = shiftDate(date, 1))
-    if (isWorkout(planDay(plan, date).cell)) return date;
-  return null;
+  return nextPlannedDays(plan, today, doneToday, 1, isWorkout)[0] ?? null;
 }
 
 // ---------------------------------------------------------------- progression

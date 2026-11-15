@@ -15,6 +15,7 @@ import {
   currentPlanWeek,
   liftStatus,
   nextPlannedDay,
+  nextPlannedDays,
   otherLifts,
   pausedCountUntil,
   phaseStatus,
@@ -490,4 +491,42 @@ test("start → now reads compact for weighted sets of the same reps", () => {
     nb(startNowText("80 kg × 5", null, "no session yet")),
     "80 kg × 5 → no session yet",
   );
+});
+
+test("the next planned workouts: the next N from today, in order", () => {
+  // Week 3 (9–15 Nov): Mon push, Wed legs, Fri pull. Today is Thu 12 Nov.
+  assert.deepEqual(nextPlannedDays(plan(), TODAY, false, 3), [
+    "2026-11-13",
+    "2026-11-16",
+    "2026-11-18",
+  ]);
+  // Today counts until a workout is finished on it.
+  const p = plan({ overrides: { [TODAY]: PUSH } });
+  assert.deepEqual(nextPlannedDays(p, TODAY, false, 2), [TODAY, "2026-11-13"]);
+  assert.deepEqual(nextPlannedDays(p, TODAY, true, 2), [
+    "2026-11-13",
+    "2026-11-16",
+  ]);
+  // A skip and a move are followed.
+  assert.deepEqual(
+    nextPlannedDays(
+      plan({ overrides: { "2026-11-13": REST, "2026-11-14": PULL } }),
+      TODAY,
+      false,
+      2,
+    ),
+    ["2026-11-14", "2026-11-16"],
+  );
+  // Before the start, from the first day; near the end, fewer than asked.
+  assert.deepEqual(nextPlannedDays(plan(), "2026-10-01", false, 2), [
+    "2026-10-26",
+    "2026-10-28",
+  ]);
+  assert.deepEqual(nextPlannedDays(plan(), "2027-01-15", false, 3), [
+    "2027-01-15",
+  ]);
+  assert.deepEqual(nextPlannedDays(plan({ paused: true }), TODAY, false, 3), []);
+  assert.deepEqual(nextPlannedDays(plan(), TODAY, false, 0), []);
+  // The single next day agrees.
+  assert.equal(nextPlannedDay(plan(), TODAY, false), "2026-11-13");
 });
