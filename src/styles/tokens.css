@@ -107,6 +107,8 @@
      movement for a fade of --gt-dur-fade. */
   --gt-ease-collapse: cubic-bezier(0.3, 0, 0.2, 1);
   --gt-ease-sweep: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* The Calendar card zooms between the compact grid and the month. */
+  --gt-ease-zoom: cubic-bezier(0.3, 0.75, 0.15, 1);
   --gt-dur-fade: 120ms;
   --gt-dur-sheet-in: 340ms;
   --gt-dur-sheet-out: 240ms;
@@ -129,6 +131,8 @@
   --gt-dur-theme: 650ms;
   --gt-dur-theme-fade: 500ms;
   --gt-dur-quick: 150ms;
+  --gt-dur-zoom: 540ms;
+  --gt-dur-zoom-step: 20ms;
 
   /* The rest bar and the next-set chip are the only floating controls. The
      shadows are translucent neutrals, so they read the same in both themes. */

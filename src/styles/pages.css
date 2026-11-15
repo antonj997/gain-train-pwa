@@ -855,6 +855,19 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   letter-spacing: 0;
   color: var(--gt-accent);
 }
+.today-label-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-block: -10px;
+  color: inherit;
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .today-label-link:hover {
+    text-decoration: underline;
+  }
+}
 .today-main {
   display: flex;
   align-items: center;
@@ -2511,49 +2524,6 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   inset: -12px -4px;
 }
 
-/* Library → Routines: the phase card on top opens the Plan subscreen. */
-.phase-card {
-  display: flex;
-  align-items: center;
-  gap: var(--gt-space-3);
-  color: var(--gt-ink);
-  text-decoration: none;
-}
-.phase-card-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  background-color: var(--gt-accent-soft);
-  color: var(--gt-accent);
-}
-.phase-card-text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-.phase-card-eyebrow {
-  font-size: var(--gt-fs-1);
-  font-weight: 600;
-  color: var(--gt-ink-2);
-}
-.phase-card-title {
-  font-size: var(--gt-fs-3);
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-.phase-card .phase-bar {
-  margin-top: 4px;
-}
-@media (hover: hover) {
-  .phase-card:hover {
-    border-color: var(--gt-line-strong);
-  }
-}
 /* The last row of Routines: Explore shared routines. */
 .shared-routines-row > svg:first-child {
   flex: none;

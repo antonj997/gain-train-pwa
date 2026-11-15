@@ -349,6 +349,13 @@ button.ex-row-main {
   text-align: center;
   text-transform: uppercase;
 }
+/* A planned day to come: the band is an outline, like a planned day cell. */
+.date-tile.is-planned .date-tile-band {
+  border-radius: var(--gt-radius-md) var(--gt-radius-md) 0 0;
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--gt-done);
+  color: var(--gt-ink-2);
+}
 .date-tile-day {
   display: flex;
   flex: 1;

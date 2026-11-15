@@ -34,7 +34,8 @@ export type HistoryCalendarState = {
 };
 
 export type HistoryCalendarAction =
-  | { type: "browse"; month: string }
+  /** `max` is the last month to browse to (calendarMonthLimit); the current month by default. */
+  | { type: "browse"; month: string; max?: string }
   | { type: "mode"; mode: HistoryCalendarState["mode"] }
   | { type: "display"; display: HistoryCalendarState["display"] }
   | { type: "bound"; bound: HistoryCalendarState["activeBound"] }
@@ -97,8 +98,11 @@ export function changeHistoryCalendar(
       return { ...state, activeBound: action.bound };
     case "browse": {
       if (!validMonth(action.month)) return state;
-      const month =
-        action.month > now.slice(0, 7) ? now.slice(0, 7) : action.month;
+      const last =
+        action.max && validMonth(action.max) && action.max > now.slice(0, 7)
+          ? action.max
+          : now.slice(0, 7);
+      const month = action.month > last ? last : action.month;
       return {
         ...state,
         month,
@@ -205,6 +209,40 @@ export function calendarCells(month: string) {
       inMonth: date.startsWith(month),
     };
   });
+}
+
+/** The month calendar always shows six Monday-first weeks (42 days), so its height never changes between months. */
+export const MONTH_ROWS = 6;
+
+/** The day cells of a month in six full weeks, Monday first; none for an invalid month. */
+export function sixWeekCells(month: string) {
+  if (!validMonth(month)) return [];
+  const offset = weekdayIndex(month + "-01");
+  return Array.from({ length: MONTH_ROWS * 7 }, (_, index) => {
+    const date = shiftDate(month + "-01", index - offset);
+    return {
+      date,
+      day: Number(date.slice(8)),
+      inMonth: date.startsWith(month),
+      /** The row, 0–5, for the zoom's stagger. */
+      week: Math.floor(index / 7),
+    };
+  });
+}
+
+/**
+ * The last month the calendar browses to: the current month, or later as far
+ * as a plan that is not paused reaches, so the planned days ahead can be seen.
+ */
+export function calendarMonthLimit(
+  plans: readonly { endDate: string; paused?: boolean }[],
+  now: string,
+) {
+  let last = now.slice(0, 7);
+  for (const plan of plans)
+    if (!plan.paused && plan.endDate.slice(0, 7) > last)
+      last = plan.endDate.slice(0, 7);
+  return last;
 }
 
 export function workoutDates(records: readonly RecordDoc[]) {

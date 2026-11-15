@@ -40,7 +40,6 @@ import { lastUsedLabel } from "@/lib/library";
 import RoutinePlan from "@/components/RoutinePlan";
 import { useCardioFields } from "@/hooks/useCardioFields";
 import { useRepHold } from "@/hooks/useRepHold";
-import PhaseCard from "@/components/library/PhaseCard";
 import type { PanelRequest } from "@/components/library/ExercisesPanel";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
 import { notify } from "@/lib/message-store";
@@ -239,7 +238,6 @@ export default function RoutinesPanel({
   return (
     <div className="col-12">
       {workoutStart.confirmation}
-      <PhaseCard />
       {query !== null && (
         <label className="search-field routine-search">
           <Search size={20} aria-hidden="true" />
