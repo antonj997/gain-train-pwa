@@ -215,9 +215,7 @@ export function AdherenceCard({
         </li>
       </ul>
       {changes && (
-        <p className="status-note">
-          {t("planStatus.notMissed", { changes })}
-        </p>
+        <p className="status-note">{t("planStatus.notMissed", { changes })}</p>
       )}
       {a.band === "off" && !paused && (
         <p className="status-note">{t("planStatus.adherenceOffTip")}</p>
@@ -265,10 +263,7 @@ export function ProgressionCard({
             unbroken(`${load(lift, lift.startKg)} × ${lift.reps}`);
           return (
             <li key={lift.exerciseId}>
-              <Link
-                className="status-lift"
-                to={exercisePath(lift.exerciseId)}
-              >
+              <Link className="status-lift" to={exercisePath(lift.exerciseId)}>
                 <span className="status-lift-text">
                   <strong className="row-title">{lift.name}</strong>
                   <span className="row-sub">
@@ -409,10 +404,14 @@ export function GoalsCard({
           const now =
             progress.current === null
               ? null
-              : (progress.unit === "kg e1RM" ? "≈ " : "") +
-                formatWeight(progress.current, undefined, 1);
+              : t(
+                  progress.unit === "kg e1RM"
+                    ? "planStatus.goalNowE1rm"
+                    : "planStatus.goalNow",
+                  { value: formatWeight(progress.current, undefined, 1) },
+                );
           const sub = [
-            now && t("planStatus.goalNow", { value: now }),
+            now,
             projected &&
               !progress.met &&
               insight.deadline.kind !== "overdue" &&
@@ -508,7 +507,12 @@ export function NextWorkoutCard({
           disabled={starting}
           onClick={onStart}
         >
-          <Play size={20} fill="currentColor" stroke="none" aria-hidden="true" />
+          <Play
+            size={20}
+            fill="currentColor"
+            stroke="none"
+            aria-hidden="true"
+          />
         </button>
       </div>
     </section>

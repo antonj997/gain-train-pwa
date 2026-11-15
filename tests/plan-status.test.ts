@@ -21,6 +21,7 @@ import {
   planAdherence,
   planLifts,
   planMuscleSets,
+  startNowText,
   workoutsPerWeek,
 } from "../src/data/plan-status";
 
@@ -94,10 +95,10 @@ test("the phase reads week n of N, the next deload and the days left", () => {
   });
   const inDeload = phaseStatus(plan(), "2026-11-17");
   assert.equal(inDeload.kind === "running" && inDeload.deloadNow, true);
-  assert.deepEqual(
-    inDeload.kind === "running" ? inDeload.nextDeload : null,
-    { week: 8, inDays: 27 },
-  );
+  assert.deepEqual(inDeload.kind === "running" ? inDeload.nextDeload : null, {
+    week: 8,
+    inDays: 27,
+  });
   assert.deepEqual(phaseStatus(plan(), "2026-10-20"), {
     kind: "upcoming",
     weeks: 12,
@@ -177,7 +178,8 @@ test("today counts once a workout is done, else it is still to come", () => {
 test("extra workouts never push adherence past 100 %", () => {
   const every = new Set<string>();
   for (let d = 26; d <= 31; d++) every.add(`2026-10-${d}`);
-  for (let d = 1; d <= 11; d++) every.add(`2026-11-${String(d).padStart(2, "0")}`);
+  for (let d = 1; d <= 11; d++)
+    every.add(`2026-11-${String(d).padStart(2, "0")}`);
   const a = planAdherence(plan(), every, TODAY);
   assert.equal(a.percent, 100);
   assert.equal(a.done, a.planned);
@@ -196,7 +198,10 @@ test("the bands: 85 % and up follows, 65–84 % a little behind, under 65 % not 
 });
 
 test("deleted routines and day types follow the resolver passed in", () => {
-  const names = { routines: [{ id: PUSH, payload: { name: "Push" } }], groups: [] };
+  const names = {
+    routines: [{ id: PUSH, payload: { name: "Push" } }],
+    groups: [],
+  };
   const isWorkout = (cell: string | null | undefined) => {
     const day = resolveCell(cell, names);
     return !!day && day.kind !== "rest";
@@ -205,7 +210,10 @@ test("deleted routines and day types follow the resolver passed in", () => {
   const a = planAdherence(plan(), new Set(), TODAY, { isWorkout });
   assert.equal(a.planned, 3);
   const typed = plan({ template: Array(4).fill(row(typeCell("legs"))) });
-  assert.equal(planAdherence(typed, new Set(), TODAY, { isWorkout }).planned, 3);
+  assert.equal(
+    planAdherence(typed, new Set(), TODAY, { isWorkout }).planned,
+    3,
+  );
 });
 
 test("a paused plan stops counting after its last workout", () => {
@@ -253,10 +261,38 @@ test("progression rows: start and now inside the plan, planned this week, status
   // weeks, 2.5 kg a step. Week 3 plans 85 kg.
   const p = plan({
     progression: [
-      { exerciseId: "bench", name: "Bench", reps: 5, startKg: 80, targetKg: 100, level: "intermediate" },
-      { exerciseId: "squat", name: "Squat", reps: 5, startKg: 100, targetKg: 120, level: "intermediate" },
-      { exerciseId: "row", name: "Row", reps: 8, startKg: 70, targetKg: 90, level: "intermediate" },
-      { exerciseId: "dips", name: "Dips", reps: 6, startKg: 10, targetKg: 20, level: "intermediate" },
+      {
+        exerciseId: "bench",
+        name: "Bench",
+        reps: 5,
+        startKg: 80,
+        targetKg: 100,
+        level: "intermediate",
+      },
+      {
+        exerciseId: "squat",
+        name: "Squat",
+        reps: 5,
+        startKg: 100,
+        targetKg: 120,
+        level: "intermediate",
+      },
+      {
+        exerciseId: "row",
+        name: "Row",
+        reps: 8,
+        startKg: 70,
+        targetKg: 90,
+        level: "intermediate",
+      },
+      {
+        exerciseId: "dips",
+        name: "Dips",
+        reps: 6,
+        startKg: 10,
+        targetKg: 20,
+        level: "intermediate",
+      },
     ],
   });
   const records = [
@@ -268,7 +304,10 @@ test("progression rows: start and now inside the plan, planned this week, status
       ex("row", [set({ weight: 70, reps: 8 })]),
     ]),
     workout("2026-11-11", [
-      ex("bench", [set({ weight: 85 }), set({ weight: 85, section: "warmup" })]),
+      ex("bench", [
+        set({ weight: 85 }),
+        set({ weight: 85, section: "warmup" }),
+      ]),
       ex("squat", [set({ weight: 110 })]),
       ex("row", [set({ weight: 70, reps: 8 })]),
     ]),
@@ -293,11 +332,20 @@ test("progression rows: start and now inside the plan, planned this week, status
 test("a lift done last week is judged against last week's plan", () => {
   const p = plan({
     progression: [
-      { exerciseId: "bench", name: "Bench", reps: 5, startKg: 80, targetKg: 100, level: "intermediate" },
+      {
+        exerciseId: "bench",
+        name: "Bench",
+        reps: 5,
+        startKg: 80,
+        targetKg: 100,
+        level: "intermediate",
+      },
     ],
   });
   // Week 2 plans 82.5; this week (3) plans 85.
-  const records = [workout("2026-11-06", [ex("bench", [set({ weight: 82.5 })])])];
+  const records = [
+    workout("2026-11-06", [ex("bench", [set({ weight: 82.5 })])]),
+  ];
   const [bench] = planLifts(p, records, TODAY, () => "barbell");
   assert.equal(bench.plannedKg, 85);
   assert.equal(bench.status, "on");
@@ -306,7 +354,14 @@ test("a lift done last week is judged against last week's plan", () => {
 test("bodyweight lifts compare the added weight", () => {
   const p = plan({
     progression: [
-      { exerciseId: "dips", name: "Dips", reps: 6, startKg: 10, targetKg: 20, level: "intermediate" },
+      {
+        exerciseId: "dips",
+        name: "Dips",
+        reps: 6,
+        startKg: 10,
+        targetKg: 20,
+        level: "intermediate",
+      },
     ],
   });
   const bw = (weight: number) =>
@@ -321,17 +376,38 @@ test("bodyweight lifts compare the added weight", () => {
 test("other lifts: the most trained exercises inside the plan without a progression", () => {
   const p = plan({
     progression: [
-      { exerciseId: "bench", name: "Bench", reps: 5, startKg: 80, targetKg: 100, level: "intermediate" },
+      {
+        exerciseId: "bench",
+        name: "Bench",
+        reps: 5,
+        startKg: 80,
+        targetKg: 100,
+        level: "intermediate",
+      },
     ],
   });
   const body = (reps: number, weight: number | null = null) =>
     set({ load: "bodyweight", extraWeight: weight !== null, weight, reps });
   const records = [
     workout("2026-10-01", [ex("curl", [set()]), ex("curl", [set()])]),
-    workout("2026-10-27", [ex("pullup", [body(8)]), ex("bench", [set()]), ex("ohp", [set({ weight: 40 })])]),
-    workout("2026-11-03", [ex("pullup", [body(7, 5)]), ex("ohp", [set({ weight: 42.5 })]), ex("run", [set({ measure: "cardio", reps: null, weight: null, durationSec: 600 })])]),
+    workout("2026-10-27", [
+      ex("pullup", [body(8)]),
+      ex("bench", [set()]),
+      ex("ohp", [set({ weight: 40 })]),
+    ]),
+    workout("2026-11-03", [
+      ex("pullup", [body(7, 5)]),
+      ex("ohp", [set({ weight: 42.5 })]),
+      ex("run", [
+        set({ measure: "cardio", reps: null, weight: null, durationSec: 600 }),
+      ]),
+    ]),
     workout("2026-11-10", [ex("pullup", [body(6, 10)]), ex("lunge", [set()])]),
-    workout("2026-11-11", [ex("a", [set()]), ex("b", [set()]), ex("c", [set()])]),
+    workout("2026-11-11", [
+      ex("a", [set()]),
+      ex("b", [set()]),
+      ex("c", [set()]),
+    ]),
   ];
   const rows = otherLifts(p, records, TODAY);
   assert.deepEqual(
@@ -371,17 +447,47 @@ test("muscle sets: the weekly average over the plan's weeks so far", () => {
   );
   assert.deepEqual(result.under, ["Legs", "Shoulders", "Arms"]);
   assert.equal(result.scale, 24);
-  assert.equal(planMuscleSets(plan(), records, "2026-10-01", categoriesOf), null);
+  assert.equal(
+    planMuscleSets(plan(), records, "2026-10-01", categoriesOf),
+    null,
+  );
   assert.equal(planMuscleSets(plan(), [], TODAY, categoriesOf), null);
 });
 
 test("the current plan: running, else the next, else a paused one holding today", () => {
   const a = { ...plan(), id: "a" };
-  const later = { ...plan({ startDate: "2027-02-01", endDate: "2027-03-01" }), id: "b" };
+  const later = {
+    ...plan({ startDate: "2027-02-01", endDate: "2027-03-01" }),
+    id: "b",
+  };
   assert.equal(currentPlan([a, later], TODAY)?.id, "a");
   assert.equal(currentPlan([later], TODAY)?.id, "b");
   const paused = { ...a, paused: true };
   assert.equal(currentPlan([paused, later], TODAY)?.id, "b");
   assert.equal(currentPlan([paused], TODAY)?.id, "a");
   assert.equal(currentPlan([], TODAY), null);
+});
+
+test("start → now reads compact for weighted sets of the same reps", () => {
+  const nb = (text: string) => text.replace(/\u00a0/g, " ");
+  assert.equal(
+    nb(startNowText(set({ weight: 80 }), set({ weight: 85 }), "–")),
+    "80 → 85 kg × 5",
+  );
+  assert.equal(
+    nb(startNowText(set({ weight: 80, reps: 6 }), set({ weight: 85 }), "–")),
+    "80 kg × 6 → 85 kg × 5",
+  );
+  const bw = set({ load: "bodyweight", weight: null, reps: 8 });
+  const added = set({
+    load: "bodyweight",
+    extraWeight: true,
+    weight: 10,
+    reps: 6,
+  });
+  assert.equal(nb(startNowText(bw, added, "–")), "BW × 8 → BW + 10 kg × 6");
+  assert.equal(
+    nb(startNowText("80 kg × 5", null, "no session yet")),
+    "80 kg × 5 → no session yet",
+  );
 });

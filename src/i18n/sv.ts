@@ -1812,7 +1812,10 @@ export const sv = {
     other: "{count} pass per vecka",
   },
   "planStatus.perWeekRange": "{min}–{max} pass per vecka",
-  "planStatus.daysLeft": { one: "{count} dag kvar", other: "{count} dagar kvar" },
+  "planStatus.daysLeft": {
+    one: "{count} dag kvar",
+    other: "{count} dagar kvar",
+  },
   "planStatus.lastDay": "Sista dagen i dag",
   "planStatus.startsIn": {
     one: "Börjar om {count} dag",
@@ -1881,6 +1884,7 @@ export const sv = {
   },
   "planStatus.goals": "Mål i schemat",
   "planStatus.goalNow": "Nu {value}",
+  "planStatus.goalNowE1rm": "Nu ≈ {value} uppsk. 1RM",
   "planStatus.goalAround": "klart runt {date}",
   "planStatus.next": "Nästa pass",
   "planStatus.today": "i dag",

@@ -5,12 +5,7 @@
 import { labelSet, type Plan, type RecordDoc, type WorkoutSet } from "./model";
 import { REST, planDay } from "./plans";
 import { isWorkoutCell } from "./plan-moves";
-import {
-  isDeloadWeek,
-  phaseWeek,
-  phaseWeeks,
-  progressionWeeks,
-} from "./phase";
+import { isDeloadWeek, phaseWeek, phaseWeeks, progressionWeeks } from "./phase";
 import { exerciseSessions } from "./exercise-records";
 import { exerciseOverview, signedLoad } from "./exercise-overview";
 import {

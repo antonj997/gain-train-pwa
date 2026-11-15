@@ -1802,7 +1802,10 @@ export const en = {
     other: "{count} workouts a week",
   },
   "planStatus.perWeekRange": "{min}–{max} workouts a week",
-  "planStatus.daysLeft": { one: "{count} day left", other: "{count} days left" },
+  "planStatus.daysLeft": {
+    one: "{count} day left",
+    other: "{count} days left",
+  },
   "planStatus.lastDay": "Last day today",
   "planStatus.startsIn": {
     one: "Starts in {count} day",
@@ -1868,6 +1871,7 @@ export const en = {
   },
   "planStatus.goals": "Goals in the plan",
   "planStatus.goalNow": "Now {value}",
+  "planStatus.goalNowE1rm": "Now ≈ {value} est. 1RM",
   "planStatus.goalAround": "done around {date}",
   "planStatus.next": "Next workout",
   "planStatus.today": "today",

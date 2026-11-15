@@ -40,7 +40,10 @@ import {
 } from "@/data/plan-status";
 import { categoriesLookup } from "@/data/muscle-sets";
 import { equipmentLookup } from "@/data/progression";
-import { completedWorkouts, routines as routineRecords } from "@/data/selectors";
+import {
+  completedWorkouts,
+  routines as routineRecords,
+} from "@/data/selectors";
 import { newWorkout } from "@/data/start";
 import { lastDoneByRoutine, todayPick } from "@/data/today";
 import { categoryLabel } from "@/lib/catalogue-labels";
@@ -81,7 +84,10 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
   const today = todayDate();
   const tomorrow = shiftDate(today, 1);
   const records = useMemo(() => Object.values(state.records), [state.records]);
-  const routines = useMemo(() => routineRecords(state.records), [state.records]);
+  const routines = useMemo(
+    () => routineRecords(state.records),
+    [state.records],
+  );
   const groups = useMemo(() => groupsOf(state.records), [state.records]);
   const isWorkout = useMemo(() => {
     const names = { routines, groups };
@@ -167,8 +173,7 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
       categories: nextDay.categories.map(categoryLabel).join(", "),
     });
   const startNext = () => {
-    if (nextRoutine)
-      void start(newWorkout(records, { routine: nextRoutine }));
+    if (nextRoutine) void start(newWorkout(records, { routine: nextRoutine }));
     else if (nextDay)
       void start(
         {

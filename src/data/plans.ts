@@ -364,9 +364,7 @@ export function currentPlan<T extends PlanLike & { name: string }>(
   return (
     plannedFor(plans, today)?.plan ??
     plans.find((p) => !p.paused && p.startDate > today) ??
-    plans.find(
-      (p) => p.paused && p.startDate <= today && today <= p.endDate,
-    ) ??
+    plans.find((p) => p.paused && p.startDate <= today && today <= p.endDate) ??
     null
   );
 }
