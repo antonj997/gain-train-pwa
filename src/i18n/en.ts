@@ -147,7 +147,8 @@ export const en = {
   // Train (redesign 1B)
   "home.profile": "Profile and settings",
   "home.weekLabel": "Week {week}",
-  "home.weekOpen": "Open History",
+  "home.todayPlanLink": "{label}. Open how {name} is going",
+  "home.weekOpen": "Open the calendar",
   "home.today": "Today",
   "home.todayRest": "Rest day",
   "home.typeText": "Exercises suggested from {categories}",
@@ -268,7 +269,7 @@ export const en = {
   "workout.discardChanges": "Discard changes",
   "workout.dateLabel": "Date {date}. Edit workout details",
   "workout.setsOf": "{done} of {total} sets",
-  "workout.backToHistory": "Back to history",
+  "workout.backToHistory": "Back to the calendar",
   "workout.leave": "Leave workout",
   "workout.editTitle": "Edit {name}",
   "workout.save": "Save",
@@ -490,7 +491,7 @@ export const en = {
   "label.assistSuffix": "{kg} {unit} assist",
   "actions.saveFailed": "Could not save. Retry to keep your changes.",
   "actions.routineFailed":
-    "Workout saved. The routine could not be saved; create it from History.",
+    "Workout saved. The routine could not be saved; create it from Calendar.",
   "actions.changesSaved": "Changes saved on this phone",
   "actions.workoutSaved": "Workout saved on this phone",
   "actions.changesFailed":
@@ -500,7 +501,7 @@ export const en = {
   "actions.abandonRetry":
     "Could not abandon. The workout is still here; retry.",
   "autosave.finishedElsewhere":
-    "This workout was finished on another device, so changes here are not saved. Your entries are kept on this phone; open the workout in History to edit it.",
+    "This workout was finished on another device, so changes here are not saved. Your entries are kept on this phone; open the workout in Calendar to edit it.",
   "autosave.recoveredEdit":
     "Recovered changes you had not saved. Save to keep them, or leave to discard them.",
   "autosave.recoveredDraft":
@@ -546,8 +547,6 @@ export const en = {
   "history.chooseMonthYear": "Choose month and year",
   "history.previousYear": "Previous year",
   "history.nextYear": "Next year",
-  "history.showMonth": "Show month calendar",
-  "history.showGrid": "Show activity grid",
   "history.clearToYear": "Clear the selection and show the whole year",
   "history.clearToMonth": "Clear the selection and show {month}",
   "history.calendar": "Workout calendar",
@@ -691,7 +690,7 @@ export const en = {
   "cardio.heartRateHint": "Average, in bpm",
   "cardio.distanceUnit": "Distance unit",
   "cardio.fieldsNote":
-    "Saved for {name} for next time. Values you already entered stay saved, and History shows them.",
+    "Saved for {name} for next time. Values you already entered stay saved, and Calendar shows them.",
   "cardio.fieldsFailed": "Could not save the fields. Try again.",
   "cardio.note":
     "Cardio is not part of strength bests or volume. A session adds up the checked cardio sets of {name} in one workout.",
@@ -812,12 +811,6 @@ export const en = {
     "The built-in catalogue plus your own. Tap one for its history and records.",
   "library.searchRoutines": "Search routines",
   "library.searchExercises": "Search exercises",
-  "library.phaseNone": "Plan a phase",
-  "library.phaseNoneText":
-    "Which routine on which day, deload weeks and progression",
-  "library.phaseStarts": "{name} · starts {date}",
-  "library.phasePaused": "{name} · paused",
-  "library.phaseOpen": "Plan: {text}",
   "library.sharedRow": "Explore shared routines",
   "library.sharedRowText": "Routines other people have shared",
   "library.planTitle": "Plan",
@@ -835,7 +828,7 @@ export const en = {
   "exercise.hiddenChip": "Hidden",
   "exercise.notFoundTitle": "Exercise not found",
   "exercise.notFoundText":
-    "It may have been deleted. Any sets you logged are still in History.",
+    "It may have been deleted. Any sets you logged are still in Calendar.",
   "exercise.backToLibrary": "Open Library",
   "exercise.start": "Start workout with this exercise",
   "exercise.neverTitle": "Not logged yet",
@@ -1705,7 +1698,7 @@ export const en = {
   "menu.addedToWorkout": "{name} added to the workout",
   "tips.label": "Tip",
   "tips.ok": "OK",
-  "tips.weekStrip": "Tap the week for your whole history",
+  "tips.weekStrip": "Tap the week to open the calendar",
   "tips.swipeRoutine": "Swipe right to start straight away",
   "tips.libraryExercise": "Press and hold for more options",
   "tips.calendarDay": "Press and hold, then drag to choose a period",

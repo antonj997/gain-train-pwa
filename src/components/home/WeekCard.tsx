@@ -100,7 +100,7 @@ const ringAt = (box: Box, x = box.x, scale = 1) =>
 
 /**
  * This week on Train: "Week 45 · 2 of 3 workouts", a day cell per day (done,
- * today, planned) and the totals. The head is a link to History (the card
+ * today, planned) and the totals. The head is a link to Calendar (the card
  * around the strip too). A planned day is a button: tap opens the day sheet
  * (step it a day, do it today, skip it); press and hold until its ring lifts,
  * then drag it to another day. A busy day swaps with it. Every change is a
@@ -766,7 +766,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
             . {shown === 0 ? totalsLine : rangeLine}. {t("home.weekOpen")}
           </span>
         </Link>
-        {/* Above the card's link: they browse the weeks here, not History. */}
+        {/* Above the card's link: they browse the weeks here, not Calendar. */}
         <span className="week-nav">
           {shown > 0 && (
             <button

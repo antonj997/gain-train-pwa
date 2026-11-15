@@ -64,7 +64,12 @@ test("days with a visible square fly; future and hidden days fade", () => {
     { date: "2026-11-03", box: rect(64, 108, 44, 44) },
     { date: "2026-11-20", box: rect(208, 156, 44, 44) }, // in the future: no square
   ];
-  const plan = zoomPlan(cells, squares, rect(20, 0, 320, 120), rect(0, 10, 360, 120));
+  const plan = zoomPlan(
+    cells,
+    squares,
+    rect(20, 0, 320, 120),
+    rect(0, 10, 360, 120),
+  );
   assert.deepEqual(
     plan.flights.map((f) => f.date),
     ["2026-11-02", "2026-11-03"],
@@ -74,5 +79,8 @@ test("days with a visible square fly; future and hidden days fade", () => {
   assert.deepEqual(plan.fades, ["2026-10-26", "2026-11-20"]);
   // The middle of the two squares (300–312 × 20–47), from the layer's corner.
   assert.deepEqual(plan.origin, { x: 306, y: 23.5 });
-  assert.equal(zoomPlan(cells, new Map(), rect(0, 0, 1, 1), rect(0, 0, 1, 1)).origin, null);
+  assert.equal(
+    zoomPlan(cells, new Map(), rect(0, 0, 1, 1), rect(0, 0, 1, 1)).origin,
+    null,
+  );
 });

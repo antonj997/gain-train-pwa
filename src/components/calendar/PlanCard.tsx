@@ -59,7 +59,10 @@ export default function PlanCard({
 }: {
   today: string;
   plans: readonly PlanItem[];
-  names: { routines: readonly RoutineRecord[]; groups: readonly RoutineGroup[] };
+  names: {
+    routines: readonly RoutineRecord[];
+    groups: readonly RoutineGroup[];
+  };
   /** A planned day's line: exercises and length, a group's routines. */
   metaOf: (entry: PlannedDay | null) => string;
   /** The day the sheet is open on. */
@@ -164,9 +167,7 @@ export default function PlanCard({
         {paused ? (
           <span className="stat-chip muted">{t("plan.paused")}</span>
         ) : (
-          band && (
-            <span className={"stat-chip" + band.tone}>{t(band.key)}</span>
-          )
+          band && <span className={"stat-chip" + band.tone}>{t(band.key)}</span>
         )}
       </div>
       <div className="plan-card-title">

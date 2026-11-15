@@ -145,7 +145,8 @@ export const sv = {
   // Träna (redesign 1B)
   "home.profile": "Profil och inställningar",
   "home.weekLabel": "Vecka {week}",
-  "home.weekOpen": "Öppna historiken",
+  "home.todayPlanLink": "{label}. Visa hur {name} går",
+  "home.weekOpen": "Öppna kalendern",
   "home.today": "I dag",
   "home.todayRest": "Vilodag",
   "home.typeText": "Övningsförslag från {categories}",
@@ -268,7 +269,7 @@ export const sv = {
   "workout.discardChanges": "Släng ändringar",
   "workout.dateLabel": "Datum {date}. Redigera passets detaljer",
   "workout.setsOf": "{done} av {total} set",
-  "workout.backToHistory": "Tillbaka till historiken",
+  "workout.backToHistory": "Tillbaka till kalendern",
   "workout.leave": "Lämna passet",
   "workout.editTitle": "Redigera {name}",
   "workout.save": "Spara",
@@ -493,7 +494,7 @@ export const sv = {
   "actions.saveFailed":
     "Kunde inte spara. Försök igen för att behålla ändringarna.",
   "actions.routineFailed":
-    "Passet sparades. Rutinen kunde inte sparas; skapa den från Historik.",
+    "Passet sparades. Rutinen kunde inte sparas; skapa den från Kalender.",
   "actions.changesSaved": "Ändringarna sparade på mobilen",
   "actions.workoutSaved": "Passet sparat på mobilen",
   "actions.changesFailed":
@@ -502,7 +503,7 @@ export const sv = {
   "actions.abandonFailed": "Kunde inte avbryta. Passet finns kvar.",
   "actions.abandonRetry": "Kunde inte avbryta. Passet finns kvar; försök igen.",
   "autosave.finishedElsewhere":
-    "Passet avslutades på en annan enhet, så ändringar här sparas inte. Dina värden finns kvar på mobilen; öppna passet i Historik för att redigera det.",
+    "Passet avslutades på en annan enhet, så ändringar här sparas inte. Dina värden finns kvar på mobilen; öppna passet i Kalender för att redigera det.",
   "autosave.recoveredEdit":
     "Återställde ändringar som inte var sparade. Spara för att behålla dem, eller lämna för att slänga dem.",
   "autosave.recoveredDraft":
@@ -549,8 +550,6 @@ export const sv = {
   "history.chooseMonthYear": "Välj månad och år",
   "history.previousYear": "Föregående år",
   "history.nextYear": "Nästa år",
-  "history.showMonth": "Visa månadskalender",
-  "history.showGrid": "Visa aktivitetsrutnät",
   "history.clearToYear": "Rensa valet och visa hela året",
   "history.clearToMonth": "Rensa valet och visa {month}",
   "history.calendar": "Träningskalender",
@@ -696,7 +695,7 @@ export const sv = {
   "cardio.heartRateHint": "Snitt, i bpm",
   "cardio.distanceUnit": "Distansenhet",
   "cardio.fieldsNote":
-    "Sparas för {name} till nästa gång. Värden du redan fyllt i sparas och visas i Historik.",
+    "Sparas för {name} till nästa gång. Värden du redan fyllt i sparas och visas i Kalender.",
   "cardio.fieldsFailed": "Kunde inte spara fälten. Försök igen.",
   "cardio.note":
     "Kondition ingår inte i styrkerekord eller volym. Ett pass summerar ikryssade konditionsset för {name} under ett träningspass.",
@@ -815,12 +814,6 @@ export const sv = {
     "Den inbyggda katalogen plus dina egna. Tryck på en för historik och rekord.",
   "library.searchRoutines": "Sök rutiner",
   "library.searchExercises": "Sök övningar",
-  "library.phaseNone": "Planera en fas",
-  "library.phaseNoneText":
-    "Vilken rutin vilken dag, deload-veckor och progression",
-  "library.phaseStarts": "{name} · startar {date}",
-  "library.phasePaused": "{name} · pausat",
-  "library.phaseOpen": "Schema: {text}",
   "library.sharedRow": "Utforska delade rutiner",
   "library.sharedRowText": "Rutiner som andra har delat",
   "library.planTitle": "Schema",
@@ -838,7 +831,7 @@ export const sv = {
   "exercise.hiddenChip": "Dold",
   "exercise.notFoundTitle": "Övningen hittades inte",
   "exercise.notFoundText":
-    "Den kan ha tagits bort. Set du har loggat finns kvar i Historik.",
+    "Den kan ha tagits bort. Set du har loggat finns kvar i Kalender.",
   "exercise.backToLibrary": "Öppna Bibliotek",
   "exercise.start": "Starta pass med den här övningen",
   "exercise.neverTitle": "Inte loggad än",
@@ -1714,7 +1707,7 @@ export const sv = {
   "menu.addedToWorkout": "{name} lades till i passet",
   "tips.label": "Tips",
   "tips.ok": "Ok",
-  "tips.weekStrip": "Tryck på veckan för hela historiken",
+  "tips.weekStrip": "Tryck på veckan för att öppna kalendern",
   "tips.swipeRoutine": "Svep höger för att starta direkt",
   "tips.libraryExercise": "Håll in för fler val",
   "tips.calendarDay": "Håll in och dra för att välja en period",

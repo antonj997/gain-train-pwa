@@ -57,8 +57,8 @@ const short = (date: string) =>
   localizedDate(date, { day: "numeric", month: "short" });
 
 /**
- * One plan's status page (/library/plan/:id), opened from the phase card on
- * Library → Routines and Train's Today ⋯: where the phase is, how well it is
+ * One plan's status page (/library/plan/:id), opened from the plan card on
+ * the Calendar tab, Train's "Today · Week 3 of 12" line and its ⋯: where the phase is, how well it is
  * followed, the lifts against the planned progression, the weekly sets per
  * muscle group, the plan's goals and the next workout. Edit (top right and at
  * the bottom) opens the same editor sheet as the plans list, where Pause and
@@ -80,7 +80,7 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
   const { t } = useT();
   const { state } = useData();
   const { bodyWeightKg } = useProfile();
-  const back = usePageBack("/library");
+  const back = usePageBack("/history");
   const today = todayDate();
   const tomorrow = shiftDate(today, 1);
   const records = useMemo(() => Object.values(state.records), [state.records]);

@@ -1,5 +1,5 @@
 export const workoutPath = (id: string) => "/workout/" + id;
-/** History, optionally with one workout's details open and one set highlighted. */
+/** The Calendar tab (still at /history), optionally with one workout's details open and one set highlighted. */
 export const historyPath = (workoutId?: string, setId?: string) =>
   workoutId
     ? "/history?workout=" + workoutId + (setId ? "&set=" + setId : "")

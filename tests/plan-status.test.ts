@@ -525,7 +525,10 @@ test("the next planned workouts: the next N from today, in order", () => {
   assert.deepEqual(nextPlannedDays(plan(), "2027-01-15", false, 3), [
     "2027-01-15",
   ]);
-  assert.deepEqual(nextPlannedDays(plan({ paused: true }), TODAY, false, 3), []);
+  assert.deepEqual(
+    nextPlannedDays(plan({ paused: true }), TODAY, false, 3),
+    [],
+  );
   assert.deepEqual(nextPlannedDays(plan(), TODAY, false, 0), []);
   // The single next day agrees.
   assert.equal(nextPlannedDay(plan(), TODAY, false), "2026-11-13");

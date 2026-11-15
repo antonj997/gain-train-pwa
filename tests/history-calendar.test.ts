@@ -370,9 +370,16 @@ test("browsing goes forward as far as a running plan reaches", () => {
   assert.equal(calendar.calendarMonthLimit(plans, now), "2027-01");
   assert.equal(calendar.calendarMonthLimit([], now), "2026-11");
   const max = calendar.calendarMonthLimit(plans, now);
-  const state = { ...calendar.createHistoryCalendar(now), display: "detailed" as const };
+  const state = {
+    ...calendar.createHistoryCalendar(now),
+    display: "detailed" as const,
+  };
   const go = (month: string, limit?: string) =>
-    calendar.changeHistoryCalendar(state, { type: "browse", month, max: limit }, now).month;
+    calendar.changeHistoryCalendar(
+      state,
+      { type: "browse", month, max: limit },
+      now,
+    ).month;
   assert.equal(go("2026-12", max), "2026-12");
   assert.equal(go("2027-01", max), "2027-01");
   assert.equal(go("2027-02", max), "2027-01");

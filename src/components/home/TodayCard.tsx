@@ -131,7 +131,18 @@ export default function TodayCard({
     <section className="today-card" aria-labelledby="today-heading">
       <div className="today-card-head">
         <h2 id="today-heading" className="today-label">
-          {label}
+          {/* "Today · Week 3 of 12" opens the plan's status page. */}
+          {plan && phase ? (
+            <Link
+              className="today-label-link"
+              to={planStatusPath(plan.id)}
+              aria-label={t("home.todayPlanLink", { label, name: plan.name })}
+            >
+              {label}
+            </Link>
+          ) : (
+            label
+          )}
         </h2>
         <button
           type="button"
