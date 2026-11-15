@@ -2691,3 +2691,192 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
 .muscle-note {
   font-size: var(--gt-fs-1);
 }
+
+/* A plan's status page (/library/plan/:id, pages/PlanStatus.tsx): the phase,
+   adherence with a week grid, progression rows, weekly sets per muscle group,
+   the plan's goals and the next workout, each a flat card. */
+.plan-status-page .page-header-bar.has-leading > .plan-status-edit {
+  margin-left: auto;
+}
+.plan-status-sub {
+  margin-top: calc(-1 * var(--gt-space-3));
+}
+.status-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.status-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--gt-space-1) var(--gt-space-3);
+}
+.status-head h2 {
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.status-head .stat-chip {
+  align-self: center;
+}
+.status-note {
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  color: var(--gt-ink-2);
+}
+.status-big {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--gt-space-1) var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-3);
+}
+.status-big strong {
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-6);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+/* One column per plan week, a cell per planned workout, filled from the bottom. */
+.adherence-weeks {
+  display: grid;
+  align-items: end;
+  gap: 3px;
+  min-height: 48px;
+}
+.adherence-week {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+}
+.adherence-day {
+  display: block;
+  height: 12px;
+  border-radius: 3px;
+  background-color: var(--gt-surface-2);
+}
+.adherence-day[data-state="done"] {
+  background-color: var(--gt-done);
+}
+.adherence-day[data-state="missed"] {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--gt-danger-fg);
+}
+.adherence-day[data-state="upcoming"] {
+  background-color: var(--gt-accent-soft);
+  box-shadow: inset 0 0 0 1.5px var(--gt-accent);
+}
+.adherence-day[data-state="paused"] {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--gt-line-strong);
+}
+.adherence-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-1) var(--gt-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+}
+.adherence-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.adherence-legend .adherence-day {
+  width: 10px;
+  height: 10px;
+}
+/* Rows inside a status card: a lift, a goal. Hairlines between, no card. */
+.status-rows {
+  margin: 0 calc(-1 * var(--gt-space-4)) calc(-1 * var(--gt-space-2));
+  padding: 0;
+  list-style: none;
+}
+.status-rows li + li {
+  border-top: 1px solid var(--gt-line);
+}
+.status-lift,
+.status-goal {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: 8px var(--gt-space-2) 8px var(--gt-space-4);
+  border: 0;
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.status-goal {
+  padding-right: var(--gt-space-4);
+}
+.status-lift:focus-visible,
+.status-goal:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+}
+@media (hover: hover) {
+  .status-lift:hover,
+  .status-goal:hover {
+    background-color: var(--gt-surface-2);
+  }
+}
+.status-lift-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.status-lift-text .row-title {
+  font-weight: 600;
+}
+.status-goal .goal-ring {
+  flex: none;
+}
+.status-goal .goal-ring-text {
+  font-size: var(--gt-fs-1);
+}
+.status-next {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+.status-play {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  cursor: pointer;
+}
+.status-play:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.status-play:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.plan-status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}

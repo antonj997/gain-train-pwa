@@ -3,17 +3,18 @@ import { Link } from "react-router-dom";
 import { CalendarPlus, ChevronRight } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { today as todayDate } from "@/data/model";
-import { activePlans, plannedFor } from "@/data/plans";
+import { activePlans, currentPlan, plannedFor } from "@/data/plans";
 import { phaseSegments, phaseWeek } from "@/data/phase";
 import PhaseBar from "@/components/items/PhaseBar";
 import { localizedDate } from "@/lib/dates";
+import { PLANS_PATH, planStatusPath } from "@/lib/routes";
 import { useT } from "@/i18n/useT";
 
 /**
  * The top of Library → Routines: the plan running today ("Strength phase ·
  * week 3 of 12" over its phase bar), else the next one to start, else a
- * paused one covering today; with none, "Plan a phase". It opens the Plan
- * subscreen.
+ * paused one covering today; with none, "Plan a phase". It opens that plan's
+ * status page, or with none the Plan subscreen.
  */
 export default function PhaseCard() {
   const { state } = useData();
@@ -25,7 +26,7 @@ export default function PhaseCard() {
   const paused = plans.find(
     (p) => p.paused && p.startDate <= today && today <= p.endDate,
   );
-  const plan = running ?? next ?? paused ?? null;
+  const plan = currentPlan(plans, today);
   let line: string;
   if (running) {
     const at = phaseWeek(running, today)!;
@@ -39,7 +40,7 @@ export default function PhaseCard() {
   else line = t("library.phaseNone");
   return (
     <Link
-      to="/library/plan"
+      to={plan ? planStatusPath(plan.id) : PLANS_PATH}
       className="card phase-card"
       aria-label={t("library.phaseOpen", { text: line })}
     >

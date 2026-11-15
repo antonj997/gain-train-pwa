@@ -34,7 +34,9 @@ test("tabs are level 0, Settings and subscreens 1, Admin 2, and other routes hav
   assert.equal(routeDepth("/settings/admin"), 2);
   assert.equal(routeDepth("/exercise/builtin%3Asquat"), 1);
   assert.equal(routeDepth("/progress/goals"), 1);
-  assert.equal(routeDepth("/library/plan"), 1);
+  assert.equal(routeDepth("/library/plan"), 2);
+  assert.equal(routeDepth("/library/plan/abc"), 1);
+  assert.equal(routeDepth("/library/plan/abc/"), 1);
   assert.equal(routeDepth("/library/shared/"), 1);
   assert.equal(routeDepth("/library/nowhere"), null);
   assert.equal(routeDepth("/exercise/"), null);
@@ -68,6 +70,12 @@ test("sub-pages push in and Back pops out, at any depth", () => {
   assert.equal(pageTransition("/", "/library/plan"), "push");
   assert.equal(pageTransition("/library/shared", "/library"), "pop");
   assert.equal(pageTransition("/library/plan", "/history"), "pop");
+  // A plan's status page opens from the phase card; the plans list sits under it.
+  assert.equal(pageTransition("/library", "/library/plan/abc"), "push");
+  assert.equal(pageTransition("/library/plan/abc", "/library/plan"), "push");
+  assert.equal(pageTransition("/library/plan", "/library/plan/abc"), "pop");
+  assert.equal(pageTransition("/library/plan/abc", "/library"), "pop");
+  assert.equal(pageTransition("/library/plan/abc", "/exercise/x"), null);
 });
 
 test("no slide for the same route, the workout, sign-in or an unknown route", () => {

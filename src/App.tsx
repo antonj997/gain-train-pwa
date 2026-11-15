@@ -18,6 +18,7 @@ const Library = lazy(() => import("@/pages/Library"));
 const Progress = lazy(() => import("@/pages/Progress"));
 const ProgressGoals = lazy(() => import("@/pages/ProgressGoals"));
 const LibraryPlan = lazy(() => import("@/pages/LibraryPlan"));
+const PlanStatus = lazy(() => import("@/pages/PlanStatus"));
 const LibraryShared = lazy(() => import("@/pages/LibraryShared"));
 const AdminReports = lazy(() => import("@/pages/AdminReports"));
 const Exercise = lazy(() => import("@/pages/Exercise"));
@@ -39,6 +40,7 @@ function AccountApp() {
               <Route path="settings/admin" element={<AdminReports />} />
               <Route path="library" element={<Library />} />
               <Route path="library/plan" element={<LibraryPlan />} />
+              <Route path="library/plan/:id" element={<PlanStatus />} />
               <Route path="library/shared" element={<LibraryShared />} />
               <Route path="exercise/:id" element={<Exercise />} />
               {/* Old URLs (/routines, ?tab=plan, ?tab=goals …) are
