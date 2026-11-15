@@ -11,7 +11,7 @@ export const en = {
   "app.update": "Update",
   "nav.main": "Main navigation",
   "nav.train": "Train",
-  "nav.history": "History",
+  "nav.history": "Calendar",
   "nav.progress": "Progress",
   "nav.library": "Library",
 
@@ -514,7 +514,7 @@ export const en = {
   "dialog.close": "Close",
 
   // History
-  "history.title": "History",
+  "history.title": "Calendar",
   "history.thisWeek": "This week",
   "history.onThisDay": "{workouts} on this day",
   "history.inView": "{workouts} in view",
@@ -1878,4 +1878,29 @@ export const en = {
   "planStatus.tomorrow": "tomorrow",
   "planStatus.when": "{when}, {date}",
   "planStatus.startNext": "Start {name}",
+  // The Calendar tab: the zoom between the views and the plan card.
+  "history.zoomIn": "Zoom in to the month",
+  "history.zoomOut": "Zoom out to the overview",
+  "history.viewMonth": "Month view, {month}",
+  "history.viewYear": "Overview of the last year",
+  "history.plannedDay": "{date}, planned: {title}. Move or skip it",
+  "calendarPlan.label": "Plan",
+  "calendarPlan.doneOf": "{done} of {planned} workouts done",
+  "calendarPlan.nothingYet": "nothing to count yet",
+  "calendarPlan.daysLeft": { one: "day left", other: "days left" },
+  "calendarPlan.lastDay": "last day",
+  "calendarPlan.week": "wk {week}",
+  "calendarPlan.nextDeload": "next deload",
+  "calendarPlan.deloadNow": "deload week",
+  "calendarPlan.now": "Now",
+  "calendarPlan.perWeek": { one: "workout a week", other: "workouts a week" },
+  "calendarPlan.weeks": { one: "week", other: "weeks" },
+  "calendarPlan.upcoming": "Coming workouts",
+  "calendarPlan.upcomingHint": "tap to move",
+  "calendarPlan.noneAhead": "Nothing more is planned in this plan.",
+  "calendarPlan.status": "See how the plan is going",
+  "calendarPlan.none": "No plan",
+  "calendarPlan.noneText":
+    "Plan which routine on which day, with deload weeks and progression. The days show up here in the calendar.",
+  "calendarPlan.create": "Create a plan",
 };

@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, type CSSProperties } from "react";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { Outlet, Link, Navigate, useLocation } from "react-router-dom";
-import { Dumbbell, History, TrendingUp, Library } from "lucide-react";
+import { Dumbbell, CalendarDays, TrendingUp, Library } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { useLegacyPlanImport } from "@/hooks/useLegacyPlanImport";
@@ -16,7 +16,7 @@ import { legacyRedirect } from "@/lib/legacy-routes";
 // In the order of TAB_PATHS, which sets the slide direction.
 const tabs = [
   { title: "nav.train", Icon: Dumbbell },
-  { title: "nav.history", Icon: History },
+  { title: "nav.history", Icon: CalendarDays },
   { title: "nav.progress", Icon: TrendingUp },
   { title: "nav.library", Icon: Library },
 ] as const;

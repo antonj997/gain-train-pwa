@@ -2,12 +2,20 @@ import { localizedDate } from "@/lib/dates";
 
 /**
  * A workout's date as a small calendar page: a done-coloured band with the
- * short weekday over the day number. Screen readers hear the full date.
+ * short weekday over the day number. A planned day to come has the band as a
+ * done-coloured outline instead, like a planned day cell. Screen readers hear
+ * the full date.
  */
-export default function DateTile({ date }: { date: string }) {
+export default function DateTile({
+  date,
+  planned,
+}: {
+  date: string;
+  planned?: boolean;
+}) {
   const weekday = localizedDate(date, { weekday: "short" }).replace(".", "");
   return (
-    <span className="date-tile">
+    <span className={"date-tile" + (planned ? " is-planned" : "")}>
       <span className="date-tile-band" aria-hidden="true">
         {weekday}
       </span>

@@ -1,6 +1,7 @@
 import HistoryCalendar from "@/components/HistoryCalendar";
 import WorkoutDetails from "@/components/history/WorkoutDetails";
 import {
+  calendarMonthLimit,
   changeHistoryCalendar,
   createHistoryCalendar,
   filterBySelection,
@@ -35,7 +36,9 @@ import {
   Trash2,
 } from "lucide-react";
 import Swipeable from "@/components/gestures/Swipeable";
-import ActivityGridIcon from "@/components/ActivityGridIcon";
+import PlanCard from "@/components/calendar/PlanCard";
+import { usePlanDaySheet } from "@/hooks/usePlanDaySheet";
+import { canEditDay } from "@/data/plan-moves";
 import { useData } from "@/contexts/useData";
 import { today, type WorkoutRecord } from "@/data/model";
 import PageHeader from "@/components/PageHeader";
@@ -67,6 +70,8 @@ function weekTitle(week: string, now: string) {
 
 /** The undo placeholders of one week's box. */
 const historyScope = (week: string) => `history:${week}`;
+/** The plan card's Undo slot, for a planned day skipped from this tab. */
+const PLAN_SCOPE = "calendar:plan";
 
 export default function History() {
   const { state, deleteRecord, restoreWorkout } = useData();
@@ -101,6 +106,9 @@ export default function History() {
     },
     [planned],
   );
+  // Planned days ahead open Train's day sheet to move or skip them.
+  const days = usePlanDaySheet({ day: now, undoScope: PLAN_SCOPE });
+  const maxMonth = calendarMonthLimit(days.plans, now);
   // One record per exercise per workout, strongest first; one badge per workout.
   const prs = useMemo(() => rankedRecords(records), [records]);
   const bests = useMemo(() => recordBadges(prs), [prs]);
@@ -209,40 +217,6 @@ export default function History() {
         title={t("history.title")}
         action={
           <div className="page-header-actions">
-            {/* The button shows the view it switches to. */}
-            <button
-              type="button"
-              className="icon-btn"
-              aria-label={
-                calendar.display === "simple"
-                  ? t("history.showMonth")
-                  : t("history.showGrid")
-              }
-              title={
-                calendar.display === "simple"
-                  ? t("history.showMonth")
-                  : t("history.showGrid")
-              }
-              onClick={() =>
-                setCalendar(
-                  changeHistoryCalendar(
-                    calendar,
-                    {
-                      type: "display",
-                      display:
-                        calendar.display === "simple" ? "detailed" : "simple",
-                    },
-                    now,
-                  ),
-                )
-              }
-            >
-              {calendar.display === "simple" ? (
-                <CalendarDays size={22} aria-hidden="true" />
-              ) : (
-                <ActivityGridIcon size={22} />
-              )}
-            </button>
             <button
               type="button"
               className="icon-btn"
@@ -260,6 +234,13 @@ export default function History() {
         now={now}
         records={records}
         planned={plannedDay}
+        edit={{
+          can: (date) => plannedDay(date) && canEditDay(days.plans, date, now),
+          title: (date) => planned(date)?.title ?? "",
+          open: days.open,
+          openDate: days.openDate,
+        }}
+        maxMonth={maxMonth}
         onChange={setCalendar}
         picking={picking}
         onPicking={setPicking}
@@ -279,6 +260,16 @@ export default function History() {
           }
         />
       )}
+      <PlanCard
+        today={now}
+        plans={days.plans}
+        names={days.names}
+        metaOf={days.metaOf}
+        openDate={days.openDate}
+        undoScope={PLAN_SCOPE}
+        onOpenDay={days.open}
+      />
+      {days.sheetNode}
       {/* Choosing a period or a month: the calendar's rarer controls. */}
       <Sheet
         open={menu}
@@ -416,7 +407,8 @@ export default function History() {
           {t("history.chooseDateToBegin")}
         </p>
       )}
-      {period && !filtered.length && (
+      {/* A month still to come has nothing to list yet. */}
+      {period && !filtered.length && period.start <= now && (
         <div className="empty-card">
           <CalendarDays size={26} />
           <h2>

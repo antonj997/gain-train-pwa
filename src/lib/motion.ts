@@ -61,6 +61,10 @@ export const MOTION = {
   /** A deleted set: the row slides out, the bin gulps, the row folds. */
   binSlide: 220,
   binGulp: 330,
+  /** The Calendar card zooms between the compact grid and the month… */
+  zoom: 540,
+  /** …a row of days setting off this much after the one before. */
+  zoomStep: 20,
 } as const;
 
 export const EASE = {
@@ -73,6 +77,8 @@ export const EASE = {
   swipe: "cubic-bezier(0.2, 1.3, 0.4, 1)",
   swipeOpen: "cubic-bezier(0.2, 0.9, 0.3, 1)",
   gulp: "cubic-bezier(0.3, 0.7, 0.2, 1)",
+  /** The Calendar card's zoom: quick off the mark, a long soft landing. */
+  zoom: "cubic-bezier(0.3, 0.75, 0.15, 1)",
 } as const;
 
 /** Springs as stiffness / damping per unit mass. */

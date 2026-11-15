@@ -11,7 +11,7 @@ export const sv = {
   "app.update": "Uppdatera",
   "nav.main": "Huvudmeny",
   "nav.train": "Träna",
-  "nav.history": "Historik",
+  "nav.history": "Kalender",
   "nav.progress": "Framsteg",
   "nav.library": "Bibliotek",
 
@@ -517,7 +517,7 @@ export const sv = {
   "dialog.close": "Stäng",
 
   // History
-  "history.title": "Historik",
+  "history.title": "Kalender",
   "history.thisWeek": "Den här veckan",
   "history.onThisDay": "{workouts} den här dagen",
   "history.inView": "{workouts} i vyn",
@@ -1891,4 +1891,29 @@ export const sv = {
   "planStatus.tomorrow": "i morgon",
   "planStatus.when": "{when}, {date}",
   "planStatus.startNext": "Starta {name}",
+  // Kalender-fliken: zoomen mellan vyerna och schemakortet.
+  "history.zoomIn": "Förstora till månad",
+  "history.zoomOut": "Förminska till översikt",
+  "history.viewMonth": "Månadsvy, {month}",
+  "history.viewYear": "Översikt över senaste året",
+  "history.plannedDay": "{date}, planerat: {title}. Flytta eller hoppa över",
+  "calendarPlan.label": "Schema",
+  "calendarPlan.doneOf": "{done} av {planned} pass gjorda",
+  "calendarPlan.nothingYet": "inget att räkna än",
+  "calendarPlan.daysLeft": { one: "dag kvar", other: "dagar kvar" },
+  "calendarPlan.lastDay": "sista dagen",
+  "calendarPlan.week": "v. {week}",
+  "calendarPlan.nextDeload": "nästa deload",
+  "calendarPlan.deloadNow": "deloadvecka",
+  "calendarPlan.now": "Nu",
+  "calendarPlan.perWeek": { one: "pass per vecka", other: "pass per vecka" },
+  "calendarPlan.weeks": { one: "vecka", other: "veckor" },
+  "calendarPlan.upcoming": "Kommande pass",
+  "calendarPlan.upcomingHint": "tryck för att flytta",
+  "calendarPlan.noneAhead": "Inget mer är planerat i schemat.",
+  "calendarPlan.status": "Visa hur schemat går",
+  "calendarPlan.none": "Inget schema",
+  "calendarPlan.noneText":
+    "Planera vilken rutin som körs vilken dag, med deloadveckor och progression. Dagarna syns här i kalendern.",
+  "calendarPlan.create": "Skapa ett schema",
 } satisfies Messages;
