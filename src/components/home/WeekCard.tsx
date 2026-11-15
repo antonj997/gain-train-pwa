@@ -10,41 +10,19 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 import { ChevronLeft, ChevronRight, Moon } from "lucide-react";
-import { useData } from "@/contexts/useData";
-import type { Plan, WorkoutRecord } from "@/data/model";
-import {
-  activePlans,
-  groupsOf,
-  plannedFor,
-  resolveCell,
-  REST,
-  type PlannedDay,
-  type PlanItem,
-} from "@/data/plans";
-import {
-  canEditDay,
-  canMoveTo,
-  isWorkoutCell,
-  moveDay,
-  restoreDay,
-  skipDay,
-  snapshotDay,
-} from "@/data/plan-moves";
-import { phaseWeek } from "@/data/phase";
-import { routines as routineRecords } from "@/data/selectors";
-import { categoryLabel } from "@/lib/catalogue-labels";
-import { isoWeek, localizedDate, shiftDate } from "@/lib/dates";
+import type { WorkoutRecord } from "@/data/model";
+import { plannedFor, REST, type PlannedDay } from "@/data/plans";
+import { canEditDay, canMoveTo, isWorkoutCell } from "@/data/plan-moves";
+import { isoWeek, localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
-import { notify, offerUndo } from "@/lib/message-store";
 import { motionMs } from "@/lib/slow-motion";
-import { routineAverageMinutes, routineMeta } from "@/lib/routine-preview";
 import { springValues } from "@/lib/spring";
 import { capturePointer, releasePointer } from "@/lib/pointer-capture";
 import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
 import { useT } from "@/i18n/useT";
 import DayCell from "@/components/items/DayCell";
 import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
-import DaySheet from "@/components/home/DaySheet";
+import { usePlanDaySheet } from "@/hooks/usePlanDaySheet";
 import { reducedMotion, useUndoEntries } from "@/hooks/useMessages";
 import { useTipTarget } from "@/hooks/useTipTarget";
 import {
@@ -92,6 +70,9 @@ const EASE = EASE_CURVES.out;
 /** The strip slides this share of its width to show another week. */
 const WEEK_SLIDE_SHARE = 0.3;
 
+const short = (date: string) =>
+  localizedDate(date, { weekday: "short", day: "numeric" });
+
 type Box = { x: number; y: number; w: number; h: number };
 type Press = {
   date: string;
@@ -113,11 +94,6 @@ type Press = {
   edgeTimer: number;
 };
 
-const short = (date: string) =>
-  localizedDate(date, { weekday: "short", day: "numeric" });
-
-const planOf = ({ id: _id, ...plan }: PlanItem): Plan => plan;
-
 /** A ring's transform at a box, scaled about its centre. */
 const ringAt = (box: Box, x = box.x, scale = 1) =>
   `translate(${x}px, ${box.y}px) scale(${scale})`;
@@ -133,18 +109,34 @@ const ringAt = (box: Box, x = box.x, scale = 1) =>
  * today's week afterwards (src/lib/week-nav.ts).
  */
 export default function WeekCard({ completed, goal, day, planned }: Props) {
-  const { state, save } = useData();
   const { t, language } = useT();
   const tipRef = useTipTarget<HTMLDivElement>("weekStrip", { tap: true });
-  const plans = useMemo(() => activePlans(state.records), [state.records]);
-  const routines = useMemo(
-    () => routineRecords(state.records),
-    [state.records],
-  );
-  const names = useMemo(
-    () => ({ routines, groups: groupsOf(state.records) }),
-    [routines, state.records],
-  );
+  // Moving and skipping, and the day sheet: shared with the Calendar tab.
+  const {
+    plans,
+    livePlans,
+    titleOf,
+    move,
+    skip,
+    open: openSheet,
+    openDate,
+    sheetOpen,
+    sheetNode,
+  } = usePlanDaySheet({
+    day,
+    undoScope: WEEK_SCOPE,
+    onMoved: ({ from, to, swapped, text, start }) => {
+      say(text);
+      // A step into another week: the strip goes there, the day keeps its ring.
+      const there = weekOffsetOf(to, day);
+      if (there !== shownRef.current) showWeek(there);
+      else void animateMove(from, to, swapped, start);
+    },
+    onSkipped: (date) => {
+      setStatus(null);
+      void animateSkip(date);
+    },
+  });
   // The week the strip shows, in weeks from today's (0 most of the time).
   const [shown, setShown] = useState(0);
   // Weeks ahead opened with the head's arrows: the strip stays on them (no
@@ -207,32 +199,6 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     : week.streak >= 2
       ? t("home.streak", { count: week.streak })
       : t("home.nothingThisWeek");
-
-  // Changes are saved one after another; until a save lands, the next change
-  // builds on what the last one made, so quick steps in the sheet add up.
-  const pending = useRef(new Map<string, Plan>());
-  const queue = useRef<Promise<unknown>>(Promise.resolve());
-  const livePlans = useCallback(
-    (): PlanItem[] =>
-      plans.map((p) => {
-        const next = pending.current.get(p.id);
-        return next ? { ...next, id: p.id } : p;
-      }),
-    [plans],
-  );
-  const commit = (id: string, next: Plan) => {
-    pending.current.set(id, next);
-    const run = queue.current.then(() => save(id, "plan", next));
-    queue.current = run.catch(() => {});
-    return run
-      .catch((cause) => {
-        notify.error(t("week.changeFailed"));
-        throw cause;
-      })
-      .finally(() => {
-        if (pending.current.get(id) === next) pending.current.delete(id);
-      });
-  };
 
   // The line under the strip says what just changed, then the totals again.
   const [status, setStatus] = useState<{ id: number; text: string } | null>(
@@ -478,63 +444,6 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     );
     hideRing(ring);
     setGhosted([]);
-  };
-
-  // ---- Changes.
-  const titleOf = (cell: string | null | undefined) =>
-    resolveCell(cell, names)?.title ?? "";
-  const [sheet, setSheet] = useState<{ date: string; dir: -1 | 0 | 1 } | null>(
-    null,
-  );
-  const [sheetOpen, setSheetOpen] = useState(false);
-
-  const move = (from: string, to: string, start?: { x: number }) => {
-    const live = livePlans();
-    if (!canMoveTo(live, from, to, day)) return false;
-    const source = plannedFor(live, from)!;
-    const target = plannedFor(live, to)!;
-    const swapped = isWorkoutCell(target.cell);
-    const next = moveDay(planOf(source.plan), from, to);
-    void commit(source.plan.id, next).catch(() => {});
-    say(
-      swapped
-        ? t("week.swapped", {
-            a: titleOf(source.cell),
-            b: titleOf(target.cell),
-          })
-        : t("week.moved", { name: titleOf(source.cell), day: short(to) }),
-    );
-    // A step into another week: the strip goes there, the day keeps its ring.
-    const there = weekOffsetOf(to, day);
-    if (there !== shownRef.current) showWeek(there);
-    else void animateMove(from, to, swapped, start);
-    setSheet((s) =>
-      s && s.date === from ? { date: to, dir: to > from ? 1 : -1 } : s,
-    );
-    return true;
-  };
-
-  const skip = (date: string) => {
-    const found = plannedFor(livePlans(), date);
-    if (!found || !isWorkoutCell(found.cell)) return;
-    const id = found.plan.id;
-    const before = snapshotDay(planOf(found.plan), date);
-    const name = titleOf(found.cell);
-    void commit(id, skipDay(planOf(found.plan), date)).catch(() => {});
-    offerUndo({
-      scope: WEEK_SCOPE,
-      index: 0,
-      text: t("week.skipped", { name, day: short(date) }),
-      undo: () => {
-        const current = livePlans().find((p) => p.id === id);
-        if (!current) return Promise.resolve();
-        return commit(id, restoreDay(planOf(current), before));
-      },
-      failed: t("week.restoreFailed"),
-    });
-    setStatus(null);
-    setSheetOpen(false);
-    void animateSkip(date);
   };
 
   // ---- Hold and drag.
@@ -829,44 +738,8 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
       event.preventDefault();
       return;
     }
-    setSheet({ date, dir: 0 });
-    setSheetOpen(true);
+    openSheet(date);
   };
-
-  // ---- The day sheet.
-  const sheetDate = sheet?.date ?? day;
-  const sheetFound = plannedFor(plans, sheetDate);
-  const sheetEntry = resolveCell(sheetFound?.cell, names);
-  // A day that stops being a workout (another device, or it was skipped) closes the sheet.
-  useEffect(() => {
-    if (sheetOpen && !isWorkoutCell(plannedFor(livePlans(), sheetDate)?.cell))
-      setSheetOpen(false);
-  }, [sheetOpen, sheetDate, livePlans]);
-  const sheetRoutine =
-    sheetEntry?.kind === "routine"
-      ? (routines.find((r) => r.id === sheetEntry.routineIds[0]) ?? null)
-      : null;
-  const sheetMeta = sheetRoutine
-    ? routineMeta(
-        sheetRoutine.payload.exercises.length,
-        routineAverageMinutes(sheetRoutine.id, state.records),
-      )
-    : sheetEntry?.kind === "group"
-      ? sheetEntry.routineIds
-          .map((id) => routines.find((r) => r.id === id)?.payload.name)
-          .filter(Boolean)
-          .join(" · ")
-      : sheetEntry
-        ? t("home.typeText", {
-            categories: sheetEntry.categories.map(categoryLabel).join(", "),
-          })
-        : "";
-  const sheetPhase = sheetFound ? phaseWeek(sheetFound.plan, sheetDate) : null;
-  const live = sheet ? livePlans() : plans;
-  const canEarlier =
-    !!sheet && canMoveTo(live, sheetDate, shiftDate(sheetDate, -1), day);
-  const canLater =
-    !!sheet && canMoveTo(live, sheetDate, shiftDate(sheetDate, 1), day);
 
   // While a day is lifted, the days it cannot go to are dimmed.
   const allowed = drop ? allowedInWeek(livePlans(), drop.from, day, shown) : [];
@@ -947,7 +820,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
                 d.date !== drop.from &&
                 !allowed.includes(d.date) &&
                 "is-drop-bad",
-              sheetOpen && sheet?.date === d.date && "is-selected-day",
+              openDate === d.date && "is-selected-day",
             ]
               .filter(Boolean)
               .join(" ");
@@ -1057,32 +930,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
           </p>
         )}
       </MotionList>
-      {sheet && (
-        <DaySheet
-          open={sheetOpen && !!sheetEntry}
-          date={sheetDate}
-          today={day}
-          entry={sheetEntry}
-          routine={sheetRoutine}
-          phase={
-            sheetPhase
-              ? t("plan.weekOf", {
-                  week: sheetPhase.week,
-                  weeks: sheetPhase.weeks,
-                })
-              : null
-          }
-          meta={sheetMeta}
-          direction={sheet.dir}
-          canEarlier={canEarlier}
-          canLater={canLater}
-          busy={false}
-          onStep={(dir) => move(sheetDate, shiftDate(sheetDate, dir))}
-          onDoToday={() => move(sheetDate, day)}
-          onSkip={() => skip(sheetDate)}
-          onClose={() => setSheetOpen(false)}
-        />
-      )}
+      {sheetNode}
     </div>
   );
 }
