@@ -13,11 +13,13 @@ import {
 import { useData } from "@/contexts/useData";
 import type { RoutineRecord } from "@/data/model";
 import type { TodayPick } from "@/data/today";
+import { activePlans, currentPlan } from "@/data/plans";
 import Sheet from "@/components/ui/Sheet";
 import ListRow from "@/components/ui/ListRow";
 import RoutineBadge from "@/components/items/RoutineBadge";
 import { categoryLabel } from "@/lib/catalogue-labels";
 import { lastUsedLabel } from "@/lib/library";
+import { PLANS_PATH, planStatusPath } from "@/lib/routes";
 import { routineAverageMinutes, routineMeta } from "@/lib/routine-preview";
 import { useT } from "@/i18n/useT";
 
@@ -60,6 +62,8 @@ export default function TodayCard({
   const { t } = useT();
   const [sheet, setSheet] = useState<"menu" | "switch" | null>(null);
   const close = () => setSheet(null);
+  // View plan opens the current plan's status page, or the plans list without one.
+  const plan = currentPlan(activePlans(state.records), day);
   const routineById = (id: string | null) =>
     id ? (routines.find((r) => r.id === id) ?? null) : null;
   const meta = (routine: RoutineRecord) => {
@@ -209,7 +213,10 @@ export default function TodayCard({
               {t("home.switchWorkout")}
             </button>
           )}
-          <Link className="sheet-menu-item" to="/library/plan">
+          <Link
+            className="sheet-menu-item"
+            to={plan ? planStatusPath(plan.id) : PLANS_PATH}
+          >
             <CalendarDays size={20} aria-hidden="true" />
             {t("home.showPlan")}
           </Link>

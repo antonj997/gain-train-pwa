@@ -2,7 +2,7 @@
 // plan is followed, whether the lifts keep up with the planned progression and
 // the weekly sets per muscle group. Pure, so it is tested
 // (tests/plan-status.test.ts); the page only formats what these return.
-import type { Plan, RecordDoc, WorkoutSet } from "./model";
+import { labelSet, type Plan, type RecordDoc, type WorkoutSet } from "./model";
 import { REST, planDay } from "./plans";
 import { isWorkoutCell } from "./plan-moves";
 import {
@@ -26,6 +26,7 @@ import {
 import { completedWorkouts } from "./selectors";
 import { loadIncrement } from "../lib/progression";
 import { daysBetween, shiftDate, weekStart } from "../lib/dates";
+import { formatWeightValue } from "../lib/units";
 
 type PlanLike = Pick<
   Plan,
@@ -484,4 +485,34 @@ export function planMuscleSets(
       .filter((r) => r.sets < WEEKLY_SET_GUIDE.min)
       .map((r) => r.group),
   };
+}
+
+// ---------------------------------------------------------------- labels
+
+/**
+ * A lift's start and now as the row reads them: "80 → 85 kg × 5" when both
+ * are weighted sets of the same reps, else both in full, "BW × 8 → BW + 10 kg
+ * × 6". `start` may be text already (the progression's start weight before
+ * the first session); `nowMissing` stands in for a missing latest set. Each
+ * set keeps its spaces unbreakable, so the line wraps between them.
+ */
+export function startNowText(
+  start: string | WorkoutSet,
+  now: WorkoutSet | null,
+  nowMissing: string,
+) {
+  const keep = (text: string) => text.replace(/ /g, "\u00a0");
+  const nowText = now ? keep(labelSet(now, false)) : nowMissing;
+  if (typeof start === "string") return `${start} → ${nowText}`;
+  if (
+    now &&
+    start.load === "weight" &&
+    now.load === "weight" &&
+    start.measure !== "seconds" &&
+    now.measure !== "seconds" &&
+    start.reps === now.reps &&
+    start.weight !== null
+  )
+    return `${formatWeightValue(start.weight)} → ${nowText}`;
+  return `${keep(labelSet(start, false))} → ${nowText}`;
 }

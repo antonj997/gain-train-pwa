@@ -17,13 +17,15 @@ export const TAB_PATHS = ["/", "/history", "/progress", "/library"] as const;
 /**
  * Sub-pages, by how many levels they sit below the tabs. A tab's subscreens
  * (Progress → Goals, Library → Plan and Shared routines) keep their tab lit in
- * the bar but slide like any sub-page.
+ * the bar but slide like any sub-page. The plans list sits one level below a
+ * plan's status page (/library/plan/<id>), which the phase card opens and
+ * which links to the list.
  */
 const SUB_PAGES: Record<string, number> = {
   "/settings": 1,
   "/settings/admin": 2,
   "/progress/goals": 1,
-  "/library/plan": 1,
+  "/library/plan": 2,
   "/library/shared": 1,
 };
 
@@ -43,9 +45,10 @@ export function tabIndex(pathname: string): number {
 /** Sub-pages with an id, such as /exercise/<id>, by their prefix. */
 const SUB_PAGE_PREFIXES: Record<string, number> = {
   "/exercise/": 1,
+  "/library/plan/": 1,
 };
 
-/** 0 for a tab, 1 for Settings, an exercise or a subscreen, 2 for Admin; null for any other route (the workout, sign-in, not found). */
+/** 0 for a tab, 1 for Settings, an exercise, a plan's status or a subscreen, 2 for Admin and the plans list; null for any other route (the workout, sign-in, not found). */
 export function routeDepth(pathname: string): number | null {
   const path = normalise(pathname);
   if (path in SUB_PAGES) return SUB_PAGES[path];

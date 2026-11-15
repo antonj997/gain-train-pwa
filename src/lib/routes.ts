@@ -18,3 +18,8 @@ export const exerciseEditPath = (exerciseId: string) =>
 /** Library → Routines, with one routine's editor opened. */
 export const routineEditPath = (routineId: string) =>
   "/library?edit=" + routineId;
+/** Library → Plan: the plans list and editor. */
+export const PLANS_PATH = "/library/plan";
+/** One plan's status page: how the phase is going, with Edit one tap away. */
+export const planStatusPath = (planId: string) =>
+  PLANS_PATH + "/" + encodeURIComponent(planId);
