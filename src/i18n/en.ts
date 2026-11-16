@@ -223,8 +223,6 @@ export const en = {
   "crash.copied": "Copied",
   "crash.copy": "Copy details",
   "notFound.title": "Page not found",
-  "notFound.eyebrow": "Gain Train",
-  "notFound.text": "Return to your workout log to keep training.",
   "notFound.back": "Back to workouts",
   "undo.label": "Undo",
   "workout.defaultName": "Workout",
@@ -1478,12 +1476,10 @@ export const en = {
   "auth.titleUpdate": "Choose a new password",
   "auth.titleReset": "Reset your password",
   "auth.titleSignin": "Sign in to sync",
-  "auth.textUpdate":
-    "Enter a new password for your account. Use at least 8 characters.",
-  "auth.textReset":
-    "Enter your account email and we’ll send a link to choose a new password.",
+  "auth.textUpdate": "At least 8 characters.",
+  "auth.textReset": "We'll email you a link to choose a new password.",
   "auth.textSignin":
-    "Sync your workout log across devices. You can keep logging on this phone without an account.",
+    "Optional: you can keep logging on this phone without an account.",
   "auth.linkExpired":
     "This reset link is unavailable or has expired. Request a new link below.",
   "auth.email": "Email",

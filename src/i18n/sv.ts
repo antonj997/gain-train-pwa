@@ -222,8 +222,6 @@ export const sv = {
   "crash.copied": "Kopierat",
   "crash.copy": "Kopiera detaljer",
   "notFound.title": "Sidan hittades inte",
-  "notFound.eyebrow": "Gain Train",
-  "notFound.text": "Gå tillbaka till din träningslogg och fortsätt träna.",
   "notFound.back": "Tillbaka till passen",
   "undo.label": "Ångra",
   "workout.defaultName": "Pass",
@@ -1492,12 +1490,9 @@ export const sv = {
   "auth.titleUpdate": "Välj ett nytt lösenord",
   "auth.titleReset": "Återställ ditt lösenord",
   "auth.titleSignin": "Logga in för att synka",
-  "auth.textUpdate":
-    "Ange ett nytt lösenord för ditt konto. Använd minst 8 tecken.",
-  "auth.textReset":
-    "Ange e-postadressen för ditt konto så skickar vi en länk för att välja ett nytt lösenord.",
-  "auth.textSignin":
-    "Synka din träningslogg mellan enheter. Du kan fortsätta logga på mobilen utan konto.",
+  "auth.textUpdate": "Minst 8 tecken.",
+  "auth.textReset": "Vi mejlar en länk för att välja ett nytt lösenord.",
+  "auth.textSignin": "Valfritt: du kan logga på mobilen utan konto.",
   "auth.linkExpired":
     "Återställningslänken är ogiltig eller har gått ut. Begär en ny länk nedan.",
   "auth.email": "E-post",
