@@ -95,7 +95,6 @@ export default function Settings() {
   return (
     <div className="page settings-page">
       <PageHeader
-        eyebrow={t("settings.eyebrow")}
         title={t("settings.title")}
         notices={false}
         leading={<BackButton onClick={back} />}
@@ -186,7 +185,6 @@ export default function Settings() {
           />
           <ListRow
             title={t("settings.showTips")}
-            sub={t("settings.showTipsHint")}
             onClick={() => {
               resetTips();
               notify.success(t("settings.tipsReset"));
@@ -202,14 +200,12 @@ export default function Settings() {
         <div className="list">
           <ListRow
             title={t("settings.feedback")}
-            sub={t("settings.feedbackNote")}
             chevron
             onClick={() => setSheet("feedback")}
           />
           {admin.isAdmin && (
             <ListRow
               title={t("settings.admin")}
-              sub={t("settings.adminNote")}
               trailing={
                 admin.openCount ? (
                   <span className="stat-chip">
@@ -244,7 +240,6 @@ export default function Settings() {
                 {displayName.available && (
                   <ListRow
                     title={t("settings.name")}
-                    sub={t("settings.nameNote")}
                     value={displayName.name ?? t("settings.notSet")}
                     chevron
                     onClick={() => setSheet("name")}
@@ -278,13 +273,14 @@ export default function Settings() {
             )}
           </div>
         )}
-        <p className="small-note group-note">
-          {user
-            ? t("settings.noteSignedIn")
-            : account !== "phone"
-              ? t("settings.noteSessionEnded")
-              : t("settings.notePhone")}
-        </p>
+        {/* Signed out on the phone's own log, the card above says it all. */}
+        {(user || account !== "phone") && (
+          <p className="small-note group-note">
+            {user
+              ? t("settings.noteSignedIn")
+              : t("settings.noteSessionEnded")}
+          </p>
+        )}
       </section>
 
       <Sheet

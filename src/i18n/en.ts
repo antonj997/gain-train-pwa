@@ -59,7 +59,9 @@ export const en = {
   "common.back": "Back",
   "common.done": "Done",
   "common.off": "Off",
+  "common.on": "On",
   "common.cancel": "Cancel",
+  "common.save": "Save",
   "common.saving": "Saving…",
   "common.delete": "Delete",
   "common.edit": "Edit",
@@ -69,12 +71,11 @@ export const en = {
 
   // Settings
   "settings.title": "Settings",
-  "settings.eyebrow": "App and account",
   "settings.signedInSyncing": "Signed in · syncing…",
   "settings.signedInPending": "Signed in · {count} pending",
   "settings.signedInSynced": "Signed in · synced",
-  "settings.phoneSignIn": "Saved on this phone · sign in to sync",
-  "settings.phoneSignInAgain": "Saved on this phone · sign in again to sync",
+  "settings.phoneSignIn": "Saved on this phone",
+  "settings.phoneSignInAgain": "Sign in again to sync",
   "settings.notSignedIn": "Not signed in",
   "settings.training": "Training",
   "settings.bodyweight": "Bodyweight",
@@ -91,29 +92,20 @@ export const en = {
   "settings.signInAgain": "Sign in again",
   "settings.usePhoneLog": "Use this phone's own log instead",
   "settings.switchFailed": "Could not switch logs. Try again.",
-  "settings.noteSignedIn":
-    "Sync runs when connected while the app is open, and when you return. Your phone keeps a local copy.",
-  "settings.noteSessionEnded":
-    "Your session ended, so this account's log is not syncing. It stays on this phone; sign in again to sync it.",
-  "settings.notePhone":
-    "An account is optional. Sign in to sync across devices; your phone-only log stays separate until you choose to copy it.",
+  "settings.noteSignedIn": "Syncs while the app is open and online. This phone keeps a copy.",
+  "settings.noteSessionEnded": "Your session ended, so this log isn't syncing. It stays on this phone.",
   "settings.signInPromptTitle": "Saved on this phone only",
-  "settings.signInPromptText":
-    "Sign in to back up your log and use it on your other devices.",
+  "settings.signInPromptText": "Sign in to back up and sync your log.",
   "settings.signInPromptButton": "Sign in to sync",
   "settings.signedInOffline": "Offline · saved on this phone",
-  "settings.goalDescription":
-    "How many workouts you aim for each week, Monday to Sunday.",
+  "settings.goalDescription": "Weeks run Monday to Sunday.",
   "settings.setGoal": "Set a weekly goal",
   "settings.fewerWorkout": "One fewer workout",
   "settings.moreWorkout": "One more workout",
   "settings.perWeekUnit": { one: "workout a week", other: "workouts a week" },
-  "settings.restDescription": "Starts after checking a set as done.",
   "settings.restTime": "Rest time",
   "settings.restSound": "Sound when rest ends",
   "settings.vibrate": "Vibrate when a set is done",
-  "settings.vibrateNote":
-    "Vibration is off by default and works on supported devices.",
   "settings.lightAppearance": "Light appearance",
 
   // Train
@@ -354,8 +346,7 @@ export const en = {
   "unit.title": "Weight unit",
   "unit.kg": "Kilograms (kg)",
   "unit.lb": "Pounds (lb)",
-  "unit.note":
-    "Applies to every screen. Weights are saved in kg, so switching back is exact.",
+  "unit.note": "Weights are stored in kg, so nothing is lost.",
   "set.optWeight": "Weight",
   "set.optBw": "BW",
   "set.optBwPlus": "BW + {unit}",
@@ -1029,10 +1020,8 @@ export const en = {
     "It leaves the shared library. Your routine stays, and copies others added are not affected.",
   "sharedPreview.keepSharing": "Keep sharing",
   "settings.name": "Name",
-  "settings.nameNote": "Shown on routines and exercises you share.",
   "name.title": "Your name",
-  "name.description":
-    "Shown as “by …” on routines and exercises you share. Leave it empty to share without a name.",
+  "name.description": "Shown as “by …” on what you share. Leave it empty to share without a name.",
   "name.label": "Name",
   "name.placeholder": "e.g. Anna",
   "name.save": "Save name",
@@ -1522,13 +1511,10 @@ export const en = {
   "profile.pendingSignIn": "Saved on this device. Sign in to sync.",
   "profile.synced": "Profile synced.",
   "profile.cleared": "Bodyweight cleared on this device.",
-  "profile.none": "No bodyweight saved.",
   "profile.savedDevice": "Saved on this device.",
-  "profile.intro": "Your bodyweight appears when you choose BW in a workout.",
-  "profile.label": "Bodyweight (kg)",
+  "profile.intro": "Used for bodyweight (BW) sets.",
+  "profile.label": "Weight (kg)",
   "profile.placeholder": "e.g. 75.5",
-  "profile.save": "Save bodyweight",
-  "profile.clearHint": "Leave blank and save to clear your bodyweight.",
   "profile.retry": "Retry profile sync",
   "auth.offline":
     "Connect to the internet to use your account. Your phone log is still available.",
@@ -1572,12 +1558,9 @@ export const en = {
   // Feedback and the admin inbox
   "settings.help": "Help and feedback",
   "settings.feedback": "Send feedback",
-  "settings.feedbackNote": "Report a bug or suggest a feature.",
   "settings.admin": "Admin",
-  "settings.adminNote": "Reports from everyone",
   "settings.adminOpen": { one: "{count} open", other: "{count} open" },
   "feedback.title": "Send feedback",
-  "feedback.description": "Tell us what went wrong or what you'd like to see.",
   "feedback.kind": "Type",
   "feedback.bug": "Bug",
   "feedback.feature": "Feature idea",
@@ -1621,8 +1604,7 @@ export const en = {
   "feedback.limitDay":
     "You can send up to {max} reports a day. Try again tomorrow.",
   "feedback.signInTitle": "Sign in to send feedback",
-  "feedback.signInText":
-    "Reports are sent with your account, so you can follow what happens to them.",
+  "feedback.signInText": "Reports are sent with your account so you can follow them.",
   "feedback.signIn": "Sign in",
   "feedback.mine": "My reports",
   "feedback.mineEmpty": "Reports you send show up here with their status.",
@@ -1676,8 +1658,7 @@ export const en = {
   "admin.sentBy": "{who} · {when}",
   "admin.developer": "Developer",
   "slowmo.title": "Slow motion",
-  "slowmo.note":
-    "Slows down every animation so you can review it. Only for admins, on this device.",
+  "slowmo.note": "Slows every animation on this device.",
   "slowmo.reducedNote":
     "Reduce Motion is on, so only the motion that remains is slowed.",
   "slowmo.option": "{scale}×",
@@ -1707,7 +1688,6 @@ export const en = {
   "tips.unitHeader": "Switch between kg and lb here",
   "tips.repsHeader": "Choose reps, hold or reps + hold",
   "settings.showTips": "Show tips again",
-  "settings.showTipsHint": "The one-time tips show again on this phone",
   "settings.tipsReset": "Tips will show again",
   "exercises.restoreFailed":
     "Could not restore the exercise. Retry from a backup.",
@@ -1784,8 +1764,7 @@ export const en = {
   "workout.noteLabel": "Workout note",
   "finish.recordsLabel": "Records in this workout",
   "settings.askRir": "Ask for RIR",
-  "settings.askRirNote":
-    "After you check a set, choose reps in reserve for 4 seconds. Skip leaves it empty.",
+  "settings.askRirNote": "Reps in reserve, after each checked set.",
   // The plan's status page (/library/plan/:id)
   "planStatus.edit": "Edit",
   "planStatus.editLabel": "Edit {name}",

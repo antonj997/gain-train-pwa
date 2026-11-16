@@ -31,7 +31,7 @@ export function GoalSheet({
       description={t("settings.goalDescription")}
     >
       <Switch
-        label={t("settings.setGoal")}
+        label={t("common.on")}
         checked={goal !== null}
         onChange={(on) => onChange({ weeklyGoal: on ? 3 : null })}
       />
@@ -76,7 +76,11 @@ export function RestSheet({
   const { t } = useT();
   return (
     <Sheet open={open} onClose={onClose} title={t("settings.restTimer")}>
-      <RestSettings preferences={preferences} onChange={onChange} />
+      <RestSettings
+        preferences={preferences}
+        onChange={onChange}
+        switchLabel={t("common.on")}
+      />
       <button type="button" className="btn-primary" onClick={onClose}>
         {t("common.done")}
       </button>
@@ -95,7 +99,6 @@ export function VibrateSetting({
     <div className="rest-setting">
       <Switch
         label={t("settings.vibrate")}
-        hint={t("settings.vibrateNote")}
         checked={preferences.haptics}
         onChange={(haptics) => onChange({ haptics })}
       />

@@ -56,7 +56,9 @@ export const sv = {
   "common.back": "Tillbaka",
   "common.done": "Klar",
   "common.off": "Av",
+  "common.on": "På",
   "common.cancel": "Avbryt",
+  "common.save": "Spara",
   "common.saving": "Sparar…",
   "common.delete": "Radera",
   "common.edit": "Redigera",
@@ -66,13 +68,11 @@ export const sv = {
 
   // Settings
   "settings.title": "Inställningar",
-  "settings.eyebrow": "App och konto",
   "settings.signedInSyncing": "Inloggad · synkar…",
   "settings.signedInPending": "Inloggad · {count} väntar",
   "settings.signedInSynced": "Inloggad · synkad",
-  "settings.phoneSignIn": "Sparat på den här mobilen · logga in för att synka",
-  "settings.phoneSignInAgain":
-    "Sparat på den här mobilen · logga in igen för att synka",
+  "settings.phoneSignIn": "Sparat på mobilen",
+  "settings.phoneSignInAgain": "Logga in igen för att synka",
   "settings.notSignedIn": "Inte inloggad",
   "settings.training": "Träning",
   "settings.bodyweight": "Kroppsvikt",
@@ -89,29 +89,20 @@ export const sv = {
   "settings.signInAgain": "Logga in igen",
   "settings.usePhoneLog": "Använd mobilens egen logg i stället",
   "settings.switchFailed": "Kunde inte byta logg. Försök igen.",
-  "settings.noteSignedIn":
-    "Synken körs när du är uppkopplad och appen är öppen, och när du kommer tillbaka. Mobilen sparar en lokal kopia.",
-  "settings.noteSessionEnded":
-    "Din session har gått ut, så kontots logg synkas inte. Den ligger kvar på mobilen; logga in igen för att synka den.",
-  "settings.notePhone":
-    "Ett konto är frivilligt. Logga in för att synka mellan enheter; mobilens egen logg hålls separat tills du väljer att kopiera den.",
+  "settings.noteSignedIn": "Synkar när appen är öppen och uppkopplad. Mobilen har en egen kopia.",
+  "settings.noteSessionEnded": "Sessionen har gått ut, så loggen synkas inte. Den finns kvar på mobilen.",
   "settings.signInPromptTitle": "Sparat bara på den här mobilen",
-  "settings.signInPromptText":
-    "Logga in för att säkerhetskopiera loggen och använda den på dina andra enheter.",
+  "settings.signInPromptText": "Logga in för att säkerhetskopiera och synka loggen.",
   "settings.signInPromptButton": "Logga in för att synka",
   "settings.signedInOffline": "Offline · sparat på mobilen",
-  "settings.goalDescription":
-    "Hur många pass du siktar på varje vecka, måndag till söndag.",
+  "settings.goalDescription": "Veckan räknas måndag–söndag.",
   "settings.setGoal": "Sätt ett veckomål",
   "settings.fewerWorkout": "Ett pass färre",
   "settings.moreWorkout": "Ett pass till",
   "settings.perWeekUnit": { one: "pass i veckan", other: "pass i veckan" },
-  "settings.restDescription": "Startar när du kryssar i ett set.",
   "settings.restTime": "Vilotid",
   "settings.restSound": "Ljud när vilan är slut",
   "settings.vibrate": "Vibrera när ett set är klart",
-  "settings.vibrateNote":
-    "Vibration är av som standard och fungerar på enheter som stöder det.",
   "settings.lightAppearance": "Ljust utseende",
 
   // Train
@@ -354,8 +345,7 @@ export const sv = {
   "unit.title": "Viktenhet",
   "unit.kg": "Kilo (kg)",
   "unit.lb": "Pund (lb)",
-  "unit.note":
-    "Gäller på alla skärmar. Vikter sparas i kg, så det blir exakt när du byter tillbaka.",
+  "unit.note": "Vikter sparas i kg, så inget går förlorat.",
   "set.optWeight": "Vikt",
   "set.optBw": "KV",
   "set.optBwPlus": "KV + {unit}",
@@ -1037,10 +1027,8 @@ export const sv = {
     "Den tas bort från det delade biblioteket. Din rutin finns kvar, och kopior som andra har lagt till påverkas inte.",
   "sharedPreview.keepSharing": "Fortsätt dela",
   "settings.name": "Namn",
-  "settings.nameNote": "Visas på rutiner och övningar som du delar.",
   "name.title": "Ditt namn",
-  "name.description":
-    "Visas som ”av …” på rutiner och övningar som du delar. Lämna tomt för att dela utan namn.",
+  "name.description": "Visas som ”av …” på det du delar. Lämna tomt för att dela utan namn.",
   "name.label": "Namn",
   "name.placeholder": "t.ex. Anna",
   "name.save": "Spara namn",
@@ -1531,13 +1519,10 @@ export const sv = {
   "profile.pendingSignIn": "Sparat på enheten. Logga in för att synka.",
   "profile.synced": "Profilen synkad.",
   "profile.cleared": "Kroppsvikten rensad på enheten.",
-  "profile.none": "Ingen kroppsvikt sparad.",
   "profile.savedDevice": "Sparat på enheten.",
-  "profile.intro": "Din kroppsvikt visas när du väljer KV i ett pass.",
-  "profile.label": "Kroppsvikt (kg)",
+  "profile.intro": "Används för set med kroppsvikt (KV).",
+  "profile.label": "Vikt (kg)",
   "profile.placeholder": "t.ex. 75,5",
-  "profile.save": "Spara kroppsvikt",
-  "profile.clearHint": "Lämna tomt och spara för att rensa kroppsvikten.",
   "profile.retry": "Försök synka profilen igen",
   "auth.offline":
     "Anslut till internet för att använda ditt konto. Mobilens logg finns kvar.",
@@ -1581,12 +1566,9 @@ export const sv = {
   // Feedback and the admin inbox
   "settings.help": "Hjälp och feedback",
   "settings.feedback": "Skicka feedback",
-  "settings.feedbackNote": "Rapportera en bugg eller föreslå en funktion.",
   "settings.admin": "Admin",
-  "settings.adminNote": "Rapporter från alla",
   "settings.adminOpen": { one: "{count} öppen", other: "{count} öppna" },
   "feedback.title": "Skicka feedback",
-  "feedback.description": "Berätta vad som gick fel eller vad du vill se.",
   "feedback.kind": "Typ",
   "feedback.bug": "Bugg",
   "feedback.feature": "Funktionsidé",
@@ -1630,8 +1612,7 @@ export const sv = {
   "feedback.limitDay":
     "Du kan skicka upp till {max} rapporter per dag. Försök igen i morgon.",
   "feedback.signInTitle": "Logga in för att skicka feedback",
-  "feedback.signInText":
-    "Rapporter skickas med ditt konto, så att du kan följa vad som händer med dem.",
+  "feedback.signInText": "Rapporter skickas med ditt konto så att du kan följa dem.",
   "feedback.signIn": "Logga in",
   "feedback.mine": "Mina rapporter",
   "feedback.mineEmpty": "Rapporter du skickar visas här med sin status.",
@@ -1685,8 +1666,7 @@ export const sv = {
   "admin.sentBy": "{who} · {when}",
   "admin.developer": "Utvecklare",
   "slowmo.title": "Slow motion",
-  "slowmo.note":
-    "Saktar ner alla animationer så att du kan granska dem. Bara för admins, på den här enheten.",
+  "slowmo.note": "Saktar ner alla animationer på den här enheten.",
   "slowmo.reducedNote":
     "Reducera rörelse är på, så bara den rörelse som finns kvar saktas ner.",
   "slowmo.option": "{scale}×",
@@ -1716,7 +1696,6 @@ export const sv = {
   "tips.unitHeader": "Byt mellan kg och lb här",
   "tips.repsHeader": "Välj reps, hold eller reps + hold",
   "settings.showTips": "Visa tips igen",
-  "settings.showTipsHint": "Engångstipsen visas igen på den här telefonen",
   "settings.tipsReset": "Tipsen visas igen",
   "exercises.restoreFailed":
     "Kunde inte återställa övningen. Försök från en säkerhetskopia.",
@@ -1794,8 +1773,7 @@ export const sv = {
   "workout.noteLabel": "Anteckning för passet",
   "finish.recordsLabel": "Rekord i passet",
   "settings.askRir": "Fråga efter RIR",
-  "settings.askRirNote":
-    "När du bockat ett set kan du välja reps kvar i tanken i 4 sekunder. Hoppa över lämnar det tomt.",
+  "settings.askRirNote": "Reps kvar i tanken, efter varje ikryssat set.",
   // Schemats statussida (/library/plan/:id)
   "planStatus.edit": "Redigera",
   "planStatus.editLabel": "Redigera {name}",
