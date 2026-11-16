@@ -22,10 +22,12 @@ import {
   strengthTrend,
 } from "../src/data/lift-goal";
 import {
+  goalFillSource,
   goalSetTargets,
   goalTargetLabel,
   goalTargetText,
 } from "../src/data/goal-targets";
+import { fillFrom } from "../src/lib/set-target";
 import { shiftDate } from "../src/lib/dates";
 import { setCurrentWeightUnit } from "../src/lib/units";
 
@@ -687,4 +689,36 @@ test("a bodyweight goal's targets read as added weight", () => {
   assert.equal(goalTargetLabel(target), "BW + 5 kg × max");
   assert.equal(goalTargetText({ ...target, weight: 0 }), "Check-in BW × max");
   assert.equal(goalTargetLabel({ ...target, weight: 0 }), "BW × max");
+});
+
+test("a goal target fills the weight, and the reps unless they are max", () => {
+  assert.deepEqual(
+    goalFillSource(
+      { weight: 92.5, reps: null, body: false },
+      { measure: undefined },
+    ),
+    { load: "weight", weight: 92.5, reps: null, measure: undefined },
+  );
+  assert.deepEqual(
+    goalFillSource({ weight: 110, reps: 1, body: false }, {}).reps,
+    1,
+  );
+  assert.deepEqual(goalFillSource({ weight: 5, reps: null, body: true }, {}), {
+    load: "bodyweight",
+    extraWeight: true,
+    weight: 5,
+    reps: null,
+    measure: undefined,
+  });
+  assert.equal(
+    goalFillSource({ weight: 0, reps: null, body: true }, {}).weight,
+    null,
+  );
+  // Filled into an open set: the weight changes, the reps stay to be typed.
+  const open = set(90, 7, { done: false });
+  const filled = fillFrom(
+    open,
+    goalFillSource({ weight: 92.5, reps: null, body: false }, open),
+  );
+  assert.deepEqual([filled.weight, filled.reps], [92.5, 7]);
 });

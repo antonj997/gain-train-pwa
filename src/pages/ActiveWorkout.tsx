@@ -31,6 +31,7 @@ import { workoutTargets } from "@/data/targets";
 import { summarize } from "@/data/summary";
 import { loadKeyOf } from "@/lib/load-keys";
 import { targetRowText, targetSource } from "@/lib/set-target";
+import { useWorkoutGoals } from "@/hooks/useWorkoutGoals";
 import { addExercises, type ExerciseTarget } from "@/lib/workout-editor";
 import { trainingHaptic } from "@/lib/preferences";
 import { historyPath } from "@/lib/routes";
@@ -260,6 +261,17 @@ function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [historyKey, shape, planKey, weightUnit, w.date, id],
   );
+  // Lift goals: a mark by the exercise's name, and a check-in or the goal's
+  // own lift as a set's target.
+  const workoutGoals = useWorkoutGoals({
+    records: state.records,
+    workout: w,
+    historyKey,
+    shape,
+    unit: weightUnit,
+    bodyWeightKg,
+    targets,
+  });
   const deloadWeek = !!w.plan?.deload;
 
   const cardioFields = useCardioFields();
@@ -476,7 +488,10 @@ function Editor({
                 : planNote(w.plan, ex.exerciseId)
             }
             deload={deloadWeek}
-            targets={editing ? undefined : targets}
+            targets={editing ? undefined : workoutGoals.targets}
+            goalMark={
+              editing ? undefined : workoutGoals.marks.get(ex.exerciseId)
+            }
             askRir={!editing && askRir}
             onChange={update}
             onReorderExercises={
@@ -554,7 +569,7 @@ function Editor({
             previous,
             unit: weightUnit,
             changeSet,
-            targets,
+            targets: workoutGoals.targets,
           }}
         />
       )}

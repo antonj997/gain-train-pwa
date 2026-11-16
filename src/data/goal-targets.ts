@@ -7,6 +7,7 @@ import type { Workout, WorkoutSet } from "./model";
 import type { GoalInsight, GoalItem } from "./goals";
 import { isDrop } from "./drops";
 import { isCardioSet } from "../lib/cardio";
+import type { FillSource } from "../lib/set-target";
 import { formatWeightValue, getWeightUnit } from "../lib/units";
 import { t } from "../i18n";
 
@@ -111,4 +112,38 @@ export function goalTargetLabel(target: GoalSetTarget) {
   return target.weight > 0
     ? `${t("label.bwPlus", { kg, unit })} × ${n}`
     : t("label.bwReps", { n });
+}
+
+/**
+ * The goal target as a set to fill from, in the words of the set it sits on:
+ * the weight (or added weight) and, unless it is "max", the reps. A check-in's
+ * reps are left for the lifter to type.
+ */
+export function goalFillSource(
+  target: Pick<GoalSetTarget, "weight" | "reps" | "body">,
+  set: Pick<WorkoutSet, "measure">,
+): FillSource {
+  const reps = target.reps;
+  if (!target.body)
+    return {
+      load: "weight",
+      weight: target.weight,
+      reps,
+      measure: set.measure,
+    };
+  return target.weight > 0
+    ? {
+        load: "bodyweight",
+        extraWeight: true,
+        weight: target.weight,
+        reps,
+        measure: set.measure,
+      }
+    : {
+        load: "bodyweight",
+        extraWeight: false,
+        weight: null,
+        reps,
+        measure: set.measure,
+      };
 }
