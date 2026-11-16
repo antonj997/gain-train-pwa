@@ -16,6 +16,7 @@ import {
   stepPadValue,
   type PadEntry,
   type PadKey,
+  padFieldAt,
 } from "../src/lib/number-pad";
 
 const kg = padFormat("weight", "kg", ",");
@@ -212,4 +213,47 @@ test("hardware keys map to pad keys: digits, either decimal mark, Backspace and 
   assert.equal(padKeyFor("a"), null);
   assert.equal(padKeyFor("Tab"), null);
   assert.equal(padKeyFor("10"), null);
+});
+
+test("a press over a set's field finds it by the fields' boxes; elsewhere none", () => {
+  const boxes = [
+    {
+      setId: "a",
+      field: "weight" as const,
+      left: 200,
+      top: 100,
+      right: 250,
+      bottom: 144,
+    },
+    {
+      setId: "a",
+      field: "reps" as const,
+      left: 254,
+      top: 100,
+      right: 300,
+      bottom: 144,
+    },
+    {
+      setId: "b",
+      field: "weight" as const,
+      left: 200,
+      top: 152,
+      right: 250,
+      bottom: 196,
+    },
+  ];
+  assert.deepEqual(padFieldAt(boxes, 220, 120), {
+    setId: "a",
+    field: "weight",
+  });
+  assert.deepEqual(padFieldAt(boxes, 300, 144), { setId: "a", field: "reps" });
+  assert.deepEqual(padFieldAt(boxes, 225, 170), {
+    setId: "b",
+    field: "weight",
+  });
+  // The gap between two fields, the badge, and below every row.
+  assert.equal(padFieldAt(boxes, 252, 120), null);
+  assert.equal(padFieldAt(boxes, 40, 120), null);
+  assert.equal(padFieldAt(boxes, 220, 400), null);
+  assert.equal(padFieldAt([], 220, 120), null);
 });

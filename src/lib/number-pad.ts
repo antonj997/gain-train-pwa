@@ -216,3 +216,27 @@ export function padAfterCheck(
   }
   return null;
 }
+
+/** Where a field the pad types sits on screen (its box in the row). */
+export type PadFieldBox = PadTarget & {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
+/**
+ * The pad field under a point, or null. Hit by the fields' boxes rather than
+ * the elements under the point, since an open sheet's backdrop covers the
+ * page (and the page takes no pointer events while it is open).
+ */
+export function padFieldAt(
+  boxes: readonly PadFieldBox[],
+  x: number,
+  y: number,
+): PadTarget | null {
+  const hit = boxes.find(
+    (box) => x >= box.left && x <= box.right && y >= box.top && y <= box.bottom,
+  );
+  return hit ? { setId: hit.setId, field: hit.field } : null;
+}

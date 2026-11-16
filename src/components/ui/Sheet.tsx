@@ -24,6 +24,10 @@ type Props = {
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
   /** Runs when the closed sheet would return focus; call preventDefault to move it elsewhere. */
   onCloseAutoFocus?: (event: Event) => void;
+  /** A press outside the sheet, before it closes (the sheet still closes). */
+  onPointerDownOutside?: (
+    event: CustomEvent<{ originalEvent: PointerEvent }>,
+  ) => void;
   children: ReactNode;
 };
 
@@ -43,6 +47,7 @@ export default function Sheet({
   contentRef,
   onEscapeKeyDown,
   onCloseAutoFocus,
+  onPointerDownOutside,
   children,
 }: Props) {
   return (
@@ -59,6 +64,7 @@ export default function Sheet({
         className={className}
         onEscapeKeyDown={onEscapeKeyDown}
         onCloseAutoFocus={onCloseAutoFocus}
+        onPointerDownOutside={onPointerDownOutside}
         // Without a description Radix warns about a missing one in development.
         {...(description === undefined
           ? { "aria-describedby": undefined }
