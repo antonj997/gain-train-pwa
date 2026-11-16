@@ -3,6 +3,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { Trash2 } from "lucide-react";
@@ -12,6 +13,14 @@ import { motionMs } from "@/lib/slow-motion";
 import { registerTipTarget } from "@/lib/tip-store";
 import { reducedMotion } from "@/hooks/useMessages";
 import { EASE, MOTION, play as playMotion, settled } from "@/lib/motion";
+import {
+  asksBeforeDelete,
+  checkedDeleteAsked,
+  markCheckedDeleteAsked,
+} from "@/lib/checked-delete";
+// The module translator: the workout page remounts on a new language.
+import { t } from "@/i18n";
+
 
 /** The parts of the delete, in ms: the row out and the bubble's gulp side by side, then the collapse. */
 const SET_DELETE_TIMING = {
@@ -41,6 +50,12 @@ const finished = (animation: Animation, ms: number) =>
  * 0.5 px/ms) deletes short of it. The Set sheet's Delete plays the same
  * (`register`). With reduced motion the row fades out. A new set's row
  * (`entering`) grows in from nothing, then calls `onEntered`.
+ *
+ * A checked set (`checked`, a live workout) asks first, the first time on
+ * this device only: the row slides fully open and keeps its place, with
+ * "Delete a checked set?", Delete and Cancel in the space it left. Delete
+ * plays the bubble as above; Cancel, or a tap anywhere else, slides it back.
+ * Either answer means it never asks again (src/lib/checked-delete.ts).
  */
 function SetSwipeRow({
   setId,
@@ -50,6 +65,7 @@ function SetSwipeRow({
   tip,
   entering = false,
   onEntered,
+  checked = false,
   children,
 }: {
   setId: string;
@@ -63,6 +79,8 @@ function SetSwipeRow({
   entering?: boolean;
   /** The grow-in ended (or there was none to play). */
   onEntered?: (setId: string) => void;
+  /** A checked set in a live workout: the first swipe-delete asks first. */
+  checked?: boolean;
   children: ReactNode;
 }) {
   const bubble = useRef<HTMLSpanElement>(null);
@@ -70,6 +88,10 @@ function SetSwipeRow({
   const deleting = useRef(false);
   const companionsRef = useRef(companions);
   companionsRef.current = companions;
+  const checkedRef = useRef(checked);
+  checkedRef.current = checked;
+  const [asking, setAsking] = useState(false);
+  const askBox = useRef<HTMLDivElement>(null);
   const config = (width: number): SwipeConfig => ({
     left: {
       kind: "commit",
@@ -208,7 +230,39 @@ function SetSwipeRow({
   const playRef = useRef(play);
   playRef.current = play;
 
+  // The question: the row slides on out of view (its place is kept), and
+  // the bubble gives way to the question in the space it left.
+  const ask = () => {
+    const box = swipe.rootRef.current;
+    if (!box) return;
+    setBubble(0);
+    setAsking(true);
+    const width = box.getBoundingClientRect().width;
+    void swipe.animateTo(-width, MOTION.open, EASE.swipeOpen);
+  };
+  const answer = (remove: boolean) => {
+    markCheckedDeleteAsked();
+    setAsking(false);
+    if (remove) {
+      setBubble(1);
+      void playRef.current(false);
+    } else void swipe.animateTo(0);
+  };
+  const answerRef = useRef(answer);
+  answerRef.current = answer;
+  // A tap anywhere but the question is Cancel.
+  useEffect(() => {
+    if (!asking) return;
+    const away = (event: PointerEvent) => {
+      if (askBox.current?.contains(event.target as Node)) return;
+      answerRef.current(false);
+    };
+    document.addEventListener("pointerdown", away, true);
+    return () => document.removeEventListener("pointerdown", away, true);
+  }, [asking]);
+
   const swipe = useSwipe({
+    disabled: asking,
     config,
     tip: tip ? "swipeSet" : undefined,
     // With reduced motion the bubble does not grow: it is simply there.
@@ -220,6 +274,10 @@ function SetSwipeRow({
       if (armed) pop();
     },
     onCommit: () => {
+      if (asksBeforeDelete(checkedRef.current, checkedDeleteAsked())) {
+        ask();
+        return true;
+      }
       void playRef.current(false);
       return true;
     },
@@ -277,6 +335,33 @@ function SetSwipeRow({
           <Trash2 size={18} strokeWidth={2.2} />
         </span>
       </span>
+      {asking && (
+        <div
+          ref={askBox}
+          className="set-delete-ask"
+          role="group"
+          aria-label={t("set.deleteCheckedTitle")}
+        >
+          <span className="set-delete-ask-text" role="status">
+            <strong>{t("set.deleteCheckedTitle")}</strong>
+            <small>{t("set.deleteCheckedNote")}</small>
+          </span>
+          <button
+            type="button"
+            className="set-delete-ask-cancel"
+            onClick={() => answer(false)}
+          >
+            {t("common.cancel")}
+          </button>
+          <button
+            type="button"
+            className="set-delete-ask-delete"
+            onClick={() => answer(true)}
+          >
+            {t("common.delete")}
+          </button>
+        </div>
+      )}
       <div ref={swipe.frontRef} className="swipe-front set-swipe-front">
         {children}
       </div>

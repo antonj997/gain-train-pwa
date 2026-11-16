@@ -415,6 +415,8 @@ export const en = {
   "set.complete": "Complete {label}",
   "set.uncheckToFix": "Uncheck this set to correct its missing values.",
   "set.uncheckToEdit": "Uncheck this set to edit its values.",
+  "set.deleteCheckedTitle": "Delete a checked set?",
+  "set.deleteCheckedNote": "Shown only once.",
   "set.notFilled": "Not filled in",
   "set.dropSr": "Drop:",
   "set.reorderTitle": "Reorder sets",

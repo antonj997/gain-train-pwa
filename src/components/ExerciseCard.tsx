@@ -505,6 +505,8 @@ function ExerciseCard({
           tip={tips && i === 0}
           entering={entering === s.id}
           onEntered={entered}
+          // A live workout's checked set asks before its first swipe-delete.
+          checked={mode === "log" && !unlockChecked && s.done}
         >
           <SetLineMemo
             set={s}

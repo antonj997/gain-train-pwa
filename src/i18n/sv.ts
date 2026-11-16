@@ -416,6 +416,8 @@ export const sv = {
   "set.complete": "Klarmarkera {label}",
   "set.uncheckToFix": "Kryssa ur setet för att rätta de saknade värdena.",
   "set.uncheckToEdit": "Kryssa ur setet för att ändra värdena.",
+  "set.deleteCheckedTitle": "Ta bort avbockat set?",
+  "set.deleteCheckedNote": "Visas bara en gång.",
   "set.notFilled": "Inte ifyllt",
   "set.dropSr": "Drop:",
   "set.reorderTitle": "Ändra ordning på set",
