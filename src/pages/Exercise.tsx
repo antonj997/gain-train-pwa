@@ -289,7 +289,6 @@ export default function ExercisePage() {
       )}
       {logged && tab === "history" && (
         <ExerciseHistory
-          name={name}
           sessions={sessions}
           distanceUnit={fieldsFor(id).distanceUnit}
         />

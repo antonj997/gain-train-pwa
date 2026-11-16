@@ -578,12 +578,9 @@ export const en = {
   "progress.noSessions": "No sessions in this period",
   "progress.longerPeriod": "Pick a longer period to see earlier exercises.",
   "progress.noMatch": "No matching exercises",
-  "progress.noMatchText":
-    "Try another name or clear your search to see all recorded progress.",
   "progress.clearSearch": "Clear search",
   "progress.emptyTitle": "Your working sets will appear here",
-  "progress.emptyText":
-    "Finish a workout with a working set to see an exact result. Another comparable session gives you a comparison.",
+  "progress.emptyText": "Two comparable sessions show your progress.",
   "progress.startWorkout": "Start a workout",
   "progress.perWeek": "Workouts / week",
   "progress.finishedWeeks": "{change} · finished weeks",
@@ -599,7 +596,7 @@ export const en = {
   "progress.about": "About these stats",
   "progress.comparedWithShort": "compared with",
   "progress.aboutText":
-    "Workouts per week counts Monday–Sunday weeks that are over and have at least one workout; the current week joins once it ends. Working sets leave out warm-ups, cool-downs, drops and cardio; volume is weight × reps for weighted sets, drops included. Cardio adds up the time, distance and calories of checked cardio sets. Time trained adds the recorded durations. Exercises improving compares your latest working result with the last session before the period, or the first session within it. Only comparable load and measure count: estimated strength for weighted sets of 1–10 reps, otherwise reps or seconds at the same load. A dash means there is not enough data.",
+    "Workouts per week counts finished Monday–Sunday weeks with at least one workout. Working sets leave out warm-ups, cool-downs, drops and cardio; volume is weight × reps, drops included. Cardio adds up checked cardio sets. Exercises improving compares your latest working result with the session before the period (or the first in it) at a comparable load: estimated strength for 1–10 reps, otherwise reps or seconds. A dash means not enough data.",
   "progress.noComparison": "No comparison",
   "progress.noChange": "→ No change",
   "overview.latest": "Latest · {date}",
@@ -676,7 +673,7 @@ export const en = {
   "cardio.fieldsNote": "Saved for {name} for next time.",
   "cardio.fieldsFailed": "Could not save the fields. Try again.",
   "cardio.note":
-    "Cardio is not part of strength bests or volume. A session adds up the checked cardio sets of {name} in one workout.",
+    "Not part of strength records or volume. A session is all checked {name} sets in one workout.",
   "goals.title": "Goals",
   "goals.add": "Add goal",
   "goals.reached": "Reached",
@@ -684,8 +681,7 @@ export const en = {
   "goals.addBodyweight": "Add your bodyweight in Settings to follow this goal.",
   "goals.noSets": "No sets logged yet",
   "goals.reachedOn": "Reached on {date}",
-  "goals.empty":
-    "Aim for a lift or a bodyweight by a date, with or without a plan.",
+  "goals.empty": "Aim for a lift or a bodyweight by a date.",
   "goals.lift": "Lift",
   "goals.bodyweight": "Bodyweight",
   "goals.exercise": "Exercise",
@@ -703,14 +699,12 @@ export const en = {
   "goals.saveFailed": "Could not save the goal. Try again.",
   "goals.edit": "Edit goal",
   "goals.new": "New goal",
-  "goals.description":
-    "A goal stands on its own. A plan can link to it, but it does not need one.",
   "goals.kind": "Kind of goal",
   "goals.choose": "Choose",
   "goals.weightKg": "Weight (kg)",
   "goals.reps": "Reps",
   "goals.repsNote":
-    "One rep compares with your heaviest set. More reps compare with your estimated one-rep max.",
+    "1 rep compares with your heaviest set; more reps with your estimated 1RM.",
   "goals.targetKg": "Target (kg)",
   "goals.todayKg": "Weight today (kg)",
   "goals.by": "By",
@@ -721,10 +715,6 @@ export const en = {
   "goals.keep": "Keep goal",
   "goals.deleted": "Goal deleted",
   "goals.deleteFailed": "Could not delete. The goal is still here; retry.",
-  "goals.eyebrow": {
-    one: "{count} active goal",
-    other: "{count} active goals",
-  },
   "progress.periodChoose": "Period: {period}",
   "progress.allGoals": "All goals",
   "progress.goalsHeading": "Goals",
@@ -742,14 +732,9 @@ export const en = {
   "progress.recordOpen": "{name} {set}, {kinds}, {date}: open the workout",
   "goals.weeks": { one: "{count} week", other: "{count} weeks" },
   "goals.weeklyTitle": "Weekly goal",
-  "goals.weeklyTarget": "{count} {unit}",
-  "goals.setWeeklyText":
-    "Choose how many workouts you aim for each week and see how often you hit it.",
+  "goals.setWeeklyText": "How many workouts you aim for each week.",
   "goals.weekMet": "Met this week",
-  "goals.weekDaysLeft": {
-    one: "{count} day left this week",
-    other: "{count} days left this week",
-  },
+  "goals.weekDaysLeft": { one: "{count} day left", other: "{count} days left" },
   "goals.weekProgressLabel": "This week's workouts",
   "goals.hitRate": {
     one: "Met {met} of {count} finished week",
@@ -815,9 +800,7 @@ export const en = {
   "exercise.backToLibrary": "Open Library",
   "exercise.start": "Start workout with this exercise",
   "exercise.neverTitle": "Not logged yet",
-  "exercise.neverText":
-    "Log a set of {name} and its results, sessions and records show up here.",
-  "exercise.historyNote": "Every finished workout with {name}, newest first.",
+  "exercise.neverText": "Log a set of {name} to see results here.",
   "records.e1rm": "Best est. 1RM",
   "records.heaviest": "Heaviest weight",
   "records.mostReps": "Most reps",
@@ -828,7 +811,7 @@ export const en = {
   "records.reps": { one: "{count} rep", other: "{count} reps" },
   "records.empty": "Records show up after your first checked working set.",
   "records.note":
-    "Checked sets only; warm-ups never count. Estimated 1RM (Epley) uses weighted sets of up to 10 reps. Drops count towards the heaviest weight and session volume only. A PR in a workout is a new heaviest weight or best set volume.",
+    "Checked sets only, never warm-ups. Est. 1RM (Epley) uses weighted sets of up to 10 reps. Drops count only towards heaviest weight and session volume. A PR in a workout is a new heaviest weight or best set volume.",
   "records.pr": "PR",
   "records.prLabel": "Record: {kinds}",
   "records.tile": "Records",

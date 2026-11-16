@@ -580,12 +580,9 @@ export const sv = {
   "progress.longerPeriod":
     "Välj en längre period för att se tidigare övningar.",
   "progress.noMatch": "Inga övningar matchar",
-  "progress.noMatchText":
-    "Prova ett annat namn eller rensa sökningen för att se alla framsteg.",
   "progress.clearSearch": "Rensa sökningen",
   "progress.emptyTitle": "Dina arbetsset dyker upp här",
-  "progress.emptyText":
-    "Avsluta ett pass med ett arbetsset för att se ett exakt resultat. Ett till jämförbart pass ger dig en jämförelse.",
+  "progress.emptyText": "Två jämförbara pass visar din utveckling.",
   "progress.startWorkout": "Starta ett pass",
   "progress.perWeek": "Pass / vecka",
   "progress.finishedWeeks": "{change} · avslutade veckor",
@@ -601,7 +598,7 @@ export const sv = {
   "progress.about": "Om statistiken",
   "progress.comparedWithShort": "jämfört med",
   "progress.aboutText":
-    "Pass per vecka räknar avslutade veckor, måndag–söndag, med minst ett pass; den här veckan räknas när den är slut. Arbetsset räknar inte uppvärmning, nedvarvning, drops eller kondition; volym är vikt × reps för set med vikt, drops inräknade. Kondition summerar tid, distans och kalorier för ikryssade konditionsset. Träningstid summerar registrerade längder. Övningar som går framåt jämför ditt senaste arbetsresultat med sista passet före perioden, eller första passet i den. Bara jämförbar belastning och mått räknas: uppskattad styrka för set med vikt på 1–10 reps, annars reps eller sekunder med samma belastning. Ett streck betyder att det inte finns tillräckligt med data.",
+    "Pass per vecka räknar avslutade veckor, måndag–söndag, med minst ett pass. Arbetsset räknar inte uppvärmning, nedvarvning, drops eller kondition; volym är vikt × reps, drops inräknade. Kondition summerar ikryssade konditionsset. Övningar som går framåt jämför ditt senaste arbetsresultat med passet före perioden (eller det första i den) vid jämförbar belastning: uppskattad styrka för 1–10 reps, annars reps eller sekunder. Ett streck betyder för lite data.",
   "progress.noComparison": "Ingen jämförelse",
   "progress.noChange": "→ Ingen ändring",
   "overview.latest": "Senast · {date}",
@@ -678,7 +675,7 @@ export const sv = {
   "cardio.fieldsNote": "Sparas för {name} till nästa gång.",
   "cardio.fieldsFailed": "Kunde inte spara fälten. Försök igen.",
   "cardio.note":
-    "Kondition ingår inte i styrkerekord eller volym. Ett pass summerar ikryssade konditionsset för {name} under ett träningspass.",
+    "Ingår inte i styrkerekord eller volym. Ett pass är alla ikryssade set {name} i ett träningspass.",
   "goals.title": "Mål",
   "goals.add": "Lägg till mål",
   "goals.reached": "Uppnått",
@@ -687,8 +684,7 @@ export const sv = {
     "Lägg in din kroppsvikt i Inställningar för att följa målet.",
   "goals.noSets": "Inga set loggade än",
   "goals.reachedOn": "Uppnått {date}",
-  "goals.empty":
-    "Sikta på ett lyft eller en kroppsvikt till ett datum, med eller utan schema.",
+  "goals.empty": "Sikta på ett lyft eller en kroppsvikt till ett datum.",
   "goals.lift": "Lyft",
   "goals.bodyweight": "Kroppsvikt",
   "goals.exercise": "Övning",
@@ -705,14 +701,12 @@ export const sv = {
   "goals.saveFailed": "Kunde inte spara målet. Försök igen.",
   "goals.edit": "Redigera mål",
   "goals.new": "Nytt mål",
-  "goals.description":
-    "Ett mål står på egna ben. Ett schema kan länka till det, men behöver inte.",
   "goals.kind": "Typ av mål",
   "goals.choose": "Välj",
   "goals.weightKg": "Vikt (kg)",
   "goals.reps": "Reps",
   "goals.repsNote":
-    "En rep jämförs med ditt tyngsta set. Fler reps jämförs med ditt uppskattade 1RM.",
+    "1 rep jämförs med ditt tyngsta set, fler reps med ditt uppskattade 1RM.",
   "goals.targetKg": "Mål (kg)",
   "goals.todayKg": "Vikt i dag (kg)",
   "goals.by": "Senast",
@@ -723,7 +717,6 @@ export const sv = {
   "goals.keep": "Behåll målet",
   "goals.deleted": "Målet raderat",
   "goals.deleteFailed": "Kunde inte radera. Målet finns kvar; försök igen.",
-  "goals.eyebrow": { one: "{count} aktivt mål", other: "{count} aktiva mål" },
   "progress.periodChoose": "Period: {period}",
   "progress.allGoals": "Alla mål",
   "progress.goalsHeading": "Mål",
@@ -741,13 +734,11 @@ export const sv = {
   "progress.recordOpen": "{name} {set}, {kinds}, {date}: öppna passet",
   "goals.weeks": { one: "{count} vecka", other: "{count} veckor" },
   "goals.weeklyTitle": "Veckomål",
-  "goals.weeklyTarget": "{count} {unit}",
-  "goals.setWeeklyText":
-    "Välj hur många pass du siktar på varje vecka och se hur ofta du når dit.",
+  "goals.setWeeklyText": "Hur många pass du siktar på i veckan.",
   "goals.weekMet": "Klart den här veckan",
   "goals.weekDaysLeft": {
-    one: "{count} dag kvar av veckan",
-    other: "{count} dagar kvar av veckan",
+    one: "{count} dag kvar",
+    other: "{count} dagar kvar",
   },
   "goals.weekProgressLabel": "Veckans pass",
   "goals.hitRate": {
@@ -815,9 +806,7 @@ export const sv = {
   "exercise.backToLibrary": "Öppna Bibliotek",
   "exercise.start": "Starta pass med den här övningen",
   "exercise.neverTitle": "Inte loggad än",
-  "exercise.neverText":
-    "Logga ett set {name} så visas resultat, pass och rekord här.",
-  "exercise.historyNote": "Alla avslutade pass med {name}, nyaste först.",
+  "exercise.neverText": "Logga ett set {name} så syns resultaten här.",
   "records.e1rm": "Bästa uppsk. 1RM",
   "records.heaviest": "Tyngsta vikt",
   "records.mostReps": "Flest reps",
@@ -828,7 +817,7 @@ export const sv = {
   "records.reps": { one: "{count} rep", other: "{count} reps" },
   "records.empty": "Rekord visas efter ditt första avbockade arbetsset.",
   "records.note":
-    "Bara avbockade set; uppvärmning räknas aldrig. Uppskattad 1RM (Epley) använder viktset med högst 10 reps. Dropset räknas bara till tyngsta vikt och passvolym. Ett PR i ett pass är en ny tyngsta vikt eller bästa setvolym.",
+    "Bara ikryssade set, aldrig uppvärmning. Uppskattat 1RM (Epley) använder viktset med högst 10 reps. Drops räknas bara till tyngsta vikt och passvolym. Ett PR i ett pass är ny tyngsta vikt eller bästa setvolym.",
   "records.pr": "PR",
   "records.prLabel": "Rekord: {kinds}",
   "records.tile": "Rekord",

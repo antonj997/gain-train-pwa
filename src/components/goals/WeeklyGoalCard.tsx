@@ -87,12 +87,6 @@ export default function WeeklyGoalCard({
       <div className="card-head">
         <div>
           <h2 id="weekly-heading">{t("goals.weeklyTitle")}</h2>
-          <p className="row-sub">
-            {t("goals.weeklyTarget", {
-              count: goal,
-              unit: t("settings.perWeekUnit", { count: goal }),
-            })}
-          </p>
         </div>
         <button type="button" className="text-link" onClick={onEdit}>
           <span aria-hidden="true">{t("common.edit")}</span>

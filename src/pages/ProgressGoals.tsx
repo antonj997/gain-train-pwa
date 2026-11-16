@@ -22,11 +22,7 @@ export default function ProgressGoals() {
   return (
     <div className="page progress-page goals-page">
       <PageHeader
-        eyebrow={
-          goals.open.length
-            ? t("goals.eyebrow", { count: goals.open.length })
-            : t("progress.title")
-        }
+        eyebrow={t("progress.title")}
         title={t("goals.title")}
         leading={<BackButton onClick={back} />}
         action={

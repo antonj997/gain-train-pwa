@@ -147,7 +147,6 @@ export default function GoalEditor({
           if (!busy) onClose();
         }}
         title={goal ? t("goals.edit") : t("goals.new")}
-        description={t("goals.description")}
       >
         <Segmented<Goal["kind"]>
           label={t("goals.kind")}

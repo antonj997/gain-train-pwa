@@ -270,7 +270,6 @@ export default function Progress() {
             {rows.length > 0 && shown.length === 0 && (
               <div className="card col-12" role="status">
                 <h3 className="card-title">{t("progress.noMatch")}</h3>
-                <p className="row-sub">{t("progress.noMatchText")}</p>
                 <button className="btn-secondary" onClick={() => setSearch("")}>
                   {t("progress.clearSearch")}
                 </button>

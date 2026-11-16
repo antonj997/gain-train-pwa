@@ -18,20 +18,15 @@ import { t } from "@/i18n";
  * workout's details in History.
  */
 export default function ExerciseHistory({
-  name,
   sessions,
   distanceUnit,
 }: {
-  name: string;
   sessions: readonly ExerciseSession[];
   /** A cardio exercise's distance unit. */
   distanceUnit?: DistanceUnit;
 }) {
   return (
     <section className="col-12" aria-label={t("exercise.history")}>
-      <p className="row-sub section-note">
-        {t("exercise.historyNote", { name })}
-      </p>
       {sessions.map((session, index) => {
         const date = localizedDate(session.date, {
           weekday: "short",
