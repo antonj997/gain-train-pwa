@@ -101,43 +101,71 @@ export default function GoalCard({
         >
           {Math.round(progress.fraction * 100)}%
         </GoalRing>
-        <span className="goal-values">
-          <span className="goal-value">
-            <span className="goal-value-label">{t("goals.start")}</span>
-            <span>
-              {progress.start <= 0
-                ? t("goals.noValue")
-                : lift
-                  ? approx(progress.start)
-                  : kg(progress.start)}
-            </span>
-          </span>
-          <span className="goal-value">
-            <span className="goal-value-label">{t("goals.nowLabel")}</span>
-            <strong>
-              {progress.current === null
-                ? t("goals.noValue")
-                : lift
-                  ? t("goals.nowStrength", { kg: roundKg(progress.current) })
-                  : kg(progress.current)}
-            </strong>
-            {lift && progress.source && (
-              <span className="goal-value-sub">
-                {t("goals.sourceLine", {
-                  set: shortSetText(progress.source.set, progress.source.set),
-                  date: shortDate(progress.source.date),
-                })}
+        {lift ? (
+          // Strength: now, with the set it comes from, over start and target.
+          <span className="goal-lift-values">
+            <span className="goal-values">
+              <span className="goal-value">
+                <span className="goal-value-label">{t("goals.nowLabel")}</span>
+                <strong className="goal-now">
+                  {progress.current === null
+                    ? t("goals.noValue")
+                    : t("goals.nowStrength", {
+                        kg: roundKg(progress.current),
+                      })}
+                </strong>
+                {progress.source && (
+                  <span className="goal-value-sub">
+                    {t("goals.sourceLine", {
+                      set: shortSetText(
+                        progress.source.set,
+                        progress.source.set,
+                      ),
+                      date: shortDate(progress.source.date),
+                    })}
+                  </span>
+                )}
               </span>
-            )}
-          </span>
-          <span className="goal-value">
-            <span className="goal-value-label">{t("goals.targetLabel")}</span>
-            <span>
-              {exactTarget ? kg(progress.target) : approx(progress.target)}
+              {values.length >= 2 && <Sparkline values={values} />}
+            </span>
+            <span className="goal-range">
+              <span>
+                <span className="goal-value-label">{t("goals.start")}</span>{" "}
+                {progress.start <= 0
+                  ? t("goals.noValue")
+                  : approx(progress.start)}
+              </span>
+              <span>
+                <span className="goal-value-label">
+                  {t("goals.targetLabel")}
+                </span>{" "}
+                {exactTarget ? kg(progress.target) : approx(progress.target)}
+              </span>
             </span>
           </span>
-          {values.length >= 2 && <Sparkline values={values} />}
-        </span>
+        ) : (
+          <span className="goal-values">
+            <span className="goal-value">
+              <span className="goal-value-label">{t("goals.start")}</span>
+              <span>
+                {progress.start > 0 ? kg(progress.start) : t("goals.noValue")}
+              </span>
+            </span>
+            <span className="goal-value">
+              <span className="goal-value-label">{t("goals.nowLabel")}</span>
+              <strong>
+                {progress.current === null
+                  ? t("goals.noValue")
+                  : kg(progress.current)}
+              </strong>
+            </span>
+            <span className="goal-value">
+              <span className="goal-value-label">{t("goals.targetLabel")}</span>
+              <span>{kg(progress.target)}</span>
+            </span>
+            {values.length >= 2 && <Sparkline values={values} />}
+          </span>
+        )}
       </span>
       {progress.current === null && (
         <span className="row-sub">

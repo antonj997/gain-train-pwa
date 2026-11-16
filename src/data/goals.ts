@@ -111,9 +111,10 @@ function liftProgress(
   today: string,
 ): GoalProgress {
   const { log, target, points, created } = picture;
+  // The strongest session; of equals the latest, so "now" names a recent set.
   const best = (list: readonly StrengthPoint[]) =>
     list.reduce<StrengthPoint | null>(
-      (top, p) => (!top || p.value > top.value ? p : top),
+      (top, p) => (!top || p.value >= top.value ? p : top),
       null,
     );
   // The best before the goal; with none, the first session after it.
