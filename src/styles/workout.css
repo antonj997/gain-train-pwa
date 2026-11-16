@@ -1487,6 +1487,31 @@
   font-weight: 600;
   line-height: 1.4;
 }
+/* An open lift goal: a small target mark and the goal's lift by the name.
+   Narrow screens keep only the mark; its spoken name says the rest. */
+.ex-goal {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 359px) {
+  .ex-goal-text {
+    display: none;
+  }
+  .ex-goal {
+    padding: 2px 4px;
+  }
+}
 
 /* No load: no field to type, a muted dash in the load column. */
 .set-noload {

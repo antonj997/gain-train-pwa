@@ -1845,4 +1845,37 @@ export const sv = {
   "calendarPlan.noneText":
     "Planera rutiner per dag, med deload och progression.",
   "calendarPlan.create": "Skapa ett schema",
+  // Lyftmål mätta som styrka, med kontrollpass (16 november 2026).
+  "goals.statusUp": "Framåt",
+  "goals.statusFlat": "Stilla",
+  "goals.statusDown": "Bakåt",
+  "goals.statusInsufficient": "För lite data",
+  "goals.approx": "≈ {kg}",
+  "goals.nowStrength": "≈ {kg} uppsk.",
+  "goals.sourceLine": "{set}, {date}",
+  "goals.paceOn": "I fas mot datumet",
+  "goals.paceOff": "Inte i fas mot datumet än",
+  "goals.ready": "Redo att testa: försök {lift}",
+  "goals.checkinDue": "Kontrollpass den här veckan: {set}",
+  "goals.checkinHow":
+    "Så många reps du orkar på den vikten, i valfritt pass med {name} den här veckan.",
+  "goals.checkinSkip": "Hoppa över",
+  "goals.checkinSkipLabel": "Hoppa över veckans kontrollpass för {title}",
+  "goals.checkinSkipped":
+    "Kontrollpasset hoppas över. Nästa kommer om ungefär 4 veckor.",
+  "goals.checkinSkipFailed":
+    "Kunde inte hoppa över kontrollpasset. Försök igen.",
+  "goals.checkinLast": "Senaste kontroll: ≈ {kg}, {date}",
+  "goals.strengthNote":
+    "Mäts som uppskattat 1RM från ditt bästa set på 1–10 reps per pass. Nått när du lyfter {lift}.",
+  "goals.repsNoteStrength":
+    "Framstegen är ditt uppskattade 1RM från bästa setet på 1–10 reps per pass. Målet är nått när du lyfter vikten för de repsen.",
+  "progress.goalReady": "Redo att testa",
+  "progress.goalCheckin": "Kontrollpass",
+  "planStatus.goalReady": "redo att testa {lift}",
+  "planStatus.goalCheckin": "kontrollpass den här veckan",
+  "goalTarget.checkin": "Kontroll {value}",
+  "goalTarget.test": "Testa {value}",
+  "goalTarget.max": "max",
+  "workout.goalMark": "Mål: {title}",
 } satisfies Messages;

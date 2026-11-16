@@ -1,6 +1,6 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { memo, useCallback, useContext, useId, useRef, useState } from "react";
-import { ChevronDown, MoreHorizontal, Plus, Timer } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Plus, Target, Timer } from "lucide-react";
 import {
   type Exercise,
   type WorkoutSet,
@@ -122,7 +122,12 @@ export type ExerciseCardProps = {
    * Each set's target (double progression) by set id: the text under
    * Previous ("Target 87.5 × 5") and what a tap on it fills in.
    */
-  targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
+  targets?: ReadonlyMap<
+    string,
+    { text: string; source: FillSource; label?: string }
+  >;
+  /** An open lift goal for the exercise: a small mark by the name ("110 × 1"). */
+  goalMark?: { text: string; label: string };
   /** The workout is in a plan's deload week: a Deload tag by the name. */
   deload?: boolean;
   /** After a set is checked, offer its reps in reserve for a few seconds. */
@@ -205,6 +210,7 @@ function ExerciseCard({
   onSetDone,
   records,
   targets,
+  goalMark,
   deload = false,
   askRir = false,
   restChip = false,
@@ -371,7 +377,8 @@ function ExerciseCard({
   const targetOf = (index: number) => {
     const found = sets[index] && targets?.get(sets[index].id);
     return found
-      ? labelSet({ ...sets[index], ...found.source } as WorkoutSet, false)
+      ? (found.label ??
+          labelSet({ ...sets[index], ...found.source } as WorkoutSet, false))
       : undefined;
   };
 
@@ -388,6 +395,19 @@ function ExerciseCard({
             <h2 id={headingId} className="ex-title">
               {ex.name}
             </h2>
+            {goalMark && mode === "log" && (
+              <span
+                className="ex-goal"
+                role="img"
+                aria-label={goalMark.label}
+                title={goalMark.label}
+              >
+                <Target size={13} strokeWidth={2.4} aria-hidden="true" />
+                <span className="ex-goal-text" aria-hidden="true">
+                  {goalMark.text}
+                </span>
+              </span>
+            )}
             {deload && mode === "log" && (
               <span className="ex-tag" title={t("workout.deloadTagSr")}>
                 <span aria-hidden="true">{t("workout.deloadTag")}</span>

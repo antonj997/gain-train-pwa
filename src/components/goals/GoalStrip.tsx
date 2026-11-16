@@ -73,7 +73,12 @@ export default function GoalStrip({
       {open.map(({ goal, insight }) => {
         const title = goalTitle(goal);
         const percent = Math.round(insight.progress.fraction * 100);
-        const behind = insight.pace?.kind === "behind";
+        const lift = insight.strength;
+        // A lift goal: strong enough to test, a check-in this week, or
+        // strength going down; a bodyweight goal: behind its pace.
+        const behind = lift
+          ? lift.trend.status === "down" && !lift.ready && !lift.checkin?.due
+          : insight.pace?.kind === "behind";
         const due = insight.deadline;
         return (
           <li key={goal.id}>
@@ -93,13 +98,17 @@ export default function GoalStrip({
               </GoalRing>
               <span className="goal-tile-title">{title}</span>
               <span className={"goal-tile-sub" + (behind ? " is-behind" : "")}>
-                {behind
-                  ? t("goals.behind")
-                  : due.kind === "left"
-                    ? t("progress.daysLeft", { count: due.days })
-                    : due.kind === "today"
-                      ? t("progress.dueToday")
-                      : t("progress.overdue")}
+                {lift?.ready
+                  ? t("progress.goalReady")
+                  : lift?.checkin?.due
+                    ? t("progress.goalCheckin")
+                    : behind
+                      ? t(lift ? "goals.statusDown" : "goals.behind")
+                      : due.kind === "left"
+                        ? t("progress.daysLeft", { count: due.days })
+                        : due.kind === "today"
+                          ? t("progress.dueToday")
+                          : t("progress.overdue")}
               </span>
             </Link>
           </li>

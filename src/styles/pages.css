@@ -2025,6 +2025,77 @@ span.sparkline {
   color: var(--gt-danger-fg);
   font-weight: 600;
 }
+/* A lift goal: now (strength, and the set it comes from) and the sparkline,
+   over a line with the start and the target. */
+.goal-lift-values {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  min-width: 0;
+}
+.goal-now {
+  font-size: var(--gt-fs-4);
+}
+.goal-range {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--gt-space-3);
+  font-size: var(--gt-fs-2);
+  color: var(--gt-ink);
+}
+/* A lift goal's "now": the set its strength comes from, small under it. */
+.goal-value-sub {
+  font-size: var(--gt-fs-1);
+  color: var(--gt-ink-2);
+}
+/* Strong enough to try the real lift. */
+.goal-ready {
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+/* This week's check-in, with Skip above the card's button layer. */
+.goal-checkin {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border-radius: 12px;
+  background-color: var(--gt-accent-soft);
+}
+.goal-checkin-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-2);
+}
+.goal-checkin-skip {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  background: transparent;
+  color: var(--gt-accent);
+  font: inherit;
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.goal-checkin-skip:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+.goal-note {
+  font-size: var(--gt-fs-1);
+}
 .goals-reached .session-summary h2 {
   font-size: var(--gt-fs-4);
   font-weight: 600;
