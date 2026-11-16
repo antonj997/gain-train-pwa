@@ -122,6 +122,10 @@ export default function GoalEditor({
             exerciseId: exercise!.id,
             exerciseName: exercise!.name,
             reps: repCount!,
+            // Skipped check-in weeks stay with the same lift.
+            ...(goal?.checkinSkips && goal.exerciseId === exercise!.id
+              ? { checkinSkips: goal.checkinSkips }
+              : {}),
           }
         : { startKg: startKg! }),
       ...(goal?.reachedOn && !changed ? { reachedOn: goal.reachedOn } : {}),
@@ -186,7 +190,7 @@ export default function GoalEditor({
                 />
               </label>
             </div>
-            <p className="row-sub">{t("goals.repsNote")}</p>
+            <p className="row-sub">{t("goals.repsNoteStrength")}</p>
           </>
         ) : (
           <div className="field-row">

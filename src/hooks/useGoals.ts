@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
 import {
@@ -7,8 +7,14 @@ import {
   activeGoals,
   goalInsight,
 } from "@/data/goals";
+import { activePlans } from "@/data/plans";
+import { equipmentLookup } from "@/data/progression";
 import { completedWorkouts } from "@/data/selectors";
+import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
+import { notify } from "@/lib/message-store";
+import { errorMessage } from "@/lib/errors";
 import { weeklyGoalStats } from "@/lib/week-summary";
+import { t } from "@/i18n";
 
 export type GoalCardData = { goal: GoalItem; insight: GoalInsight };
 
@@ -16,6 +22,7 @@ export type GoalCardData = { goal: GoalItem; insight: GoalInsight };
  * The goals and the weekly goal as the Goals tab shows them: open goals by the
  * nearest date, reached goals most recent first, and the weekly figures (null
  * without a weekly goal). Saves the day a bodyweight goal is first seen reached.
+ * `skipCheckin` skips a lift goal's check-in week (stored on the goal).
  */
 export function useGoals(weeklyGoal: number | null, today: string) {
   const { state, save } = useData();
@@ -23,16 +30,21 @@ export function useGoals(weeklyGoal: number | null, today: string) {
   const records = useMemo(() => Object.values(state.records), [state.records]);
   const completed = useMemo(() => completedWorkouts(records), [records]);
   const goals = useMemo(() => activeGoals(state.records), [state.records]);
+  const plans = useMemo(() => activePlans(state.records), [state.records]);
+  const [{ weightUnit }] = useTrainingPreferences();
 
   // Each goal reads the whole log; only redo it when the log or profile changes.
-  const cards = useMemo<GoalCardData[]>(
-    () =>
-      goals.map((goal) => ({
-        goal,
-        insight: goalInsight(goal, completed, { bodyWeightKg }, today),
-      })),
-    [goals, completed, bodyWeightKg, today],
-  );
+  const cards = useMemo<GoalCardData[]>(() => {
+    const equipmentOf = equipmentLookup(records);
+    return goals.map((goal) => ({
+      goal,
+      insight: goalInsight(goal, completed, { bodyWeightKg }, today, {
+        plans,
+        equipmentOf,
+        unit: weightUnit,
+      }),
+    }));
+  }, [goals, completed, records, plans, bodyWeightKg, today, weightUnit]);
   const open = useMemo(
     () => cards.filter((c) => !c.insight.progress.met),
     [cards],
@@ -80,5 +92,23 @@ export function useGoals(weeklyGoal: number | null, today: string) {
       }
   }, [cards, save, today]);
 
-  return { open, reached, weekly };
+  // A skipped week is kept on the goal, so other devices skip it too.
+  const skipCheckin = useCallback(
+    async (goal: GoalItem, week: string) => {
+      const { id, ...payload } = goal;
+      const skips = [...(payload.checkinSkips ?? []), week];
+      try {
+        await save(id, "goal", {
+          ...payload,
+          checkinSkips: [...new Set(skips)].sort().slice(-100),
+        });
+        notify.success(t("goals.checkinSkipped"));
+      } catch (cause) {
+        notify.error(errorMessage(cause, t("goals.checkinSkipFailed")));
+      }
+    },
+    [save],
+  );
+
+  return { open, reached, weekly, skipCheckin };
 }

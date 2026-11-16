@@ -19,6 +19,8 @@ type Props = {
   preferences: TrainingPreferences;
   onPreferences: (patch: Partial<TrainingPreferences>) => void;
   onEdit: (goal: GoalItem | "new") => void;
+  /** Skips a lift goal's check-in week. */
+  skipCheckin?: (goal: GoalItem, week: string) => void;
 };
 
 /** Progress → Goals: the weekly goal, open goals by the nearest date, and reached goals folded away. */
@@ -29,6 +31,7 @@ export default function GoalsPanel({
   preferences,
   onPreferences,
   onEdit,
+  skipCheckin,
 }: Props) {
   const { t } = useT();
   const [weeklyOpen, setWeeklyOpen] = useState(false);
@@ -46,6 +49,11 @@ export default function GoalsPanel({
                 key={card.goal.id}
                 card={card}
                 onOpen={() => onEdit(card.goal)}
+                onSkipCheckin={
+                  skipCheckin
+                    ? (week) => skipCheckin(card.goal, week)
+                    : undefined
+                }
               />
             ))}
           </MotionList>
