@@ -1,4 +1,9 @@
-import { local, storageKeys, writeStored, type KeyValueStorage } from "./storage";
+import {
+  local,
+  storageKeys,
+  writeStored,
+  type KeyValueStorage,
+} from "./storage";
 
 /**
  * Swiping a checked set away in a live workout asks first, once per device:

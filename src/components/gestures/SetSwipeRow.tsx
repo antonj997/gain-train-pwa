@@ -21,7 +21,6 @@ import {
 // The module translator: the workout page remounts on a new language.
 import { t } from "@/i18n";
 
-
 /** The parts of the delete, in ms: the row out and the bubble's gulp side by side, then the collapse. */
 const SET_DELETE_TIMING = {
   slide: MOTION.binSlide,

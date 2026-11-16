@@ -64,7 +64,8 @@ import { setBadge } from "@/data/drops";
 import { labelSet } from "@/data/model";
 import { durationLabel } from "@/lib/labels";
 import { primeRestSound } from "@/lib/rest-sound";
-import { useWakeLock } from "@/hooks/useWakeLock";
+import { useKeepScreenOn, useWakeLock } from "@/hooks/useWakeLock";
+import { wakeLockSupported } from "@/lib/keep-screen-on";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import WorkoutBanners from "@/components/workout/WorkoutBanners";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
@@ -332,8 +333,10 @@ function Editor({
     // Only when the last set is checked.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allChecked]);
-  // The screen stays on through a running workout.
-  useWakeLock(!editing);
+  // The screen stays on through a running workout, unless switched off in
+  // the workout's details.
+  const [keepScreenOn, setKeepScreenOn] = useKeepScreenOn();
+  useWakeLock(!editing && keepScreenOn);
   // The number pad of a live workout (NumberPad.tsx).
   const [padTarget, setPadTarget] = useState<PadTarget | null>(null);
   const padApi = useMemo(
@@ -569,6 +572,12 @@ function Editor({
         onClose={() => setDetails(false)}
         workout={w}
         onChange={change}
+        // Only a running workout, and only where the browser can do it.
+        keepScreenOn={
+          !editing && wakeLockSupported()
+            ? { on: keepScreenOn, onChange: setKeepScreenOn }
+            : undefined
+        }
       />
       <ConfirmDialog
         open={!!removeExercise}

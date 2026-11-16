@@ -319,6 +319,7 @@ export const sv = {
   "workout.autoTimer": "Automatisk timer",
   "workout.notRecorded": "Inte registrerad",
   "workout.details": "Passets detaljer",
+  "workout.keepScreenOn": "Håll skärmen igång",
   "exercise.last": "Senast:",
   "exercise.options": "Alternativ för {name}",
   "exercise.colSet": "Set",

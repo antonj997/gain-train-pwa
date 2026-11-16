@@ -566,9 +566,7 @@
 }
 /* The row's other fields step back while one is typed: no accent outline,
    quieter digits. */
-.set-line:has(input[data-pad-target])
-  .set-field
-  input:not([data-pad-target]) {
+.set-line:has(input[data-pad-target]) .set-field input:not([data-pad-target]) {
   border-color: transparent;
   color: var(--gt-ink-2);
   font-weight: 500;

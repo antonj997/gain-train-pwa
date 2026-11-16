@@ -319,6 +319,7 @@ export const en = {
   "workout.autoTimer": "Automatic timer",
   "workout.notRecorded": "Not recorded",
   "workout.details": "Workout details",
+  "workout.keepScreenOn": "Keep screen on",
   "exercise.last": "Last:",
   "exercise.options": "{name} options",
   "exercise.colSet": "Set",
