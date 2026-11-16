@@ -32,6 +32,7 @@ import {
 } from "@/data/today-status";
 import { usePlanDaySheet } from "@/hooks/usePlanDaySheet";
 import Sheet from "@/components/ui/Sheet";
+import { WEEK_SCOPE } from "@/components/home/WeekCard";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { localizedDate, shiftDate } from "@/lib/dates";
 import { notify } from "@/lib/message-store";
@@ -90,7 +91,9 @@ export default function TodayDoneCard({
   const counting = useRef(false);
   const days = usePlanDaySheet({
     day,
-    undoScope: "today:plan",
+    // A skip from this sheet leaves its Undo under the week strip, as one
+    // from the strip's own sheet does.
+    undoScope: WEEK_SCOPE,
     onMoved: ({ text }) => {
       if (!counting.current) notify(text, { key: "today-move" });
     },
