@@ -978,17 +978,19 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   flex: none;
   color: var(--gt-ink-3);
 }
-.today-done-facts {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--gt-space-1) var(--gt-space-2);
+.today-done-plan {
+  margin-top: 2px;
   font-size: var(--gt-fs-2);
+  line-height: 1.4;
   color: var(--gt-ink-2);
-}
-.today-done-next {
-  min-width: 0;
   overflow-wrap: anywhere;
+}
+.today-done-week {
+  font-weight: 600;
+  color: var(--gt-ink);
+}
+.today-done-week.is-met {
+  color: var(--gt-done);
 }
 /* Off plan: what was planned, with Move and Count as. */
 .today-done-off {

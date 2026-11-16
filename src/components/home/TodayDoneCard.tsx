@@ -239,34 +239,33 @@ export default function TodayDoneCard({
           </span>
           <strong className="today-done-title">{title}</strong>
           <span className="row-sub">{meta}</span>
+          {/* Inside a plan: this week's planned workouts done, and the next. */}
+          {(progress || next) && (
+            <span className="today-done-plan">
+              {progress && (
+                <span
+                  className={
+                    "today-done-week" +
+                    (progress.done >= progress.planned ? " is-met" : "")
+                  }
+                >
+                  {t("todayDone.week", {
+                    done: progress.done,
+                    count: progress.planned,
+                  })}
+                </span>
+              )}
+              {progress && next && " · "}
+              {next &&
+                t("todayDone.next", {
+                  name: next.day.title,
+                  when: when(next.date),
+                })}
+            </span>
+          )}
         </span>
         <ChevronRight className="chev" size={20} aria-hidden="true" />
       </div>
-      {planDone && (progress || next) && (
-        <p className="today-done-facts">
-          {progress && (
-            <span
-              className={
-                "stat-chip" +
-                (progress.done >= progress.planned ? " done" : " muted")
-              }
-            >
-              {t("todayDone.week", {
-                done: progress.done,
-                count: progress.planned,
-              })}
-            </span>
-          )}
-          {next && (
-            <span className="today-done-next">
-              {t("todayDone.next", {
-                name: next.day.title,
-                when: when(next.date),
-              })}
-            </span>
-          )}
-        </p>
-      )}
       {off && offText && (
         <div className="today-done-off">
           <p className="status-note">{offText}</p>
