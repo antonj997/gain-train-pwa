@@ -8,6 +8,7 @@ import ProfileButton from "@/components/ProfileButton";
 import ResumeCards from "@/components/home/ResumeCards";
 import RoutinesSection from "@/components/home/RoutinesSection";
 import TodayCard from "@/components/home/TodayCard";
+import TodayDoneCard from "@/components/home/TodayDoneCard";
 import WeekCard from "@/components/home/WeekCard";
 import type { RoutineRecord } from "@/data/model";
 import {
@@ -20,6 +21,7 @@ import { newWorkout } from "@/data/start";
 import { today } from "@/data/model";
 import { activePlans, plannedFor } from "@/data/plans";
 import { usePlanned } from "@/hooks/usePlanned";
+import { useTodayStatus } from "@/hooks/useTodayStatus";
 import { phaseWeek } from "@/data/phase";
 import { lastDoneByRoutine, todayPick } from "@/data/today";
 import { workoutPath } from "@/lib/routes";
@@ -87,6 +89,11 @@ export default function Home() {
     routines.map((r) => r.id),
     lastDone,
   );
+  // Once a workout is finished today the card says so instead of offering
+  // today's workout again.
+  const todayState = useTodayStatus(completed, day);
+  const todayDone =
+    todayState.status.kind !== "open" ? todayState.status : null;
   // A day type or group with categories starts an empty workout and opens the
   // picker on those categories.
   const startWithSuggestions = (categories: string[], title: string) =>
@@ -119,7 +126,19 @@ export default function Home() {
         drafts={drafts}
       />
       <WeekCard completed={completed} goal={goal} day={day} planned={planned} />
-      {!running && (
+      {!running && todayDone && (
+        <TodayDoneCard
+          status={todayDone}
+          plan={todayState.plan}
+          isWorkout={todayState.isWorkout}
+          upcoming={todayState.upcoming}
+          day={day}
+          starting={starting}
+          onStartEmpty={() => void start()}
+          onLogPast={() => void start(true)}
+        />
+      )}
+      {!running && !todayDone && (
         <TodayCard
           pick={pick}
           phase={todayPhase}
@@ -136,7 +155,11 @@ export default function Home() {
       <RoutinesSection
         completed={completed}
         day={day}
-        exclude={!running && pick.kind === "planned" ? pick.routineId : null}
+        exclude={
+          !running && !todayDone && pick.kind === "planned"
+            ? pick.routineId
+            : null
+        }
         starting={starting}
         onStart={(routine) => void start(false, routine)}
       />

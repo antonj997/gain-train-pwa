@@ -1825,4 +1825,26 @@ export const en = {
   "calendarPlan.noneText":
     "Plan routines by day, with deloads and progression.",
   "calendarPlan.create": "Create a plan",
+
+  // Train's Today card once the day is trained (TodayDoneCard).
+  "todayDone.title": "Done for today",
+  "todayDone.count": {
+    one: "{count} workout today",
+    other: "{count} workouts today",
+  },
+  "todayDone.openWorkout": "{label}: {title}. Open it in the calendar",
+  "todayDone.openPlan": "{label}: {title}. Open how {name} is going",
+  "todayDone.week": {
+    one: "{done} of {count} workout this week",
+    other: "{done} of {count} workouts this week",
+  },
+  "todayDone.next": "Next: {name} {when}",
+  "todayDone.plannedWas": "{name} was planned",
+  "todayDone.restDay": "A rest day in the plan",
+  "todayDone.unplanned": "Nothing was planned today",
+  "todayDone.move": "Move {name}",
+  "todayDone.countAs": "Count today's workout as {name}",
+  "todayDone.counted": "Today's workout counts as {name}",
+  "todayDone.undoFailed": "Couldn't undo the change.",
+  "todayDone.another": "Another workout",
 };
