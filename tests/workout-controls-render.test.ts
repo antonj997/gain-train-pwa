@@ -265,8 +265,16 @@ test("a set waiting on its drops explains the disabled check", async () => {
     canCheck: false,
     checkHint: hint,
   });
-  assert.doesNotMatch(checked, /aria-disabled/);
+  const [uncheck] = tags(checked, "button").filter((tag) =>
+    tag.includes("aria-pressed"),
+  );
+  assert.doesNotMatch(uncheck, /aria-disabled/);
   assert.doesNotMatch(checked, /Fill in or delete/);
+  // Its badge waits until it is unchecked (a live workout locks the row).
+  const [badge] = tags(checked, "button").filter((tag) =>
+    tag.includes("set-badge"),
+  );
+  assert.match(badge, /aria-disabled="true"/);
 
   // Without a hint a disabled check has nothing to point at.
   const bare = await setLine({ set, canCheck: false });
@@ -287,7 +295,7 @@ test("row state classes and the set id are on the line", async () => {
   const html = await setLine({ set, next: true });
   const line = html.match(/^<div[^>]*>/)![0];
   assert.match(line, new RegExp(`data-set-id="${set.id}"`));
-  assert.match(line, /class="set-line is-done is-next"/);
+  assert.match(line, /class="set-line is-done is-locked is-next"/);
   assert.match(
     await setLine({ set: { ...set, done: false } }),
     /^<div[^>]*class="set-line"/,
