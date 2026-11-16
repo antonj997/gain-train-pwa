@@ -29,12 +29,9 @@ test("the caption names the chosen day with its workout count", () => {
   assert.match(caption, /5/);
 });
 
-test("the caption falls back to the latest workout, then a hint", () => {
+test("the caption falls back to the latest workout, then nothing", () => {
   assert.match(historyCaption(base, counts, "2026-10-28"), /^Last workout /);
-  assert.equal(
-    historyCaption(base, new Map(), "2026-10-28"),
-    "Tap a day to see its workouts",
-  );
+  assert.equal(historyCaption(base, new Map(), "2026-10-28"), "");
 });
 
 test("a range caption totals the workouts between both ends", () => {

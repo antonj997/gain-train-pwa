@@ -216,11 +216,6 @@ export default function PlanCard({
         <div className="plan-upcoming">
           <div className="plan-card-head">
             <h3 className="plan-card-eyebrow">{t("calendarPlan.upcoming")}</h3>
-            {upcoming.length > 0 && (
-              <span className="plan-card-hint">
-                {t("calendarPlan.upcomingHint")}
-              </span>
-            )}
           </div>
           <MotionList className="plan-upcoming-list">
             {[

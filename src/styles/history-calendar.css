@@ -647,10 +647,6 @@
   font-weight: 600;
   letter-spacing: 0;
 }
-.plan-card-hint {
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-1);
-}
 .plan-card-title {
   display: flex;
   flex-wrap: wrap;

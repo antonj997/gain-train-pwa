@@ -61,7 +61,6 @@ function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
           className="finish-note"
           rows={2}
           maxLength={WORKOUT_NOTE_MAX}
-          placeholder={t("workout.note")}
           value={w.note ?? ""}
           onChange={(e) => onChange({ ...w, note: e.target.value })}
         />

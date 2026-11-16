@@ -415,7 +415,7 @@ export default function HistoryCalendar({
 
   const footer = (
     <HistoryFooter
-      caption={periodShown ? null : caption}
+      caption={periodShown || !caption ? null : caption}
       canReset={canReset && !periodShown}
       resetTitle={
         heat

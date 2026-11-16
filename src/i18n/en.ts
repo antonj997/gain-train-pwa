@@ -515,8 +515,6 @@ export const en = {
     "Choose a date on the calendar to begin your range.",
   "history.noneOnDay": "No workouts on this day",
   "history.noneInPeriod": "No workouts in this period",
-  "history.emptyText":
-    "Choose another date on the calendar or log your next workout.",
   "history.logWorkout": "Log a workout",
   "history.pleaseWait": "Please wait…",
   "history.deleteWorkout": "Delete workout",
@@ -558,7 +556,6 @@ export const en = {
   "history.chooseEndOf": "{date} · choose the end date",
   "history.chooseStartOf": "{date} · choose the start date",
   "history.lastWorkout": "Last workout {date}",
-  "history.tapDay": "Tap a day to see its workouts",
   "history.weekdays": "{weekday}s, {from} – {to}",
 
   // Progress
@@ -1750,8 +1747,7 @@ export const en = {
   "pad.fillTarget": "Fill in {value}",
   "workout.deloadTag": "Deload",
   "workout.deloadTagSr": "Deload week: lighter targets",
-  "workout.note": "Note",
-  "workout.noteLabel": "Workout note",
+  "workout.noteLabel": "Note",
   "finish.recordsLabel": "Records in this workout",
   "settings.askRir": "Ask for RIR",
   "settings.askRirNote": "Reps in reserve, after each checked set.",
@@ -1870,11 +1866,10 @@ export const en = {
   "calendarPlan.perWeek": { one: "workout a week", other: "workouts a week" },
   "calendarPlan.weeks": { one: "week", other: "weeks" },
   "calendarPlan.upcoming": "Coming workouts",
-  "calendarPlan.upcomingHint": "tap to move",
   "calendarPlan.noneAhead": "Nothing more is planned in this plan.",
   "calendarPlan.status": "See how the plan is going",
   "calendarPlan.none": "No plan",
   "calendarPlan.noneText":
-    "Plan which routine on which day, with deload weeks and progression. The days show up here in the calendar.",
+    "Plan routines by day, with deloads and progression.",
   "calendarPlan.create": "Create a plan",
 };

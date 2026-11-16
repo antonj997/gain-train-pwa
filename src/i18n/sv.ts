@@ -516,8 +516,6 @@ export const sv = {
     "Välj ett datum i kalendern för att börja ditt intervall.",
   "history.noneOnDay": "Inga pass den här dagen",
   "history.noneInPeriod": "Inga pass under perioden",
-  "history.emptyText":
-    "Välj ett annat datum i kalendern eller logga ditt nästa pass.",
   "history.logWorkout": "Logga ett pass",
   "history.pleaseWait": "Vänta…",
   "history.deleteWorkout": "Radera passet",
@@ -559,7 +557,6 @@ export const sv = {
   "history.chooseEndOf": "{date} · välj slutdatum",
   "history.chooseStartOf": "{date} · välj startdatum",
   "history.lastWorkout": "Senaste passet {date}",
-  "history.tapDay": "Tryck på en dag för att se dess pass",
   "history.weekdays": "{weekday}ar, {from} – {to}",
 
   // Progress
@@ -1757,8 +1754,7 @@ export const sv = {
   "pad.fillTarget": "Fyll i {value}",
   "workout.deloadTag": "Deload",
   "workout.deloadTagSr": "Deloadvecka: lättare mål",
-  "workout.note": "Anteckning",
-  "workout.noteLabel": "Anteckning för passet",
+  "workout.noteLabel": "Anteckning",
   "finish.recordsLabel": "Rekord i passet",
   "settings.askRir": "Fråga efter RIR",
   "settings.askRirNote": "Reps kvar i tanken, efter varje ikryssat set.",
@@ -1880,11 +1876,10 @@ export const sv = {
   "calendarPlan.perWeek": { one: "pass per vecka", other: "pass per vecka" },
   "calendarPlan.weeks": { one: "vecka", other: "veckor" },
   "calendarPlan.upcoming": "Kommande pass",
-  "calendarPlan.upcomingHint": "tryck för att flytta",
   "calendarPlan.noneAhead": "Inget mer är planerat i schemat.",
   "calendarPlan.status": "Visa hur schemat går",
   "calendarPlan.none": "Inget schema",
   "calendarPlan.noneText":
-    "Planera vilken rutin som körs vilken dag, med deloadveckor och progression. Dagarna syns här i kalendern.",
+    "Planera rutiner per dag, med deload och progression.",
   "calendarPlan.create": "Skapa ett schema",
 } satisfies Messages;

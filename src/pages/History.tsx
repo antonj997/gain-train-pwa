@@ -416,7 +416,6 @@ export default function History() {
               ? t("history.noneOnDay")
               : t("history.noneInPeriod")}
           </h2>
-          <p>{t("history.emptyText")}</p>
           <Link className="btn-primary" to="/">
             {t("history.logWorkout")}
           </Link>
@@ -426,20 +425,15 @@ export default function History() {
         open={!!selected}
         onClose={() => setParams({})}
         title={w && workoutTitle(w.name)}
+        // Just the date: the tiles below give the time and the sets.
         description={
           w &&
-          [
-            localizedDate(w.date, {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            }),
-            w.duration !== null ? durationLabel(w.duration) : null,
-            countLabel(doneSetCount(w), "set"),
-          ]
-            .filter(Boolean)
-            .join(" · ")
+          localizedDate(w.date, {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
         }
         size="full"
         className="details-dialog"

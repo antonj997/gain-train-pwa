@@ -238,7 +238,7 @@ function FinishSheetBody({
         className="finish-note"
         rows={2}
         maxLength={WORKOUT_NOTE_MAX}
-        placeholder={t("workout.note")}
+        placeholder={t("workout.noteLabel")}
         aria-label={t("workout.noteLabel")}
         value={note}
         disabled={busy}
