@@ -775,18 +775,13 @@ export const sv = {
 
   // Library: routines
   "library.title": "Bibliotek",
-  "library.eyebrow": "Ditt träningsupplägg",
   "library.section": "Biblioteksdel",
   "library.routines": "Rutiner",
   "library.exercises": "Övningar",
   "library.plan": "Schema",
-  "library.helpRoutines": "Passen du upprepar. Starta dem från Träna.",
-  "library.helpExercises":
-    "Den inbyggda katalogen plus dina egna. Tryck på en för historik och rekord.",
   "library.searchRoutines": "Sök rutiner",
   "library.searchExercises": "Sök övningar",
   "library.sharedRow": "Utforska delade rutiner",
-  "library.sharedRowText": "Rutiner som andra har delat",
   "library.planTitle": "Schema",
   "library.sharedTitle": "Delade rutiner",
   "routines.find": "Hitta en rutin",
@@ -832,7 +827,7 @@ export const sv = {
   "routines.neverDone": "aldrig körd",
   "routines.options": "Alternativ för {name}",
   "routines.empty":
-    "Planera dina vanliga övningar och set en gång, och starta dem sedan tillsammans.",
+    "Planera övningar och set en gång och starta dem tillsammans.",
   "routines.unfinished": "Ofärdig rutin: {name}.",
   "routines.untitled": "Namnlös rutin",
   "routines.keptOnPhone": "Sparad på mobilen.",
@@ -843,8 +838,6 @@ export const sv = {
   "routines.editNamed": "Redigera {name}",
   "routines.edit": "Redigera rutin",
   "routines.create": "Skapa rutin",
-  "routines.editorDescription":
-    "Planera set, belastning och settyper. Det du inte är klar med sparas på mobilen när du stänger formuläret.",
   "routines.name": "Rutinens namn",
   "routines.addExercises": "Lägg till övningar",
   "routines.storageUnavailable":
@@ -937,7 +930,7 @@ export const sv = {
   "exercises.unhideExercise": "Visa övningen igen",
   "exercises.hideExercise": "Dölj övningen",
   "exercises.hiddenNote":
-    "Dolda övningar försvinner från väljaren och de här listorna. Sparade pass behåller dem. Du hittar dem under Dolda.",
+    "Dolda övningar syns inte i väljaren eller listorna. Sparade pass behåller dem.",
   "exercises.lastUsed": "senast {when}",
   "exercises.neverLogged": "aldrig loggad",
   "exercises.bestSet": "bäst {set}",
@@ -986,7 +979,7 @@ export const sv = {
   "sharedRoutines.limitTotal":
     "Du kan dela upp till 100 rutiner. Sluta dela några först.",
   "sharedRoutines.menuNote":
-    "Alla som är inloggade kan lägga till en kopia, med ditt namn om du har angett ett i Inställningar. Bara övningarna och seten delas, inte dina vikter eller reps. När du sparar ändringar uppdateras den delade kopian.",
+    "Alla inloggade kan lägga till en kopia, med ditt namn om du angett ett. Bara övningar och set delas, inte vikter eller reps. Sparade ändringar uppdaterar kopian.",
   "sharedPreview.weight": "Vikt",
   "sharedPreview.bodyweight": "Kroppsvikt",
   "sharedPreview.bodyweightPlus": "Kroppsvikt + vikt",
@@ -1020,14 +1013,12 @@ export const sv = {
   "name.loadFailed": "Kunde inte ladda ditt namn.",
   "name.offline": "Anslut för att ändra ditt namn.",
   "name.tooLong": "Använd högst {max} tecken.",
-  "editor.description":
-    "Namn i avslutade pass förblir som de loggades. Ofärdiga ändringar sparas när du stänger formuläret.",
+  "editor.description": "Ett nytt namn ändrar inte avslutade pass.",
   "editor.name": "Namn",
   "editor.twin": "Du har redan en övning som heter {name}.",
   "editor.note": "Anteckning",
   "editor.alsoTrains": "Tränar även",
-  "editor.alsoTrainsHint":
-    "Kategorifilter och förslag i scheman hittar den även här.",
+  "editor.alsoTrainsHint": "Filter och schemaförslag hittar den även här.",
   "editor.save": "Spara övning",
   "editor.storageUnavailable":
     "Lagringen är inte tillgänglig. Låt formuläret vara öppet tills det är sparat.",

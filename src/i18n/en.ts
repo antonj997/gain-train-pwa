@@ -769,18 +769,13 @@ export const en = {
 
   // Library: routines
   "library.title": "Library",
-  "library.eyebrow": "Your training setup",
   "library.section": "Library section",
   "library.routines": "Routines",
   "library.exercises": "Exercises",
   "library.plan": "Plan",
-  "library.helpRoutines": "The workouts you repeat. Start them from Train.",
-  "library.helpExercises":
-    "The built-in catalogue plus your own. Tap one for its history and records.",
   "library.searchRoutines": "Search routines",
   "library.searchExercises": "Search exercises",
   "library.sharedRow": "Explore shared routines",
-  "library.sharedRowText": "Routines other people have shared",
   "library.planTitle": "Plan",
   "library.sharedTitle": "Shared routines",
   "routines.find": "Find a routine",
@@ -823,8 +818,7 @@ export const en = {
   "routines.lastDone": "last done {when}",
   "routines.neverDone": "never done",
   "routines.options": "{name} options",
-  "routines.empty":
-    "Plan your usual exercises and sets once, then start them together.",
+  "routines.empty": "Plan exercises and sets once, then start them together.",
   "routines.unfinished": "Unfinished routine: {name}.",
   "routines.untitled": "Untitled routine",
   "routines.keptOnPhone": "Kept on this phone.",
@@ -835,8 +829,6 @@ export const en = {
   "routines.editNamed": "Edit {name}",
   "routines.edit": "Edit routine",
   "routines.create": "Create routine",
-  "routines.editorDescription":
-    "Plan sets, load and set types. Your unfinished work is kept on this phone when you close this form.",
   "routines.name": "Routine name",
   "routines.addExercises": "Add exercises",
   "routines.storageUnavailable":
@@ -929,7 +921,7 @@ export const en = {
   "exercises.unhideExercise": "Unhide exercise",
   "exercises.hideExercise": "Hide exercise",
   "exercises.hiddenNote":
-    "Hidden exercises leave the picker and these lists. Saved workouts keep them. Find them under Hidden.",
+    "Hidden exercises leave the picker and lists. Saved workouts keep them.",
   "exercises.lastUsed": "last {when}",
   "exercises.neverLogged": "never logged",
   "exercises.bestSet": "best {set}",
@@ -975,7 +967,7 @@ export const en = {
   "sharedRoutines.limitTotal":
     "You can share up to 100 routines. Stop sharing some first.",
   "sharedRoutines.menuNote":
-    "Anyone signed in can add a copy, with your name if you set one in Settings. Only the exercises and sets are shared, not your weights or reps. Saving changes updates the shared copy.",
+    "Anyone signed in can add a copy, with your name if you set one. Only exercises and sets are shared, not your weights or reps. Saving changes updates the copy.",
   "sharedPreview.weight": "Weight",
   "sharedPreview.bodyweight": "Bodyweight",
   "sharedPreview.bodyweightPlus": "Bodyweight + weight",
@@ -1009,14 +1001,13 @@ export const en = {
   "name.loadFailed": "Could not load your name.",
   "name.offline": "Connect to change your name.",
   "name.tooLong": "Use at most {max} characters.",
-  "editor.description":
-    "Names in completed workouts stay as originally recorded. Unfinished edits are kept when you close this form.",
+  "editor.description": "Renaming doesn't change finished workouts.",
   "editor.name": "Name",
   "editor.twin": "You already have an exercise called {name}.",
   "editor.note": "Note",
   "editor.alsoTrains": "Also trains",
   "editor.alsoTrainsHint":
-    "Category filters and plan suggestions find it under these too.",
+    "Filters and plan suggestions find it under these too.",
   "editor.save": "Save exercise",
   "editor.storageUnavailable":
     "Storage is unavailable. Keep this form open until saved.",
