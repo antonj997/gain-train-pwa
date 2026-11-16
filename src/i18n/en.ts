@@ -509,8 +509,7 @@ export const en = {
   "history.restoreFailed":
     "Could not restore the workout. Try restoring a backup.",
   "history.deleteFailed": "Could not delete this workout. Try again.",
-  "history.chooseDateToBegin":
-    "Choose a date on the calendar to begin your range.",
+  "history.chooseDateToBegin": "Pick a start date on the calendar.",
   "history.noneOnDay": "No workouts on this day",
   "history.noneInPeriod": "No workouts in this period",
   "history.logWorkout": "Log a workout",
@@ -1024,7 +1023,7 @@ export const en = {
   "picker.recent": "Recent",
   "picker.favourites": "Favourites",
   "picker.results": "Exercise search results",
-  "picker.noMatch": "No matching exercises. Try another search or create one.",
+  "picker.noMatch": "No matching exercises.",
   "picker.createNamed": "Create “{name}”…",
   "search.filter": "Filter",
   "search.showFilters": "Show filters",

@@ -510,8 +510,7 @@ export const sv = {
   "history.restoreFailed":
     "Kunde inte återställa passet. Prova att återställa en säkerhetskopia.",
   "history.deleteFailed": "Kunde inte radera passet. Försök igen.",
-  "history.chooseDateToBegin":
-    "Välj ett datum i kalendern för att börja ditt intervall.",
+  "history.chooseDateToBegin": "Välj ett startdatum i kalendern.",
   "history.noneOnDay": "Inga pass den här dagen",
   "history.noneInPeriod": "Inga pass under perioden",
   "history.logWorkout": "Logga ett pass",
@@ -1036,8 +1035,7 @@ export const sv = {
   "picker.recent": "Nyligen",
   "picker.favourites": "Favoriter",
   "picker.results": "Sökresultat för övningar",
-  "picker.noMatch":
-    "Inga övningar matchar. Prova en annan sökning eller skapa en.",
+  "picker.noMatch": "Inga övningar matchar.",
   "picker.createNamed": "Skapa ”{name}”…",
   "search.filter": "Filter",
   "search.showFilters": "Visa filter",
