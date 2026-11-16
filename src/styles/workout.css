@@ -1405,7 +1405,7 @@
 /* Pressed as the finger lands (is-pressed, set on pointerdown) until it
    lifts: a darker key, and a small press-in with motion. */
 .number-pad-key.is-pressed:not(:disabled) {
-  background-color: var(--gt-surface-2);
+  background-color: var(--gt-line-strong);
 }
 .number-pad-key.is-step.is-pressed:not(:disabled) {
   background-color: color-mix(in srgb, var(--gt-accent) 22%, var(--gt-surface));
