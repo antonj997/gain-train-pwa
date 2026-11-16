@@ -214,6 +214,12 @@ export const goalSchema = z
     createdAt: z.number().finite().min(0),
     /** Set when the goal is reached. */
     reachedOn: isoDay.optional(),
+    /**
+     * Lift goal: the Mondays of check-in weeks the user skipped. Optional and
+     * unchecked by the server trigger, so no schema bump; the rest of a
+     * check-in (when it is due, its result) is worked out from the log.
+     */
+    checkinSkips: z.array(isoDay).max(100).optional(),
   })
   .superRefine((goal, ctx) => {
     if (goal.kind === "lift" && !goal.exerciseId)

@@ -56,29 +56,60 @@ const lift = (change: Partial<Goal> = {}): Goal => ({
 });
 const noProfile = { bodyWeightKg: null };
 
-test("a one-rep lift goal compares the heaviest set and shows the bar from the starting best", () => {
+const near = (actual: number | null, expected: number, within = 1e-6) =>
+  assert.ok(
+    actual !== null && Math.abs(actual - expected) < within,
+    `${actual} is not ${expected}`,
+  );
+
+test("a one-rep lift goal compares strength and shows the bar from the starting best", () => {
   const records = [
-    workout("2026-10-01", [set(90, 5)]), // before the goal: the starting point
-    workout("2026-10-20", [set(100, 3), set(95, 8)]),
+    workout("2026-10-01", [set(90, 5)]), // before the goal: 105 estimated
+    workout("2026-10-20", [set(100, 2), set(95, 1)]), // 106.7 estimated; a single is its load
   ];
   const p = goalProgress(lift(), records, noProfile, "2026-11-01");
-  assert.equal(p.unit, "kg");
-  assert.equal(p.start, 90);
-  assert.equal(p.current, 100);
+  assert.equal(p.unit, "kg e1RM");
+  near(p.start, 105);
+  near(p.current, 100 * (1 + 2 / 30));
+  // 110 × 1 is 110 kg of strength: a single is its own load.
   assert.equal(p.target, 110);
-  assert.equal(p.fraction, 0.5);
+  near(p.fraction, (100 * (1 + 2 / 30) - 105) / 5);
+  assert.equal(p.source?.date, "2026-10-20");
+  assert.deepEqual([p.source?.set.weight, p.source?.set.reps], [100, 2]);
   assert.equal(p.met, false);
   assert.equal(p.reachedOn, null);
   assert.equal(p.daysLeft, 61);
 });
 
-test("a lift goal is reached on the first day a set meets it, and keeps that day", () => {
+test("now is the best session of the last four weeks, else the latest", () => {
+  const records = [
+    workout("2026-09-01", [set(100, 5)]), // 116.7, but long ago
+    workout("2026-10-20", [set(90, 5)]), // 105
+    workout("2026-10-28", [set(90, 3)]), // 99
+  ];
+  near(goalProgress(lift(), records, noProfile, "2026-11-01").current, 105);
+  // Nothing in the last four weeks: the latest session.
+  near(goalProgress(lift(), records, noProfile, "2027-01-30").current, 99);
+});
+
+test("a lift goal is reached only by the real lift, on the first day it is done", () => {
   const records = [
     workout("2026-10-01", [set(90, 5)]),
+    // 105 × 2 is about 112 kg of strength: above the target, but not the lift.
     workout("2026-10-20", [set(105, 2)]),
     workout("2026-11-05", [set(110, 1)]),
     workout("2026-11-12", [set(112.5, 1)]),
   ];
+  const before = goalProgress(
+    lift(),
+    records.slice(0, 2),
+    noProfile,
+    "2026-10-25",
+  );
+  assert.equal(before.met, false);
+  assert.ok(before.current! > 110);
+  // Strong enough is not done: the bar stops just short of full.
+  assert.equal(before.fraction, 0.99);
   const p = goalProgress(lift(), records, noProfile, "2026-11-20");
   assert.equal(p.met, true);
   assert.equal(p.reachedOn, "2026-11-05");
@@ -91,24 +122,51 @@ test("a lift goal is reached on the first day a set meets it, and keeps that day
   );
 });
 
-test("a lift goal with several reps compares estimated one-rep maxes", () => {
-  const goal = lift({ targetKg: 100, reps: 5 }); // 100 x 5 is an estimated 116.7 kg
+test("a lift goal with several reps compares strength and needs the weight for the reps", () => {
+  const goal = lift({ targetKg: 100, reps: 5 }); // 100 × 5 is an estimated 116.7 kg
   const records = [workout("2026-10-20", [set(90, 5)])]; // estimated 105
   const p = goalProgress(goal, records, noProfile, "2026-11-01");
   assert.equal(p.unit, "kg e1RM");
-  assert.ok(Math.abs(p.target - 116.667) < 0.01);
-  assert.ok(Math.abs(p.current! - 105) < 0.01);
+  near(p.target, 116.667, 0.01);
+  near(p.current, 105, 0.01);
   assert.equal(p.met, false);
   // Nothing before the goal: the bar starts at the first session after it.
-  assert.ok(Math.abs(p.start - 105) < 0.01);
+  near(p.start, 105, 0.01);
+  // More strength, too light or too few reps: not met.
+  for (const short of [set(95, 8), set(100, 4), set(102.5, 3)])
+    assert.equal(
+      goalProgress(
+        goal,
+        [workout("2026-10-21", [short])],
+        noProfile,
+        "2026-11-01",
+      ).met,
+      false,
+    );
+  // The weight for more reps than asked is met.
   const done = goalProgress(
     goal,
-    [workout("2026-10-21", [set(100, 5)])],
+    [
+      workout("2026-10-21", [set(100, 5)]),
+      workout("2026-10-22", [set(100, 7)]),
+    ],
     noProfile,
     "2026-11-01",
   );
   assert.equal(done.met, true);
   assert.equal(done.reachedOn, "2026-10-21");
+});
+
+test("an estimated-1RM goal is met by strength itself", () => {
+  const goal = lift({ targetKg: 120, reps: 1, estimated: true });
+  const p = goalProgress(
+    goal,
+    [workout("2026-10-21", [set(105, 5)])], // 122.5
+    noProfile,
+    "2026-11-01",
+  );
+  assert.equal(p.target, 120);
+  assert.equal(p.met, true);
 });
 
 test("warm-ups, drops, unchecked sets and other exercises do not count", () => {

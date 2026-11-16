@@ -1908,4 +1908,36 @@ export const en = {
   "calendarPlan.noneText":
     "Plan which routine on which day, with deload weeks and progression. The days show up here in the calendar.",
   "calendarPlan.create": "Create a plan",
+  // Lift goals measured as strength, with check-ins (16 November 2026).
+  "goals.statusUp": "Going up",
+  "goals.statusFlat": "Steady",
+  "goals.statusDown": "Going down",
+  "goals.statusInsufficient": "Too little data",
+  "goals.approx": "≈ {kg}",
+  "goals.nowStrength": "≈ {kg} est.",
+  "goals.sourceLine": "{set}, {date}",
+  "goals.paceOn": "On pace for the date",
+  "goals.paceOff": "Not on pace for the date yet",
+  "goals.ready": "Ready to test: try {lift}",
+  "goals.checkinDue": "Check-in this week: {set}",
+  "goals.checkinHow":
+    "As many reps as you can at that weight, in any workout with {name} this week.",
+  "goals.checkinSkip": "Skip",
+  "goals.checkinSkipLabel": "Skip this week's check-in for {title}",
+  "goals.checkinSkipped":
+    "Check-in skipped. The next one comes in about 4 weeks.",
+  "goals.checkinSkipFailed": "Could not skip the check-in. Try again.",
+  "goals.checkinLast": "Last check-in: ≈ {kg}, {date}",
+  "goals.strengthNote":
+    "Measured as estimated 1RM from your best set of 1–10 reps each session. Reached when you lift {lift}.",
+  "goals.repsNoteStrength":
+    "Progress is your estimated 1RM from your best set of 1–10 reps each session. The goal is reached when you lift the weight for the reps.",
+  "progress.goalReady": "Ready to test",
+  "progress.goalCheckin": "Check-in this week",
+  "planStatus.goalReady": "ready to test {lift}",
+  "planStatus.goalCheckin": "check-in this week",
+  "goalTarget.checkin": "Check-in {value}",
+  "goalTarget.test": "Test {value}",
+  "goalTarget.max": "max",
+  "workout.goalMark": "Goal: {title}",
 };

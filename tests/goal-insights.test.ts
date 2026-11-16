@@ -223,49 +223,68 @@ const benchGoal = (change: Partial<Goal> = {}): Goal => ({
   ...change,
 });
 
-test("a lift goal's insight: start, sparkline since start, pace and projection", () => {
-  const records = [
-    workout("2026-09-10", [{ weight: 95 }]),
-    workout("2026-09-27", [{ weight: 97.5 }, { weight: 90, reps: 5 }]),
-    workout("2026-10-04", [{ weight: 98 }]),
-    workout("2026-10-11", [{ weight: 99 }]),
-    workout("2026-10-18", [{ weight: 100 }]),
-    workout("2026-10-25", [{ weight: 101 }]),
-  ];
+// Weekly singles from Thursday 3 September, 95 kg up a kilo a week, to 103 today.
+const weekly = (from: string, count: number) =>
+  Array.from({ length: count }, (_, n) => shiftDate(from, 7 * n));
+
+test("a lift goal's insight: start, sparkline since start, smoothed trend, pace and projection", () => {
+  const records = weekly("2026-09-03", 9).map((date, n) =>
+    workout(
+      date,
+      date === "2026-09-24"
+        ? [{ weight: 95 + n }, { weight: 85, reps: 3 }] // 93.5: the 98 single is the day's best
+        : [{ weight: 95 + n }],
+    ),
+  );
   const i = goalInsight(benchGoal(), records, { bodyWeightKg: null }, NOW);
-  assert.equal(i.progress.start, 95);
-  assert.equal(i.progress.current, 101);
-  near(i.progress.fraction, 6 / 15);
+  assert.equal(i.progress.start, 97); // the best by 20 September
+  assert.equal(i.progress.current, 103);
+  near(i.progress.fraction, 6 / 13);
   assert.deepEqual(
     i.sinceStart.map((p) => [p.date, p.value]),
     [
-      ["2026-09-20", 95],
-      ["2026-09-27", 97.5],
-      ["2026-10-04", 98],
-      ["2026-10-11", 99],
-      ["2026-10-18", 100],
-      ["2026-10-25", 101],
+      ["2026-09-20", 97],
+      ["2026-09-24", 98],
+      ["2026-10-01", 99],
+      ["2026-10-08", 100],
+      ["2026-10-15", 101],
+      ["2026-10-22", 102],
+      ["2026-10-29", 103],
     ],
   );
-  assert.ok(i.perDay! > 0.1 && i.perDay! < 0.2, String(i.perDay));
+  // Last four weeks 101.5 against 97.5 before: about 4 % up, a kilo a week.
+  const s = i.strength!;
+  assert.equal(s.trend.status, "up");
+  near(i.perDay, 1 / 7);
   assert.deepEqual(i.deadline, { kind: "left", days: 42 });
-  // 9 kg in six weeks needs 1.5 kg a week; the trend is about 0.9.
-  assert.equal(i.pace?.kind, "behind");
-  assert.ok(i.projected && i.projected > "2026-12-10");
+  // Carried on to 10 December the trend gets to 109: not on pace.
+  assert.equal(s.pace, "off");
+  assert.equal(i.pace, null);
+  assert.equal(i.projected, "2026-12-17");
+  assert.equal(s.ready, null);
+  // On pace with a later date.
+  const later = goalInsight(
+    benchGoal({ byDate: "2026-12-31" }),
+    records,
+    { bodyWeightKg: null },
+    NOW,
+  );
+  assert.equal(later.strength?.pace, "on");
 });
 
-test("an estimated 1RM or multi-rep goal is paced in estimated 1RM", () => {
+test("a multi-rep or estimated goal is measured in estimated 1RM", () => {
   const goal = benchGoal({ targetKg: 100, reps: 5 }); // e1RM target 116.7
-  const records = ["2026-10-01", "2026-10-08", "2026-10-15", "2026-10-22"].map(
-    (date, n) => workout(date, [{ weight: 90 + 2.5 * n, reps: 5 }]),
+  const records = weekly("2026-09-10", 7).map((date, n) =>
+    workout(date, [{ weight: 90 + 2.5 * n, reps: 5 }]),
   );
   const i = goalInsight(goal, records, { bodyWeightKg: null }, NOW);
   assert.equal(i.progress.unit, "kg e1RM");
+  near(i.progress.target, 100 * (1 + 5 / 30));
   // 2.5 kg × (1 + 5/30) a week.
   near(i.perDay! * 7, 2.5 * (1 + 5 / 30), 1e-6);
   assert.equal(
     goalSeries(goal, records, { bodyWeightKg: null }, NOW).length,
-    4,
+    7,
   );
   const estimated = benchGoal({ targetKg: 120, reps: 1, estimated: true });
   const e = goalInsight(estimated, records, { bodyWeightKg: null }, NOW);
@@ -280,13 +299,17 @@ test("a goal without data has no trend and says so", () => {
   assert.equal(i.pace, null);
   assert.equal(i.projected, null);
   assert.deepEqual(i.sinceStart, []);
+  assert.equal(i.strength?.trend.status, "insufficient");
+  assert.equal(i.strength?.pace, null);
   const one = goalInsight(
     benchGoal(),
     [workout("2026-10-20", [{ weight: 100 }])],
     { bodyWeightKg: null },
     NOW,
   );
-  assert.deepEqual(one.pace, { kind: "unknown" });
+  assert.equal(one.strength?.trend.status, "insufficient");
+  assert.equal(one.strength?.pace, null);
+  assert.equal(one.projected, null);
 });
 
 const cut = (change: Partial<Goal> = {}): Goal => ({
