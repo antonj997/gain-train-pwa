@@ -276,9 +276,7 @@ export default function Settings() {
         {/* Signed out on the phone's own log, the card above says it all. */}
         {(user || account !== "phone") && (
           <p className="small-note group-note">
-            {user
-              ? t("settings.noteSignedIn")
-              : t("settings.noteSessionEnded")}
+            {user ? t("settings.noteSignedIn") : t("settings.noteSessionEnded")}
           </p>
         )}
       </section>

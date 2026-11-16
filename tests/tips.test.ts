@@ -61,22 +61,25 @@ test("seen tips are read and written per device, and storage errors never throw"
     },
   };
   assert.deepEqual([...readSeen(broken)], []);
-  assert.equal(writeSeen(new Set<TipId>(["setBadge"]), broken), false);
+  assert.equal(writeSeen(new Set<TipId>(["swipeSet"]), broken), false);
 });
 
 test("one tip at a time: the first unseen visible one, in order", () => {
   assert.equal(nextTip(base), null);
   assert.equal(
-    nextTip({ ...base, visible: ["repsHeader", "setBadge", "unitHeader"] }),
-    "setBadge",
+    nextTip({
+      ...base,
+      visible: ["swipeSet", "calendarDay", "libraryExercise"],
+    }),
+    "libraryExercise",
   );
   assert.equal(
     nextTip({
       ...base,
-      visible: ["repsHeader", "setBadge"],
-      seen: new Set<TipId>(["setBadge"]),
+      visible: ["swipeSet", "libraryExercise"],
+      seen: new Set<TipId>(["libraryExercise"]),
     }),
-    "repsHeader",
+    "swipeSet",
   );
   assert.equal(
     nextTip({ ...base, visible: ["weekStrip"], seen: new Set(TIP_IDS) }),

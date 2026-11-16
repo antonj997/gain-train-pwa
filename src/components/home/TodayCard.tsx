@@ -96,7 +96,7 @@ export default function TodayCard({
     .join(" · ");
 
   let title: string;
-  let sub: string;
+  let sub = "";
   if (planned?.kind === "group") {
     title = planned.title;
     sub = routine
@@ -116,7 +116,6 @@ export default function TodayCard({
     sub = meta(routine);
   } else {
     title = t("home.emptyWorkout");
-    sub = t("home.emptyText");
   }
 
   const start = () => {
@@ -125,7 +124,6 @@ export default function TodayCard({
       onStartSuggestions(categories, planned.title);
     else onStartEmpty();
   };
-  const startLabel = planned ? t("home.start") : t("home.startEmpty");
 
   return (
     <section className="today-card" aria-labelledby="today-heading">
@@ -175,7 +173,7 @@ export default function TodayCard({
         )}
         <span className="today-text">
           <strong className="today-title">{title}</strong>
-          <span className="row-sub">{sub}</span>
+          {sub && <span className="row-sub">{sub}</span>}
         </span>
       </div>
       <button
@@ -185,7 +183,7 @@ export default function TodayCard({
         onClick={start}
       >
         <Play size={18} fill="currentColor" stroke="none" aria-hidden="true" />
-        {starting ? t("home.starting") : startLabel}
+        {starting ? t("home.starting") : t("home.start")}
       </button>
       {suggested && pick.kind === "suggested" && (
         <button
@@ -249,7 +247,6 @@ export default function TodayCard({
         open={sheet === "switch"}
         onClose={close}
         title={t("home.switchWorkout")}
-        description={t("home.switchText")}
         size={routines.length > 5 ? "full" : undefined}
       >
         <div className="list">
