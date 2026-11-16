@@ -1869,11 +1869,23 @@ export const sv = {
   "planStatus.behind": "Efter",
   "planStatus.noPlan": "Ingen plan",
   "planStatus.muscle": "Set per muskelgrupp och vecka",
-  "planStatus.muscleHint": "snitt i schemat · riktmärke {min}–{max}",
+  "planStatus.muscleHint": "riktmärke {min}–{max} per vecka",
+  "planStatus.muscleThisWeek": "Vecka {week} hittills",
+  "planStatus.muscleAverage": {
+    one: "Snitt av {count} avslutad vecka",
+    other: "Snitt av {count} avslutade veckor",
+  },
+  "planStatus.muscleAverageShort": "snitt {average}",
+  "planStatus.muscleRow":
+    "{group}: {week} set den här veckan, {average} i snitt",
+  "planStatus.muscleRowWeek": "{group}: {week} set den här veckan",
+  "planStatus.muscleLeft": "Kvar till {min} set den här veckan: {groups}.",
+  "planStatus.muscleFirstWeek":
+    "Snittet visas när schemats första vecka är slut.",
   "planStatus.muscleUnder": {
-    one: "{groups} ligger under riktmärket. Lägg till ett par set om de ska växa.",
+    one: "I snitt ligger {groups} under riktmärket. Lägg till ett par set om de ska växa.",
     other:
-      "{groups} ligger under riktmärket. Lägg till ett par set om de ska växa.",
+      "I snitt ligger {groups} under riktmärket. Lägg till ett par set om de ska växa.",
   },
   "planStatus.goals": "Mål i schemat",
   "planStatus.goalNow": "Nu {value}",

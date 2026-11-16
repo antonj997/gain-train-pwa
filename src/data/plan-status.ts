@@ -451,21 +451,38 @@ export function otherLifts(
 
 // ---------------------------------------------------------------- volume
 
+export type PlanMuscleRow = {
+  group: MuscleGroup;
+  /** Hard sets a week over the plan's finished weeks, to the half set; null before one has finished. */
+  average: number | null;
+  /** Hard sets so far in the plan week that holds today. */
+  thisWeek: number;
+  /** The average against the 10–20 guide; this week's sets before a week has finished. */
+  status: MuscleSetRow["status"];
+};
+
 export type PlanMuscleSets = {
-  /** Weeks averaged over: the finished weeks of the plan and the current one. */
+  /** Finished plan weeks the average is taken over; 0 in the first week. */
   weeks: number;
-  /** Groups the plan trains at all, in MUSCLE_GROUPS order, with the weekly average to the half set. */
-  rows: MuscleSetRow[];
+  /** The plan week that holds today (the last one after the end). */
+  week: number;
+  /** Whether the plan has ended, so there is no "this week" any more. */
+  ended: boolean;
+  /** Groups trained at all in the plan, in MUSCLE_GROUPS order. */
+  rows: PlanMuscleRow[];
   scale: number;
-  /** Groups under the guide's minimum. */
+  /** Groups whose average is under the guide's minimum. */
   under: MuscleGroup[];
+  /** Groups still short of the guide's minimum this week, with the sets left. */
+  short: { group: MuscleGroup; left: number }[];
 };
 
 /**
- * The average hard sets per muscle group a week over the plan so far: the
- * finished workouts from the start to today, divided by the plan's weeks up
- * to and including this one (counted as it stands). Null before the plan
- * starts or when nothing has been trained in it.
+ * Hard sets per muscle group a week over the plan. The average only counts
+ * plan weeks that have finished, so a new week never pulls it down before it
+ * is trained; the week that holds today is shown on its own, as it stands, so
+ * the user can see what is left to do. Null before the plan starts or when
+ * nothing has been trained in it.
  */
 export function planMuscleSets(
   plan: Plan,
@@ -474,27 +491,59 @@ export function planMuscleSets(
   categoriesOf: CategoriesOf,
 ): PlanMuscleSets | null {
   if (today < plan.startDate) return null;
+  const ended = today > plan.endDate;
   const end = lastCounted(plan, today);
-  const weeks = phaseWeek(plan, end)!.week;
-  const workouts = completedWorkouts(records)
+  const week = phaseWeek(plan, end)!.week;
+  // The plan week that holds today starts here; weeks before it are finished.
+  const weekFrom = weekFirstDay(plan, week);
+  const weeks = ended ? week : week - 1;
+  const inPlan = completedWorkouts(records)
     .map((r) => r.payload)
     .filter((w) => w.date >= plan.startDate && w.date <= end);
-  const sets = hardSetsByMuscle(workouts, categoriesOf);
-  const rows = MUSCLE_GROUPS.filter((g) => (sets.get(g) ?? 0) > 0).map(
-    (group): MuscleSetRow => {
-      const average = Math.round(((sets.get(group) ?? 0) / weeks) * 2) / 2;
-      return { group, sets: average, status: guideStatus(average) };
-    },
+  const finished = hardSetsByMuscle(
+    ended ? inPlan : inPlan.filter((w) => w.date < weekFrom),
+    categoriesOf,
   );
+  const current = ended
+    ? new Map<MuscleGroup, number>()
+    : hardSetsByMuscle(
+        inPlan.filter((w) => w.date >= weekFrom),
+        categoriesOf,
+      );
+  const half = (n: number) => Math.round(n * 2) / 2;
+  const rows = MUSCLE_GROUPS.filter(
+    (g) => (finished.get(g) ?? 0) > 0 || (current.get(g) ?? 0) > 0,
+  ).map((group): PlanMuscleRow => {
+    const average = weeks > 0 ? half((finished.get(group) ?? 0) / weeks) : null;
+    const thisWeek = half(current.get(group) ?? 0);
+    return {
+      group,
+      average,
+      thisWeek,
+      status: guideStatus(average ?? thisWeek),
+    };
+  });
   if (!rows.length) return null;
-  const most = Math.max(...rows.map((r) => r.sets));
+  const most = Math.max(
+    ...rows.map((r) => Math.max(r.average ?? 0, r.thisWeek)),
+  );
   return {
     weeks,
+    week,
+    ended,
     rows,
     scale: Math.max(MUSCLE_SCALE_MIN, Math.ceil(most)),
     under: rows
-      .filter((r) => r.sets < WEEKLY_SET_GUIDE.min)
+      .filter((r) => r.average !== null && r.average < WEEKLY_SET_GUIDE.min)
       .map((r) => r.group),
+    short: ended
+      ? []
+      : rows
+          .filter((r) => r.thisWeek < WEEKLY_SET_GUIDE.min)
+          .map((r) => ({
+            group: r.group,
+            left: half(WEEKLY_SET_GUIDE.min - r.thisWeek),
+          })),
   };
 }
 
