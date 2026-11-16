@@ -49,8 +49,7 @@ export const sv = {
 
   // Finish summary
   "finish.atLeastOne": "Kryssa i minst ett set",
-  "finish.willBeSaved": "{sets} sparas",
-  "finish.leftOut": "{saved} · {unchecked} tas inte med",
+  "finish.leftOut": "{unchecked} tas inte med",
 
   // Common
   "common.back": "Tillbaka",
@@ -247,8 +246,7 @@ export const sv = {
   "workout.addExercise": "Lägg till övning",
   "workout.addFirst": "Lägg till din första övning",
   "workout.removeTitle": "Ta bort {name}?",
-  "workout.removeText":
-    "Övningen har ifyllda värden eller klara set. Tar du bort den raderas alla de seten från passet.",
+  "workout.removeText": "Ifyllda värden och klara set raderas från passet.",
   "workout.keepExercise": "Behåll övningen",
   "workout.removeExercise": "Ta bort övningen",
   "workout.discardTitle": "Slänga dina ändringar?",
@@ -304,7 +302,7 @@ export const sv = {
   "workout.completeOne": "Kryssa i minst ett set innan du sparar.",
   "workout.name": "Namn",
   "workout.date": "Datum",
-  "workout.durationLabel": "Längd (valfritt, minuter)",
+  "workout.durationLabel": "Längd (min)",
   "workout.autoTimer": "Automatisk timer",
   "workout.notRecorded": "Inte registrerad",
   "workout.details": "Passets detaljer",
@@ -357,11 +355,10 @@ export const sv = {
     one: "Radera set och {count} drop",
     other: "Radera set och {count} drop",
   },
-  "set.dropNote":
-    "Görs direkt efter setet ovanför, med lägre vikt. Ingen vila emellan.",
+  "set.dropNote": "Direkt efter setet ovanför, lättare och utan vila.",
   "set.type": "Typ",
   "set.typeOf": "Typ för {title}",
-  "set.loadForSet": "Belastning för setet",
+  "set.loadForSet": "Belastning",
   "set.uncheckToChangeType": "Kryssa ur setet för att ändra typ.",
   "set.uncheckToChangeTypeLoad":
     "Kryssa ur setet för att ändra typ eller belastning.",
@@ -676,14 +673,12 @@ export const sv = {
   "cardio.metricIncline": "Lutning %",
   "cardio.metricCalories": "Kalorier",
   "cardio.metricHeartRate": "Puls",
-  "cardio.timeAlways":
-    "Alltid på: ett set behöver en tid för att kunna kryssas i.",
-  "cardio.paceHint": "Räknas ut från tid och distans, i {unit}. Sparas inte.",
+  "cardio.timeAlways": "Alltid på: ett set behöver en tid.",
+  "cardio.paceHint": "Räknas från tid och distans, i {unit}. Sparas inte.",
   "cardio.levelHint": "Maskinens nivå eller motstånd",
   "cardio.heartRateHint": "Snitt, i bpm",
   "cardio.distanceUnit": "Distansenhet",
-  "cardio.fieldsNote":
-    "Sparas för {name} till nästa gång. Värden du redan fyllt i sparas och visas i Kalender.",
+  "cardio.fieldsNote": "Sparas för {name} till nästa gång.",
   "cardio.fieldsFailed": "Kunde inte spara fälten. Försök igen.",
   "cardio.note":
     "Kondition ingår inte i styrkerekord eller volym. Ett pass summerar ikryssade konditionsset för {name} under ett träningspass.",
@@ -1055,10 +1050,6 @@ export const sv = {
   "picker.create": "Skapa övning",
   "picker.chooseOne": "Välj en övning",
   "picker.addExercises": "Lägg till övningar",
-  "picker.createDescription":
-    "Skapa den en gång och använd den i alla pass. Ofärdiga uppgifter sparas på mobilen.",
-  "picker.tapToChoose": "Tryck på en övning för att välja den.",
-  "picker.chooseMany": "Välj en eller flera övningar.",
   "picker.exerciseName": "Övningens namn",
   "picker.createAndAdd": "Skapa och lägg till",
   "picker.backToExercises": "Tillbaka till övningarna",
@@ -1755,8 +1746,8 @@ export const sv = {
   "set.fillTarget": "Tryck för att fylla i målet",
   "set.fillPrevious": "Tryck för att fylla i förra resultatet",
   "set.noLoadSr": "{label}: ingen belastning",
-  "set.noneExplain": "Ingen = räknas utan belastning, till exempel planka.",
-  "set.rirTitle": "Reps kvar i tanken (RIR) · valfritt",
+  "set.noneExplain": "Ingen = utan belastning, t.ex. planka.",
+  "set.rirTitle": "Reps kvar i tanken (RIR)",
   "set.addRir": "Lägg till RIR",
   "set.rirNone": "Ingen RIR",
   "set.rirAsk": "RIR?",
@@ -1766,7 +1757,7 @@ export const sv = {
   "pad.fillTarget": "Fyll i {value}",
   "workout.deloadTag": "Deload",
   "workout.deloadTagSr": "Deloadvecka: lättare mål",
-  "workout.note": "Anteckning för passet (valfritt)",
+  "workout.note": "Anteckning",
   "workout.noteLabel": "Anteckning för passet",
   "finish.recordsLabel": "Rekord i passet",
   "settings.askRir": "Fråga efter RIR",
