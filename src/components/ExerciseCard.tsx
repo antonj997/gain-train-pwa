@@ -68,6 +68,7 @@ import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
 import { NumberPadContext } from "@/components/workout/number-pad-context";
 import { padFields } from "@/lib/number-pad";
+import { padFieldUnder } from "@/components/workout/pad-hit";
 import SetSwipeRow from "@/components/gestures/SetSwipeRow";
 import { motionMs } from "@/lib/slow-motion";
 import SetSheet from "@/components/workout/SetSheet";
@@ -317,6 +318,20 @@ function ExerciseCard({
     },
     [pad, mode],
   );
+  // A tap on a set's load or reps while the Set sheet is open closes the
+  // sheet and opens the pad on that field in the same tap; the field keeps
+  // focus (with a mouse) instead of the badge getting it back.
+  const toPad = useRef(false);
+  const sheetPressOutside = (
+    event: CustomEvent<{ originalEvent: PointerEvent }>,
+  ) => {
+    if (!pad) return;
+    const hit = padFieldUnder(event.detail.originalEvent);
+    if (!hit) return;
+    toPad.current = true;
+    close();
+    pad.open(hit.setId, hit.field);
+  };
   const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
   // "Reps + hold" changes the count to reps and is remembered for the exercise.
   const chooseCount = (choice: CountChoice) => {
@@ -481,6 +496,8 @@ function ExerciseCard({
           tip={tips && i === 0}
           entering={entering === s.id}
           onEntered={entered}
+          // A live workout's checked set asks before its first swipe-delete.
+          checked={mode === "log" && !unlockChecked && s.done}
         >
           <SetLineMemo
             set={s}
@@ -543,6 +560,12 @@ function ExerciseCard({
           open={openSetId !== null}
           onClose={close}
           contentRef={setSheetRef}
+          onPointerDownOutside={sheetPressOutside}
+          onCloseAutoFocus={(event) => {
+            if (!toPad.current) return;
+            toPad.current = false;
+            event.preventDefault();
+          }}
           badge={setBadge(sets, shownIndex)}
           previous={previousOf(shownIndex)}
           target={mode === "log" ? targetOf(shownIndex) : undefined}

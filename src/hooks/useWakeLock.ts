@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { readKeepScreenOn, writeKeepScreenOn } from "@/lib/keep-screen-on";
 
 type Sentinel = { released: boolean; release: () => Promise<void> };
 type WakeLockApi = { request: (type: "screen") => Promise<Sentinel> };
@@ -37,4 +38,18 @@ export function useWakeLock(active: boolean) {
       sentinel = null;
     };
   }, [active]);
+}
+
+/**
+ * The device's "Keep screen on" choice for a running workout, on by default.
+ * Changing it is remembered on this device, and the lock follows at once:
+ * useWakeLock(active && on) releases it or asks for it again.
+ */
+export function useKeepScreenOn() {
+  const [on, setOn] = useState(readKeepScreenOn);
+  const change = useCallback((next: boolean) => {
+    setOn(next);
+    writeKeepScreenOn(next);
+  }, []);
+  return [on, change] as const;
 }

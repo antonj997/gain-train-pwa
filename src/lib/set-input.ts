@@ -9,6 +9,13 @@ import { dragIntent, dragSteps } from "./drag-step";
  * number pad opens) and a drag up or down that steps the value (`step` gets
  * the steps made so far and the change since the last call).
  */
+/**
+ * Where a try at changing a locked (checked) field came from: a tap, or a
+ * keyboard or assistive technology. A single tap is let go quietly; the
+ * keyboard is told at once (src/lib/locked-tap.ts).
+ */
+export type LockedAttempt = "tap" | "keyboard";
+
 export type SetInputGestures = {
   tap?: () => void;
   stepStart?: () => void;
@@ -112,6 +119,7 @@ export function isSetInputEditKey(event: {
 type PointerInputEvent = {
   currentTarget: HTMLInputElement;
   pointerId: number;
+  pointerType?: string;
   clientX: number;
   clientY: number;
   button: number;
@@ -169,7 +177,7 @@ function inputCaretAtPoint(input: HTMLInputElement, clientX: number) {
  */
 export function createSetInputSelection(
   pointAt = inputCaretAtPoint,
-  onLockedAttempt: () => void = () => {},
+  onLockedAttempt: (kind: LockedAttempt) => void = () => {},
   gestures: () => SetInputGestures = () => ({}),
 ) {
   let gesture: {
@@ -214,6 +222,9 @@ export function createSetInputSelection(
       const input = event.currentTarget;
       lastPointerAt = now(event);
       if (input.readOnly) {
+        // A mouse press would focus it (and ring it): a locked field takes
+        // no focus from a pointer. A touch is left alone, so it can scroll.
+        if (event.pointerType === "mouse") event.preventDefault();
         endTap();
         tap = {
           pointerId: event.pointerId,
@@ -290,7 +301,7 @@ export function createSetInputSelection(
             start.scrolled,
           )
         )
-          onLockedAttempt();
+          onLockedAttempt("tap");
         return;
       }
       if (gesture?.pointerId !== event.pointerId) return;
@@ -324,7 +335,7 @@ export function createSetInputSelection(
       // A tap on a locked field already warned on pointerup; a click with no
       // pointer (detail 0) comes from a keyboard or assistive technology.
       if (event.currentTarget.readOnly) {
-        if (event.detail === 0) onLockedAttempt();
+        if (event.detail === 0) onLockedAttempt("keyboard");
       } else if (!suppressClick || event.detail === 0)
         event.currentTarget.select();
       suppressClick = false;

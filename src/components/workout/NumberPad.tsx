@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type Dispatch,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
   type RefObject,
   type SetStateAction,
@@ -20,6 +21,7 @@ import {
   padKeyFor,
   padFields,
   padFormat,
+  padKeyPresses,
   padNext,
   padStepLabel,
   padText,
@@ -103,6 +105,15 @@ export default function NumberPad({
   const { t } = useT();
   const mark = formatDecimal(1.5).charAt(1);
   const pad = useRef<HTMLDivElement>(null);
+  // The keys under a finger now, by pointer: each shows pressed until lifted.
+  const pressed = useRef(new Map<number, HTMLElement>());
+  const release = (event: ReactPointerEvent<HTMLElement>) => {
+    const button = pressed.current.get(event.pointerId);
+    if (!button) return;
+    pressed.current.delete(event.pointerId);
+    if (![...pressed.current.values()].includes(button))
+      button.classList.remove("is-pressed");
+  };
   const latest = useRef({ workout, target });
   latest.current = { workout, target };
   const found = locate(workout, target.setId);
@@ -119,6 +130,10 @@ export default function NumberPad({
   const [entry, setEntry] = useState({ key, text, fresh: true });
   if (entry.key !== key || entry.text !== text)
     setEntry({ key, text, fresh: true });
+  // Keys press on pointerdown: two taps can land before React draws the
+  // first, so each key reads and writes the latest entry here.
+  const entryRef = useRef(entry);
+  entryRef.current = entry;
 
   // The set it types was checked some other way than the pad's own Bocka or
   // the row's ✓ (which move it first): it moves on to the next open set of the
@@ -327,18 +342,51 @@ export default function NumberPad({
     changeSet(set.id, (s) => changeSetNumber(s, field, stored, unfinished));
   };
   const press = (k: PadKey) => {
-    const after = pressPadKey(entry, k, format);
-    if (after.text === entry.text && after.fresh === entry.fresh) return;
-    setEntry({ key, ...after });
-    if (after.text !== entry.text) write(after.text);
+    const before = entryRef.current;
+    const after = pressPadKey(before, k, format);
+    if (after.text === before.text && after.fresh === before.fresh) return;
+    const next = { key, ...after };
+    entryRef.current = next;
+    setEntry(next);
+    if (after.text !== before.text) write(after.text);
   };
   const step = (direction: 1 | -1) => {
-    const value = stepPadValue(padValue(entry.text), direction, field, unit);
+    const value = stepPadValue(
+      padValue(entryRef.current.text),
+      direction,
+      field,
+      unit,
+    );
     const nextText = padText(value, mark);
-    setEntry({ key, text: nextText, fresh: true });
+    const next = { key, text: nextText, fresh: true };
+    entryRef.current = next;
+    setEntry(next);
     write(nextText);
     playStep(inputFor(target), direction);
   };
+  /**
+   * A digit, decimal, backspace or ± key: it presses as the finger lands
+   * (padKeyPresses), each finger once, and shows it is pressed until the
+   * finger lifts. Its pointerdown is cancelled, so the browser does no focus,
+   * zoom or text selection; WebKit then drops that touch's click, which the
+   * key no longer needs. Enter and Space on a focused key still press it.
+   */
+  const keyPress = (action: () => void) => ({
+    onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => {
+      const button = event.currentTarget;
+      if (button.disabled || !padKeyPresses(event)) return;
+      event.preventDefault();
+      pressed.current.set(event.pointerId, button);
+      button.classList.add("is-pressed");
+      action();
+    },
+    onClick: (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (padKeyPresses(event)) action();
+    },
+    onPointerUp: release,
+    onPointerCancel: release,
+    onPointerLeave: release,
+  });
   // Same as last, or the target: both fields at once, the pad stays.
   const fill = (source: FillSource | undefined) => {
     if (!source) return;
@@ -406,8 +454,10 @@ export default function NumberPad({
       className="number-pad"
       role="group"
       aria-label={t("pad.title")}
-      // Taps on the pad leave focus in the field it types. Not on
-      // pointerdown: WebKit would drop the tap's click.
+      // Taps on the pad leave focus in the field it types. The digit, mark,
+      // backspace and ± keys cancel their own pointerdown (keyPress); the
+      // pad does not, since WebKit would then drop the click that Next,
+      // Check, Same as last and Target act on.
       onMouseDown={(event) => event.preventDefault()}
     >
       <button
@@ -474,7 +524,7 @@ export default function NumberPad({
                 key={digit}
                 type="button"
                 className="number-pad-key"
-                onClick={() => press(digit)}
+                {...keyPress(() => press(digit))}
               >
                 {digit}
               </button>
@@ -484,7 +534,7 @@ export default function NumberPad({
                 type="button"
                 className="number-pad-key is-step"
                 aria-label={stepName(-1)}
-                onClick={() => step(-1)}
+                {...keyPress(() => step(-1))}
               >
                 {padStepLabel(field, unit, -1, mark)}
               </button>
@@ -494,7 +544,7 @@ export default function NumberPad({
                 type="button"
                 className="number-pad-key is-step"
                 aria-label={stepName(1)}
-                onClick={() => step(1)}
+                {...keyPress(() => step(1))}
               >
                 {padStepLabel(field, unit, 1, mark)}
               </button>
@@ -516,14 +566,14 @@ export default function NumberPad({
           className="number-pad-key"
           aria-label={t("pad.decimal")}
           disabled={format.decimals === 0}
-          onClick={() => press("decimal")}
+          {...keyPress(() => press("decimal"))}
         >
           {mark}
         </button>
         <button
           type="button"
           className="number-pad-key"
-          onClick={() => press("0")}
+          {...keyPress(() => press("0"))}
         >
           0
         </button>
@@ -531,10 +581,14 @@ export default function NumberPad({
           type="button"
           className="number-pad-key"
           aria-label={t("pad.backspace")}
-          onClick={() => press("backspace")}
+          {...keyPress(() => press("backspace"))}
         >
           <Delete size={24} strokeWidth={1.75} aria-hidden="true" />
         </button>
+        {/* Next and Check act on the click, not as the finger lands: they
+            move the pad or check the set, so a thumb resting on them must
+            not fire, and the click is the tap that lets iPhone Safari play
+            the rest's tone later. */}
         <button
           type="button"
           className={`number-pad-key is-go${willCheck ? " is-check" : ""}`}

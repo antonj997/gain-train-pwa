@@ -2,15 +2,25 @@ import { type Workout, today } from "@/data/model";
 import { selectInputValue } from "@/lib/set-editing";
 import { WORKOUT_NOTE_MAX } from "@/lib/workout-note";
 import Sheet from "@/components/ui/Sheet";
+import Switch from "@/components/ui/Switch";
 import { useT } from "@/i18n/useT";
 
 type BodyProps = {
   workout: Workout;
   onChange: (workout: Workout) => void;
+  /**
+   * "Keep screen on" for a running workout, where the browser can keep it
+   * on (Screen Wake Lock). Left out otherwise, and the switch is not shown.
+   */
+  keepScreenOn?: { on: boolean; onChange: (on: boolean) => void };
 };
 
 /** The details sheet's fields: name, date, an optional duration and the workout's note. */
-function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
+function WorkoutDetailsSheetBody({
+  workout: w,
+  onChange,
+  keepScreenOn,
+}: BodyProps) {
   const { t } = useT();
   return (
     <>
@@ -65,11 +75,21 @@ function WorkoutDetailsSheetBody({ workout: w, onChange }: BodyProps) {
           onChange={(e) => onChange({ ...w, note: e.target.value })}
         />
       </label>
+      {keepScreenOn && (
+        <Switch
+          label={t("workout.keepScreenOn")}
+          checked={keepScreenOn.on}
+          onChange={keepScreenOn.onChange}
+        />
+      )}
     </>
   );
 }
 
-/** Opens from the workout's title or the date chip. Changes apply as typed. */
+/**
+ * Opens from the workout's title or the date chip. Changes apply as typed. A
+ * running workout also has its "Keep screen on" switch here.
+ */
 export default function WorkoutDetailsSheet({
   open,
   onClose,
