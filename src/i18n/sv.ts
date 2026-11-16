@@ -1878,4 +1878,26 @@ export const sv = {
   "goalTarget.test": "Testa {value}",
   "goalTarget.max": "max",
   "workout.goalMark": "Mål: {title}",
+
+  // Train's Today card once the day is trained (TodayDoneCard).
+  "todayDone.title": "Klart för i dag",
+  "todayDone.count": {
+    one: "{count} pass i dag",
+    other: "{count} pass i dag",
+  },
+  "todayDone.openWorkout": "{label}: {title}. Öppna passet i kalendern",
+  "todayDone.openPlan": "{label}: {title}. Visa hur {name} går",
+  "todayDone.week": {
+    one: "{done} av {count} pass den här veckan",
+    other: "{done} av {count} pass den här veckan",
+  },
+  "todayDone.next": "Nästa: {name} {when}",
+  "todayDone.plannedWas": "Planerat var {name}",
+  "todayDone.restDay": "Vilodag i schemat",
+  "todayDone.unplanned": "Inget var planerat i dag",
+  "todayDone.move": "Flytta {name}",
+  "todayDone.countAs": "Räkna dagens pass som {name}",
+  "todayDone.counted": "Dagens pass räknas som {name}",
+  "todayDone.undoFailed": "Kunde inte ångra ändringen.",
+  "todayDone.another": "Kör ett till pass",
 } satisfies Messages;
