@@ -1298,6 +1298,12 @@
 /* The number pad: in thumb reach, big keys, no shade over the page so the row
    being typed stays readable above it. */
 .number-pad {
+  /* No double-tap zoom, text selection or callout anywhere on the pad. */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   padding: 0 var(--gt-space-3) calc(var(--gt-space-3) + var(--dock-safe, 0px));
   border-top: 1px solid var(--gt-line);
   border-radius: var(--gt-radius-xl) var(--gt-radius-xl) 0 0;
@@ -1353,7 +1359,9 @@
   flex: none;
   width: 132px;
 }
+/* The keys take every touch as a press: no pan, no zoom. */
 .number-pad-grid {
+  touch-action: none;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1.3fr;
   gap: 6px;
@@ -1394,11 +1402,20 @@
 .number-pad-key:disabled {
   opacity: 0.4;
 }
+/* Pressed as the finger lands (is-pressed, set on pointerdown) until it
+   lifts: a darker key, and a small press-in with motion. */
+.number-pad-key.is-pressed:not(:disabled) {
+  background-color: var(--gt-surface-2);
+}
+.number-pad-key.is-step.is-pressed:not(:disabled) {
+  background-color: color-mix(in srgb, var(--gt-accent) 22%, var(--gt-surface));
+}
 @media (prefers-reduced-motion: no-preference) {
   .number-pad-key {
     transition: transform 60ms ease-out;
   }
-  .number-pad-key:active:not(:disabled) {
+  .number-pad-key:active:not(:disabled),
+  .number-pad-key.is-pressed:not(:disabled) {
     transform: scale(0.94);
   }
 }

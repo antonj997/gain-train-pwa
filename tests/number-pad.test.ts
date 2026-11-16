@@ -17,6 +17,7 @@ import {
   type PadEntry,
   type PadKey,
   padFieldAt,
+  padKeyPresses,
 } from "../src/lib/number-pad";
 
 const kg = padFormat("weight", "kg", ",");
@@ -256,4 +257,33 @@ test("a press over a set's field finds it by the fields' boxes; elsewhere none",
   assert.equal(padFieldAt(boxes, 40, 120), null);
   assert.equal(padFieldAt(boxes, 220, 400), null);
   assert.equal(padFieldAt([], 220, 120), null);
+});
+
+test("pad keys press as a finger lands, once per pointer; a click only from a keyboard", () => {
+  // Each finger, a pen and a mouse's main button press on pointerdown.
+  assert.equal(
+    padKeyPresses({ type: "pointerdown", pointerType: "touch", button: 0 }),
+    true,
+  );
+  assert.equal(
+    padKeyPresses({ type: "pointerdown", pointerType: "pen", button: 0 }),
+    true,
+  );
+  assert.equal(
+    padKeyPresses({ type: "pointerdown", pointerType: "mouse", button: 0 }),
+    true,
+  );
+  assert.equal(
+    padKeyPresses({ type: "pointerdown", pointerType: "mouse", button: 2 }),
+    false,
+  );
+  // The pointer's own click would press it twice.
+  assert.equal(padKeyPresses({ type: "click", detail: 1 }), false);
+  assert.equal(padKeyPresses({ type: "click", detail: 2 }), false);
+  // Enter or Space on a focused key, or assistive technology: detail 0.
+  assert.equal(padKeyPresses({ type: "click", detail: 0 }), true);
+  assert.equal(
+    padKeyPresses({ type: "pointerup", pointerType: "touch" }),
+    false,
+  );
 });

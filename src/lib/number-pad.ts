@@ -240,3 +240,24 @@ export function padFieldAt(
   );
   return hit ? { setId: hit.setId, field: hit.field } : null;
 }
+
+/**
+ * Whether an event on a digit, decimal, backspace or ± key presses it. Keys
+ * press on pointerdown, like the phone's own keyboard: each finger (or pen,
+ * or a mouse's main button) presses once, as it lands, so two quick or
+ * overlapping taps both count. That pointer's click is ignored, since iOS
+ * delays clicks and drops one when a second touch starts first. A click
+ * with no pointer (detail 0: Enter or Space on a focused key, or assistive
+ * technology) presses it too.
+ */
+export function padKeyPresses(event: {
+  type: string;
+  pointerType?: string;
+  button?: number;
+  detail?: number;
+}): boolean {
+  if (event.type === "pointerdown")
+    return event.pointerType !== "mouse" || event.button === 0;
+  if (event.type === "click") return event.detail === 0;
+  return false;
+}
