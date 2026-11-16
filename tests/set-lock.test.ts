@@ -228,3 +228,68 @@ test("a drop forgets its locked-edit notice once the set above is unchecked", as
   state.set = { ...drop, done: true };
   assert.equal(message(render()), undefined);
 });
+
+test("a single tap on a locked row stays quiet; a second within 2 s shows the notice", async () => {
+  const { state, render } = await host({
+    ...model.newSet(),
+    weight: 75,
+    reps: 8,
+    done: true,
+  });
+  let tree = render();
+  const [load] = fields(tree);
+  assert.equal(load.props.tabIndex, -1, "Tab skips a locked field");
+  (load.props.onLockedAttempt as (kind: string) => void)("tap");
+  tree = render();
+  assert.equal(message(tree), undefined, "the first tap says nothing");
+  const [, count] = fields(tree);
+  (count.props.onLockedAttempt as (kind: string) => void)("tap");
+  tree = render();
+  assert.ok(message(tree), "the second tap explains the lock");
+  // The ✓ still unchecks, and the notice goes with it.
+  const check = tree.find(
+    (node) => node.props["aria-label"] === "Uncheck Bench set 1",
+  )!;
+  (check.props.onClick as () => void)();
+  assert.equal(state.set.done, false);
+  assert.equal(message(render()), undefined);
+});
+
+test("a locked row's badge does not open the Set sheet; a second tap warns", async () => {
+  const { state, render } = await host({
+    ...model.newSet(),
+    weight: 75,
+    reps: 8,
+    done: true,
+  });
+  const badgeOf = (tree: Node[]) =>
+    tree.find(
+      (node) => (node.props.badge as { tone?: string })?.tone === "working",
+    )!;
+  let tree = render();
+  assert.equal(badgeOf(tree).props.locked, true);
+  (badgeOf(tree).props.onClick as (keyboard: boolean) => void)(false);
+  tree = render();
+  assert.equal(state.sheets, 0);
+  assert.equal(message(tree), undefined);
+  (badgeOf(tree).props.onClick as (keyboard: boolean) => void)(false);
+  assert.equal(state.sheets, 0);
+  assert.ok(message(render()));
+});
+
+test("editing a finished workout keeps checked rows open", async () => {
+  const { state, render } = await host(
+    { ...model.newSet(), weight: 75, reps: 8, done: true },
+    { unlocked: true },
+  );
+  const tree = render();
+  const [load] = fields(tree);
+  assert.equal(load.props.readOnly, false);
+  assert.equal(load.props.tabIndex, undefined);
+  const badge = tree.find(
+    (node) => (node.props.badge as { tone?: string })?.tone === "working",
+  )!;
+  assert.equal(badge.props.locked, false);
+  (badge.props.onClick as (keyboard: boolean) => void)(false);
+  assert.equal(state.sheets, 1);
+});

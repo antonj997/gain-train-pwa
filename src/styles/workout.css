@@ -528,11 +528,65 @@
     transform: none;
   }
 }
-/* The field the number pad types keeps its ring even when focus is on the pad. */
+/* The field the number pad types stands out from the row's other fields: a
+   filled accent tone, a thicker ring and bolder digits, with a thin line under
+   the digits that breathes like a caret. The ring is an inset shadow and the
+   line an overlay, so nothing in the row moves. It keeps all of this even
+   while focus is on the pad. */
 .set-line .set-field input[data-pad-target] {
-  outline: 2px solid var(--gt-accent);
-  outline-offset: -2px;
+  outline: none;
   border-color: var(--gt-accent);
+  background-color: var(--gt-accent-soft);
+  background-color: color-mix(in srgb, var(--gt-accent) 16%, var(--gt-surface));
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+  color: var(--gt-ink);
+  font-weight: 800;
+}
+.set-line .set-field:has(> input[data-pad-target])::after {
+  content: "";
+  position: absolute;
+  bottom: 7px;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  margin-left: -9px;
+  border-radius: 1px;
+  background-color: var(--gt-accent);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .set-line .set-field:has(> input[data-pad-target])::after {
+    animation: pad-caret 1.1s ease-in-out infinite;
+  }
+}
+@keyframes pad-caret {
+  50% {
+    opacity: 0.25;
+  }
+}
+/* The row's other fields step back while one is typed: no accent outline,
+   quieter digits. */
+.set-line:has(input[data-pad-target])
+  .set-field
+  input:not([data-pad-target]) {
+  border-color: transparent;
+  color: var(--gt-ink-2);
+  font-weight: 500;
+}
+/* A checked set is locked in a live workout: its fields never show a focus
+   or pad ring, whatever was tapped. */
+.set-line.is-locked .set-field input,
+.set-line.is-locked .set-field input:focus,
+.set-line.is-locked .set-field input:focus-visible,
+.set-line.is-locked .set-field input[data-pad-target] {
+  outline: none;
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  font-weight: 600;
+}
+.set-line.is-locked .set-field::after {
+  content: none;
 }
 
 /* Field messages and the unlock notice run under the whole row. */

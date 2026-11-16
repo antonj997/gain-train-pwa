@@ -10,6 +10,7 @@ import {
   createSetInputSelection,
   parseSetNumber,
   isSetInputEditKey,
+  type LockedAttempt,
   type SetInputGestures,
 } from "../lib/set-input";
 import { formatDecimal } from "../i18n";
@@ -21,7 +22,8 @@ type Props = Omit<
   value: number | null;
   onValueChange: (value: number | null, unfinishedText?: string) => void;
   inputText?: string;
-  onLockedAttempt?: () => void;
+  /** A try at changing the field while it is locked (a checked set). */
+  onLockedAttempt?: (kind: LockedAttempt) => void;
   /** Text to number, NaN while unfinished. Defaults to a plain decimal number. */
   parse?: (text: string) => number | null;
   /** The text shown for a value. Defaults to the number itself. */
@@ -77,7 +79,7 @@ export default function SetNumberInput({
   const selection = useRef(
     createSetInputSelection(
       undefined,
-      () => warning.current?.(),
+      (kind) => warning.current?.(kind),
       () => gesturesRef.current ?? {},
     ),
   );
@@ -103,12 +105,14 @@ export default function SetNumberInput({
       onPointerCancel={selection.current.onPointerCancel}
       onLostPointerCapture={selection.current.onLostPointerCapture}
       onClick={selection.current.onClick}
-      // The number pad's fields on a touch screen: the tap is handled on
-      // pointerup, and stopping the touch's end keeps iOS from focusing them.
+      // The number pad's fields on a touch screen, and locked (checked)
+      // fields: the tap is handled on pointerup, and stopping the touch's end
+      // keeps iOS from focusing them (a locked field never shows a ring).
       onTouchEnd={(event) => {
         if (
           event.cancelable &&
-          event.currentTarget.getAttribute("inputmode") === "none"
+          (event.currentTarget.readOnly ||
+            event.currentTarget.getAttribute("inputmode") === "none")
         )
           event.preventDefault();
       }}
@@ -124,7 +128,7 @@ export default function SetNumberInput({
         // A tap's own pointerup decides on the notice; this is keyboard focus.
         const fromPointer = selection.current.pointerFocus(event.timeStamp);
         if (props.readOnly) {
-          if (!fromPointer) onLockedAttempt?.();
+          if (!fromPointer) onLockedAttempt?.("keyboard");
         } else {
           event.currentTarget.select();
           if (!fromPointer) onKeyboardFocus?.();
@@ -133,7 +137,7 @@ export default function SetNumberInput({
       onKeyDown={(event) => {
         if (props.readOnly && isSetInputEditKey(event)) {
           event.preventDefault();
-          onLockedAttempt?.();
+          onLockedAttempt?.("keyboard");
         }
       }}
       onBlur={(event) => {
@@ -146,7 +150,7 @@ export default function SetNumberInput({
       }}
       onChange={(event) => {
         if (props.readOnly) {
-          onLockedAttempt?.();
+          onLockedAttempt?.("keyboard");
           return;
         }
         let text = event.target.value;
