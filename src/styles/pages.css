@@ -2648,6 +2648,62 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
 .muscle-row[data-status="under"] .muscle-fill {
   background-color: var(--gt-ink-3);
 }
+/* The plan's card: the bar is this week as it stands, so it is accent until
+   the guide's minimum is reached and done-green after; the mark is the
+   average of the finished weeks. */
+.muscle-sets .muscle-row .muscle-fill {
+  background-color: var(--gt-accent);
+}
+.muscle-sets .muscle-row .muscle-fill[data-reached] {
+  background-color: var(--gt-done);
+}
+.muscle-mark {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 3px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background-color: var(--gt-ink);
+}
+.muscle-sets .muscle-row {
+  grid-template-columns: minmax(64px, 6.5em) minmax(0, 1fr) 6.5ch;
+  min-height: 36px;
+}
+.muscle-sets .muscle-value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+}
+.muscle-sets .muscle-value small {
+  font-size: var(--gt-fs-1);
+  font-weight: 500;
+  color: var(--gt-ink-2);
+}
+.muscle-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-1) var(--gt-space-3);
+  margin: 0;
+}
+.muscle-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.muscle-key-fill {
+  width: 14px;
+  height: 8px;
+  border-radius: 999px;
+  background-color: var(--gt-accent);
+}
+.muscle-key-mark {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background-color: var(--gt-ink);
+}
 .muscle-value {
   font-size: var(--gt-fs-3);
   font-weight: 700;

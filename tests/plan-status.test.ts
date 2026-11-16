@@ -421,7 +421,7 @@ test("other lifts: the most trained exercises inside the plan without a progress
   assert.equal(otherLifts(p, records, TODAY, 2).length, 2);
 });
 
-test("muscle sets: the weekly average over the plan's weeks so far", () => {
+test("muscle sets: the average counts finished weeks only; this week stands on its own", () => {
   const categoriesOf = (id: string) =>
     ({
       bench: { category: "Chest", categories: ["Arms", "Shoulders"] },
@@ -429,25 +429,63 @@ test("muscle sets: the weekly average over the plan's weeks so far", () => {
     })[id] ?? {};
   const sets = (n: number) => Array.from({ length: n }, () => set());
   const records = [
+    // Plan weeks 1 and 2 (from Monday 26 Oct): finished.
     workout("2026-10-27", [ex("bench", sets(12)), ex("squat", sets(9))]),
-    workout("2026-11-03", [ex("bench", sets(12)), ex("squat", sets(9))]),
-    workout("2026-11-10", [ex("bench", sets(12)), ex("squat", sets(9))]),
+    workout("2026-11-03", [ex("bench", sets(14)), ex("squat", sets(11))]),
+    // Week 3, which holds TODAY (Thursday 12 Nov): so far.
+    workout("2026-11-10", [ex("bench", sets(4))]),
     // Outside the plan.
     workout("2026-10-20", [ex("bench", sets(30))]),
   ];
   const result = planMuscleSets(plan(), records, TODAY, categoriesOf)!;
-  assert.equal(result.weeks, 3);
+  assert.equal(result.weeks, 2);
+  assert.equal(result.week, 3);
+  assert.equal(result.ended, false);
   assert.deepEqual(
-    result.rows.map((r) => [r.group, r.sets, r.status]),
+    result.rows.map((r) => [r.group, r.average, r.thisWeek, r.status]),
     [
-      ["Chest", 12, "in"],
-      ["Legs", 9, "under"],
-      ["Shoulders", 6, "under"],
-      ["Arms", 6, "under"],
+      ["Chest", 13, 4, "in"],
+      ["Legs", 10, 0, "in"],
+      ["Shoulders", 6.5, 2, "under"],
+      ["Arms", 6.5, 2, "under"],
     ],
   );
-  assert.deepEqual(result.under, ["Legs", "Shoulders", "Arms"]);
-  assert.equal(result.scale, 24);
+  assert.deepEqual(result.under, ["Shoulders", "Arms"]);
+  assert.deepEqual(result.short, [
+    { group: "Chest", left: 6 },
+    { group: "Legs", left: 10 },
+    { group: "Shoulders", left: 8 },
+    { group: "Arms", left: 8 },
+  ]);
+  // A new week with nothing trained yet leaves the average alone.
+  const monday = planMuscleSets(
+    plan(),
+    records.slice(0, 2),
+    "2026-11-09",
+    categoriesOf,
+  )!;
+  assert.equal(monday.weeks, 2);
+  assert.equal(monday.rows[0].average, 13);
+  assert.equal(monday.rows[0].thisWeek, 0);
+  // The first week has no average yet; the status reads this week's sets.
+  const first = planMuscleSets(
+    plan(),
+    records.slice(0, 1),
+    "2026-10-29",
+    categoriesOf,
+  )!;
+  assert.equal(first.weeks, 0);
+  assert.equal(first.rows[0].average, null);
+  assert.equal(first.rows[0].thisWeek, 12);
+  assert.equal(first.rows[0].status, "in");
+  // After the end every week is finished and there is no "this week".
+  const after = planMuscleSets(plan(), records, "2027-02-01", categoriesOf)!;
+  assert.equal(after.ended, true);
+  assert.deepEqual(after.short, []);
+  assert.equal(
+    after.rows.every((r) => r.thisWeek === 0),
+    true,
+  );
   assert.equal(
     planMuscleSets(plan(), records, "2026-10-01", categoriesOf),
     null,

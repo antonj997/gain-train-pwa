@@ -1,5 +1,9 @@
 # Changelog
 
+## 16 November 2026 — the plan's sets per muscle group: finished weeks and this week
+
+- The average on the plan status page counted the week in progress as a whole week, so a new Monday pulled every group down before anything was trained. It now averages only the plan's finished weeks, and the week that holds today is shown on its own: the bar is this week so far (accent, done-green once a group reaches 10 sets), a mark on the track is the average, and the value reads "3 / snitt 1,5". A line names what is left to reach 10 sets this week ("Kvar till 10 set den här veckan: Bröst 7, Rygg 10 och Ben 6"), and the under-the-guide line is about the average. In the first week there is no average yet; after the plan ends only the average remains. `planMuscleSets` in `src/data/plan-status.ts`, tested.
+
 ## 15 November 2026 — Historik becomes Kalender: done and planned in one tab
 
 - **The tab.** History is now **Calendar** / **Kalender**, with the CalendarDays icon, in the nav, the page title and every string that named it (Train's week card link, the tips, the workout and exercise notes). The route stays `/history`: links with `?workout=&set=` from the exercise page, Progress and a finished workout, installed home-screen shortcuts and the page-transition depths keep working with no redirect hop, and the URL is not shown in the installed app. The header's grid/month toggle is gone; ⋯ and its menu stay.

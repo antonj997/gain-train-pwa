@@ -307,6 +307,11 @@ export function MuscleCard({ muscle }: { muscle: PlanMuscleSets }) {
   const { t } = useT();
   const { min, max } = WEEKLY_SET_GUIDE;
   const under = muscle.under.map(categoryLabel);
+  // The bar is this week as it stands; the mark is the average of the
+  // finished weeks. After the plan has ended only the average is left.
+  const live = !muscle.ended;
+  const hasAverage = muscle.weeks > 0;
+  const short = muscle.short.slice(0, 3);
   return (
     <section
       className="card status-card muscle-sets"
@@ -318,20 +323,49 @@ export function MuscleCard({ muscle }: { muscle: PlanMuscleSets }) {
           {t("planStatus.muscleHint", { min, max })}
         </span>
       </div>
+      <p className="muscle-legend row-sub" aria-hidden="true">
+        {live && (
+          <span>
+            <i className="muscle-key-fill" />
+            {t("planStatus.muscleThisWeek", { week: muscle.week })}
+          </span>
+        )}
+        {hasAverage && (
+          <span>
+            <i className="muscle-key-mark" />
+            {t("planStatus.muscleAverage", { count: muscle.weeks })}
+          </span>
+        )}
+      </p>
       <ul className="muscle-list">
         {muscle.rows.map((row) => {
           const group = categoryLabel(row.group);
-          const sets = formatDecimal(row.sets);
+          const shown = live ? row.thisWeek : (row.average ?? 0);
+          const average =
+            row.average === null ? null : formatDecimal(row.average);
           return (
             <li
               key={row.group}
               className="muscle-row"
               data-status={row.status}
-              aria-label={t("muscle.row", {
-                group,
-                sets,
-                status: t(`muscle.${row.status}`),
-              })}
+              aria-label={
+                live
+                  ? t(
+                      average === null
+                        ? "planStatus.muscleRowWeek"
+                        : "planStatus.muscleRow",
+                      {
+                        group,
+                        week: formatDecimal(row.thisWeek),
+                        average: average ?? "",
+                      },
+                    )
+                  : t("muscle.row", {
+                      group,
+                      sets: average ?? "0",
+                      status: t(`muscle.${row.status}`),
+                    })
+              }
             >
               <span className="muscle-name" aria-hidden="true">
                 {group}
@@ -346,16 +380,41 @@ export function MuscleCard({ muscle }: { muscle: PlanMuscleSets }) {
                 />
                 <span
                   className="muscle-fill"
-                  style={{ width: pct(row.sets, muscle.scale) }}
+                  data-reached={shown >= min || undefined}
+                  style={{ width: pct(shown, muscle.scale) }}
                 />
+                {live && row.average !== null && (
+                  <span
+                    className="muscle-mark"
+                    style={{ left: pct(row.average, muscle.scale) }}
+                  />
+                )}
               </span>
-              <strong className="muscle-value" aria-hidden="true">
-                {sets}
-              </strong>
+              <span className="muscle-value" aria-hidden="true">
+                <strong>{formatDecimal(shown)}</strong>
+                {live && average !== null && (
+                  <small>
+                    {t("planStatus.muscleAverageShort", { average })}
+                  </small>
+                )}
+              </span>
             </li>
           );
         })}
       </ul>
+      {live && short.length > 0 && (
+        <p className="status-note">
+          {t("planStatus.muscleLeft", {
+            min,
+            groups: listText(
+              short.map(
+                ({ group, left }) =>
+                  `${categoryLabel(group)} ${formatDecimal(left)}`,
+              ),
+            ),
+          })}
+        </p>
+      )}
       {under.length > 0 && (
         <p className="status-note">
           {t("planStatus.muscleUnder", {
@@ -363,6 +422,9 @@ export function MuscleCard({ muscle }: { muscle: PlanMuscleSets }) {
             groups: listText(under),
           })}
         </p>
+      )}
+      {live && !hasAverage && (
+        <p className="status-note">{t("planStatus.muscleFirstWeek")}</p>
       )}
     </section>
   );

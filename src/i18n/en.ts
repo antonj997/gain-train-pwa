@@ -1856,11 +1856,23 @@ export const en = {
   "planStatus.behind": "Behind",
   "planStatus.noPlan": "No plan",
   "planStatus.muscle": "Sets per muscle group a week",
-  "planStatus.muscleHint": "plan average · guide {min}–{max}",
+  "planStatus.muscleHint": "guide {min}–{max} a week",
+  "planStatus.muscleThisWeek": "Week {week} so far",
+  "planStatus.muscleAverage": {
+    one: "Average of {count} finished week",
+    other: "Average of {count} finished weeks",
+  },
+  "planStatus.muscleAverageShort": "avg {average}",
+  "planStatus.muscleRow":
+    "{group}: {week} sets this week, {average} on average",
+  "planStatus.muscleRowWeek": "{group}: {week} sets this week",
+  "planStatus.muscleLeft": "Left to reach {min} sets this week: {groups}.",
+  "planStatus.muscleFirstWeek":
+    "The average shows once the plan's first week is over.",
   "planStatus.muscleUnder": {
-    one: "{groups} is under the guide. Add a couple of sets if it is to grow.",
+    one: "On average {groups} is under the guide. Add a couple of sets if it is to grow.",
     other:
-      "{groups} are under the guide. Add a couple of sets if they are to grow.",
+      "On average {groups} are under the guide. Add a couple of sets if they are to grow.",
   },
   "planStatus.goals": "Goals in the plan",
   "planStatus.goalNow": "Now {value}",
