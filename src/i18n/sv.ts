@@ -1099,31 +1099,25 @@ export const sv = {
   "plan.pausedToast": "Schemat pausat",
   "plan.resumedToast": "Schemat återupptaget",
   "plan.pausedNote":
-    "Pausat: Träna visar inget från schemat, och ett annat schema kan använda dess datum.",
-  "plan.intro":
-    "Valfritt. Träna visar dagens pass; inget ändras någonstans så länge du inte har ett schema.",
+    "Pausat: syns inte på Träna, och datumen är lediga för ett annat schema.",
   "plan.plans": "Scheman",
   "plan.repeatsWeekly": "upprepas varje vecka",
   "plan.cycle": "{count}-veckorscykel",
   "plan.new": "Nytt schema",
   "plan.newGroup": "Ny grupp",
-  "plan.groupNote":
-    "En grupp, till exempel Bendag, samlar rutinerna du vill köra den dagen. Du kan planera den, eller en av dagtyperna {types}, som föreslår övningar efter kategori.",
   "plan.yourWeeks": "Dina veckor",
   "plan.yourWeek": "Din vecka",
   "plan.weekN": "Vecka {n}",
   "plan.cellLabel": "{day}: {text}",
   "plan.cellLabelWeek": "{day}, vecka {week}: {text}",
   "plan.empty": "tom",
-  "plan.templateNote":
-    "Tryck på en dag för att välja en rutin, en dagtyp, en grupp eller vila. Veckorna upprepas från fasens första vecka.",
+  "plan.templateNote": "Veckorna upprepas från fasens första vecka.",
   "plan.goalsHeading": "Mål som schemat jobbar mot",
   "plan.by": "Senast {date}",
   "plan.linked": "Länkad",
   "plan.nothingPlanned": "inget planerat",
   "plan.upcoming": "Kommande",
-  "plan.upcomingNote":
-    "Tryck på en dag för att ändra just det datumet. Dagar som har passerat går inte att ändra.",
+  "plan.upcomingNote": "En ändring här gäller bara det datumet.",
   "plan.needName": "Ge schemat ett namn.",
   "plan.needPeriod":
     "Välj ett startdatum och ett slutdatum på eller efter det.",
@@ -1133,8 +1127,6 @@ export const sv = {
   "plan.saved": "Schemat sparat",
   "plan.saveFailed": "Kunde inte spara schemat. Försök igen.",
   "plan.edit": "Redigera schema",
-  "plan.description":
-    "Inget här är obligatoriskt. Träna visar dagens pass medan schemat är aktivt.",
   "plan.name": "Namn",
   "plan.namePlaceholder": "Höstblock",
   "plan.repeatsEvery": "Upprepas var (veckor)",
@@ -1191,29 +1183,27 @@ export const sv = {
   "plan.cycleDeload": "{normal} + {deload} deload",
   "plan.advanced": "Avancerat",
   "plan.groupsExplain":
-    "En grupp låter en schemadag erbjuda ett val av rutiner, t.ex. Bendag: Ben A eller Ben B.",
+    "En grupp ger en schemadag ett val, t.ex. Bendag: Ben A eller Ben B.",
   "planNote.week": "Schemavecka {week}: {weight}",
   "planNote.deloadLoad": "Deload-vecka: {weight}",
   "planNote.deload": "Deload-vecka",
   "prog.heading": "Progression",
   "prog.intro":
-    "Öka lyften under fasen. Lägg till ett lyft, eller alla i en rutin; varje lyft får ett föreslaget steg per vecka som du kan ändra.",
+    "Varje lyft får ett föreslaget steg per vecka som du kan ändra.",
   "prog.addExercise": "Lägg till övning",
   "prog.addRoutine": "Alla övningar i en rutin",
   "prog.addRoutineNote":
-    "Lägger till varje övning med vikt i rutinen som inte redan finns här.",
+    "Lägger till rutinens viktövningar som inte redan finns här.",
   "prog.addedFromRoutine": "Lade till {lifts} från {name}",
   "prog.nothingToAdd": "Inget nytt att lägga till från {name}",
   "prog.tableLabel": "Planerad arbetsvikt per vecka",
-  "prog.tableNote":
-    "{lifts}. Tryck på ett lyft eller en vecka för att ändra; grå veckor är deload.",
+  "prog.tableNote": "{lifts} · grå veckor är deload",
   "prog.lift": "Lyft",
   "prog.weekShort": "V{n}",
   "prog.deloadShort": "D",
   "prog.cellLabel": "{name}, vecka {n}: {kg} kg",
   "prog.enterStart": "Ange en startvikt",
   "prog.needStart": "Ange startvikt och mål för {name} under Progression.",
-  "prog.sheetDescription": "Arbetsvikten för de här repsen, vecka för vecka.",
   "prog.reps": "Reps",
   "prog.startKg": "Start (kg)",
   "prog.fromSet": "Från din logg: {set} den {date}.",
@@ -1257,7 +1247,7 @@ export const sv = {
   "prog.weekWeight": "Vikt vecka {n} i kg",
   "prog.resetWeek": "Återställ vecka {n} till schemat",
   "prog.weeksNote":
-    "Skriv över valfri vecka för att ändra den; de andra veckorna följer linjen. En deload-vecka lyfter veckan innan, lättare.",
+    "Skriv över en vecka för att ändra den. En deload-vecka utgår från veckan innan, lättare.",
   "prog.addGoal": "Lägg även till som mål",
   "prog.linkedGoal": "Länkat mål: {goal}",
   "prog.goalRepsNote":
@@ -1265,8 +1255,6 @@ export const sv = {
   "prog.remove": "Ta bort från progression",
   "group.saveFailed": "Kunde inte spara. Försök igen.",
   "group.edit": "Redigera grupp",
-  "group.description":
-    "En grupp är en dag du kan planera, till exempel Bendag. Träna erbjuder dess rutiner och kan föreslå övningar.",
   "group.name": "Namn",
   "group.namePlaceholder": "Bendag",
   "group.routines": "Rutiner",
@@ -1791,7 +1779,7 @@ export const sv = {
   "planStatus.adherenceBehind": "Lite efter",
   "planStatus.adherenceOff": "Schemat följs inte",
   "planStatus.adherenceOffTip":
-    "Färre pass i veckan kan vara lättare att hålla. Redigera schemat så att det passar dina veckor.",
+    "Färre pass i veckan kan vara lättare att hålla.",
   "planStatus.percent": "{pct} %",
   "planStatus.doneOf": "{done} av {planned} planerade pass gjorda",
   "planStatus.nothingYet": "Inget planerat pass har passerat än.",
@@ -1808,7 +1796,7 @@ export const sv = {
   },
   "planStatus.notMissed": "{changes} (räknas inte som missat)",
   "planStatus.pausedCount":
-    "Appen sparar inte när ett schema pausades, så dagarna räknas fram till ditt senaste pass i schemat.",
+    "Pauser sparas inte, så dagarna räknas fram till ditt senaste pass i schemat.",
   "planStatus.weeksLabel": "Planerade pass per vecka",
   "planStatus.weekSr": "Vecka {week}: {text}",
   "planStatus.srDone": { one: "{count} gjort", other: "{count} gjorda" },
@@ -1845,9 +1833,8 @@ export const sv = {
   "planStatus.muscleFirstWeek":
     "Snittet visas när schemats första vecka är slut.",
   "planStatus.muscleUnder": {
-    one: "I snitt ligger {groups} under riktmärket. Lägg till ett par set om de ska växa.",
-    other:
-      "I snitt ligger {groups} under riktmärket. Lägg till ett par set om de ska växa.",
+    one: "Under riktmärket i snitt: {groups}.",
+    other: "Under riktmärket i snitt: {groups}.",
   },
   "planStatus.goals": "Mål i schemat",
   "planStatus.goalNow": "Nu {value}",

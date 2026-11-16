@@ -168,13 +168,7 @@ export default function ProgressionSheet({
   const typedReps = positive(repsText);
 
   return (
-    <Sheet
-      open={open}
-      size="full"
-      onClose={onClose}
-      title={item.name}
-      description={t("prog.sheetDescription")}
-    >
+    <Sheet open={open} size="full" onClose={onClose} title={item.name}>
       <div className="field-row">
         <label>
           {t("prog.reps")}

@@ -1092,31 +1092,25 @@ export const en = {
   "plan.pausedToast": "Plan paused",
   "plan.resumedToast": "Plan resumed",
   "plan.pausedNote":
-    "Paused: Train shows nothing from this plan, and another plan can use its dates.",
-  "plan.intro":
-    "Optional. Train shows today's entry; nothing changes anywhere while you have no plan.",
+    "Paused: not shown on Train, and its dates are free for another plan.",
   "plan.plans": "Plans",
   "plan.repeatsWeekly": "repeats weekly",
   "plan.cycle": "{count}-week cycle",
   "plan.new": "New plan",
   "plan.newGroup": "New group",
-  "plan.groupNote":
-    "A group such as Legday holds the routines you want for that day. You can plan it, or one of the day types {types}, which suggest exercises by category.",
   "plan.yourWeeks": "Your weeks",
   "plan.yourWeek": "Your week",
   "plan.weekN": "Week {n}",
   "plan.cellLabel": "{day}: {text}",
   "plan.cellLabelWeek": "{day}, week {week}: {text}",
   "plan.empty": "empty",
-  "plan.templateNote":
-    "Tap a day to choose a routine, a day type, a group or rest. The weeks repeat from the first week of the phase.",
+  "plan.templateNote": "The weeks repeat from the phase's first week.",
   "plan.goalsHeading": "Goals this plan works toward",
   "plan.by": "By {date}",
   "plan.linked": "Linked",
   "plan.nothingPlanned": "nothing planned",
   "plan.upcoming": "Upcoming",
-  "plan.upcomingNote":
-    "Tap a day to change just that date. Past days cannot be changed.",
+  "plan.upcomingNote": "A change here applies to that date only.",
   "plan.needName": "Give the plan a name.",
   "plan.needPeriod": "Choose a start date and an end date on or after it.",
   "plan.overlap":
@@ -1125,8 +1119,6 @@ export const en = {
   "plan.saved": "Plan saved",
   "plan.saveFailed": "Could not save the plan. Try again.",
   "plan.edit": "Edit plan",
-  "plan.description":
-    "Nothing here is required. Train shows today's entry while the plan is active.",
   "plan.name": "Name",
   "plan.namePlaceholder": "Autumn block",
   "plan.repeatsEvery": "Repeats every (weeks)",
@@ -1183,22 +1175,19 @@ export const en = {
   "plan.cycleDeload": "{normal} + {deload} deload",
   "plan.advanced": "Advanced",
   "plan.groupsExplain":
-    "A group lets one plan day offer a choice of routines, e.g. Legday: Legs A or Legs B.",
+    "A group lets a plan day offer a choice, e.g. Legday: Legs A or Legs B.",
   "planNote.week": "Plan week {week}: {weight}",
   "planNote.deloadLoad": "Deload week: {weight}",
   "planNote.deload": "Deload week",
   "prog.heading": "Progression",
-  "prog.intro":
-    "Increase lifts over the phase. Add a lift, or all of a routine's; each gets a suggested weekly step you can change.",
+  "prog.intro": "Each lift gets a suggested weekly step you can change.",
   "prog.addExercise": "Add exercise",
   "prog.addRoutine": "All exercises in a routine",
-  "prog.addRoutineNote":
-    "Adds each weighted exercise in the routine that isn't here yet.",
+  "prog.addRoutineNote": "Adds its weighted exercises that aren't here yet.",
   "prog.addedFromRoutine": "Added {lifts} from {name}",
   "prog.nothingToAdd": "Nothing new to add from {name}",
   "prog.tableLabel": "Planned working weight per week",
-  "prog.tableNote":
-    "{lifts}. Tap a lift or a week to change it; grey weeks are deloads.",
+  "prog.tableNote": "{lifts} · grey weeks are deloads",
   "prog.lift": "Lift",
   "prog.weekShort": "W{n}",
   "prog.deloadShort": "D",
@@ -1206,7 +1195,6 @@ export const en = {
   "prog.enterStart": "Enter a start weight",
   "prog.needStart":
     "Enter a start weight and a target for {name} under Progression.",
-  "prog.sheetDescription": "The working weight for these reps, week by week.",
   "prog.reps": "Reps",
   "prog.startKg": "Start (kg)",
   "prog.fromSet": "From your log: {set} on {date}.",
@@ -1250,7 +1238,7 @@ export const en = {
   "prog.weekWeight": "Week {n} weight in kg",
   "prog.resetWeek": "Reset week {n} to the plan",
   "prog.weeksNote":
-    "Type over any week to change it; the other weeks keep to the line. A deload week lifts the week before, lighter.",
+    "Type over a week to change it. A deload week takes the week before, lighter.",
   "prog.addGoal": "Also add as a goal",
   "prog.linkedGoal": "Linked goal: {goal}",
   "prog.goalRepsNote":
@@ -1258,8 +1246,6 @@ export const en = {
   "prog.remove": "Remove from progression",
   "group.saveFailed": "Could not save. Try again.",
   "group.edit": "Edit group",
-  "group.description":
-    "A group is a day you can plan, such as Legday. Train offers its routines and can suggest exercises.",
   "group.name": "Name",
   "group.namePlaceholder": "Legday",
   "group.routines": "Routines",
@@ -1783,8 +1769,7 @@ export const en = {
   "planStatus.adherenceGood": "On plan",
   "planStatus.adherenceBehind": "A little behind",
   "planStatus.adherenceOff": "Plan not followed",
-  "planStatus.adherenceOffTip":
-    "Fewer workouts a week can be easier to keep. Edit the plan to fit your weeks.",
+  "planStatus.adherenceOffTip": "Fewer workouts a week can be easier to keep.",
   "planStatus.percent": "{pct}%",
   "planStatus.doneOf": "{done} of {planned} planned workouts done",
   "planStatus.nothingYet": "No planned workout has passed yet.",
@@ -1798,7 +1783,7 @@ export const en = {
   "planStatus.skipped": { one: "{count} skipped", other: "{count} skipped" },
   "planStatus.notMissed": "{changes} (not counted as missed)",
   "planStatus.pausedCount":
-    "The app does not save when a plan was paused, so days count up to your last workout in the plan.",
+    "Pauses aren't saved, so days count up to your last workout in the plan.",
   "planStatus.weeksLabel": "Planned workouts by week",
   "planStatus.weekSr": "Week {week}: {text}",
   "planStatus.srDone": { one: "{count} done", other: "{count} done" },
@@ -1835,9 +1820,8 @@ export const en = {
   "planStatus.muscleFirstWeek":
     "The average shows once the plan's first week is over.",
   "planStatus.muscleUnder": {
-    one: "On average {groups} is under the guide. Add a couple of sets if it is to grow.",
-    other:
-      "On average {groups} are under the guide. Add a couple of sets if they are to grow.",
+    one: "Under the guide on average: {groups}.",
+    other: "Under the guide on average: {groups}.",
   },
   "planStatus.goals": "Goals in the plan",
   "planStatus.goalNow": "Now {value}",
