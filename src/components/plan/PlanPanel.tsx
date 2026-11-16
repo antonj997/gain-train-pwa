@@ -128,9 +128,9 @@ export default function PlanPanel() {
 
   return (
     <div className="plan-panel">
-      <p className="row-sub">{t("plan.intro")}</p>
       <section aria-labelledby="plans-heading">
-        <h2 className="group-title" id="plans-heading">
+        {/* The page title already says Plan; the heading is for screen readers. */}
+        <h2 className="sr-only" id="plans-heading">
           {t("plan.plans")}
         </h2>
         {planSlots.length > 0 && (
@@ -214,7 +214,8 @@ export default function PlanPanel() {
           <ChevronDown className="chev" size={20} aria-hidden="true" />
         </summary>
         <section aria-labelledby="groups-heading">
-          <h2 className="group-title" id="groups-heading">
+          {/* The summary above already reads Groups. */}
+          <h2 className="sr-only" id="groups-heading">
             {t("plan.groups")}
           </h2>
           <p className="row-sub">{t("plan.groupsExplain")}</p>
@@ -244,11 +245,6 @@ export default function PlanPanel() {
             <Plus size={20} aria-hidden="true" />
             {t("plan.newGroup")}
           </button>
-          <p className="row-sub group-note">
-            {t("plan.groupNote", {
-              types: dayTypes.map(dayTypeLabel).join(", "),
-            })}
-          </p>
         </section>
       </details>
       {current?.kind === "plan" && (

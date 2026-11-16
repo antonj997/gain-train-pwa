@@ -11,13 +11,12 @@ export default function NotFound() {
   return (
     <div className="page not-found-page">
       <PageHeader
-        eyebrow={t("notFound.eyebrow")}
         title={t("notFound.title")}
         notices={false}
         leading={<BackButton onClick={back} />}
       />
-      <div className="empty-card" role="status">
-        <p>{t("notFound.text")}</p>
+      {/* The title says it all; just the way back. */}
+      <div>
         <Link to="/" className="btn-secondary">
           {t("notFound.back")}
         </Link>

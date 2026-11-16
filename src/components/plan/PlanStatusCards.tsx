@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Play } from "lucide-react";
 import GoalRing from "@/components/items/GoalRing";
 import PhaseBar from "@/components/items/PhaseBar";
-import { goalTitle, type GoalItem } from "@/data/goals";
+import { statusChip } from "@/components/goals/goal-status";
+import { goalLiftText, goalTitle, type GoalItem } from "@/data/goals";
 import type { Plan } from "@/data/model";
 import { deloadOf, phaseSegments } from "@/data/phase";
 import {
@@ -458,11 +459,15 @@ export function GoalsCard({
         {goals.map(({ goal, insight }) => {
           const title = goalTitle(goal);
           const { progress, pace, projected } = insight;
+          const lift = insight.strength;
+          // A lift goal reads its smoothed strength; a bodyweight goal its pace.
           const chip = progress.met
             ? { key: "goals.reached" as MessageKey, tone: " done" }
-            : pace
-              ? PACE[pace.kind]
-              : null;
+            : lift
+              ? statusChip[lift.trend.status]
+              : pace
+                ? PACE[pace.kind]
+                : null;
           const now =
             progress.current === null
               ? null
@@ -470,10 +475,22 @@ export function GoalsCard({
                   progress.unit === "kg e1RM"
                     ? "planStatus.goalNowE1rm"
                     : "planStatus.goalNow",
-                  { value: formatWeight(progress.current, undefined, 1) },
+                  {
+                    value: formatWeight(
+                      progress.current,
+                      undefined,
+                      lift ? 0 : 1,
+                    ),
+                  },
                 );
           const sub = [
             now,
+            !progress.met &&
+              lift?.ready &&
+              t("planStatus.goalReady", {
+                lift: goalLiftText(goal, lift.body),
+              }),
+            !progress.met && lift?.checkin?.due && t("planStatus.goalCheckin"),
             projected &&
               !progress.met &&
               insight.deadline.kind !== "overdue" &&

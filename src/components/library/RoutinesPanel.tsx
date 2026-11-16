@@ -48,7 +48,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogCloseButton,
 } from "@/components/ui/dialog";
 import { t } from "@/i18n";
@@ -357,7 +356,6 @@ export default function RoutinesPanel({
           <Globe size={20} aria-hidden="true" />
           <span className="row-main">
             <span className="row-title">{t("library.sharedRow")}</span>
-            <span className="row-sub">{t("library.sharedRowText")}</span>
           </span>
           <ChevronRight className="chev" size={20} aria-hidden="true" />
         </Link>
@@ -372,7 +370,12 @@ export default function RoutinesPanel({
           }
         }}
       >
-        <DialogContent size="full" className="routine-dialog">
+        <DialogContent
+          size="full"
+          className="routine-dialog"
+          // The title says it all; there is no description line.
+          aria-describedby={undefined}
+        >
           <DialogHeader className="has-close">
             <div className="dialog-header-text">
               <DialogTitle>
@@ -380,9 +383,6 @@ export default function RoutinesPanel({
                   ? t("routines.edit")
                   : t("routines.create")}
               </DialogTitle>
-              <DialogDescription>
-                {t("routines.editorDescription")}
-              </DialogDescription>
             </div>
             <DialogCloseButton />
           </DialogHeader>

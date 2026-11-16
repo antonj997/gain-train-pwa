@@ -25,6 +25,7 @@ import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
 import { usePlanDaySheet } from "@/hooks/usePlanDaySheet";
 import { reducedMotion, useUndoEntries } from "@/hooks/useMessages";
 import { useTipTarget } from "@/hooks/useTipTarget";
+import { tipUsed } from "@/lib/tip-store";
 import {
   EASE as EASE_CURVES,
   MOTION,
@@ -110,7 +111,6 @@ const ringAt = (box: Box, x = box.x, scale = 1) =>
  */
 export default function WeekCard({ completed, goal, day, planned }: Props) {
   const { t, language } = useT();
-  const tipRef = useTipTarget<HTMLDivElement>("weekStrip", { tap: true });
   // Moving and skipping, and the day sheet: shared with the Calendar tab.
   const {
     plans,
@@ -126,6 +126,7 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     day,
     undoScope: WEEK_SCOPE,
     onMoved: ({ from, to, swapped, text, start }) => {
+      tipUsed("weekStrip");
       say(text);
       // A step into another week: the strip goes there, the day keeps its ring.
       const there = weekOffsetOf(to, day);
@@ -137,6 +138,9 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
       void animateSkip(date);
     },
   });
+  // The one-time tip teaches the hold-and-drag, so only with a plan to move;
+  // moving a workout counts as using it.
+  const tipRef = useTipTarget<HTMLDivElement>(plans.length > 0 && "weekStrip");
   // The week the strip shows, in weeks from today's (0 most of the time).
   const [shown, setShown] = useState(0);
   // Weeks ahead opened with the head's arrows: the strip stays on them (no

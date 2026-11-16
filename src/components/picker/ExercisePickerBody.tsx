@@ -9,11 +9,7 @@ import {
   type MutableRefObject,
 } from "react";
 import { Search, Check, Plus, X } from "lucide-react";
-import {
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useData } from "@/contexts/useData";
 import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
 import FacetChips from "@/components/FacetChips";
@@ -283,15 +279,6 @@ export default function ExercisePickerBody({
                 ? t("picker.chooseOne")
                 : t("picker.addExercises")}
         </DialogTitle>
-        <DialogDescription
-          className={"picker-description" + (searching ? " is-searching" : "")}
-        >
-          {creating
-            ? t("picker.createDescription")
-            : single
-              ? t("picker.tapToChoose")
-              : t("picker.chooseMany")}
-        </DialogDescription>
       </DialogHeader>
       {creating ? (
         <div className="stack">
@@ -470,7 +457,12 @@ export default function ExercisePickerBody({
                         {"equipment" in e && e.equipment
                           ? ` · ${equipmentLabel(e.equipment)}`
                           : ""}
-                        {recent.has(e.id) ? ` · ${t("picker.recent")}` : ""}
+                        {/* Not in the recent group or filter, which say it already. */}
+                        {recent.has(e.id) &&
+                        filter !== "Recent" &&
+                        group.title !== t("exercises.filterRecent")
+                          ? ` · ${t("picker.recent")}`
+                          : ""}
                       </>
                     }
                     end={

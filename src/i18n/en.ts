@@ -52,14 +52,15 @@ export const en = {
 
   // Finish summary
   "finish.atLeastOne": "Complete at least one set",
-  "finish.willBeSaved": "{sets} will be saved",
-  "finish.leftOut": "{saved} · {unchecked} left out",
+  "finish.leftOut": "{unchecked} left out",
 
   // Common
   "common.back": "Back",
   "common.done": "Done",
   "common.off": "Off",
+  "common.on": "On",
   "common.cancel": "Cancel",
+  "common.save": "Save",
   "common.saving": "Saving…",
   "common.delete": "Delete",
   "common.edit": "Edit",
@@ -69,12 +70,11 @@ export const en = {
 
   // Settings
   "settings.title": "Settings",
-  "settings.eyebrow": "App and account",
   "settings.signedInSyncing": "Signed in · syncing…",
   "settings.signedInPending": "Signed in · {count} pending",
   "settings.signedInSynced": "Signed in · synced",
-  "settings.phoneSignIn": "Saved on this phone · sign in to sync",
-  "settings.phoneSignInAgain": "Saved on this phone · sign in again to sync",
+  "settings.phoneSignIn": "Saved on this phone",
+  "settings.phoneSignInAgain": "Sign in again to sync",
   "settings.notSignedIn": "Not signed in",
   "settings.training": "Training",
   "settings.bodyweight": "Bodyweight",
@@ -92,28 +92,21 @@ export const en = {
   "settings.usePhoneLog": "Use this phone's own log instead",
   "settings.switchFailed": "Could not switch logs. Try again.",
   "settings.noteSignedIn":
-    "Sync runs when connected while the app is open, and when you return. Your phone keeps a local copy.",
+    "Syncs while the app is open and online. This phone keeps a copy.",
   "settings.noteSessionEnded":
-    "Your session ended, so this account's log is not syncing. It stays on this phone; sign in again to sync it.",
-  "settings.notePhone":
-    "An account is optional. Sign in to sync across devices; your phone-only log stays separate until you choose to copy it.",
+    "Your session ended, so this log isn't syncing. It stays on this phone.",
   "settings.signInPromptTitle": "Saved on this phone only",
-  "settings.signInPromptText":
-    "Sign in to back up your log and use it on your other devices.",
+  "settings.signInPromptText": "Sign in to back up and sync your log.",
   "settings.signInPromptButton": "Sign in to sync",
   "settings.signedInOffline": "Offline · saved on this phone",
-  "settings.goalDescription":
-    "How many workouts you aim for each week, Monday to Sunday.",
+  "settings.goalDescription": "Weeks run Monday to Sunday.",
   "settings.setGoal": "Set a weekly goal",
   "settings.fewerWorkout": "One fewer workout",
   "settings.moreWorkout": "One more workout",
   "settings.perWeekUnit": { one: "workout a week", other: "workouts a week" },
-  "settings.restDescription": "Starts after checking a set as done.",
   "settings.restTime": "Rest time",
   "settings.restSound": "Sound when rest ends",
   "settings.vibrate": "Vibrate when a set is done",
-  "settings.vibrateNote":
-    "Vibration is off by default and works on supported devices.",
   "settings.lightAppearance": "Light appearance",
 
   // Train
@@ -135,8 +128,7 @@ export const en = {
   "home.allRoutines": "All routines",
   "home.startSuggestions": "Start with suggestions",
   "home.emptyRoutinesTitle": "A routine makes next time easier",
-  "home.emptyRoutinesText":
-    "Save a workout as a routine after finishing, or create one now.",
+  "home.emptyRoutinesText": "Save a workout as a routine, or create one.",
   "home.createRoutine": "Create a routine",
   "home.goalProgress": "{done} of {goal} workouts",
   "home.dayDone": ", workout done",
@@ -155,18 +147,15 @@ export const en = {
   "home.groupNext": "Next: {name}",
   "home.todayMenu": "More for today",
   "home.switchWorkout": "Change workout",
-  "home.switchText": "Pick another routine to start today.",
   "home.showPlan": "View plan",
   "home.yourRoutines": "Your routines",
   "home.all": "All",
   "home.emptyWorkout": "Empty workout",
   "home.todayNothing": "nothing planned",
-  "home.emptyText": "Add exercises as you go",
-  "home.startEmpty": "Start empty workout",
-  "home.suggestOldestRoutine": "Or {name}, the routine you did longest ago",
+  "home.suggestOldestRoutine": "Or {name}, done longest ago",
   "home.suggestFirstRoutine": "Or {name}, your first routine",
   "week.dayLabel": "{day}: {title}",
-  "week.dayHint": "Tap for options; hold and drag to another day to move it.",
+  "week.dayHint": "Tap for options. Hold and drag to move.",
   "week.dragTo": "{name} → {day}",
   "week.swapWith": "Swaps with {name}",
   "week.passed": "Already passed",
@@ -234,8 +223,6 @@ export const en = {
   "crash.copied": "Copied",
   "crash.copy": "Copy details",
   "notFound.title": "Page not found",
-  "notFound.eyebrow": "Gain Train",
-  "notFound.text": "Return to your workout log to keep training.",
   "notFound.back": "Back to workouts",
   "undo.label": "Undo",
   "workout.defaultName": "Workout",
@@ -259,7 +246,7 @@ export const en = {
   "workout.addFirst": "Add your first exercise",
   "workout.removeTitle": "Remove {name}?",
   "workout.removeText":
-    "This exercise contains entered values or completed sets. Removing it deletes all of those sets from this workout.",
+    "Its entered values and checked sets are deleted from this workout.",
   "workout.keepExercise": "Keep exercise",
   "workout.removeExercise": "Remove exercise",
   "workout.discardTitle": "Discard your changes?",
@@ -315,10 +302,11 @@ export const en = {
   "workout.completeOne": "Complete at least one set before saving.",
   "workout.name": "Name",
   "workout.date": "Date",
-  "workout.durationLabel": "Duration (optional, minutes)",
+  "workout.durationLabel": "Duration (min)",
   "workout.autoTimer": "Automatic timer",
   "workout.notRecorded": "Not recorded",
   "workout.details": "Workout details",
+  "workout.keepScreenOn": "Keep screen on",
   "exercise.last": "Last:",
   "exercise.options": "{name} options",
   "exercise.colSet": "Set",
@@ -354,8 +342,7 @@ export const en = {
   "unit.title": "Weight unit",
   "unit.kg": "Kilograms (kg)",
   "unit.lb": "Pounds (lb)",
-  "unit.note":
-    "Applies to every screen. Weights are saved in kg, so switching back is exact.",
+  "unit.note": "Weights are stored in kg, so nothing is lost.",
   "set.optWeight": "Weight",
   "set.optBw": "BW",
   "set.optBwPlus": "BW + {unit}",
@@ -369,11 +356,10 @@ export const en = {
     one: "Delete set and {count} drop",
     other: "Delete set and {count} drops",
   },
-  "set.dropNote":
-    "Done straight after the set above, at a lower weight. No rest in between.",
+  "set.dropNote": "Right after the set above, lighter, with no rest.",
   "set.type": "Type",
   "set.typeOf": "{title} type",
-  "set.loadForSet": "Load for this set",
+  "set.loadForSet": "Load",
   "set.uncheckToChangeType": "Uncheck this set to change its type.",
   "set.uncheckToChangeTypeLoad": "Uncheck this set to change its type or load.",
   "set.addAnotherDrop": "Add another drop",
@@ -415,6 +401,8 @@ export const en = {
   "set.complete": "Complete {label}",
   "set.uncheckToFix": "Uncheck this set to correct its missing values.",
   "set.uncheckToEdit": "Uncheck this set to edit its values.",
+  "set.deleteCheckedTitle": "Delete a checked set?",
+  "set.deleteCheckedNote": "Shown only once.",
   "set.notFilled": "Not filled in",
   "set.dropSr": "Drop:",
   "set.reorderTitle": "Reorder sets",
@@ -524,12 +512,9 @@ export const en = {
   "history.restoreFailed":
     "Could not restore the workout. Try restoring a backup.",
   "history.deleteFailed": "Could not delete this workout. Try again.",
-  "history.chooseDateToBegin":
-    "Choose a date on the calendar to begin your range.",
+  "history.chooseDateToBegin": "Pick a start date on the calendar.",
   "history.noneOnDay": "No workouts on this day",
   "history.noneInPeriod": "No workouts in this period",
-  "history.emptyText":
-    "Choose another date on the calendar or log your next workout.",
   "history.logWorkout": "Log a workout",
   "history.pleaseWait": "Please wait…",
   "history.deleteWorkout": "Delete workout",
@@ -571,7 +556,6 @@ export const en = {
   "history.chooseEndOf": "{date} · choose the end date",
   "history.chooseStartOf": "{date} · choose the start date",
   "history.lastWorkout": "Last workout {date}",
-  "history.tapDay": "Tap a day to see its workouts",
   "history.weekdays": "{weekday}s, {from} – {to}",
 
   // Progress
@@ -594,12 +578,9 @@ export const en = {
   "progress.noSessions": "No sessions in this period",
   "progress.longerPeriod": "Pick a longer period to see earlier exercises.",
   "progress.noMatch": "No matching exercises",
-  "progress.noMatchText":
-    "Try another name or clear your search to see all recorded progress.",
   "progress.clearSearch": "Clear search",
   "progress.emptyTitle": "Your working sets will appear here",
-  "progress.emptyText":
-    "Finish a workout with a working set to see an exact result. Another comparable session gives you a comparison.",
+  "progress.emptyText": "Two comparable sessions show your progress.",
   "progress.startWorkout": "Start a workout",
   "progress.perWeek": "Workouts / week",
   "progress.finishedWeeks": "{change} · finished weeks",
@@ -615,7 +596,7 @@ export const en = {
   "progress.about": "About these stats",
   "progress.comparedWithShort": "compared with",
   "progress.aboutText":
-    "Workouts per week counts Monday–Sunday weeks that are over and have at least one workout; the current week joins once it ends. Working sets leave out warm-ups, cool-downs, drops and cardio; volume is weight × reps for weighted sets, drops included. Cardio adds up the time, distance and calories of checked cardio sets. Time trained adds the recorded durations. Exercises improving compares your latest working result with the last session before the period, or the first session within it. Only comparable load and measure count: estimated strength for weighted sets of 1–10 reps, otherwise reps or seconds at the same load. A dash means there is not enough data.",
+    "Workouts per week counts finished Monday–Sunday weeks with at least one workout. Working sets leave out warm-ups, cool-downs, drops and cardio; volume is weight × reps, drops included. Cardio adds up checked cardio sets. Exercises improving compares your latest working result with the session before the period (or the first in it) at a comparable load: estimated strength for 1–10 reps, otherwise reps or seconds. A dash means not enough data.",
   "progress.noComparison": "No comparison",
   "progress.noChange": "→ No change",
   "overview.latest": "Latest · {date}",
@@ -684,16 +665,15 @@ export const en = {
   "cardio.metricIncline": "Incline %",
   "cardio.metricCalories": "Calories",
   "cardio.metricHeartRate": "Heart rate",
-  "cardio.timeAlways": "Always on: a set needs a time to be checked.",
-  "cardio.paceHint": "Worked out from time and distance, in {unit}. Not saved.",
+  "cardio.timeAlways": "Always on: a set needs a time.",
+  "cardio.paceHint": "From time and distance, in {unit}. Not saved.",
   "cardio.levelHint": "The machine's level or resistance",
   "cardio.heartRateHint": "Average, in bpm",
   "cardio.distanceUnit": "Distance unit",
-  "cardio.fieldsNote":
-    "Saved for {name} for next time. Values you already entered stay saved, and Calendar shows them.",
+  "cardio.fieldsNote": "Saved for {name} for next time.",
   "cardio.fieldsFailed": "Could not save the fields. Try again.",
   "cardio.note":
-    "Cardio is not part of strength bests or volume. A session adds up the checked cardio sets of {name} in one workout.",
+    "Not part of strength records or volume. A session is all checked {name} sets in one workout.",
   "goals.title": "Goals",
   "goals.add": "Add goal",
   "goals.reached": "Reached",
@@ -701,8 +681,7 @@ export const en = {
   "goals.addBodyweight": "Add your bodyweight in Settings to follow this goal.",
   "goals.noSets": "No sets logged yet",
   "goals.reachedOn": "Reached on {date}",
-  "goals.empty":
-    "Aim for a lift or a bodyweight by a date, with or without a plan.",
+  "goals.empty": "Aim for a lift or a bodyweight by a date.",
   "goals.lift": "Lift",
   "goals.bodyweight": "Bodyweight",
   "goals.exercise": "Exercise",
@@ -720,14 +699,12 @@ export const en = {
   "goals.saveFailed": "Could not save the goal. Try again.",
   "goals.edit": "Edit goal",
   "goals.new": "New goal",
-  "goals.description":
-    "A goal stands on its own. A plan can link to it, but it does not need one.",
   "goals.kind": "Kind of goal",
   "goals.choose": "Choose",
   "goals.weightKg": "Weight (kg)",
   "goals.reps": "Reps",
   "goals.repsNote":
-    "One rep compares with your heaviest set. More reps compare with your estimated one-rep max.",
+    "1 rep compares with your heaviest set; more reps with your estimated 1RM.",
   "goals.targetKg": "Target (kg)",
   "goals.todayKg": "Weight today (kg)",
   "goals.by": "By",
@@ -738,10 +715,6 @@ export const en = {
   "goals.keep": "Keep goal",
   "goals.deleted": "Goal deleted",
   "goals.deleteFailed": "Could not delete. The goal is still here; retry.",
-  "goals.eyebrow": {
-    one: "{count} active goal",
-    other: "{count} active goals",
-  },
   "progress.periodChoose": "Period: {period}",
   "progress.allGoals": "All goals",
   "progress.goalsHeading": "Goals",
@@ -759,14 +732,9 @@ export const en = {
   "progress.recordOpen": "{name} {set}, {kinds}, {date}: open the workout",
   "goals.weeks": { one: "{count} week", other: "{count} weeks" },
   "goals.weeklyTitle": "Weekly goal",
-  "goals.weeklyTarget": "{count} {unit}",
-  "goals.setWeeklyText":
-    "Choose how many workouts you aim for each week and see how often you hit it.",
+  "goals.setWeeklyText": "How many workouts you aim for each week.",
   "goals.weekMet": "Met this week",
-  "goals.weekDaysLeft": {
-    one: "{count} day left this week",
-    other: "{count} days left this week",
-  },
+  "goals.weekDaysLeft": { one: "{count} day left", other: "{count} days left" },
   "goals.weekProgressLabel": "This week's workouts",
   "goals.hitRate": {
     one: "Met {met} of {count} finished week",
@@ -801,18 +769,13 @@ export const en = {
 
   // Library: routines
   "library.title": "Library",
-  "library.eyebrow": "Your training setup",
   "library.section": "Library section",
   "library.routines": "Routines",
   "library.exercises": "Exercises",
   "library.plan": "Plan",
-  "library.helpRoutines": "The workouts you repeat. Start them from Train.",
-  "library.helpExercises":
-    "The built-in catalogue plus your own. Tap one for its history and records.",
   "library.searchRoutines": "Search routines",
   "library.searchExercises": "Search exercises",
   "library.sharedRow": "Explore shared routines",
-  "library.sharedRowText": "Routines other people have shared",
   "library.planTitle": "Plan",
   "library.sharedTitle": "Shared routines",
   "routines.find": "Find a routine",
@@ -832,9 +795,7 @@ export const en = {
   "exercise.backToLibrary": "Open Library",
   "exercise.start": "Start workout with this exercise",
   "exercise.neverTitle": "Not logged yet",
-  "exercise.neverText":
-    "Log a set of {name} and its results, sessions and records show up here.",
-  "exercise.historyNote": "Every finished workout with {name}, newest first.",
+  "exercise.neverText": "Log a set of {name} to see results here.",
   "records.e1rm": "Best est. 1RM",
   "records.heaviest": "Heaviest weight",
   "records.mostReps": "Most reps",
@@ -845,7 +806,7 @@ export const en = {
   "records.reps": { one: "{count} rep", other: "{count} reps" },
   "records.empty": "Records show up after your first checked working set.",
   "records.note":
-    "Checked sets only; warm-ups never count. Estimated 1RM (Epley) uses weighted sets of up to 10 reps. Drops count towards the heaviest weight and session volume only. A PR in a workout is a new heaviest weight or best set volume.",
+    "Checked sets only, never warm-ups. Est. 1RM (Epley) uses weighted sets of up to 10 reps. Drops count only towards heaviest weight and session volume. A PR in a workout is a new heaviest weight or best set volume.",
   "records.pr": "PR",
   "records.prLabel": "Record: {kinds}",
   "records.tile": "Records",
@@ -857,8 +818,7 @@ export const en = {
   "routines.lastDone": "last done {when}",
   "routines.neverDone": "never done",
   "routines.options": "{name} options",
-  "routines.empty":
-    "Plan your usual exercises and sets once, then start them together.",
+  "routines.empty": "Plan exercises and sets once, then start them together.",
   "routines.unfinished": "Unfinished routine: {name}.",
   "routines.untitled": "Untitled routine",
   "routines.keptOnPhone": "Kept on this phone.",
@@ -869,8 +829,6 @@ export const en = {
   "routines.editNamed": "Edit {name}",
   "routines.edit": "Edit routine",
   "routines.create": "Create routine",
-  "routines.editorDescription":
-    "Plan sets, load and set types. Your unfinished work is kept on this phone when you close this form.",
   "routines.name": "Routine name",
   "routines.addExercises": "Add exercises",
   "routines.storageUnavailable":
@@ -963,7 +921,7 @@ export const en = {
   "exercises.unhideExercise": "Unhide exercise",
   "exercises.hideExercise": "Hide exercise",
   "exercises.hiddenNote":
-    "Hidden exercises leave the picker and these lists. Saved workouts keep them. Find them under Hidden.",
+    "Hidden exercises leave the picker and lists. Saved workouts keep them.",
   "exercises.lastUsed": "last {when}",
   "exercises.neverLogged": "never logged",
   "exercises.bestSet": "best {set}",
@@ -1009,7 +967,7 @@ export const en = {
   "sharedRoutines.limitTotal":
     "You can share up to 100 routines. Stop sharing some first.",
   "sharedRoutines.menuNote":
-    "Anyone signed in can add a copy, with your name if you set one in Settings. Only the exercises and sets are shared, not your weights or reps. Saving changes updates the shared copy.",
+    "Anyone signed in can add a copy, with your name if you set one. Only exercises and sets are shared, not your weights or reps. Saving changes updates the copy.",
   "sharedPreview.weight": "Weight",
   "sharedPreview.bodyweight": "Bodyweight",
   "sharedPreview.bodyweightPlus": "Bodyweight + weight",
@@ -1029,10 +987,9 @@ export const en = {
     "It leaves the shared library. Your routine stays, and copies others added are not affected.",
   "sharedPreview.keepSharing": "Keep sharing",
   "settings.name": "Name",
-  "settings.nameNote": "Shown on routines and exercises you share.",
   "name.title": "Your name",
   "name.description":
-    "Shown as “by …” on routines and exercises you share. Leave it empty to share without a name.",
+    "Shown as “by …” on what you share. Leave it empty to share without a name.",
   "name.label": "Name",
   "name.placeholder": "e.g. Anna",
   "name.save": "Save name",
@@ -1044,14 +1001,13 @@ export const en = {
   "name.loadFailed": "Could not load your name.",
   "name.offline": "Connect to change your name.",
   "name.tooLong": "Use at most {max} characters.",
-  "editor.description":
-    "Names in completed workouts stay as originally recorded. Unfinished edits are kept when you close this form.",
+  "editor.description": "Renaming doesn't change finished workouts.",
   "editor.name": "Name",
   "editor.twin": "You already have an exercise called {name}.",
   "editor.note": "Note",
   "editor.alsoTrains": "Also trains",
   "editor.alsoTrainsHint":
-    "Category filters and plan suggestions find it under these too.",
+    "Filters and plan suggestions find it under these too.",
   "editor.save": "Save exercise",
   "editor.storageUnavailable":
     "Storage is unavailable. Keep this form open until saved.",
@@ -1059,10 +1015,6 @@ export const en = {
   "picker.create": "Create exercise",
   "picker.chooseOne": "Choose an exercise",
   "picker.addExercises": "Add exercises",
-  "picker.createDescription":
-    "Create it once and use it in any workout. Unfinished details are kept on this phone.",
-  "picker.tapToChoose": "Tap an exercise to choose it.",
-  "picker.chooseMany": "Choose one or more exercises.",
   "picker.exerciseName": "Exercise name",
   "picker.createAndAdd": "Create and add",
   "picker.backToExercises": "Back to exercises",
@@ -1074,7 +1026,7 @@ export const en = {
   "picker.recent": "Recent",
   "picker.favourites": "Favourites",
   "picker.results": "Exercise search results",
-  "picker.noMatch": "No matching exercises. Try another search or create one.",
+  "picker.noMatch": "No matching exercises.",
   "picker.createNamed": "Create “{name}”…",
   "search.filter": "Filter",
   "search.showFilters": "Show filters",
@@ -1114,31 +1066,25 @@ export const en = {
   "plan.pausedToast": "Plan paused",
   "plan.resumedToast": "Plan resumed",
   "plan.pausedNote":
-    "Paused: Train shows nothing from this plan, and another plan can use its dates.",
-  "plan.intro":
-    "Optional. Train shows today's entry; nothing changes anywhere while you have no plan.",
+    "Paused: not shown on Train, and its dates are free for another plan.",
   "plan.plans": "Plans",
   "plan.repeatsWeekly": "repeats weekly",
   "plan.cycle": "{count}-week cycle",
   "plan.new": "New plan",
   "plan.newGroup": "New group",
-  "plan.groupNote":
-    "A group such as Legday holds the routines you want for that day. You can plan it, or one of the day types {types}, which suggest exercises by category.",
   "plan.yourWeeks": "Your weeks",
   "plan.yourWeek": "Your week",
   "plan.weekN": "Week {n}",
   "plan.cellLabel": "{day}: {text}",
   "plan.cellLabelWeek": "{day}, week {week}: {text}",
   "plan.empty": "empty",
-  "plan.templateNote":
-    "Tap a day to choose a routine, a day type, a group or rest. The weeks repeat from the first week of the phase.",
+  "plan.templateNote": "The weeks repeat from the phase's first week.",
   "plan.goalsHeading": "Goals this plan works toward",
   "plan.by": "By {date}",
   "plan.linked": "Linked",
   "plan.nothingPlanned": "nothing planned",
   "plan.upcoming": "Upcoming",
-  "plan.upcomingNote":
-    "Tap a day to change just that date. Past days cannot be changed.",
+  "plan.upcomingNote": "A change here applies to that date only.",
   "plan.needName": "Give the plan a name.",
   "plan.needPeriod": "Choose a start date and an end date on or after it.",
   "plan.overlap":
@@ -1147,8 +1093,6 @@ export const en = {
   "plan.saved": "Plan saved",
   "plan.saveFailed": "Could not save the plan. Try again.",
   "plan.edit": "Edit plan",
-  "plan.description":
-    "Nothing here is required. Train shows today's entry while the plan is active.",
   "plan.name": "Name",
   "plan.namePlaceholder": "Autumn block",
   "plan.repeatsEvery": "Repeats every (weeks)",
@@ -1205,22 +1149,19 @@ export const en = {
   "plan.cycleDeload": "{normal} + {deload} deload",
   "plan.advanced": "Advanced",
   "plan.groupsExplain":
-    "A group lets one plan day offer a choice of routines, e.g. Legday: Legs A or Legs B.",
+    "A group lets a plan day offer a choice, e.g. Legday: Legs A or Legs B.",
   "planNote.week": "Plan week {week}: {weight}",
   "planNote.deloadLoad": "Deload week: {weight}",
   "planNote.deload": "Deload week",
   "prog.heading": "Progression",
-  "prog.intro":
-    "Increase lifts over the phase. Add a lift, or all of a routine's; each gets a suggested weekly step you can change.",
+  "prog.intro": "Each lift gets a suggested weekly step you can change.",
   "prog.addExercise": "Add exercise",
   "prog.addRoutine": "All exercises in a routine",
-  "prog.addRoutineNote":
-    "Adds each weighted exercise in the routine that isn't here yet.",
+  "prog.addRoutineNote": "Adds its weighted exercises that aren't here yet.",
   "prog.addedFromRoutine": "Added {lifts} from {name}",
   "prog.nothingToAdd": "Nothing new to add from {name}",
   "prog.tableLabel": "Planned working weight per week",
-  "prog.tableNote":
-    "{lifts}. Tap a lift or a week to change it; grey weeks are deloads.",
+  "prog.tableNote": "{lifts} · grey weeks are deloads",
   "prog.lift": "Lift",
   "prog.weekShort": "W{n}",
   "prog.deloadShort": "D",
@@ -1228,7 +1169,6 @@ export const en = {
   "prog.enterStart": "Enter a start weight",
   "prog.needStart":
     "Enter a start weight and a target for {name} under Progression.",
-  "prog.sheetDescription": "The working weight for these reps, week by week.",
   "prog.reps": "Reps",
   "prog.startKg": "Start (kg)",
   "prog.fromSet": "From your log: {set} on {date}.",
@@ -1272,7 +1212,7 @@ export const en = {
   "prog.weekWeight": "Week {n} weight in kg",
   "prog.resetWeek": "Reset week {n} to the plan",
   "prog.weeksNote":
-    "Type over any week to change it; the other weeks keep to the line. A deload week lifts the week before, lighter.",
+    "Type over a week to change it. A deload week takes the week before, lighter.",
   "prog.addGoal": "Also add as a goal",
   "prog.linkedGoal": "Linked goal: {goal}",
   "prog.goalRepsNote":
@@ -1280,8 +1220,6 @@ export const en = {
   "prog.remove": "Remove from progression",
   "group.saveFailed": "Could not save. Try again.",
   "group.edit": "Edit group",
-  "group.description":
-    "A group is a day you can plan, such as Legday. Train offers its routines and can suggest exercises.",
   "group.name": "Name",
   "group.namePlaceholder": "Legday",
   "group.routines": "Routines",
@@ -1522,13 +1460,10 @@ export const en = {
   "profile.pendingSignIn": "Saved on this device. Sign in to sync.",
   "profile.synced": "Profile synced.",
   "profile.cleared": "Bodyweight cleared on this device.",
-  "profile.none": "No bodyweight saved.",
   "profile.savedDevice": "Saved on this device.",
-  "profile.intro": "Your bodyweight appears when you choose BW in a workout.",
-  "profile.label": "Bodyweight (kg)",
+  "profile.intro": "Used for bodyweight (BW) sets.",
+  "profile.label": "Weight (kg)",
   "profile.placeholder": "e.g. 75.5",
-  "profile.save": "Save bodyweight",
-  "profile.clearHint": "Leave blank and save to clear your bodyweight.",
   "profile.retry": "Retry profile sync",
   "auth.offline":
     "Connect to the internet to use your account. Your phone log is still available.",
@@ -1543,12 +1478,10 @@ export const en = {
   "auth.titleUpdate": "Choose a new password",
   "auth.titleReset": "Reset your password",
   "auth.titleSignin": "Sign in to sync",
-  "auth.textUpdate":
-    "Enter a new password for your account. Use at least 8 characters.",
-  "auth.textReset":
-    "Enter your account email and we’ll send a link to choose a new password.",
+  "auth.textUpdate": "At least 8 characters.",
+  "auth.textReset": "We'll email you a link to choose a new password.",
   "auth.textSignin":
-    "Sync your workout log across devices. You can keep logging on this phone without an account.",
+    "Optional: you can keep logging on this phone without an account.",
   "auth.linkExpired":
     "This reset link is unavailable or has expired. Request a new link below.",
   "auth.email": "Email",
@@ -1572,12 +1505,9 @@ export const en = {
   // Feedback and the admin inbox
   "settings.help": "Help and feedback",
   "settings.feedback": "Send feedback",
-  "settings.feedbackNote": "Report a bug or suggest a feature.",
   "settings.admin": "Admin",
-  "settings.adminNote": "Reports from everyone",
   "settings.adminOpen": { one: "{count} open", other: "{count} open" },
   "feedback.title": "Send feedback",
-  "feedback.description": "Tell us what went wrong or what you'd like to see.",
   "feedback.kind": "Type",
   "feedback.bug": "Bug",
   "feedback.feature": "Feature idea",
@@ -1622,7 +1552,7 @@ export const en = {
     "You can send up to {max} reports a day. Try again tomorrow.",
   "feedback.signInTitle": "Sign in to send feedback",
   "feedback.signInText":
-    "Reports are sent with your account, so you can follow what happens to them.",
+    "Reports are sent with your account so you can follow them.",
   "feedback.signIn": "Sign in",
   "feedback.mine": "My reports",
   "feedback.mineEmpty": "Reports you send show up here with their status.",
@@ -1676,8 +1606,7 @@ export const en = {
   "admin.sentBy": "{who} · {when}",
   "admin.developer": "Developer",
   "slowmo.title": "Slow motion",
-  "slowmo.note":
-    "Slows down every animation so you can review it. Only for admins, on this device.",
+  "slowmo.note": "Slows every animation on this device.",
   "slowmo.reducedNote":
     "Reduce Motion is on, so only the motion that remains is slowed.",
   "slowmo.option": "{scale}×",
@@ -1698,16 +1627,12 @@ export const en = {
   "menu.addedToWorkout": "{name} added to the workout",
   "tips.label": "Tip",
   "tips.ok": "OK",
-  "tips.weekStrip": "Tap the week to open the calendar",
-  "tips.swipeRoutine": "Swipe right to start straight away",
+  "tips.weekStrip": "Hold a workout and drag it to another day",
+  "tips.swipeRoutine": "Swipe right to start",
   "tips.libraryExercise": "Press and hold for more options",
-  "tips.calendarDay": "Press and hold, then drag to choose a period",
-  "tips.setBadge": "Tap for warm-up, drop set or delete",
-  "tips.swipeSet": "Swipe left to delete a set",
-  "tips.unitHeader": "Switch between kg and lb here",
-  "tips.repsHeader": "Choose reps, hold or reps + hold",
+  "tips.calendarDay": "Hold and drag to pick a period",
+  "tips.swipeSet": "Swipe left to delete",
   "settings.showTips": "Show tips again",
-  "settings.showTipsHint": "The one-time tips show again on this phone",
   "settings.tipsReset": "Tips will show again",
   "exercises.restoreFailed":
     "Could not restore the exercise. Retry from a backup.",
@@ -1769,8 +1694,8 @@ export const en = {
   "set.fillTarget": "Tap to fill in the target",
   "set.fillPrevious": "Tap to fill in last time's result",
   "set.noLoadSr": "{label}: no load",
-  "set.noneExplain": "None = counted without a load, for example a plank.",
-  "set.rirTitle": "Reps in reserve (RIR) · optional",
+  "set.noneExplain": "None = no load, e.g. a plank.",
+  "set.rirTitle": "Reps in reserve (RIR)",
   "set.addRir": "Add RIR",
   "set.rirNone": "No RIR",
   "set.rirAsk": "RIR?",
@@ -1780,12 +1705,10 @@ export const en = {
   "pad.fillTarget": "Fill in {value}",
   "workout.deloadTag": "Deload",
   "workout.deloadTagSr": "Deload week: lighter targets",
-  "workout.note": "Note for the workout (optional)",
-  "workout.noteLabel": "Workout note",
+  "workout.noteLabel": "Note",
   "finish.recordsLabel": "Records in this workout",
   "settings.askRir": "Ask for RIR",
-  "settings.askRirNote":
-    "After you check a set, choose reps in reserve for 4 seconds. Skip leaves it empty.",
+  "settings.askRirNote": "Reps in reserve, after each checked set.",
   // The plan's status page (/library/plan/:id)
   "planStatus.edit": "Edit",
   "planStatus.editLabel": "Edit {name}",
@@ -1818,8 +1741,7 @@ export const en = {
   "planStatus.adherenceGood": "On plan",
   "planStatus.adherenceBehind": "A little behind",
   "planStatus.adherenceOff": "Plan not followed",
-  "planStatus.adherenceOffTip":
-    "Fewer workouts a week can be easier to keep. Edit the plan to fit your weeks.",
+  "planStatus.adherenceOffTip": "Fewer workouts a week can be easier to keep.",
   "planStatus.percent": "{pct}%",
   "planStatus.doneOf": "{done} of {planned} planned workouts done",
   "planStatus.nothingYet": "No planned workout has passed yet.",
@@ -1833,7 +1755,7 @@ export const en = {
   "planStatus.skipped": { one: "{count} skipped", other: "{count} skipped" },
   "planStatus.notMissed": "{changes} (not counted as missed)",
   "planStatus.pausedCount":
-    "The app does not save when a plan was paused, so days count up to your last workout in the plan.",
+    "Pauses aren't saved, so days count up to your last workout in the plan.",
   "planStatus.weeksLabel": "Planned workouts by week",
   "planStatus.weekSr": "Week {week}: {text}",
   "planStatus.srDone": { one: "{count} done", other: "{count} done" },
@@ -1870,9 +1792,8 @@ export const en = {
   "planStatus.muscleFirstWeek":
     "The average shows once the plan's first week is over.",
   "planStatus.muscleUnder": {
-    one: "On average {groups} is under the guide. Add a couple of sets if it is to grow.",
-    other:
-      "On average {groups} are under the guide. Add a couple of sets if they are to grow.",
+    one: "Under the guide on average: {groups}.",
+    other: "Under the guide on average: {groups}.",
   },
   "planStatus.goals": "Goals in the plan",
   "planStatus.goalNow": "Now {value}",
@@ -1901,11 +1822,42 @@ export const en = {
   "calendarPlan.perWeek": { one: "workout a week", other: "workouts a week" },
   "calendarPlan.weeks": { one: "week", other: "weeks" },
   "calendarPlan.upcoming": "Coming workouts",
-  "calendarPlan.upcomingHint": "tap to move",
   "calendarPlan.noneAhead": "Nothing more is planned in this plan.",
   "calendarPlan.status": "See how the plan is going",
   "calendarPlan.none": "No plan",
   "calendarPlan.noneText":
-    "Plan which routine on which day, with deload weeks and progression. The days show up here in the calendar.",
+    "Plan routines by day, with deloads and progression.",
   "calendarPlan.create": "Create a plan",
+  // Lift goals measured as strength, with check-ins (16 November 2026).
+  "goals.statusUp": "Going up",
+  "goals.statusFlat": "Steady",
+  "goals.statusDown": "Going down",
+  "goals.statusInsufficient": "Too little data",
+  "goals.approx": "≈ {kg}",
+  "goals.nowStrength": "≈ {kg} est.",
+  "goals.sourceLine": "{set}, {date}",
+  "goals.paceOn": "On pace for the date",
+  "goals.paceOff": "Not on pace for the date yet",
+  "goals.ready": "Ready to test: try {lift}",
+  "goals.checkinDue": "Check-in this week: {set}",
+  "goals.checkinHow":
+    "As many reps as you can at that weight, in any workout with {name} this week.",
+  "goals.checkinSkip": "Skip",
+  "goals.checkinSkipLabel": "Skip this week's check-in for {title}",
+  "goals.checkinSkipped":
+    "Check-in skipped. The next one comes in about 4 weeks.",
+  "goals.checkinSkipFailed": "Could not skip the check-in. Try again.",
+  "goals.checkinLast": "Last check-in: ≈ {kg}, {date}",
+  "goals.strengthNote":
+    "Measured as estimated 1RM from your best set of 1–10 reps each session. Reached when you lift {lift}.",
+  "goals.repsNoteStrength":
+    "Progress is your estimated 1RM from your best set of 1–10 reps each session. The goal is reached when you lift the weight for the reps.",
+  "progress.goalReady": "Ready to test",
+  "progress.goalCheckin": "Check-in this week",
+  "planStatus.goalReady": "ready to test {lift}",
+  "planStatus.goalCheckin": "check-in this week",
+  "goalTarget.checkin": "Check-in {value}",
+  "goalTarget.test": "Test {value}",
+  "goalTarget.max": "max",
+  "workout.goalMark": "Goal: {title}",
 };

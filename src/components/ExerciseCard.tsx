@@ -1,14 +1,6 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
-import {
-  memo,
-  useCallback,
-  useContext,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-} from "react";
-import { ChevronDown, MoreHorizontal, Plus, Timer } from "lucide-react";
+import { memo, useCallback, useContext, useId, useRef, useState } from "react";
+import { ChevronDown, MoreHorizontal, Plus, Target, Timer } from "lucide-react";
 import {
   type Exercise,
   type WorkoutSet,
@@ -76,8 +68,8 @@ import { useStableCallback } from "@/hooks/useStableCallback";
 import SetLine from "@/components/workout/SetLine";
 import { NumberPadContext } from "@/components/workout/number-pad-context";
 import { padFields } from "@/lib/number-pad";
+import { padFieldUnder } from "@/components/workout/pad-hit";
 import SetSwipeRow from "@/components/gestures/SetSwipeRow";
-import { useTipTarget } from "@/hooks/useTipTarget";
 import { motionMs } from "@/lib/slow-motion";
 import SetSheet from "@/components/workout/SetSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
@@ -130,7 +122,12 @@ export type ExerciseCardProps = {
    * Each set's target (double progression) by set id: the text under
    * Previous ("Target 87.5 × 5") and what a tap on it fills in.
    */
-  targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
+  targets?: ReadonlyMap<
+    string,
+    { text: string; source: FillSource; label?: string }
+  >;
+  /** An open lift goal for the exercise: a small mark by the name ("110 × 1"). */
+  goalMark?: { text: string; label: string };
   /** The workout is in a plan's deload week: a Deload tag by the name. */
   deload?: boolean;
   /** After a set is checked, offer its reps in reserve for a few seconds. */
@@ -213,6 +210,7 @@ function ExerciseCard({
   onSetDone,
   records,
   targets,
+  goalMark,
   deload = false,
   askRir = false,
   restChip = false,
@@ -290,20 +288,8 @@ function ExerciseCard({
     isDrop(sets[index])
       ? []
       : sets.slice(index + 1, dropGroup(sets, index).end).map((x) => x.id);
-  // One-time tips, pointed at the headings and the first set's badge.
+  // The one-time swipe tip goes on the first set of a live workout.
   const tips = mode === "log";
-  const unitTip = useTipTarget<HTMLButtonElement>(tips && "unitHeader", {
-    tap: true,
-  });
-  const repsTip = useTipTarget<HTMLButtonElement>(tips && "repsHeader", {
-    tap: true,
-  });
-  const [badgeEl, setBadgeEl] = useState<HTMLElement | null>(null);
-  const badgeTip = useTipTarget<HTMLElement>(tips && "setBadge", { tap: true });
-  useEffect(() => badgeTip(badgeEl), [badgeEl, badgeTip]);
-  const card = useCallback((node: HTMLElement | null) => {
-    setBadgeEl(node?.querySelector<HTMLElement>(".set-badge") ?? null);
-  }, []);
   const openSet = useCallback(
     (setId: string) => setSheet({ kind: "set", setId }),
     [],
@@ -338,6 +324,20 @@ function ExerciseCard({
     },
     [pad, mode],
   );
+  // A tap on a set's load or reps while the Set sheet is open closes the
+  // sheet and opens the pad on that field in the same tap; the field keeps
+  // focus (with a mouse) instead of the badge getting it back.
+  const toPad = useRef(false);
+  const sheetPressOutside = (
+    event: CustomEvent<{ originalEvent: PointerEvent }>,
+  ) => {
+    if (!pad) return;
+    const hit = padFieldUnder(event.detail.originalEvent);
+    if (!hit) return;
+    toPad.current = true;
+    close();
+    pad.open(hit.setId, hit.field);
+  };
   const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
   // "Reps + hold" changes the count to reps and is remembered for the exercise.
   const chooseCount = (choice: CountChoice) => {
@@ -377,13 +377,13 @@ function ExerciseCard({
   const targetOf = (index: number) => {
     const found = sets[index] && targets?.get(sets[index].id);
     return found
-      ? labelSet({ ...sets[index], ...found.source } as WorkoutSet, false)
+      ? (found.label ??
+          labelSet({ ...sets[index], ...found.source } as WorkoutSet, false))
       : undefined;
   };
 
   return (
     <section
-      ref={card}
       className="card ex-card"
       aria-labelledby={headingId}
       data-unit={weightUnit}
@@ -395,6 +395,19 @@ function ExerciseCard({
             <h2 id={headingId} className="ex-title">
               {ex.name}
             </h2>
+            {goalMark && mode === "log" && (
+              <span
+                className="ex-goal"
+                role="img"
+                aria-label={goalMark.label}
+                title={goalMark.label}
+              >
+                <Target size={13} strokeWidth={2.4} aria-hidden="true" />
+                <span className="ex-goal-text" aria-hidden="true">
+                  {goalMark.text}
+                </span>
+              </span>
+            )}
             {deload && mode === "log" && (
               <span className="ex-tag" title={t("workout.deloadTagSr")}>
                 <span aria-hidden="true">{t("workout.deloadTag")}</span>
@@ -471,7 +484,6 @@ function ExerciseCard({
           {/* The headings pick the unit and the count; the rest of Load and
               count is in the exercise's menu. */}
           <button
-            ref={unitTip}
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
@@ -482,7 +494,6 @@ function ExerciseCard({
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           <button
-            ref={repsTip}
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
@@ -505,6 +516,8 @@ function ExerciseCard({
           tip={tips && i === 0}
           entering={entering === s.id}
           onEntered={entered}
+          // A live workout's checked set asks before its first swipe-delete.
+          checked={mode === "log" && !unlockChecked && s.done}
         >
           <SetLineMemo
             set={s}
@@ -567,6 +580,12 @@ function ExerciseCard({
           open={openSetId !== null}
           onClose={close}
           contentRef={setSheetRef}
+          onPointerDownOutside={sheetPressOutside}
+          onCloseAutoFocus={(event) => {
+            if (!toPad.current) return;
+            toPad.current = false;
+            event.preventDefault();
+          }}
           badge={setBadge(sets, shownIndex)}
           previous={previousOf(shownIndex)}
           target={mode === "log" ? targetOf(shownIndex) : undefined}

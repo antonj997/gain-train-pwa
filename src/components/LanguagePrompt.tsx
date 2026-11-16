@@ -36,7 +36,7 @@ export default function LanguagePrompt() {
       open
       onClose={() => setLanguage("en")}
       title="Choose your language · Välj språk"
-      description="You can change it later in Settings · Du kan ändra det senare i Inställningar"
+      description="Change it later in Settings · Ändra senare i Inställningar"
     >
       <LanguageChoices onChoose={setLanguage} />
     </Sheet>

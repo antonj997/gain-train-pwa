@@ -44,7 +44,7 @@ export default function ProfileForm() {
           : bodyWeightKg === null
             ? saved
               ? t("profile.cleared")
-              : t("profile.none")
+              : ""
             : t("profile.savedDevice");
   return (
     <section className="profile-section">
@@ -60,7 +60,7 @@ export default function ProfileForm() {
             maxLength={12}
             placeholder={t("profile.placeholder")}
             value={draft}
-            aria-describedby={`profile-weight-help${fieldError ? " profile-weight-error" : ""}`}
+            aria-describedby={fieldError ? "profile-weight-error" : undefined}
             aria-invalid={!!fieldError}
             onChange={(event) => {
               setDraft(event.target.value);
@@ -69,12 +69,9 @@ export default function ProfileForm() {
             }}
           />
           <button className="btn-primary" type="submit" disabled={!editing}>
-            {t("profile.save")}
+            {t("common.save")}
           </button>
         </div>
-        <p className="small-note" id="profile-weight-help">
-          {t("profile.clearHint")}
-        </p>
         <Reveal>
           {fieldError && (
             <p className="error-text" role="alert" id="profile-weight-error">
@@ -90,7 +87,7 @@ export default function ProfileForm() {
           )}
         </Reveal>
         <Reveal>
-          {!error && (
+          {!error && saveMessage && (
             <p className="small-note profile-save-state" role="status">
               {saveMessage}
             </p>

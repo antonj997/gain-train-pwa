@@ -10,12 +10,19 @@ import type { SetBadgeInfo } from "@/data/drops";
 export default function SetBadge({
   badge,
   editing = false,
+  locked = false,
   onClick,
 }: {
   badge: SetBadgeInfo;
   /** The Set sheet is open for this set. */
   editing?: boolean;
-  onClick: () => void;
+  /**
+   * A checked set in a live workout: the sheet waits until it is unchecked.
+   * Not `disabled`, so a tap still lands and the row can say why.
+   */
+  locked?: boolean;
+  /** `fromKeyboard`: the press came from a keyboard or assistive technology. */
+  onClick: (fromKeyboard: boolean) => void;
 }) {
   const [shown, setShown] = useState<{ text: string; old: string | null }>({
     text: badge.text,
@@ -29,8 +36,9 @@ export default function SetBadge({
       className={`set-badge${editing ? " is-editing" : ""}`}
       data-tone={badge.tone}
       aria-label={badge.label}
-      aria-haspopup="dialog"
-      onClick={onClick}
+      aria-haspopup={locked ? undefined : "dialog"}
+      aria-disabled={locked || undefined}
+      onClick={(event) => onClick(event.detail === 0)}
     >
       <span className="set-badge-chip" aria-hidden="true">
         {shown.old === null ? (

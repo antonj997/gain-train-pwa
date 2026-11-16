@@ -28,6 +28,8 @@ export default function ExercisePicker({
         ref={content}
         size="full"
         className="picker-dialog"
+        // The title says what to do; there is no description line.
+        aria-describedby={undefined}
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           content.current?.querySelector<HTMLElement>(".picker-title")?.focus();

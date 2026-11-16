@@ -49,14 +49,15 @@ export const sv = {
 
   // Finish summary
   "finish.atLeastOne": "Kryssa i minst ett set",
-  "finish.willBeSaved": "{sets} sparas",
-  "finish.leftOut": "{saved} · {unchecked} tas inte med",
+  "finish.leftOut": "{unchecked} tas inte med",
 
   // Common
   "common.back": "Tillbaka",
   "common.done": "Klar",
   "common.off": "Av",
+  "common.on": "På",
   "common.cancel": "Avbryt",
+  "common.save": "Spara",
   "common.saving": "Sparar…",
   "common.delete": "Radera",
   "common.edit": "Redigera",
@@ -66,13 +67,11 @@ export const sv = {
 
   // Settings
   "settings.title": "Inställningar",
-  "settings.eyebrow": "App och konto",
   "settings.signedInSyncing": "Inloggad · synkar…",
   "settings.signedInPending": "Inloggad · {count} väntar",
   "settings.signedInSynced": "Inloggad · synkad",
-  "settings.phoneSignIn": "Sparat på den här mobilen · logga in för att synka",
-  "settings.phoneSignInAgain":
-    "Sparat på den här mobilen · logga in igen för att synka",
+  "settings.phoneSignIn": "Sparat på mobilen",
+  "settings.phoneSignInAgain": "Logga in igen för att synka",
   "settings.notSignedIn": "Inte inloggad",
   "settings.training": "Träning",
   "settings.bodyweight": "Kroppsvikt",
@@ -90,28 +89,22 @@ export const sv = {
   "settings.usePhoneLog": "Använd mobilens egen logg i stället",
   "settings.switchFailed": "Kunde inte byta logg. Försök igen.",
   "settings.noteSignedIn":
-    "Synken körs när du är uppkopplad och appen är öppen, och när du kommer tillbaka. Mobilen sparar en lokal kopia.",
+    "Synkar när appen är öppen och uppkopplad. Mobilen har en egen kopia.",
   "settings.noteSessionEnded":
-    "Din session har gått ut, så kontots logg synkas inte. Den ligger kvar på mobilen; logga in igen för att synka den.",
-  "settings.notePhone":
-    "Ett konto är frivilligt. Logga in för att synka mellan enheter; mobilens egen logg hålls separat tills du väljer att kopiera den.",
+    "Sessionen har gått ut, så loggen synkas inte. Den finns kvar på mobilen.",
   "settings.signInPromptTitle": "Sparat bara på den här mobilen",
   "settings.signInPromptText":
-    "Logga in för att säkerhetskopiera loggen och använda den på dina andra enheter.",
+    "Logga in för att säkerhetskopiera och synka loggen.",
   "settings.signInPromptButton": "Logga in för att synka",
   "settings.signedInOffline": "Offline · sparat på mobilen",
-  "settings.goalDescription":
-    "Hur många pass du siktar på varje vecka, måndag till söndag.",
+  "settings.goalDescription": "Veckan räknas måndag–söndag.",
   "settings.setGoal": "Sätt ett veckomål",
   "settings.fewerWorkout": "Ett pass färre",
   "settings.moreWorkout": "Ett pass till",
   "settings.perWeekUnit": { one: "pass i veckan", other: "pass i veckan" },
-  "settings.restDescription": "Startar när du kryssar i ett set.",
   "settings.restTime": "Vilotid",
   "settings.restSound": "Ljud när vilan är slut",
   "settings.vibrate": "Vibrera när ett set är klart",
-  "settings.vibrateNote":
-    "Vibration är av som standard och fungerar på enheter som stöder det.",
   "settings.lightAppearance": "Ljust utseende",
 
   // Train
@@ -133,8 +126,7 @@ export const sv = {
   "home.allRoutines": "Alla rutiner",
   "home.startSuggestions": "Starta med förslag",
   "home.emptyRoutinesTitle": "En rutin gör nästa gång enklare",
-  "home.emptyRoutinesText":
-    "Spara ett pass som rutin när du är klar, eller skapa en nu.",
+  "home.emptyRoutinesText": "Spara ett pass som rutin, eller skapa en.",
   "home.createRoutine": "Skapa en rutin",
   "home.goalProgress": "{done} av {goal} pass",
   "home.dayDone": ", pass klart",
@@ -153,19 +145,15 @@ export const sv = {
   "home.groupNext": "Nästa: {name}",
   "home.todayMenu": "Fler val för i dag",
   "home.switchWorkout": "Byt pass",
-  "home.switchText": "Välj en annan rutin att starta i dag.",
   "home.showPlan": "Visa schema",
   "home.yourRoutines": "Dina rutiner",
   "home.all": "Alla",
   "home.emptyWorkout": "Tomt pass",
   "home.todayNothing": "inget planerat",
-  "home.emptyText": "Lägg till övningar efter hand",
-  "home.startEmpty": "Starta tomt pass",
-  "home.suggestOldestRoutine": "Eller {name}, rutinen du kört längst sedan",
+  "home.suggestOldestRoutine": "Eller {name}, längst sedan sist",
   "home.suggestFirstRoutine": "Eller {name}, din första rutin",
   "week.dayLabel": "{day}: {title}",
-  "week.dayHint":
-    "Tryck för fler val, håll in och dra till en annan dag för att flytta.",
+  "week.dayHint": "Tryck för val. Håll in och dra för att flytta.",
   "week.dragTo": "{name} → {day}",
   "week.swapWith": "Byter med {name}",
   "week.passed": "Redan passerad",
@@ -234,8 +222,6 @@ export const sv = {
   "crash.copied": "Kopierat",
   "crash.copy": "Kopiera detaljer",
   "notFound.title": "Sidan hittades inte",
-  "notFound.eyebrow": "Gain Train",
-  "notFound.text": "Gå tillbaka till din träningslogg och fortsätt träna.",
   "notFound.back": "Tillbaka till passen",
   "undo.label": "Ångra",
   "workout.defaultName": "Pass",
@@ -258,8 +244,7 @@ export const sv = {
   "workout.addExercise": "Lägg till övning",
   "workout.addFirst": "Lägg till din första övning",
   "workout.removeTitle": "Ta bort {name}?",
-  "workout.removeText":
-    "Övningen har ifyllda värden eller klara set. Tar du bort den raderas alla de seten från passet.",
+  "workout.removeText": "Ifyllda värden och klara set raderas från passet.",
   "workout.keepExercise": "Behåll övningen",
   "workout.removeExercise": "Ta bort övningen",
   "workout.discardTitle": "Slänga dina ändringar?",
@@ -315,10 +300,11 @@ export const sv = {
   "workout.completeOne": "Kryssa i minst ett set innan du sparar.",
   "workout.name": "Namn",
   "workout.date": "Datum",
-  "workout.durationLabel": "Längd (valfritt, minuter)",
+  "workout.durationLabel": "Längd (min)",
   "workout.autoTimer": "Automatisk timer",
   "workout.notRecorded": "Inte registrerad",
   "workout.details": "Passets detaljer",
+  "workout.keepScreenOn": "Håll skärmen igång",
   "exercise.last": "Senast:",
   "exercise.options": "Alternativ för {name}",
   "exercise.colSet": "Set",
@@ -354,8 +340,7 @@ export const sv = {
   "unit.title": "Viktenhet",
   "unit.kg": "Kilo (kg)",
   "unit.lb": "Pund (lb)",
-  "unit.note":
-    "Gäller på alla skärmar. Vikter sparas i kg, så det blir exakt när du byter tillbaka.",
+  "unit.note": "Vikter sparas i kg, så inget går förlorat.",
   "set.optWeight": "Vikt",
   "set.optBw": "KV",
   "set.optBwPlus": "KV + {unit}",
@@ -369,11 +354,10 @@ export const sv = {
     one: "Radera set och {count} drop",
     other: "Radera set och {count} drop",
   },
-  "set.dropNote":
-    "Görs direkt efter setet ovanför, med lägre vikt. Ingen vila emellan.",
+  "set.dropNote": "Direkt efter setet ovanför, lättare och utan vila.",
   "set.type": "Typ",
   "set.typeOf": "Typ för {title}",
-  "set.loadForSet": "Belastning för setet",
+  "set.loadForSet": "Belastning",
   "set.uncheckToChangeType": "Kryssa ur setet för att ändra typ.",
   "set.uncheckToChangeTypeLoad":
     "Kryssa ur setet för att ändra typ eller belastning.",
@@ -416,6 +400,8 @@ export const sv = {
   "set.complete": "Klarmarkera {label}",
   "set.uncheckToFix": "Kryssa ur setet för att rätta de saknade värdena.",
   "set.uncheckToEdit": "Kryssa ur setet för att ändra värdena.",
+  "set.deleteCheckedTitle": "Ta bort avbockat set?",
+  "set.deleteCheckedNote": "Visas bara en gång.",
   "set.notFilled": "Inte ifyllt",
   "set.dropSr": "Drop:",
   "set.reorderTitle": "Ändra ordning på set",
@@ -527,12 +513,9 @@ export const sv = {
   "history.restoreFailed":
     "Kunde inte återställa passet. Prova att återställa en säkerhetskopia.",
   "history.deleteFailed": "Kunde inte radera passet. Försök igen.",
-  "history.chooseDateToBegin":
-    "Välj ett datum i kalendern för att börja ditt intervall.",
+  "history.chooseDateToBegin": "Välj ett startdatum i kalendern.",
   "history.noneOnDay": "Inga pass den här dagen",
   "history.noneInPeriod": "Inga pass under perioden",
-  "history.emptyText":
-    "Välj ett annat datum i kalendern eller logga ditt nästa pass.",
   "history.logWorkout": "Logga ett pass",
   "history.pleaseWait": "Vänta…",
   "history.deleteWorkout": "Radera passet",
@@ -574,7 +557,6 @@ export const sv = {
   "history.chooseEndOf": "{date} · välj slutdatum",
   "history.chooseStartOf": "{date} · välj startdatum",
   "history.lastWorkout": "Senaste passet {date}",
-  "history.tapDay": "Tryck på en dag för att se dess pass",
   "history.weekdays": "{weekday}ar, {from} – {to}",
 
   // Progress
@@ -598,12 +580,9 @@ export const sv = {
   "progress.longerPeriod":
     "Välj en längre period för att se tidigare övningar.",
   "progress.noMatch": "Inga övningar matchar",
-  "progress.noMatchText":
-    "Prova ett annat namn eller rensa sökningen för att se alla framsteg.",
   "progress.clearSearch": "Rensa sökningen",
   "progress.emptyTitle": "Dina arbetsset dyker upp här",
-  "progress.emptyText":
-    "Avsluta ett pass med ett arbetsset för att se ett exakt resultat. Ett till jämförbart pass ger dig en jämförelse.",
+  "progress.emptyText": "Två jämförbara pass visar din utveckling.",
   "progress.startWorkout": "Starta ett pass",
   "progress.perWeek": "Pass / vecka",
   "progress.finishedWeeks": "{change} · avslutade veckor",
@@ -619,7 +598,7 @@ export const sv = {
   "progress.about": "Om statistiken",
   "progress.comparedWithShort": "jämfört med",
   "progress.aboutText":
-    "Pass per vecka räknar avslutade veckor, måndag–söndag, med minst ett pass; den här veckan räknas när den är slut. Arbetsset räknar inte uppvärmning, nedvarvning, drops eller kondition; volym är vikt × reps för set med vikt, drops inräknade. Kondition summerar tid, distans och kalorier för ikryssade konditionsset. Träningstid summerar registrerade längder. Övningar som går framåt jämför ditt senaste arbetsresultat med sista passet före perioden, eller första passet i den. Bara jämförbar belastning och mått räknas: uppskattad styrka för set med vikt på 1–10 reps, annars reps eller sekunder med samma belastning. Ett streck betyder att det inte finns tillräckligt med data.",
+    "Pass per vecka räknar avslutade veckor, måndag–söndag, med minst ett pass. Arbetsset räknar inte uppvärmning, nedvarvning, drops eller kondition; volym är vikt × reps, drops inräknade. Kondition summerar ikryssade konditionsset. Övningar som går framåt jämför ditt senaste arbetsresultat med passet före perioden (eller det första i den) vid jämförbar belastning: uppskattad styrka för 1–10 reps, annars reps eller sekunder. Ett streck betyder för lite data.",
   "progress.noComparison": "Ingen jämförelse",
   "progress.noChange": "→ Ingen ändring",
   "overview.latest": "Senast · {date}",
@@ -688,17 +667,15 @@ export const sv = {
   "cardio.metricIncline": "Lutning %",
   "cardio.metricCalories": "Kalorier",
   "cardio.metricHeartRate": "Puls",
-  "cardio.timeAlways":
-    "Alltid på: ett set behöver en tid för att kunna kryssas i.",
-  "cardio.paceHint": "Räknas ut från tid och distans, i {unit}. Sparas inte.",
+  "cardio.timeAlways": "Alltid på: ett set behöver en tid.",
+  "cardio.paceHint": "Räknas från tid och distans, i {unit}. Sparas inte.",
   "cardio.levelHint": "Maskinens nivå eller motstånd",
   "cardio.heartRateHint": "Snitt, i bpm",
   "cardio.distanceUnit": "Distansenhet",
-  "cardio.fieldsNote":
-    "Sparas för {name} till nästa gång. Värden du redan fyllt i sparas och visas i Kalender.",
+  "cardio.fieldsNote": "Sparas för {name} till nästa gång.",
   "cardio.fieldsFailed": "Kunde inte spara fälten. Försök igen.",
   "cardio.note":
-    "Kondition ingår inte i styrkerekord eller volym. Ett pass summerar ikryssade konditionsset för {name} under ett träningspass.",
+    "Ingår inte i styrkerekord eller volym. Ett pass är alla ikryssade set {name} i ett träningspass.",
   "goals.title": "Mål",
   "goals.add": "Lägg till mål",
   "goals.reached": "Uppnått",
@@ -707,8 +684,7 @@ export const sv = {
     "Lägg in din kroppsvikt i Inställningar för att följa målet.",
   "goals.noSets": "Inga set loggade än",
   "goals.reachedOn": "Uppnått {date}",
-  "goals.empty":
-    "Sikta på ett lyft eller en kroppsvikt till ett datum, med eller utan schema.",
+  "goals.empty": "Sikta på ett lyft eller en kroppsvikt till ett datum.",
   "goals.lift": "Lyft",
   "goals.bodyweight": "Kroppsvikt",
   "goals.exercise": "Övning",
@@ -725,14 +701,12 @@ export const sv = {
   "goals.saveFailed": "Kunde inte spara målet. Försök igen.",
   "goals.edit": "Redigera mål",
   "goals.new": "Nytt mål",
-  "goals.description":
-    "Ett mål står på egna ben. Ett schema kan länka till det, men behöver inte.",
   "goals.kind": "Typ av mål",
   "goals.choose": "Välj",
   "goals.weightKg": "Vikt (kg)",
   "goals.reps": "Reps",
   "goals.repsNote":
-    "En rep jämförs med ditt tyngsta set. Fler reps jämförs med ditt uppskattade 1RM.",
+    "1 rep jämförs med ditt tyngsta set, fler reps med ditt uppskattade 1RM.",
   "goals.targetKg": "Mål (kg)",
   "goals.todayKg": "Vikt i dag (kg)",
   "goals.by": "Senast",
@@ -743,7 +717,6 @@ export const sv = {
   "goals.keep": "Behåll målet",
   "goals.deleted": "Målet raderat",
   "goals.deleteFailed": "Kunde inte radera. Målet finns kvar; försök igen.",
-  "goals.eyebrow": { one: "{count} aktivt mål", other: "{count} aktiva mål" },
   "progress.periodChoose": "Period: {period}",
   "progress.allGoals": "Alla mål",
   "progress.goalsHeading": "Mål",
@@ -761,13 +734,11 @@ export const sv = {
   "progress.recordOpen": "{name} {set}, {kinds}, {date}: öppna passet",
   "goals.weeks": { one: "{count} vecka", other: "{count} veckor" },
   "goals.weeklyTitle": "Veckomål",
-  "goals.weeklyTarget": "{count} {unit}",
-  "goals.setWeeklyText":
-    "Välj hur många pass du siktar på varje vecka och se hur ofta du når dit.",
+  "goals.setWeeklyText": "Hur många pass du siktar på i veckan.",
   "goals.weekMet": "Klart den här veckan",
   "goals.weekDaysLeft": {
-    one: "{count} dag kvar av veckan",
-    other: "{count} dagar kvar av veckan",
+    one: "{count} dag kvar",
+    other: "{count} dagar kvar",
   },
   "goals.weekProgressLabel": "Veckans pass",
   "goals.hitRate": {
@@ -804,18 +775,13 @@ export const sv = {
 
   // Library: routines
   "library.title": "Bibliotek",
-  "library.eyebrow": "Ditt träningsupplägg",
   "library.section": "Biblioteksdel",
   "library.routines": "Rutiner",
   "library.exercises": "Övningar",
   "library.plan": "Schema",
-  "library.helpRoutines": "Passen du upprepar. Starta dem från Träna.",
-  "library.helpExercises":
-    "Den inbyggda katalogen plus dina egna. Tryck på en för historik och rekord.",
   "library.searchRoutines": "Sök rutiner",
   "library.searchExercises": "Sök övningar",
   "library.sharedRow": "Utforska delade rutiner",
-  "library.sharedRowText": "Rutiner som andra har delat",
   "library.planTitle": "Schema",
   "library.sharedTitle": "Delade rutiner",
   "routines.find": "Hitta en rutin",
@@ -835,9 +801,7 @@ export const sv = {
   "exercise.backToLibrary": "Öppna Bibliotek",
   "exercise.start": "Starta pass med den här övningen",
   "exercise.neverTitle": "Inte loggad än",
-  "exercise.neverText":
-    "Logga ett set {name} så visas resultat, pass och rekord här.",
-  "exercise.historyNote": "Alla avslutade pass med {name}, nyaste först.",
+  "exercise.neverText": "Logga ett set {name} så syns resultaten här.",
   "records.e1rm": "Bästa uppsk. 1RM",
   "records.heaviest": "Tyngsta vikt",
   "records.mostReps": "Flest reps",
@@ -848,7 +812,7 @@ export const sv = {
   "records.reps": { one: "{count} rep", other: "{count} reps" },
   "records.empty": "Rekord visas efter ditt första avbockade arbetsset.",
   "records.note":
-    "Bara avbockade set; uppvärmning räknas aldrig. Uppskattad 1RM (Epley) använder viktset med högst 10 reps. Dropset räknas bara till tyngsta vikt och passvolym. Ett PR i ett pass är en ny tyngsta vikt eller bästa setvolym.",
+    "Bara ikryssade set, aldrig uppvärmning. Uppskattat 1RM (Epley) använder viktset med högst 10 reps. Drops räknas bara till tyngsta vikt och passvolym. Ett PR i ett pass är ny tyngsta vikt eller bästa setvolym.",
   "records.pr": "PR",
   "records.prLabel": "Rekord: {kinds}",
   "records.tile": "Rekord",
@@ -863,7 +827,7 @@ export const sv = {
   "routines.neverDone": "aldrig körd",
   "routines.options": "Alternativ för {name}",
   "routines.empty":
-    "Planera dina vanliga övningar och set en gång, och starta dem sedan tillsammans.",
+    "Planera övningar och set en gång och starta dem tillsammans.",
   "routines.unfinished": "Ofärdig rutin: {name}.",
   "routines.untitled": "Namnlös rutin",
   "routines.keptOnPhone": "Sparad på mobilen.",
@@ -874,8 +838,6 @@ export const sv = {
   "routines.editNamed": "Redigera {name}",
   "routines.edit": "Redigera rutin",
   "routines.create": "Skapa rutin",
-  "routines.editorDescription":
-    "Planera set, belastning och settyper. Det du inte är klar med sparas på mobilen när du stänger formuläret.",
   "routines.name": "Rutinens namn",
   "routines.addExercises": "Lägg till övningar",
   "routines.storageUnavailable":
@@ -968,7 +930,7 @@ export const sv = {
   "exercises.unhideExercise": "Visa övningen igen",
   "exercises.hideExercise": "Dölj övningen",
   "exercises.hiddenNote":
-    "Dolda övningar försvinner från väljaren och de här listorna. Sparade pass behåller dem. Du hittar dem under Dolda.",
+    "Dolda övningar syns inte i väljaren eller listorna. Sparade pass behåller dem.",
   "exercises.lastUsed": "senast {when}",
   "exercises.neverLogged": "aldrig loggad",
   "exercises.bestSet": "bäst {set}",
@@ -1017,7 +979,7 @@ export const sv = {
   "sharedRoutines.limitTotal":
     "Du kan dela upp till 100 rutiner. Sluta dela några först.",
   "sharedRoutines.menuNote":
-    "Alla som är inloggade kan lägga till en kopia, med ditt namn om du har angett ett i Inställningar. Bara övningarna och seten delas, inte dina vikter eller reps. När du sparar ändringar uppdateras den delade kopian.",
+    "Alla inloggade kan lägga till en kopia, med ditt namn om du angett ett. Bara övningar och set delas, inte vikter eller reps. Sparade ändringar uppdaterar kopian.",
   "sharedPreview.weight": "Vikt",
   "sharedPreview.bodyweight": "Kroppsvikt",
   "sharedPreview.bodyweightPlus": "Kroppsvikt + vikt",
@@ -1037,10 +999,9 @@ export const sv = {
     "Den tas bort från det delade biblioteket. Din rutin finns kvar, och kopior som andra har lagt till påverkas inte.",
   "sharedPreview.keepSharing": "Fortsätt dela",
   "settings.name": "Namn",
-  "settings.nameNote": "Visas på rutiner och övningar som du delar.",
   "name.title": "Ditt namn",
   "name.description":
-    "Visas som ”av …” på rutiner och övningar som du delar. Lämna tomt för att dela utan namn.",
+    "Visas som ”av …” på det du delar. Lämna tomt för att dela utan namn.",
   "name.label": "Namn",
   "name.placeholder": "t.ex. Anna",
   "name.save": "Spara namn",
@@ -1052,14 +1013,12 @@ export const sv = {
   "name.loadFailed": "Kunde inte ladda ditt namn.",
   "name.offline": "Anslut för att ändra ditt namn.",
   "name.tooLong": "Använd högst {max} tecken.",
-  "editor.description":
-    "Namn i avslutade pass förblir som de loggades. Ofärdiga ändringar sparas när du stänger formuläret.",
+  "editor.description": "Ett nytt namn ändrar inte avslutade pass.",
   "editor.name": "Namn",
   "editor.twin": "Du har redan en övning som heter {name}.",
   "editor.note": "Anteckning",
   "editor.alsoTrains": "Tränar även",
-  "editor.alsoTrainsHint":
-    "Kategorifilter och förslag i scheman hittar den även här.",
+  "editor.alsoTrainsHint": "Filter och schemaförslag hittar den även här.",
   "editor.save": "Spara övning",
   "editor.storageUnavailable":
     "Lagringen är inte tillgänglig. Låt formuläret vara öppet tills det är sparat.",
@@ -1068,10 +1027,6 @@ export const sv = {
   "picker.create": "Skapa övning",
   "picker.chooseOne": "Välj en övning",
   "picker.addExercises": "Lägg till övningar",
-  "picker.createDescription":
-    "Skapa den en gång och använd den i alla pass. Ofärdiga uppgifter sparas på mobilen.",
-  "picker.tapToChoose": "Tryck på en övning för att välja den.",
-  "picker.chooseMany": "Välj en eller flera övningar.",
   "picker.exerciseName": "Övningens namn",
   "picker.createAndAdd": "Skapa och lägg till",
   "picker.backToExercises": "Tillbaka till övningarna",
@@ -1083,8 +1038,7 @@ export const sv = {
   "picker.recent": "Nyligen",
   "picker.favourites": "Favoriter",
   "picker.results": "Sökresultat för övningar",
-  "picker.noMatch":
-    "Inga övningar matchar. Prova en annan sökning eller skapa en.",
+  "picker.noMatch": "Inga övningar matchar.",
   "picker.createNamed": "Skapa ”{name}”…",
   "search.filter": "Filter",
   "search.showFilters": "Visa filter",
@@ -1124,31 +1078,25 @@ export const sv = {
   "plan.pausedToast": "Schemat pausat",
   "plan.resumedToast": "Schemat återupptaget",
   "plan.pausedNote":
-    "Pausat: Träna visar inget från schemat, och ett annat schema kan använda dess datum.",
-  "plan.intro":
-    "Valfritt. Träna visar dagens pass; inget ändras någonstans så länge du inte har ett schema.",
+    "Pausat: syns inte på Träna, och datumen är lediga för ett annat schema.",
   "plan.plans": "Scheman",
   "plan.repeatsWeekly": "upprepas varje vecka",
   "plan.cycle": "{count}-veckorscykel",
   "plan.new": "Nytt schema",
   "plan.newGroup": "Ny grupp",
-  "plan.groupNote":
-    "En grupp, till exempel Bendag, samlar rutinerna du vill köra den dagen. Du kan planera den, eller en av dagtyperna {types}, som föreslår övningar efter kategori.",
   "plan.yourWeeks": "Dina veckor",
   "plan.yourWeek": "Din vecka",
   "plan.weekN": "Vecka {n}",
   "plan.cellLabel": "{day}: {text}",
   "plan.cellLabelWeek": "{day}, vecka {week}: {text}",
   "plan.empty": "tom",
-  "plan.templateNote":
-    "Tryck på en dag för att välja en rutin, en dagtyp, en grupp eller vila. Veckorna upprepas från fasens första vecka.",
+  "plan.templateNote": "Veckorna upprepas från fasens första vecka.",
   "plan.goalsHeading": "Mål som schemat jobbar mot",
   "plan.by": "Senast {date}",
   "plan.linked": "Länkad",
   "plan.nothingPlanned": "inget planerat",
   "plan.upcoming": "Kommande",
-  "plan.upcomingNote":
-    "Tryck på en dag för att ändra just det datumet. Dagar som har passerat går inte att ändra.",
+  "plan.upcomingNote": "En ändring här gäller bara det datumet.",
   "plan.needName": "Ge schemat ett namn.",
   "plan.needPeriod":
     "Välj ett startdatum och ett slutdatum på eller efter det.",
@@ -1158,8 +1106,6 @@ export const sv = {
   "plan.saved": "Schemat sparat",
   "plan.saveFailed": "Kunde inte spara schemat. Försök igen.",
   "plan.edit": "Redigera schema",
-  "plan.description":
-    "Inget här är obligatoriskt. Träna visar dagens pass medan schemat är aktivt.",
   "plan.name": "Namn",
   "plan.namePlaceholder": "Höstblock",
   "plan.repeatsEvery": "Upprepas var (veckor)",
@@ -1216,29 +1162,27 @@ export const sv = {
   "plan.cycleDeload": "{normal} + {deload} deload",
   "plan.advanced": "Avancerat",
   "plan.groupsExplain":
-    "En grupp låter en schemadag erbjuda ett val av rutiner, t.ex. Bendag: Ben A eller Ben B.",
+    "En grupp ger en schemadag ett val, t.ex. Bendag: Ben A eller Ben B.",
   "planNote.week": "Schemavecka {week}: {weight}",
   "planNote.deloadLoad": "Deload-vecka: {weight}",
   "planNote.deload": "Deload-vecka",
   "prog.heading": "Progression",
   "prog.intro":
-    "Öka lyften under fasen. Lägg till ett lyft, eller alla i en rutin; varje lyft får ett föreslaget steg per vecka som du kan ändra.",
+    "Varje lyft får ett föreslaget steg per vecka som du kan ändra.",
   "prog.addExercise": "Lägg till övning",
   "prog.addRoutine": "Alla övningar i en rutin",
   "prog.addRoutineNote":
-    "Lägger till varje övning med vikt i rutinen som inte redan finns här.",
+    "Lägger till rutinens viktövningar som inte redan finns här.",
   "prog.addedFromRoutine": "Lade till {lifts} från {name}",
   "prog.nothingToAdd": "Inget nytt att lägga till från {name}",
   "prog.tableLabel": "Planerad arbetsvikt per vecka",
-  "prog.tableNote":
-    "{lifts}. Tryck på ett lyft eller en vecka för att ändra; grå veckor är deload.",
+  "prog.tableNote": "{lifts} · grå veckor är deload",
   "prog.lift": "Lyft",
   "prog.weekShort": "V{n}",
   "prog.deloadShort": "D",
   "prog.cellLabel": "{name}, vecka {n}: {kg} kg",
   "prog.enterStart": "Ange en startvikt",
   "prog.needStart": "Ange startvikt och mål för {name} under Progression.",
-  "prog.sheetDescription": "Arbetsvikten för de här repsen, vecka för vecka.",
   "prog.reps": "Reps",
   "prog.startKg": "Start (kg)",
   "prog.fromSet": "Från din logg: {set} den {date}.",
@@ -1282,7 +1226,7 @@ export const sv = {
   "prog.weekWeight": "Vikt vecka {n} i kg",
   "prog.resetWeek": "Återställ vecka {n} till schemat",
   "prog.weeksNote":
-    "Skriv över valfri vecka för att ändra den; de andra veckorna följer linjen. En deload-vecka lyfter veckan innan, lättare.",
+    "Skriv över en vecka för att ändra den. En deload-vecka utgår från veckan innan, lättare.",
   "prog.addGoal": "Lägg även till som mål",
   "prog.linkedGoal": "Länkat mål: {goal}",
   "prog.goalRepsNote":
@@ -1290,8 +1234,6 @@ export const sv = {
   "prog.remove": "Ta bort från progression",
   "group.saveFailed": "Kunde inte spara. Försök igen.",
   "group.edit": "Redigera grupp",
-  "group.description":
-    "En grupp är en dag du kan planera, till exempel Bendag. Träna erbjuder dess rutiner och kan föreslå övningar.",
   "group.name": "Namn",
   "group.namePlaceholder": "Bendag",
   "group.routines": "Rutiner",
@@ -1531,13 +1473,10 @@ export const sv = {
   "profile.pendingSignIn": "Sparat på enheten. Logga in för att synka.",
   "profile.synced": "Profilen synkad.",
   "profile.cleared": "Kroppsvikten rensad på enheten.",
-  "profile.none": "Ingen kroppsvikt sparad.",
   "profile.savedDevice": "Sparat på enheten.",
-  "profile.intro": "Din kroppsvikt visas när du väljer KV i ett pass.",
-  "profile.label": "Kroppsvikt (kg)",
+  "profile.intro": "Används för set med kroppsvikt (KV).",
+  "profile.label": "Vikt (kg)",
   "profile.placeholder": "t.ex. 75,5",
-  "profile.save": "Spara kroppsvikt",
-  "profile.clearHint": "Lämna tomt och spara för att rensa kroppsvikten.",
   "profile.retry": "Försök synka profilen igen",
   "auth.offline":
     "Anslut till internet för att använda ditt konto. Mobilens logg finns kvar.",
@@ -1552,12 +1491,9 @@ export const sv = {
   "auth.titleUpdate": "Välj ett nytt lösenord",
   "auth.titleReset": "Återställ ditt lösenord",
   "auth.titleSignin": "Logga in för att synka",
-  "auth.textUpdate":
-    "Ange ett nytt lösenord för ditt konto. Använd minst 8 tecken.",
-  "auth.textReset":
-    "Ange e-postadressen för ditt konto så skickar vi en länk för att välja ett nytt lösenord.",
-  "auth.textSignin":
-    "Synka din träningslogg mellan enheter. Du kan fortsätta logga på mobilen utan konto.",
+  "auth.textUpdate": "Minst 8 tecken.",
+  "auth.textReset": "Vi mejlar en länk för att välja ett nytt lösenord.",
+  "auth.textSignin": "Valfritt: du kan logga på mobilen utan konto.",
   "auth.linkExpired":
     "Återställningslänken är ogiltig eller har gått ut. Begär en ny länk nedan.",
   "auth.email": "E-post",
@@ -1581,12 +1517,9 @@ export const sv = {
   // Feedback and the admin inbox
   "settings.help": "Hjälp och feedback",
   "settings.feedback": "Skicka feedback",
-  "settings.feedbackNote": "Rapportera en bugg eller föreslå en funktion.",
   "settings.admin": "Admin",
-  "settings.adminNote": "Rapporter från alla",
   "settings.adminOpen": { one: "{count} öppen", other: "{count} öppna" },
   "feedback.title": "Skicka feedback",
-  "feedback.description": "Berätta vad som gick fel eller vad du vill se.",
   "feedback.kind": "Typ",
   "feedback.bug": "Bugg",
   "feedback.feature": "Funktionsidé",
@@ -1631,7 +1564,7 @@ export const sv = {
     "Du kan skicka upp till {max} rapporter per dag. Försök igen i morgon.",
   "feedback.signInTitle": "Logga in för att skicka feedback",
   "feedback.signInText":
-    "Rapporter skickas med ditt konto, så att du kan följa vad som händer med dem.",
+    "Rapporter skickas med ditt konto så att du kan följa dem.",
   "feedback.signIn": "Logga in",
   "feedback.mine": "Mina rapporter",
   "feedback.mineEmpty": "Rapporter du skickar visas här med sin status.",
@@ -1685,8 +1618,7 @@ export const sv = {
   "admin.sentBy": "{who} · {when}",
   "admin.developer": "Utvecklare",
   "slowmo.title": "Slow motion",
-  "slowmo.note":
-    "Saktar ner alla animationer så att du kan granska dem. Bara för admins, på den här enheten.",
+  "slowmo.note": "Saktar ner alla animationer på den här enheten.",
   "slowmo.reducedNote":
     "Reducera rörelse är på, så bara den rörelse som finns kvar saktas ner.",
   "slowmo.option": "{scale}×",
@@ -1707,16 +1639,12 @@ export const sv = {
   "menu.addedToWorkout": "{name} lades till i passet",
   "tips.label": "Tips",
   "tips.ok": "Ok",
-  "tips.weekStrip": "Tryck på veckan för att öppna kalendern",
-  "tips.swipeRoutine": "Svep höger för att starta direkt",
+  "tips.weekStrip": "Håll in ett pass och dra det till en annan dag",
+  "tips.swipeRoutine": "Svep höger för att starta",
   "tips.libraryExercise": "Håll in för fler val",
   "tips.calendarDay": "Håll in och dra för att välja en period",
-  "tips.setBadge": "Tryck för uppvärmning, dropset eller ta bort",
-  "tips.swipeSet": "Svep vänster för att ta bort ett set",
-  "tips.unitHeader": "Byt mellan kg och lb här",
-  "tips.repsHeader": "Välj reps, hold eller reps + hold",
+  "tips.swipeSet": "Svep vänster för att ta bort",
   "settings.showTips": "Visa tips igen",
-  "settings.showTipsHint": "Engångstipsen visas igen på den här telefonen",
   "settings.tipsReset": "Tipsen visas igen",
   "exercises.restoreFailed":
     "Kunde inte återställa övningen. Försök från en säkerhetskopia.",
@@ -1779,8 +1707,8 @@ export const sv = {
   "set.fillTarget": "Tryck för att fylla i målet",
   "set.fillPrevious": "Tryck för att fylla i förra resultatet",
   "set.noLoadSr": "{label}: ingen belastning",
-  "set.noneExplain": "Ingen = räknas utan belastning, till exempel planka.",
-  "set.rirTitle": "Reps kvar i tanken (RIR) · valfritt",
+  "set.noneExplain": "Ingen = utan belastning, t.ex. planka.",
+  "set.rirTitle": "Reps kvar i tanken (RIR)",
   "set.addRir": "Lägg till RIR",
   "set.rirNone": "Ingen RIR",
   "set.rirAsk": "RIR?",
@@ -1790,12 +1718,10 @@ export const sv = {
   "pad.fillTarget": "Fyll i {value}",
   "workout.deloadTag": "Deload",
   "workout.deloadTagSr": "Deloadvecka: lättare mål",
-  "workout.note": "Anteckning för passet (valfritt)",
-  "workout.noteLabel": "Anteckning för passet",
+  "workout.noteLabel": "Anteckning",
   "finish.recordsLabel": "Rekord i passet",
   "settings.askRir": "Fråga efter RIR",
-  "settings.askRirNote":
-    "När du bockat ett set kan du välja reps kvar i tanken i 4 sekunder. Hoppa över lämnar det tomt.",
+  "settings.askRirNote": "Reps kvar i tanken, efter varje ikryssat set.",
   // Schemats statussida (/library/plan/:id)
   "planStatus.edit": "Redigera",
   "planStatus.editLabel": "Redigera {name}",
@@ -1829,7 +1755,7 @@ export const sv = {
   "planStatus.adherenceBehind": "Lite efter",
   "planStatus.adherenceOff": "Schemat följs inte",
   "planStatus.adherenceOffTip":
-    "Färre pass i veckan kan vara lättare att hålla. Redigera schemat så att det passar dina veckor.",
+    "Färre pass i veckan kan vara lättare att hålla.",
   "planStatus.percent": "{pct} %",
   "planStatus.doneOf": "{done} av {planned} planerade pass gjorda",
   "planStatus.nothingYet": "Inget planerat pass har passerat än.",
@@ -1846,7 +1772,7 @@ export const sv = {
   },
   "planStatus.notMissed": "{changes} (räknas inte som missat)",
   "planStatus.pausedCount":
-    "Appen sparar inte när ett schema pausades, så dagarna räknas fram till ditt senaste pass i schemat.",
+    "Pauser sparas inte, så dagarna räknas fram till ditt senaste pass i schemat.",
   "planStatus.weeksLabel": "Planerade pass per vecka",
   "planStatus.weekSr": "Vecka {week}: {text}",
   "planStatus.srDone": { one: "{count} gjort", other: "{count} gjorda" },
@@ -1883,9 +1809,8 @@ export const sv = {
   "planStatus.muscleFirstWeek":
     "Snittet visas när schemats första vecka är slut.",
   "planStatus.muscleUnder": {
-    one: "I snitt ligger {groups} under riktmärket. Lägg till ett par set om de ska växa.",
-    other:
-      "I snitt ligger {groups} under riktmärket. Lägg till ett par set om de ska växa.",
+    one: "Under riktmärket i snitt: {groups}.",
+    other: "Under riktmärket i snitt: {groups}.",
   },
   "planStatus.goals": "Mål i schemat",
   "planStatus.goalNow": "Nu {value}",
@@ -1914,11 +1839,43 @@ export const sv = {
   "calendarPlan.perWeek": { one: "pass per vecka", other: "pass per vecka" },
   "calendarPlan.weeks": { one: "vecka", other: "veckor" },
   "calendarPlan.upcoming": "Kommande pass",
-  "calendarPlan.upcomingHint": "tryck för att flytta",
   "calendarPlan.noneAhead": "Inget mer är planerat i schemat.",
   "calendarPlan.status": "Visa hur schemat går",
   "calendarPlan.none": "Inget schema",
   "calendarPlan.noneText":
-    "Planera vilken rutin som körs vilken dag, med deloadveckor och progression. Dagarna syns här i kalendern.",
+    "Planera rutiner per dag, med deload och progression.",
   "calendarPlan.create": "Skapa ett schema",
+  // Lyftmål mätta som styrka, med kontrollpass (16 november 2026).
+  "goals.statusUp": "Framåt",
+  "goals.statusFlat": "Stilla",
+  "goals.statusDown": "Bakåt",
+  "goals.statusInsufficient": "För lite data",
+  "goals.approx": "≈ {kg}",
+  "goals.nowStrength": "≈ {kg} uppsk.",
+  "goals.sourceLine": "{set}, {date}",
+  "goals.paceOn": "I fas mot datumet",
+  "goals.paceOff": "Inte i fas mot datumet än",
+  "goals.ready": "Redo att testa: försök {lift}",
+  "goals.checkinDue": "Kontrollpass den här veckan: {set}",
+  "goals.checkinHow":
+    "Så många reps du orkar på den vikten, i valfritt pass med {name} den här veckan.",
+  "goals.checkinSkip": "Hoppa över",
+  "goals.checkinSkipLabel": "Hoppa över veckans kontrollpass för {title}",
+  "goals.checkinSkipped":
+    "Kontrollpasset hoppas över. Nästa kommer om ungefär 4 veckor.",
+  "goals.checkinSkipFailed":
+    "Kunde inte hoppa över kontrollpasset. Försök igen.",
+  "goals.checkinLast": "Senaste kontroll: ≈ {kg}, {date}",
+  "goals.strengthNote":
+    "Mäts som uppskattat 1RM från ditt bästa set på 1–10 reps per pass. Nått när du lyfter {lift}.",
+  "goals.repsNoteStrength":
+    "Framstegen är ditt uppskattade 1RM från bästa setet på 1–10 reps per pass. Målet är nått när du lyfter vikten för de repsen.",
+  "progress.goalReady": "Redo att testa",
+  "progress.goalCheckin": "Kontrollpass",
+  "planStatus.goalReady": "redo att testa {lift}",
+  "planStatus.goalCheckin": "kontrollpass den här veckan",
+  "goalTarget.checkin": "Kontroll {value}",
+  "goalTarget.test": "Testa {value}",
+  "goalTarget.max": "max",
+  "workout.goalMark": "Mål: {title}",
 } satisfies Messages;

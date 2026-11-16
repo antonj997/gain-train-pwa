@@ -1,8 +1,8 @@
 import { local, writeStored, type KeyValueStorage } from "./storage";
 
 /**
- * One-time tips (coach marks): a small bubble pointing at something that does
- * more than it shows, once per device. Pure, so it is tested; the store and
+ * One-time tips (coach marks): a small bubble pointing at a gesture the
+ * screen does not show (press and hold, swipe, drag), once per device. Pure, so it is tested; the store and
  * the bubble are src/lib/tip-store.ts and src/components/Tips.tsx.
  */
 
@@ -12,10 +12,7 @@ export const TIP_IDS = [
   "swipeRoutine",
   "libraryExercise",
   "calendarDay",
-  "setBadge",
   "swipeSet",
-  "unitHeader",
-  "repsHeader",
 ] as const;
 export type TipId = (typeof TIP_IDS)[number];
 

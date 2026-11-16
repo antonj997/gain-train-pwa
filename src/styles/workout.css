@@ -528,11 +528,63 @@
     transform: none;
   }
 }
-/* The field the number pad types keeps its ring even when focus is on the pad. */
+/* The field the number pad types stands out from the row's other fields: a
+   filled accent tone, a thicker ring and bolder digits, with a thin line under
+   the digits that breathes like a caret. The ring is an inset shadow and the
+   line an overlay, so nothing in the row moves. It keeps all of this even
+   while focus is on the pad. */
 .set-line .set-field input[data-pad-target] {
-  outline: 2px solid var(--gt-accent);
-  outline-offset: -2px;
+  outline: none;
   border-color: var(--gt-accent);
+  background-color: var(--gt-accent-soft);
+  background-color: color-mix(in srgb, var(--gt-accent) 16%, var(--gt-surface));
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+  color: var(--gt-ink);
+  font-weight: 800;
+}
+.set-line .set-field:has(> input[data-pad-target])::after {
+  content: "";
+  position: absolute;
+  bottom: 7px;
+  left: 50%;
+  width: 18px;
+  height: 2px;
+  margin-left: -9px;
+  border-radius: 1px;
+  background-color: var(--gt-accent);
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .set-line .set-field:has(> input[data-pad-target])::after {
+    animation: pad-caret 1.1s ease-in-out infinite;
+  }
+}
+@keyframes pad-caret {
+  50% {
+    opacity: 0.25;
+  }
+}
+/* The row's other fields step back while one is typed: no accent outline,
+   quieter digits. */
+.set-line:has(input[data-pad-target]) .set-field input:not([data-pad-target]) {
+  border-color: transparent;
+  color: var(--gt-ink-2);
+  font-weight: 500;
+}
+/* A checked set is locked in a live workout: its fields never show a focus
+   or pad ring, whatever was tapped. */
+.set-line.is-locked .set-field input,
+.set-line.is-locked .set-field input:focus,
+.set-line.is-locked .set-field input:focus-visible,
+.set-line.is-locked .set-field input[data-pad-target] {
+  outline: none;
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  font-weight: 600;
+}
+.set-line.is-locked .set-field::after {
+  content: none;
 }
 
 /* Field messages and the unlock notice run under the whole row. */
@@ -1246,6 +1298,12 @@
 /* The number pad: in thumb reach, big keys, no shade over the page so the row
    being typed stays readable above it. */
 .number-pad {
+  /* No double-tap zoom, text selection or callout anywhere on the pad. */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   padding: 0 var(--gt-space-3) calc(var(--gt-space-3) + var(--dock-safe, 0px));
   border-top: 1px solid var(--gt-line);
   border-radius: var(--gt-radius-xl) var(--gt-radius-xl) 0 0;
@@ -1301,7 +1359,9 @@
   flex: none;
   width: 132px;
 }
+/* The keys take every touch as a press: no pan, no zoom. */
 .number-pad-grid {
+  touch-action: none;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1.3fr;
   gap: 6px;
@@ -1342,11 +1402,20 @@
 .number-pad-key:disabled {
   opacity: 0.4;
 }
+/* Pressed as the finger lands (is-pressed, set on pointerdown) until it
+   lifts: a darker key, and a small press-in with motion. */
+.number-pad-key.is-pressed:not(:disabled) {
+  background-color: var(--gt-line-strong);
+}
+.number-pad-key.is-step.is-pressed:not(:disabled) {
+  background-color: color-mix(in srgb, var(--gt-accent) 22%, var(--gt-surface));
+}
 @media (prefers-reduced-motion: no-preference) {
   .number-pad-key {
     transition: transform 60ms ease-out;
   }
-  .number-pad-key:active:not(:disabled) {
+  .number-pad-key:active:not(:disabled),
+  .number-pad-key.is-pressed:not(:disabled) {
     transform: scale(0.94);
   }
 }
@@ -1417,6 +1486,31 @@
   font-size: var(--gt-fs-1);
   font-weight: 600;
   line-height: 1.4;
+}
+/* An open lift goal: a small target mark and the goal's lift by the name.
+   Narrow screens keep only the mark; its spoken name says the rest. */
+.ex-goal {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (max-width: 359px) {
+  .ex-goal-text {
+    display: none;
+  }
+  .ex-goal {
+    padding: 2px 4px;
+  }
 }
 
 /* No load: no field to type, a muted dash in the load column. */

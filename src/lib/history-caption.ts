@@ -49,9 +49,8 @@ export function historyCaption(
   }
   if (value.selectedDate) return day(value.selectedDate);
   const last = lastWorkoutDate(counts, now);
-  return last
-    ? t("history.lastWorkout", { date: shortDay(last) })
-    : t("history.tapDay");
+  // With nothing logged there is nothing to say.
+  return last ? t("history.lastWorkout", { date: shortDay(last) }) : "";
 }
 
 /** A chosen period's dates, short: "2–9 Nov", or "30 Oct–5 Nov" across months. */

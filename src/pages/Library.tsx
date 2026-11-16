@@ -11,16 +11,8 @@ import { useT } from "@/i18n/useT";
 
 type Tab = "routines" | "exercises";
 const tabs = [
-  {
-    value: "routines",
-    label: "library.routines",
-    help: "library.helpRoutines",
-  },
-  {
-    value: "exercises",
-    label: "library.exercises",
-    help: "library.helpExercises",
-  },
+  { value: "routines", label: "library.routines" },
+  { value: "exercises", label: "library.exercises" },
 ] as const;
 
 /**
@@ -40,7 +32,6 @@ export default function Library() {
   return (
     <div className="page library-page">
       <PageHeader
-        eyebrow={t("library.eyebrow")}
         title={t("library.title")}
         action={
           <div className="page-header-actions">
@@ -77,9 +68,6 @@ export default function Library() {
           setParams(next === "routines" ? {} : { tab: next }, { replace: true })
         }
       />
-      <p className="row-sub section-note library-help">
-        {t(tabs.find((x) => x.value === tab)!.help)}
-      </p>
       {tab === "routines" && <RoutinesPanel request={request} />}
       {tab === "exercises" && <ExercisesPanel request={request} />}
     </div>

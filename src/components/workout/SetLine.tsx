@@ -16,7 +16,8 @@ import { padFields, stepPadValue, type PadField } from "@/lib/number-pad";
 import { RIR_VALUES, rirLabel, rirOf, rirValueText, withRir } from "@/lib/rir";
 import { motionMs } from "@/lib/slow-motion";
 import { EASE, MOTION, play, settled } from "@/lib/motion";
-import type { SetInputGestures } from "@/lib/set-input";
+import type { LockedAttempt, SetInputGestures } from "@/lib/set-input";
+import { lockedTap, type LockedTaps } from "@/lib/locked-tap";
 import {
   formatWeightValue,
   fromUnit,
@@ -231,11 +232,25 @@ export default function SetLine({
   onFocus?: () => void;
 }) {
   const [lockedAttempt, setLockedAttempt] = useState(false);
+  // Taps on the locked row so far: the first is let go quietly, a second
+  // within 2 s shows the notice (lockedTap).
+  const [lockedTaps, setLockedTaps] = useState<LockedTaps>(null);
   const [hintShown, setHintShown] = useState(false);
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
   const locked = set.done && !unlocked;
   if (lockedAttempt && !locked) setLockedAttempt(false);
+  if (lockedTaps && !locked) setLockedTaps(null);
+  /** A try at changing the locked row: a keyboard is told at once, a tap the second time. */
+  const lockedTry = (kind: LockedAttempt = "keyboard") => {
+    if (kind === "keyboard") {
+      setLockedAttempt(true);
+      return;
+    }
+    const next = lockedTap(lockedTaps, Date.now());
+    setLockedTaps(next.taps);
+    if (next.warn) setLockedAttempt(true);
+  };
   // The notices belong to this row: they go away once a tap or focus lands
   // anywhere outside it.
   const row = useRef<HTMLDivElement>(null);
@@ -297,6 +312,7 @@ export default function SetLine({
     const away = (event: Event) => {
       if (row.current?.contains(event.target as Node)) return;
       setLockedAttempt(false);
+      setLockedTaps(null);
       setHintShown(false);
     };
     document.addEventListener("pointerdown", away, true);
@@ -445,6 +461,7 @@ export default function SetLine({
     cardio && "is-cardio",
     hold && !cardio && "has-hold",
     set.done && "is-done",
+    locked && "is-locked",
     drop && "is-drop",
     next && "is-next",
     editing && "is-editing",
@@ -477,7 +494,9 @@ export default function SetLine({
         value={set.reps}
         inputText={getSetInputText(set, "reps")}
         readOnly={locked}
-        onLockedAttempt={() => setLockedAttempt(true)}
+        // Locked: Tab goes to its ✓, and no focus ring ever shows.
+        tabIndex={locked ? -1 : undefined}
+        onLockedAttempt={lockedTry}
         onValueChange={(value, text) => updateNumber("reps", value, text)}
         {...padProps("reps")}
       />
@@ -523,7 +542,9 @@ export default function SetLine({
         value={set.holdSec ?? null}
         inputText={getSetInputText(set, "holdSec")}
         readOnly={locked}
-        onLockedAttempt={() => setLockedAttempt(true)}
+        // Locked: Tab goes to its ✓, and no focus ring ever shows.
+        tabIndex={locked ? -1 : undefined}
+        onLockedAttempt={lockedTry}
         onValueChange={(value, text) => updateNumber("holdSec", value, text)}
       />
       {set.holdSec != null && (
@@ -547,7 +568,13 @@ export default function SetLine({
       <SetBadge
         badge={badge}
         editing={editing}
-        onClick={() => onOpenSheet(set.id)}
+        // A checked set's menu waits until it is unchecked (a live workout).
+        locked={locked && mode === "log"}
+        onClick={(fromKeyboard) =>
+          locked && mode === "log"
+            ? lockedTry(fromKeyboard ? "keyboard" : "tap")
+            : onOpenSheet(set.id)
+        }
       />
       {mode === "log" && !cardio && (
         <PreviousCell
@@ -638,7 +665,9 @@ export default function SetLine({
                   parse={props.parse}
                   format={props.format}
                   readOnly={locked}
-                  onLockedAttempt={() => setLockedAttempt(true)}
+                  // Locked: Tab goes to its ✓, and no focus ring ever shows.
+                  tabIndex={locked ? -1 : undefined}
+                  onLockedAttempt={lockedTry}
                   onValueChange={(value, text) =>
                     updateNumber(field, value, text)
                   }
@@ -703,7 +732,9 @@ export default function SetLine({
                 value={shownWeight}
                 inputText={getSetInputText(set, "weight")}
                 readOnly={locked}
-                onLockedAttempt={() => setLockedAttempt(true)}
+                // Locked: Tab goes to its ✓, and no focus ring ever shows.
+                tabIndex={locked ? -1 : undefined}
+                onLockedAttempt={lockedTry}
                 onValueChange={(value, text) => {
                   const kg = value === null ? null : fromUnit(value, unit);
                   typedWeight.current =
@@ -760,6 +791,7 @@ export default function SetLine({
             aria-disabled={checkDisabled || undefined}
             onClick={() => {
               setLockedAttempt(false);
+              setLockedTaps(null);
               if (checkDisabled) setHintShown(!!checkHint);
               else onToggleDone?.(set.id);
             }}

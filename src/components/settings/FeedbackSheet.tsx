@@ -196,7 +196,6 @@ export default function FeedbackSheet({
         if (!busy) onClose();
       }}
       title={t("feedback.title")}
-      description={t("feedback.description")}
     >
       <form className="feedback-form" onSubmit={submit} noValidate>
         <Segmented<FeedbackKind>

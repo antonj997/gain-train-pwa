@@ -65,7 +65,8 @@ export default function ExerciseEditorSheet({
         if (!busy) onClose();
       }}
       title={saved ? t("exercises.edit") : t("exercises.new")}
-      description={t("editor.description")}
+      // Only an edit can rename what finished workouts show.
+      description={saved ? t("editor.description") : undefined}
     >
       {draft && (
         <>

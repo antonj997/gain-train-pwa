@@ -59,6 +59,10 @@ export const storageKeys = {
   restSound: "gt-rest-sound",
   /** "true" when a checked set offers reps in reserve; off otherwise. */
   askRir: "gt-ask-rir",
+  /** "true" once a swipe has asked before deleting a checked set: it asks once per device. */
+  checkedDeleteAsked: "gt-checked-delete-asked",
+  /** "false" when a running workout lets the screen sleep; kept on otherwise. */
+  keepScreenOn: "gt-keep-screen-on",
   weeklyGoal: "gt-weekly-goal",
   /** "kg" or "lb"; weights are stored in kg either way. */
   weightUnit: "gt-weight-unit",

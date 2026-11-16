@@ -1,4 +1,4 @@
-import { useState, type Ref } from "react";
+import { useState, type ComponentProps, type Ref } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, Trash2 } from "lucide-react";
 import type { WorkoutSet } from "@/data/model";
@@ -200,11 +200,16 @@ export default function SetSheet({
   open,
   onClose,
   contentRef,
+  onPointerDownOutside,
+  onCloseAutoFocus,
   ...body
 }: BodyProps & {
   open: boolean;
   onClose: () => void;
   contentRef: Ref<HTMLDivElement>;
+  /** A press outside the sheet: a set's field there takes the number pad. */
+  onPointerDownOutside?: ComponentProps<typeof Sheet>["onPointerDownOutside"];
+  onCloseAutoFocus?: (event: Event) => void;
 }) {
   const { t } = useT();
   return (
@@ -213,6 +218,8 @@ export default function SetSheet({
       onClose={onClose}
       backdrop="light"
       contentRef={contentRef}
+      onPointerDownOutside={onPointerDownOutside}
+      onCloseAutoFocus={onCloseAutoFocus}
       title={
         <span className="sheet-title-line">
           <span>{body.badge.title}</span>

@@ -69,7 +69,6 @@ export default function GroupEditor({
           if (!busy) onClose();
         }}
         title={group ? t("group.edit") : t("plan.newGroup")}
-        description={t("group.description")}
       >
         <label>
           {t("group.name")}

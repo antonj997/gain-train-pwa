@@ -41,14 +41,13 @@ export function volumeLabel(kg: number) {
     ? `${formatFixed(value / 1000, 1)} ${unit === "lb" ? "k lb" : "t"}`
     : `${Math.round(value)} ${unit}`;
 }
-/** The Finish sheet's one-line summary of what saving keeps and leaves out. */
+/**
+ * The Finish sheet's note: what saving leaves out, or that it needs a set.
+ * Empty when every set is checked; the Sets tile already counts them.
+ */
 export function finishSummary(completed: number, unchecked: number) {
   if (completed === 0) return t("finish.atLeastOne");
-  const saved = t("finish.willBeSaved", { sets: countLabel(completed, "set") });
   return unchecked > 0
-    ? t("finish.leftOut", {
-        saved,
-        unchecked: countLabel(unchecked, "unchecked set"),
-      })
-    : saved;
+    ? t("finish.leftOut", { unchecked: countLabel(unchecked, "unchecked set") })
+    : "";
 }

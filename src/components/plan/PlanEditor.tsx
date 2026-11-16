@@ -256,7 +256,7 @@ export default function PlanEditor({
                   month: "short",
                 }),
               })
-            : t("plan.description")
+            : undefined
         }
       >
         <label>

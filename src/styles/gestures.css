@@ -143,6 +143,53 @@
   border: 2px solid var(--gt-bin);
   opacity: 0;
 }
+/* Swiping a checked set away asks first, once: the question fills the space
+   the row slid out of. */
+.set-delete-ask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 0 10px;
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-danger-bg);
+  color: var(--gt-ink);
+}
+.set-delete-ask-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+.set-delete-ask-text strong {
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+}
+.set-delete-ask-text small {
+  color: var(--gt-ink-2);
+  font-size: 12px;
+}
+.set-delete-ask button {
+  flex: none;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--gt-radius-sm);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  touch-action: manipulation;
+}
+.set-delete-ask-cancel {
+  background-color: transparent;
+  color: var(--gt-ink);
+}
+.set-delete-ask-delete {
+  background-color: var(--gt-bin);
+  color: var(--gt-on-bin);
+}
 
 /* Long-press on a flat row: no callout, no text selection. */
 .long-press {

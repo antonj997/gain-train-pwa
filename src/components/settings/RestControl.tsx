@@ -60,8 +60,14 @@ export function RestControl({
 export function RestSettings({
   preferences,
   onChange,
+  switchLabel,
 }: {
   preferences: TrainingPreferences;
+  /**
+   * The switch's label. Settings lists it as "Rest timer"; the rest timer
+   * sheet already has that title, so there it says "On".
+   */
+  switchLabel?: string;
   /** Saves a change; an empty one only re-reads what was saved. */
   onChange: (patch: Partial<TrainingPreferences>) => void;
 }) {
@@ -71,8 +77,7 @@ export function RestSettings({
     <>
       <div className="rest-setting">
         <Switch
-          label={t("settings.restTimer")}
-          hint={t("settings.restDescription")}
+          label={switchLabel ?? t("settings.restTimer")}
           checked={on}
           onChange={(next) => {
             saveRestTimerOn(next);
