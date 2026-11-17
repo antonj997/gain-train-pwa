@@ -1,5 +1,10 @@
 # Changelog
 
+## 17 November 2026 — exercises are added in the order you pick them
+
+- **Bug.** Picking several exercises added them in the list's order, not the order they were tapped. Now the first one picked becomes the first in the workout (or routine).
+- **The order shows on the row.** A picked row shows a small accent circle with its place, 1, 2, 3…, instead of a check. Unpicking renumbers the rest, and a re-pick goes last. The circle pops in (`--gt-dur-pop`; no motion under reduced motion). Screen readers hear “Vald som nummer 2” / “Picked as number 2”.
+
 ## 17 November 2026 — number pad heading fits the exercise
 
 - The pad's title is now the exercise name alone, wrapping to a second line rather than being cut. The set moves to the line below in a short form: “Uppv. 2 · Förra 100 kg × 8” / “Warm-up 2 · Last 100 kg × 8” (`setBadge().short`). “Uppvärmningsset 2 · Sq…” no longer hides the exercise. With no previous value that line shows just the set.

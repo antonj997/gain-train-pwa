@@ -1034,6 +1034,7 @@ export const en = {
   "search.showFilters": "Show filters",
   "search.showFiltersCount": "Show filters, {count} active",
   "picker.resumeDraft": "Resume draft",
+  "picker.orderLabel": "Picked as number {n}",
   "picker.addCount": {
     one: "Add {count} exercise",
     other: "Add {count} exercises",
