@@ -1046,6 +1046,7 @@ export const sv = {
   "search.showFilters": "Visa filter",
   "search.showFiltersCount": "Visa filter, {count} aktiva",
   "picker.resumeDraft": "Fortsätt utkastet",
+  "picker.orderLabel": "Vald som nummer {n}",
   "picker.addCount": {
     one: "Lägg till {count} övning",
     other: "Lägg till {count} övningar",

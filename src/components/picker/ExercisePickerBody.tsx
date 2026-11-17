@@ -8,7 +8,7 @@ import {
   useState,
   type MutableRefObject,
 } from "react";
-import { Search, Check, Plus, X } from "lucide-react";
+import { Search, Plus, X } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useData } from "@/contexts/useData";
 import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
@@ -467,7 +467,17 @@ export default function ExercisePickerBody({
                     }
                     end={
                       single ? undefined : selected.includes(e.id) ? (
-                        <Check className="picker-mark" size={21} />
+                        // Its place in the order it will be added.
+                        <span className="picker-order">
+                          <span aria-hidden="true">
+                            {selected.indexOf(e.id) + 1}
+                          </span>
+                          <span className="sr-only">
+                            {t("picker.orderLabel", {
+                              n: selected.indexOf(e.id) + 1,
+                            })}
+                          </span>
+                        </span>
                       ) : (
                         <Plus className="picker-mark" size={20} />
                       )
@@ -528,7 +538,10 @@ export default function ExercisePickerBody({
                 <button
                   className="btn-primary"
                   onClick={() => {
-                    onAdd(all.filter((e) => selected.includes(e.id)));
+                    // In the order they were picked, not the list's.
+                    onAdd(
+                      selected.flatMap((id) => all.filter((e) => e.id === id)),
+                    );
                     close();
                   }}
                 >

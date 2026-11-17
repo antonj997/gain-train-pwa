@@ -556,6 +556,32 @@ button.ex-row-main {
 .ex-row .picker-mark {
   flex: none;
 }
+/* A picked row shows its place in the order it will be added. */
+.ex-row .picker-order {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  background: var(--gt-accent);
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ex-row .picker-order {
+    animation: gt-order-in var(--gt-dur-pop) var(--gt-ease-out) both;
+  }
+}
+@keyframes gt-order-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
 
 /* The exercise page: the 60px avatar beside the category line. */
 .exercise-identity {
