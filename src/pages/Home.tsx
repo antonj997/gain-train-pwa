@@ -130,7 +130,6 @@ export default function Home() {
         <TodayDoneCard
           status={todayDone}
           plan={todayState.plan}
-          isWorkout={todayState.isWorkout}
           upcoming={todayState.upcoming}
           day={day}
           starting={starting}

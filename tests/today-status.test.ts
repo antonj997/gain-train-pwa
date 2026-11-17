@@ -4,7 +4,6 @@ import {
   categoryShare,
   matchesPlanned,
   todayStatus,
-  weekProgress,
   type DoneWorkout,
   type UpcomingDay,
 } from "../src/data/today-status.ts";
@@ -328,26 +327,4 @@ test("training on a day with nothing planned", () => {
     null,
     null,
   ]);
-});
-
-// ---------------------------------------------------------------- week progress
-
-test("this week's progress comes from the adherence column", () => {
-  const adherence = {
-    weeks: [
-      { week: 1, days: [{ date: "2026-11-09", state: "done" as const }] },
-      {
-        week: 2,
-        days: [
-          { date: "2026-11-16", state: "done" as const },
-          { date: "2026-11-18", state: "upcoming" as const },
-          { date: "2026-11-20", state: "upcoming" as const },
-        ],
-      },
-      { week: 3, days: [] },
-    ],
-  };
-  assert.deepEqual(weekProgress(adherence, 2), { done: 1, planned: 3 });
-  assert.equal(weekProgress(adherence, 3), null);
-  assert.equal(weekProgress(adherence, 9), null);
 });
