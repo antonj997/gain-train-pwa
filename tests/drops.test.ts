@@ -242,6 +242,7 @@ test("setBadge numbers working sets only", () => {
     label: "Warm-up set 1. Change type, load or delete",
     title: "Warm-up set",
     name: "warm-up set 1",
+    short: "Warm-up 1",
   });
   assert.deepEqual(badges[1], {
     text: "1",
@@ -249,9 +250,11 @@ test("setBadge numbers working sets only", () => {
     label: "Set 1, working set. Change type, load or delete",
     title: "Set 1",
     name: "set 1",
+    short: "Set 1",
   });
   assert.equal(badges[2].label, "Drop 1 after set 1. Change load or delete");
   assert.equal(badges[2].title, "Drop");
+  assert.equal(badges[2].short, "Drop 1");
   assert.equal(
     badges[3].label,
     "Set 2, working set. Change type, load or delete",
@@ -262,6 +265,7 @@ test("setBadge numbers working sets only", () => {
     label: "Cool-down set 1. Change type, load or delete",
     title: "Cool-down set",
     name: "cool-down set 1",
+    short: "Cool-down 1",
   });
 });
 

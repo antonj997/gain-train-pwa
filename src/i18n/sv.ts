@@ -280,7 +280,6 @@ export const sv = {
   "pad.field": "Fält",
   "pad.reps": "Reps",
   "pad.previous": "Förra {value}",
-  "pad.noPrevious": "Inget förra värde",
   "pad.same": "Samma som förra",
   "pad.stepReps": "{step} reps",
   "pad.decimal": "Decimaltecken",
@@ -423,16 +422,19 @@ export const sv = {
   "badge.dropLabel":
     "Drop {position} efter set {parent}. Ändra belastning eller radera",
   "badge.dropTitle": "Drop",
+  "badge.dropShort": "Drop {position}",
   "badge.dropName": "drop {position} efter set {parent}",
   "badge.warmupText": "U",
   "badge.warmupLabel":
     "Uppvärmningsset {n}. Ändra typ, belastning eller radera",
   "badge.warmupTitle": "Uppvärmningsset",
+  "badge.warmupShort": "Uppv. {n}",
   "badge.warmupName": "uppvärmningsset {n}",
   "badge.cooldownText": "N",
   "badge.cooldownLabel":
     "Nedvarvningsset {n}. Ändra typ, belastning eller radera",
   "badge.cooldownTitle": "Nedvarvningsset",
+  "badge.cooldownShort": "Nedv. {n}",
   "badge.cooldownName": "nedvarvningsset {n}",
   "badge.setLabel": "Set {n}, arbetsset. Ändra typ, belastning eller radera",
   "badge.setTitle": "Set {n}",

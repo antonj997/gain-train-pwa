@@ -1341,14 +1341,18 @@
 .number-pad-titles {
   min-width: 0;
 }
+/* A long exercise name wraps to a second line rather than being cut. */
 .number-pad-title {
+  display: -webkit-box;
   margin: 0;
   overflow: hidden;
   font-size: var(--gt-fs-4);
   font-weight: 700;
-  line-height: 1.3;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 .number-pad-meta {
   margin: 0;

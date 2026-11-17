@@ -17,6 +17,8 @@ export type SetBadgeInfo = {
    * "warm-up set 1", "cool-down set 1" or "drop 1 after set 2".
    */
   name: string;
+  /** A short visible name for tight headings: "Set 2", "Warm-up 1", "Drop 1". */
+  short: string;
 };
 
 export const isDrop = (set: WorkoutSet) => set.drop === true;
@@ -143,6 +145,7 @@ export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
       label: t("badge.dropLabel", { position, parent }),
       title: t("badge.dropTitle"),
       name: t("badge.dropName", { position, parent }),
+      short: t("badge.dropShort", { position }),
     };
   }
   if (set.section === "warmup") {
@@ -153,6 +156,7 @@ export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
       label: t("badge.warmupLabel", { n }),
       title: t("badge.warmupTitle"),
       name: t("badge.warmupName", { n }),
+      short: t("badge.warmupShort", { n }),
     };
   }
   if (set.section === "winddown") {
@@ -163,6 +167,7 @@ export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
       label: t("badge.cooldownLabel", { n }),
       title: t("badge.cooldownTitle"),
       name: t("badge.cooldownName", { n }),
+      short: t("badge.cooldownShort", { n }),
     };
   }
   const n = ordinal("working", index);
@@ -172,5 +177,6 @@ export function setBadge(sets: WorkoutSet[], index: number): SetBadgeInfo {
     label: t("badge.setLabel", { n }),
     title: t("badge.setTitle", { n }),
     name: t("badge.setName", { n }),
+    short: t("badge.setTitle", { n }),
   };
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 17 November 2026 — number pad heading fits the exercise
+
+- The pad's title is now the exercise name alone, wrapping to a second line rather than being cut. The set moves to the line below in a short form: “Uppv. 2 · Förra 100 kg × 8” / “Warm-up 2 · Last 100 kg × 8” (`setBadge().short`). “Uppvärmningsset 2 · Sq…” no longer hides the exercise. With no previous value that line shows just the set.
+
 ## 16 November 2026 — Train's Today card once the day is trained
 
 - **Why.** After a workout the Today card still offered the same suggestion and a big “Starta pass”, as if nothing had been done, while the week strip showed the day done.
