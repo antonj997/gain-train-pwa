@@ -3,6 +3,7 @@ import {
   ArrowUpDown,
   Columns3,
   ListOrdered,
+  Repeat,
   Trash2,
 } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
@@ -12,6 +13,9 @@ type BodyProps = {
   /** Cardio only: opens "Fields…"; `fieldsHint` lists the fields shown. */
   onFields?: () => void;
   fieldsHint?: string;
+  /** A routine's exercise: opens its rep range; `repRangeHint` shows it ("8–12 reps"). */
+  onRepRange?: () => void;
+  repRangeHint?: string;
   onChangeExercise: () => void;
   onReorder: () => void;
   /** Opens Reorder exercises; left out when there is nothing to reorder. */
@@ -23,6 +27,8 @@ type BodyProps = {
 function ExerciseMenuSheetBody({
   onFields,
   fieldsHint,
+  onRepRange,
+  repRangeHint,
   onChangeExercise,
   onReorder,
   onReorderExercises,
@@ -45,6 +51,15 @@ function ExerciseMenuSheetBody({
           <Columns3 size={18} aria-hidden="true" />
           <span>{t("exercise.fields")}</span>
           <span className="sheet-menu-hint">{fieldsHint}</span>
+        </button>
+      )}
+      {onRepRange && (
+        <button type="button" className="sheet-menu-item" onClick={onRepRange}>
+          <Repeat size={18} aria-hidden="true" />
+          <span>{t("repRange.menu")}</span>
+          {repRangeHint && (
+            <span className="sheet-menu-hint">{repRangeHint}</span>
+          )}
         </button>
       )}
       <button type="button" className="sheet-menu-item" onClick={onReorder}>

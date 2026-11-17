@@ -1,5 +1,12 @@
 import { useRef, useState } from "react";
-import { MoreHorizontal, Pencil, Share2, Trash2 } from "lucide-react";
+import {
+  Copy,
+  FolderInput,
+  MoreHorizontal,
+  Pencil,
+  Share2,
+  Trash2,
+} from "lucide-react";
 import type { SwipeAction } from "@/components/gestures/Swipeable";
 import { useData } from "@/contexts/useData";
 import type { RoutineRecord } from "@/data/model";
@@ -13,17 +20,28 @@ import Sheet from "@/components/ui/Sheet";
 import { t } from "@/i18n";
 
 /**
- * A routine's ⋯ menu (Edit, Share or Stop sharing, Delete) and deleting a
- * routine, for Library → Routines and Train's Your routines. Deleting leaves
- * an undo placeholder where the card was, in the list named `scope`.
+ * A routine's ⋯ menu and deleting a routine, for Library → Routines and
+ * Train's Your routines. Library passes Duplicate, Share (its Dela sheet)
+ * and Move to folder: Duplicera, Dela, Flytta till mapp, Redigera, Ta bort.
+ * Train's has Edit, Share or Stop sharing, and Delete. Deleting leaves an
+ * undo placeholder where the card was, in the list named `scope`.
  */
 export function useRoutineMenu({
   scope,
   onEdit,
+  onDuplicate,
+  onShare,
+  onMove,
   onSharedId = () => {},
 }: {
   scope: string;
   onEdit: (routine: RoutineRecord) => void;
+  /** Library: copies the routine in place. */
+  onDuplicate?: (routine: RoutineRecord) => void;
+  /** Library: opens the routine's Dela sheet instead of sharing at once. */
+  onShare?: (routine: RoutineRecord) => void;
+  /** Library: opens Flytta till mapp. */
+  onMove?: (routine: RoutineRecord) => void;
   /** An open draft of the routine follows its shared id. */
   onSharedId?: (routineId: string, sharedId: string | null) => void;
 }) {
@@ -88,6 +106,40 @@ export function useRoutineMenu({
       {menuRoutine && (
         <>
           <div className="list">
+            {onDuplicate && (
+              <ListRow
+                title={t("routineTile.duplicate")}
+                leading={<Copy size={20} aria-hidden="true" />}
+                disabled={busy}
+                onClick={() => {
+                  setMenu(null);
+                  onDuplicate(menuRoutine);
+                }}
+              />
+            )}
+            {onShare && (
+              <ListRow
+                title={t("routineTile.share")}
+                leading={<Share2 size={20} aria-hidden="true" />}
+                disabled={busy}
+                onClick={() => {
+                  setMenu(null);
+                  onShare(menuRoutine);
+                }}
+              />
+            )}
+            {onMove && (
+              <ListRow
+                title={t("routineTile.move")}
+                value={menuRoutine.payload.folder}
+                leading={<FolderInput size={20} aria-hidden="true" />}
+                disabled={busy}
+                onClick={() => {
+                  setMenu(null);
+                  onMove(menuRoutine);
+                }}
+              />
+            )}
             <ListRow
               title={t("common.edit")}
               leading={<Pencil size={20} aria-hidden="true" />}
@@ -97,7 +149,7 @@ export function useRoutineMenu({
                 onEdit(menuRoutine);
               }}
             />
-            {shared.canShare ? (
+            {onShare ? null : shared.canShare ? (
               <ListRow
                 title={
                   shared.sharing
@@ -130,7 +182,7 @@ export function useRoutineMenu({
               onClick={() => void remove(menuRoutine, menuIndex.current)}
             />
           </div>
-          {shared.canShare && (
+          {shared.canShare && !onShare && (
             <p className="row-sub">{t("sharedRoutines.menuNote")}</p>
           )}
         </>

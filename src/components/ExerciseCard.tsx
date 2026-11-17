@@ -45,6 +45,12 @@ import {
   type RecordKind,
 } from "@/data/record-rank";
 import { fillFrom, shortSetText, type FillSource } from "@/lib/set-target";
+import {
+  plannedPlaceholders,
+  plannedSetChange,
+  shownPlannedSet,
+} from "@/lib/routine-targets";
+import { repRangeLabel } from "@/lib/routine-preview";
 import { withRir } from "@/lib/rir";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
@@ -75,6 +81,7 @@ import SetSheet from "@/components/workout/SetSheet";
 import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 import CardioFieldsSheet from "@/components/workout/CardioFieldsSheet";
+import RepRangeSheet from "@/components/workout/RepRangeSheet";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { RestSheet } from "@/components/settings/PreferenceSheets";
 import { restLabel } from "@/lib/preferences";
@@ -85,8 +92,10 @@ import { useT } from "@/i18n/useT";
 export type ExerciseCardProps = {
   exercise: Exercise;
   /**
-   * "plan" is a routine's exercise: no previous results, checks, rest or next
-   * set, and its sets are never checked.
+   * "plan" is a routine's exercise: no checks, rest or next set, and its sets
+   * are never checked. Its kg and reps fields show only a typed target; last
+   * time's result is the Förra column and the fields' grey placeholders
+   * (routine-targets.ts). Its menu has a rep range.
    */
   mode?: "log" | "plan";
   /** The last session with this exercise, for previous-result hints. */
@@ -156,6 +165,7 @@ type OpenSheet =
   | { kind: "reorder" }
   | { kind: "fields" }
   | { kind: "rest" }
+  | { kind: "range" }
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
@@ -262,6 +272,13 @@ function ExerciseCard({
   const updateSet = useStableCallback((next: WorkoutSet) =>
     changeSets(sets.map((s) => (s.id === next.id ? next : s))),
   );
+  // A routine's row edits what it shows (shownPlannedSet): typed numbers
+  // become the set's target, anything else keeps its stored values.
+  const updatePlannedLine = useStableCallback((next: WorkoutSet) => {
+    const stored = sets.find((s) => s.id === next.id);
+    if (!stored) return;
+    updateSet(plannedSetChange(stored, shownPlannedSet(stored), next));
+  });
   const toggleDone = useStableCallback((setId: string) => {
     let next = toggleGroupCompletion(sets, setId, bodyWeightKg);
     if (next === sets) return;
@@ -299,7 +316,16 @@ function ExerciseCard({
   const pad = useContext(NumberPadContext);
   const [entering, setEntering] = useState<string | null>(null);
   const addSet = () => {
-    const next = appendSet(ex, defaults);
+    let next = appendSet(ex, defaults);
+    // A routine's new set copies the target of the set before it.
+    const prior = sets.filter((s) => !isDrop(s)).at(-1);
+    if (mode === "plan" && prior?.target)
+      next = {
+        ...next,
+        sets: next.sets.map((s, i) =>
+          i === next.sets.length - 1 ? { ...s, target: true } : s,
+        ),
+      };
     setEntering(next.sets[next.sets.length - 1].id);
     onChange(next);
   };
@@ -433,6 +459,11 @@ function ExerciseCard({
                   })}
             </p>
           )}
+          {mode === "plan" && ex.repRange && (
+            <p className="ex-last">
+              {repRangeLabel(ex.repRange, exerciseMeasure(sets) === "seconds")}
+            </p>
+          )}
           {planNote && mode === "log" && (
             <p className="ex-last ex-plan-note">{planNote}</p>
           )}
@@ -474,11 +505,9 @@ function ExerciseCard({
           data-mode={mode}
         >
           <span>{t("exercise.colSet")}</span>
-          {mode === "log" && (
-            <span className="set-previous-heading">
-              {t("exercise.colPrevious")}
-            </span>
-          )}
+          <span className="set-previous-heading">
+            {t("exercise.colPrevious")}
+          </span>
           {/* Over the arrow and record column. */}
           {mode === "log" && <span aria-hidden="true" />}
           {/* The headings pick the unit and the count; the rest of Load and
@@ -520,7 +549,16 @@ function ExerciseCard({
           checked={mode === "log" && !unlockChecked && s.done}
         >
           <SetLineMemo
-            set={s}
+            set={mode === "plan" ? shownPlannedSet(s) : s}
+            placeholders={
+              mode === "plan"
+                ? plannedPlaceholders(
+                    s,
+                    previousResult(lastSession?.sets ?? [], sets, i),
+                    weightUnit,
+                  )
+                : undefined
+            }
             hold={hold}
             mode={mode}
             name={ex.name}
@@ -548,7 +586,7 @@ function ExerciseCard({
             canCheck={groupComplete(sets, i)}
             checkHint={checkHintFor(sets, i)}
             onOpenSheet={openSet}
-            onChange={updateSet}
+            onChange={mode === "plan" ? updatePlannedLine : updateSet}
             onToggleDone={toggleDone}
           />
         </SetSwipeRow>
@@ -659,6 +697,15 @@ function ExerciseCard({
             ? () => setSheet({ kind: "fields" })
             : undefined
         }
+        onRepRange={
+          mode === "plan" && !cardio
+            ? () => setSheet({ kind: "range" })
+            : undefined
+        }
+        repRangeHint={repRangeLabel(
+          ex.repRange,
+          exerciseMeasure(sets) === "seconds",
+        )}
         onChangeExercise={() => {
           close();
           onChangeExercise(planned);
@@ -692,6 +739,18 @@ function ExerciseCard({
           onClose={close}
           preferences={preferences}
           onChange={setPreferences}
+        />
+      )}
+      {mode === "plan" && (
+        <RepRangeSheet
+          open={sheet?.kind === "range"}
+          name={ex.name}
+          value={ex.repRange}
+          onClose={close}
+          onChange={(range) => {
+            const { repRange: _old, ...rest } = ex;
+            onChange(range ? { ...rest, repRange: range } : rest);
+          }}
         />
       )}
       <ReorderSetsSheet
