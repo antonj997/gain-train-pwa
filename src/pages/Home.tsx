@@ -134,8 +134,11 @@ export default function Home() {
           upcoming={todayState.upcoming}
           day={day}
           starting={starting}
-          onStartEmpty={() => void start()}
-          onLogPast={() => void start(true)}
+          onLog={() =>
+            void requestStart(newWorkout(Object.values(state.records)), undefined, {
+              choose: true,
+            })
+          }
         />
       )}
       {!running && !todayDone && (

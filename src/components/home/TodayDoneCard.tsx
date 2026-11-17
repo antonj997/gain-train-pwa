@@ -1,13 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  CalendarDays,
-  Check,
-  ChevronRight,
-  History,
-  MoreHorizontal,
-  Plus,
-} from "lucide-react";
+import { Check, ChevronRight, Plus } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import type { Plan, WorkoutRecord } from "@/data/model";
 import {
@@ -52,8 +45,8 @@ type Props = {
   upcoming: readonly UpcomingDay[];
   day: string;
   starting: boolean;
-  onStartEmpty: () => void;
-  onLogPast: () => void;
+  /** "Log workout": a new one, asking today's or an earlier one first. */
+  onLog: () => void;
 };
 
 /** A workout finished this recently plays the done card's entrance once. */
@@ -71,8 +64,8 @@ const planOf = ({ id: _id, ...plan }: PlanItem): Plan => plan;
  * plan's status page. When today's workout was not the plan's (another
  * workout, a rest day, nothing planned) it says so and offers to move the
  * planned workout with the day sheet, or to count today's workout as a
- * matching day ahead (src/data/today-status.ts). "Another workout" starts an
- * empty one; ⋯ keeps View plan and Log a past workout.
+ * matching day ahead (src/data/today-status.ts). "Log workout" starts a new
+ * one, which asks first whether it is another today or an earlier one.
  */
 export default function TodayDoneCard({
   status,
@@ -81,12 +74,10 @@ export default function TodayDoneCard({
   upcoming,
   day,
   starting,
-  onStartEmpty,
-  onLogPast,
+  onLog,
 }: Props) {
   const { t } = useT();
   const { state, save } = useData();
-  const [menu, setMenu] = useState(false);
   // Set while "count as" moves a day, which says so itself.
   const counting = useRef(false);
   const days = usePlanDaySheet({
@@ -98,8 +89,6 @@ export default function TodayDoneCard({
       if (!counting.current) notify(text, { key: "today-move" });
     },
   });
-  // ⋯ → View plan: the current plan (running, next or paused), else the list.
-  const shownPlan = currentPlan(activePlans(state.records), day);
 
   const [latest] = status.workouts;
   const w = latest.payload;
@@ -299,44 +288,12 @@ export default function TodayDoneCard({
           type="button"
           className="btn-secondary btn-sm"
           disabled={starting}
-          onClick={onStartEmpty}
+          onClick={onLog}
         >
           <Plus size={18} aria-hidden="true" />
-          {starting ? t("home.starting") : t("todayDone.another")}
-        </button>
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={t("home.todayMenu")}
-          aria-haspopup="dialog"
-          onClick={() => setMenu(true)}
-        >
-          <MoreHorizontal size={22} aria-hidden="true" />
+          {starting ? t("home.starting") : t("todayDone.log")}
         </button>
       </div>
-      <Sheet open={menu} onClose={() => setMenu(false)} title={label}>
-        <div className="sheet-menu">
-          <Link
-            className="sheet-menu-item"
-            to={shownPlan ? planStatusPath(shownPlan.id) : PLANS_PATH}
-          >
-            <CalendarDays size={20} aria-hidden="true" />
-            {t("home.showPlan")}
-          </Link>
-          <button
-            type="button"
-            className="sheet-menu-item"
-            disabled={starting}
-            onClick={() => {
-              setMenu(false);
-              onLogPast();
-            }}
-          >
-            <History size={20} aria-hidden="true" />
-            {t("home.logPast")}
-          </button>
-        </div>
-      </Sheet>
       {days.sheetNode}
     </section>
   );

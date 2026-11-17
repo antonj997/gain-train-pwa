@@ -1902,5 +1902,11 @@ export const sv = {
   "todayDone.countAs": "Räkna dagens pass som {name}",
   "todayDone.counted": "Dagens pass räknas som {name}",
   "todayDone.undoFailed": "Kunde inte ångra ändringen.",
-  "todayDone.another": "Kör ett till pass",
+  "todayDone.log": "Logga pass",
+  // "Logga pass" från Träna-kortet: i dag eller tidigare (LogChoiceSheet).
+  "logChoice.title": "Logga pass",
+  "logChoice.today": "Ett till pass i dag",
+  "logChoice.todayHint": "Klockan startar nu",
+  "logChoice.earlier": "Ett tidigare pass",
+  "logChoice.earlierHint": "Välj datum och längd",
 } satisfies Messages;

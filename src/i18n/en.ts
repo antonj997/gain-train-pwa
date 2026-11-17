@@ -1884,5 +1884,11 @@ export const en = {
   "todayDone.countAs": "Count today's workout as {name}",
   "todayDone.counted": "Today's workout counts as {name}",
   "todayDone.undoFailed": "Couldn't undo the change.",
-  "todayDone.another": "Another workout",
+  "todayDone.log": "Log workout",
+  // "Log workout" from Train's done card: today's or an earlier one (LogChoiceSheet).
+  "logChoice.title": "Log workout",
+  "logChoice.today": "Another workout today",
+  "logChoice.todayHint": "The clock starts now",
+  "logChoice.earlier": "An earlier workout",
+  "logChoice.earlierHint": "Pick its date and duration",
 };
