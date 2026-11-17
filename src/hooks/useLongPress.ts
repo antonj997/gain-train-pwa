@@ -35,6 +35,24 @@ export function useLongPress(
   useEffect(() => clear, []);
   const fire = (el: HTMLElement) => {
     firedAt.current = performance.now();
+    // The menu may open under the finger (a bottom sheet): the click that
+    // lifting it makes must not choose an item there either. The first click
+    // until shortly after the finger lifts is swallowed, wherever it lands.
+    const swallow = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      stop();
+    };
+    const lifted = () => setTimeout(stop, SWALLOW_CLICK_MS / 2);
+    const stop = () => {
+      window.removeEventListener("click", swallow, true);
+      window.removeEventListener("pointerup", lifted, true);
+      window.removeEventListener("pointercancel", lifted, true);
+    };
+    window.addEventListener("click", swallow, true);
+    window.addEventListener("pointerup", lifted, true);
+    window.addEventListener("pointercancel", lifted, true);
+    setTimeout(stop, 5000);
     navigator.vibrate?.(10);
     if (tip) tipUsed(tip);
     handler.current?.(el);

@@ -282,6 +282,10 @@
   font-weight: 400;
   opacity: 1;
 }
+/* A routine's empty field shows last time's result: plainly not filled in. */
+.set-line[data-mode="plan"] .set-field input::placeholder {
+  color: var(--gt-ink-3);
+}
 .set-line .set-field input::selection {
   background-color: var(--gt-accent);
   color: var(--gt-on-accent);
