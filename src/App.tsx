@@ -1,5 +1,5 @@
 import { lazy } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/useAuth";
 import { DataProvider } from "@/contexts/DataContext";
@@ -19,7 +19,6 @@ const Progress = lazy(() => import("@/pages/Progress"));
 const ProgressGoals = lazy(() => import("@/pages/ProgressGoals"));
 const LibraryPlan = lazy(() => import("@/pages/LibraryPlan"));
 const PlanStatus = lazy(() => import("@/pages/PlanStatus"));
-const LibraryShared = lazy(() => import("@/pages/LibraryShared"));
 const AdminReports = lazy(() => import("@/pages/AdminReports"));
 const Exercise = lazy(() => import("@/pages/Exercise"));
 function AccountApp() {
@@ -41,7 +40,11 @@ function AccountApp() {
               <Route path="library" element={<Library />} />
               <Route path="library/plan" element={<LibraryPlan />} />
               <Route path="library/plan/:id" element={<PlanStatus />} />
-              <Route path="library/shared" element={<LibraryShared />} />
+              {/* Shared routines became Library → Upptäck (legacy-routes.ts). */}
+              <Route
+                path="library/shared"
+                element={<Navigate to="/library?tab=discover" replace />}
+              />
               <Route path="exercise/:id" element={<Exercise />} />
               {/* Old URLs (/routines, ?tab=plan, ?tab=goals …) are
                   redirected in Layout; see src/lib/legacy-routes.ts. */}

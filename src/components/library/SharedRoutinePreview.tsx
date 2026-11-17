@@ -1,42 +1,65 @@
 import { useMemo, useState } from "react";
-import { Pencil, Plus, Share2 } from "lucide-react";
+import { Check, Pencil, Play, Plus, Share2 } from "lucide-react";
 import type { RecordDoc } from "@/data/model";
+import { ownExercises } from "@/data/exercises";
+import type { LastSession } from "@/data/workouts";
 import Sheet from "@/components/ui/Sheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import {
+  PreviewExercises,
+  SetsBar,
+  type PreviewItem,
+} from "@/components/library/RoutinePreviewParts";
 import { sharedRoutinePreview } from "@/lib/shared-routine-preview";
-import type { SharedRoutineRow } from "@/lib/shared-routines";
+import {
+  matchingCustom,
+  parseSharedPayload,
+  type SharedRoutineRow,
+} from "@/lib/shared-routines";
 import { sharedByLine } from "@/lib/display-name";
 import { countLabel, durationLabel } from "@/lib/labels";
+import { plannedSetsByCategory } from "@/lib/routine-library";
+import { lastResultText, previewSetsLine } from "@/lib/routine-preview";
+import {
+  sharedAsExercises,
+  sharedExerciseFacts,
+} from "@/lib/routine-tile-facts";
 import { useT } from "@/i18n/useT";
 
 type Props = {
   row: SharedRoutineRow | null;
   records: Record<string, RecordDoc>;
-  /** Average length of the user's own routine this row was shared from, if known. */
+  /** The user's last session of each exercise, by exercise id. */
+  sessions: ReadonlyMap<string, LastSession>;
+  /** Its length: your own routine's history, else an estimate from its sets. */
   minutes: number | null;
-  /** The user already has a copy. */
+  /** The user already saved a copy. */
   added: boolean;
-  /** This row is being added. */
+  /** This row is being saved. */
   adding: boolean;
-  /** Something else is being added, shared or unshared. */
+  /** Something else is being saved, shared or started. */
   busy: boolean;
-  /** The user's own row and its routine still exists here, so it can be edited. */
+  /** Your own row whose routine is still here: Dela and Redigera. */
   canEdit: boolean;
   onClose: () => void;
   onAdd: () => void;
+  onTry: () => void;
+  onShare: () => void;
   onEdit: () => void;
   onStopSharing: () => void;
 };
 
 /**
- * The full preview of a shared routine before adding it: who shared it, its
- * note and categories, and every exercise with its sets by structure (they
- * carry no values). Someone else's routine can be added; the user's own one
- * edited or stopped sharing.
+ * Upptäck: a shared routine's preview. Who shared it, its note and focus,
+ * the sets per muscle group, and every exercise with its sets by structure
+ * (they carry no values) and, where you have done it, your own last result
+ * ("Din förra 80 × 8"; "Ny för dig" otherwise). Someone else's has Spara
+ * (then "Sparad ✓") and Prova en gång; your own has Dela and Redigera.
  */
 export default function SharedRoutinePreviewSheet({
   row,
   records,
+  sessions,
   minutes,
   added,
   adding,
@@ -44,28 +67,60 @@ export default function SharedRoutinePreviewSheet({
   canEdit,
   onClose,
   onAdd,
+  onTry,
+  onShare,
   onEdit,
   onStopSharing,
 }: Props) {
   const { t } = useT();
   const [confirming, setConfirming] = useState(false);
-  const preview = useMemo(
-    () => (row ? sharedRoutinePreview(row, records) : null),
-    [row, records],
-  );
+  const preview = useMemo(() => {
+    if (!row) return null;
+    const summary = sharedRoutinePreview(row, records);
+    const parsed = parseSharedPayload(row.payload);
+    const planned = sharedAsExercises(row);
+    const own = ownExercises(records);
+    const facts = parsed.map(sharedExerciseFacts);
+    const categoryOf = new Map(
+      planned.map((ex, i) => [ex.exerciseId, facts[i].category]),
+    );
+    const items = parsed.map((exercise, index): PreviewItem => {
+      // The user's own exercise this one is: a built-in, or a matching custom.
+      const mine =
+        exercise.builtin ??
+        (exercise.custom && matchingCustom(exercise.custom, own)?.id);
+      return {
+        key: String(index),
+        exerciseId: facts[index].exerciseId,
+        category: facts[index].category,
+        equipment: facts[index].equipment,
+        name: exercise.name,
+        line: previewSetsLine(planned[index]),
+        last: mine ? lastResultText(planned[index], sessions.get(mine)) : null,
+      };
+    });
+    return {
+      ...summary,
+      items,
+      groups: plannedSetsByCategory(planned, (id) => categoryOf.get(id)),
+    };
+  }, [row, records, sessions]);
   return (
     <>
       <Sheet
         open={!!row}
         onClose={onClose}
         size="full"
-        className="shared-preview"
+        className="shared-preview routine-preview-sheet"
         title={row?.name}
         description={
           preview &&
           [
             countLabel(preview.exercises.length, "exercise"),
-            countLabel(preview.sets, "set"),
+            countLabel(
+              preview.groups.reduce((sum, g) => sum + g.sets, 0),
+              "set",
+            ),
             minutes && `~${durationLabel(minutes)}`,
           ]
             .filter(Boolean)
@@ -87,71 +142,91 @@ export default function SharedRoutinePreviewSheet({
                 ))}
               </div>
             )}
-            <ul className="list preview-list">
-              {preview.exercises.map((exercise) => (
-                <li className="row preview-item" key={exercise.key}>
-                  <span className="row-main">
-                    <span className="row-title exercise-name">
-                      {exercise.name}
-                      {exercise.isNew && !row.mine && (
-                        <span className="stat-chip warm">
-                          {t("sharedPreview.newExercise")}
-                        </span>
-                      )}
-                    </span>
-                    <span className="row-sub shared-preview-headline">
-                      {exercise.headline}
-                    </span>
-                    {exercise.lines.map((line) => (
-                      <span className="row-sub shared-preview-line" key={line}>
-                        {line}
-                      </span>
-                    ))}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <SetsBar groups={preview.groups} />
+            <PreviewExercises
+              items={preview.items}
+              lastLabel={t("routinePreview.yourLast")}
+              missing={row.mine ? undefined : t("routinePreview.newForYou")}
+            />
             <p className="sheet-hint">{t("sharedPreview.empty")}</p>
-            <div className="sheet-footer shared-preview-footer">
+            <div
+              className={
+                "sheet-footer shared-preview-footer" +
+                (row.mine ? " is-mine" : "")
+              }
+            >
               {row.mine ? (
                 <>
-                  {canEdit && (
+                  {canEdit ? (
+                    <>
+                      <button
+                        type="button"
+                        className="btn-primary"
+                        disabled={busy}
+                        onClick={onShare}
+                      >
+                        <Share2 size={18} aria-hidden="true" />
+                        {t("routineTile.share")}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        disabled={busy}
+                        onClick={onEdit}
+                      >
+                        <Pencil size={18} aria-hidden="true" />
+                        {t("common.edit")}
+                      </button>
+                    </>
+                  ) : (
                     <button
                       type="button"
-                      className="btn-secondary"
+                      className="btn-danger"
                       disabled={busy}
-                      onClick={onEdit}
+                      onClick={() => setConfirming(true)}
                     >
-                      <Pencil size={18} aria-hidden="true" />
-                      {t("common.edit")}
+                      <Share2 size={18} aria-hidden="true" />
+                      {t("exercises.stopSharing")}
                     </button>
                   )}
-                  <button
-                    type="button"
-                    className="btn-danger"
-                    disabled={busy}
-                    onClick={() => setConfirming(true)}
-                  >
-                    <Share2 size={18} aria-hidden="true" />
-                    {t("exercises.stopSharing")}
-                  </button>
                 </>
               ) : (
-                <button
-                  type="button"
-                  className="btn-primary"
-                  disabled={
-                    added || busy || adding || !preview.exercises.length
-                  }
-                  onClick={onAdd}
-                >
-                  {!added && <Plus size={18} aria-hidden="true" />}
-                  {added
-                    ? t("sharedPreview.alreadyAdded")
-                    : adding
-                      ? t("shared.adding")
-                      : t("sharedPreview.add")}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    disabled={
+                      added || busy || adding || !preview.exercises.length
+                    }
+                    onClick={onAdd}
+                  >
+                    {added ? (
+                      <Check size={18} aria-hidden="true" />
+                    ) : (
+                      <Plus size={18} aria-hidden="true" />
+                    )}
+                    {added
+                      ? t("discover.saved")
+                      : adding
+                        ? t("discover.saving")
+                        : t("discover.save")}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    disabled={busy || adding || !preview.exercises.length}
+                    onClick={onTry}
+                  >
+                    <Play
+                      size={16}
+                      fill="currentColor"
+                      stroke="none"
+                      aria-hidden="true"
+                    />
+                    {t("discover.tryOnce")}
+                  </button>
+                  <p className="row-sub">{t("discover.tryHint")}</p>
+                </>
               )}
             </div>
           </>

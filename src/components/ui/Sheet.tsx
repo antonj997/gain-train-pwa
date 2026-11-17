@@ -18,6 +18,8 @@ type Props = {
   backdrop?: "dim" | "light";
   /** "full" opens a near full-screen panel for editors and long details. */
   size?: "sheet" | "full";
+  /** A button at the header's right, before Close (×), such as a ⋯ menu. */
+  headerAction?: ReactNode;
   className?: string;
   contentRef?: Ref<HTMLDivElement>;
   /** Runs before Escape closes the sheet; call preventDefault to keep it open. */
@@ -43,6 +45,7 @@ export default function Sheet({
   description,
   backdrop,
   size,
+  headerAction,
   className,
   contentRef,
   onEscapeKeyDown,
@@ -70,13 +73,16 @@ export default function Sheet({
           ? { "aria-describedby": undefined }
           : {})}
       >
-        <DialogHeader className={size === "full" ? "has-close" : undefined}>
+        <DialogHeader
+          className={size === "full" || headerAction ? "has-close" : undefined}
+        >
           <div className="dialog-header-text">
             <DialogTitle>{title}</DialogTitle>
             {description !== undefined && (
               <DialogDescription>{description}</DialogDescription>
             )}
           </div>
+          {headerAction}
           {size === "full" && <DialogCloseButton />}
         </DialogHeader>
         {children}

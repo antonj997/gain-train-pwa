@@ -1,42 +1,45 @@
 import { newWorkout } from "@/data/start";
-import {
-  completedWorkouts,
-  customDefaults,
-  routines,
-  setCount,
-} from "@/data/selectors";
-import { today } from "@/data/model";
+import { completedWorkouts, customDefaults, routines } from "@/data/selectors";
+import { today, type RoutineRecord } from "@/data/model";
 import { errorMessage } from "@/lib/errors";
 import { reorderByIds } from "@/lib/exercise-order";
 import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
+import { ChevronDown, Plus, Search } from "lucide-react";
+import { useRoutineMenu } from "@/components/library/RoutineMenu";
+import RoutineTile, { NewRoutineTile } from "@/components/library/RoutineTile";
+import LibraryRoutineSheet from "@/components/library/LibraryRoutineSheet";
+import ShareRoutineSheet from "@/components/library/ShareRoutineSheet";
 import {
-  ChevronRight,
-  Globe,
-  MoreHorizontal,
-  Plus,
-  Search,
-} from "lucide-react";
-import RoutineCard from "@/components/items/RoutineCard";
-import {
-  routineSwipeActions,
-  useRoutineMenu,
-} from "@/components/library/RoutineMenu";
+  MoveFolderSheet,
+  NewFolderSheet,
+} from "@/components/library/FolderSheets";
 import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
+import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { useWithUndo } from "@/hooks/useMessages";
+import { useGridMotion } from "@/hooks/useGridMotion";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { type Exercise, type Routine } from "@/data/model";
-import { initialSet, hasLoggedExercise } from "@/data/workouts";
+import { initialSet, hasLoggedExercise, lastSessions } from "@/data/workouts";
 import { draftKey, parseRoutineDraft } from "@/lib/drafts";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import ExercisePicker from "@/components/ExercisePicker";
 import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
 import { countLabel } from "@/lib/labels";
-import { lastUsedLabel } from "@/lib/library";
+import {
+  copyName,
+  duplicateRoutine,
+  folderCounts,
+  sortRoutines,
+  withFolder,
+  type RoutineSort,
+} from "@/lib/routine-library";
+import { ownTileFacts } from "@/lib/routine-tile-facts";
+import { local, storageKeys, writeStored } from "@/lib/storage";
 import RoutinePlan from "@/components/RoutinePlan";
 import { useCardioFields } from "@/hooks/useCardioFields";
 import { useRepHold } from "@/hooks/useRepHold";
@@ -50,13 +53,31 @@ import {
   DialogTitle,
   DialogCloseButton,
 } from "@/components/ui/dialog";
-import { t } from "@/i18n";
+import { currentLocale, t } from "@/i18n";
 import MotionList from "@/components/motion/MotionList";
 import Reveal from "@/components/motion/Reveal";
 
+const SCOPE = "routines:library";
+
 /**
- * Library → Routines: the phase card (to the Plan subscreen), a card per
- * routine, the routine editor, and a row to the Shared routines subscreen.
+ * Copies made this session, copy id → original id: each sits right after its
+ * original in either order (sortRoutines). Kept for the app's session, so
+ * switching tabs keeps the place.
+ */
+const copyPins = new Map<string, string>();
+
+/** How long a new copy keeps its accent ring. */
+const HIGHLIGHT_MS = 2400;
+
+const readSort = (): RoutineSort =>
+  local.getItem(storageKeys.routineSort) === "name" ? "name" : "recent";
+
+/**
+ * Library → Routines: folder chips and the order over a grid of equal tiles,
+ * two to a row, with "Ny rutin" last. A tile opens its preview (Starta,
+ * Redigera, ⋯); its play button starts it; ⋯ or a long press has Duplicera,
+ * Dela, Flytta till mapp, Redigera and Ta bort. The routine editor lives
+ * here too.
  */
 export default function RoutinesPanel({
   request = null,
@@ -82,16 +103,29 @@ export default function RoutinesPanel({
   const [changing, setChanging] = useState<Exercise | null>(null);
   const [query, setQuery] = useState<string | null>(null);
   const searchInput = useRef<HTMLInputElement>(null);
+  const nameInput = useRef<HTMLInputElement>(null);
+  // "Byt namn" opens the editor on its name, selected.
+  const focusName = useRef(false);
+  const [folder, setFolder] = useState<string | null>(null);
+  const [sort, setSort] = useState<RoutineSort>(readSort);
+  const [sortOpen, setSortOpen] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  const [shareId, setShareId] = useState<string | null>(null);
+  const [moveId, setMoveId] = useState<string | null>(null);
+  const [newFolder, setNewFolder] = useState<string[] | null>(null);
+  const [highlight, setHighlight] = useState<string | null>(null);
+  const [pins, setPins] = useState(() => new Map(copyPins));
+  const followSharedId = (id: string, sharedId: string | null) => {
+    if (edit?.id !== id) return;
+    const data = structuredClone(edit.data);
+    if (sharedId) data.sharedId = sharedId;
+    else delete data.sharedId;
+    setEdit({ ...edit, data });
+  };
+  // An open draft of the routine follows its shared id.
   const shared = useSharedRoutines({
     browsing: false,
-    // An open draft of the routine follows its shared id.
-    onSharedId: (id, sharedId) => {
-      if (edit?.id !== id) return;
-      const data = structuredClone(edit.data);
-      if (sharedId) data.sharedId = sharedId;
-      else delete data.sharedId;
-      setEdit({ ...edit, data });
-    },
+    onSharedId: followSharedId,
   });
   const categories = useMemo(
     () => customDefaults(state.records),
@@ -111,7 +145,9 @@ export default function RoutinesPanel({
     setRemoving(null);
   };
   const lock = useRef(false);
-  const records = routines(state.records);
+  const records = useMemo(() => routines(state.records), [state.records]);
+  const latestRecords = useRef(state.records);
+  latestRecords.current = state.records;
   const now = today();
   // The newest finished workout that started from each routine.
   const lastDone = useMemo(() => {
@@ -122,6 +158,11 @@ export default function RoutinesPanel({
     }
     return dates;
   }, [state.records]);
+  // Each exercise's last session: the editor's Förra and the preview's.
+  const sessions = useMemo(
+    () => lastSessions(completedWorkouts(state.records)),
+    [state.records],
+  );
   const update = (exercise: Exercise) => {
     if (edit)
       setEdit({
@@ -167,28 +208,104 @@ export default function RoutinesPanel({
       setBusy(false);
     }
   };
-  const startEdit = (id: string, data: Routine) => {
+  const startEdit = (
+    id: string,
+    data: Routine,
+    { rename = false }: { rename?: boolean } = {},
+  ) => {
     if (edit && edit.id !== id) {
       notify(t("routines.resumeFirst"));
       setOpen(true);
       return;
     }
+    focusName.current = rename;
     if (!edit) setEdit({ id, data: structuredClone(data) });
     setError(null);
+    setPreviewId(null);
     setOpen(true);
   };
+
+  // A copy right after its original, with a ring and "Byt namn".
+  const duplicate = async (r: RoutineRecord) => {
+    const id = crypto.randomUUID();
+    const copy = duplicateRoutine(
+      r.payload,
+      copyName(r.payload.name, t("routineTile.copySuffix")),
+    );
+    try {
+      await save(id, "routine", copy);
+    } catch {
+      notify.error(t("routineTile.copyFailed", { name: r.payload.name }));
+      return;
+    }
+    copyPins.set(id, r.id);
+    setPins(new Map(copyPins));
+    setPreviewId(null);
+    setHighlight(id);
+    notify(t("routineTile.copied"), {
+      key: "routine-copy",
+      action: {
+        label: t("routineTile.rename"),
+        run: () => {
+          const record = latestRecords.current[id];
+          if (record?.kind === "routine" && !record.deleted)
+            startEdit(id, record.payload, { rename: true });
+        },
+      },
+    });
+  };
+  useEffect(() => {
+    if (!highlight) return;
+    document
+      .querySelector(`[data-key="${CSS.escape(highlight)}"]`)
+      ?.scrollIntoView({
+        block: "nearest",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+    const timer = window.setTimeout(() => setHighlight(null), HIGHLIGHT_MS);
+    return () => window.clearTimeout(timer);
+  }, [highlight]);
+
+  // Folders: a name on each routine (Routine.folder), saved one by one.
+  const moveTo = async (ids: readonly string[], target: string | null) => {
+    if (lock.current) return false;
+    lock.current = true;
+    setBusy(true);
+    let moved = "";
+    try {
+      for (const id of ids) {
+        const record = latestRecords.current[id];
+        if (record?.kind !== "routine" || record.deleted) continue;
+        moved = record.payload.name;
+        await save(id, "routine", withFolder(record.payload, target));
+      }
+      return true;
+    } catch {
+      notify.error(t("folders.failed", { name: moved }));
+      return false;
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+  };
+
   const routineMenu = useRoutineMenu({
-    scope: "routines:library",
+    scope: SCOPE,
     onEdit: (r) => {
       if (!busy) startEdit(r.id, r.payload);
     },
-    onSharedId: (id, sharedId) => {
-      if (edit?.id !== id) return;
-      const data = structuredClone(edit.data);
-      if (sharedId) data.sharedId = sharedId;
-      else delete data.sharedId;
-      setEdit({ ...edit, data });
+    onDuplicate: (r) => void duplicate(r),
+    onShare: (r) => {
+      setPreviewId(null);
+      setShareId(r.id);
     },
+    onMove: (r) => {
+      setPreviewId(null);
+      setMoveId(r.id);
+    },
+    onSharedId: followSharedId,
   });
   // `?edit=<id>` (from the Train preview) opens that routine's editor once.
   const [params, setParams] = useSearchParams();
@@ -196,7 +313,9 @@ export default function RoutinesPanel({
   useEffect(() => {
     if (!editId) return;
     const target = records.find((r) => r.id === editId);
-    setParams({}, { replace: true });
+    const next = new URLSearchParams(params);
+    next.delete("edit");
+    setParams(next, { replace: true });
     if (target) startEdit(target.id, target.payload);
   });
   const create = () => {
@@ -205,22 +324,37 @@ export default function RoutinesPanel({
         id: crypto.randomUUID(),
         data: { name: "", exercises: [] },
       });
+    focusName.current = false;
     setError(null);
     setOpen(true);
   };
-  // A search narrows the cards by name or exercise.
+
+  const folders = useMemo(
+    () => folderCounts(records, currentLocale()),
+    [records],
+  );
+  const folderNames = folders.map((f) => f.name);
+  // The chosen folder is gone once its last routine leaves it.
+  const activeFolder = folder && folderNames.includes(folder) ? folder : null;
+  // A search narrows the tiles by name or exercise.
   const needle = (query ?? "").trim().toLocaleLowerCase();
-  const shown = needle
-    ? records.filter(
-        (r) =>
+  const ordered = useMemo(() => {
+    const shown = records.filter(
+      (r) =>
+        (!activeFolder || r.payload.folder === activeFolder) &&
+        (!needle ||
           r.payload.name.toLocaleLowerCase().includes(needle) ||
           r.payload.exercises.some((ex) =>
             ex.name.toLocaleLowerCase().includes(needle),
-          ),
-      )
-    : records;
+          )),
+    );
+    return sortRoutines(shown, lastDone, sort, pins, currentLocale());
+  }, [records, activeFolder, needle, lastDone, sort, pins]);
   // A deleted routine's place keeps an Undo for a few seconds.
-  const cards = useWithUndo("routines:library", shown);
+  const cards = useWithUndo(SCOPE, ordered);
+  const grid = useGridMotion<HTMLDivElement>(
+    `${activeFolder}|${needle}|${sort}`,
+  );
   // Library's header: + starts a new routine, Search opens the search field.
   const handled = useRef(request?.n ?? 0);
   useEffect(() => {
@@ -234,8 +368,20 @@ export default function RoutinesPanel({
     // Runs once per tap: `create` is this render's, and nothing else matters.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request]);
+
+  const start = (r: RoutineRecord) =>
+    void workoutStart.start(
+      newWorkout(Object.values(state.records), { routine: r }),
+    );
+  const find = (id: string | null) =>
+    id ? (records.find((r) => r.id === id) ?? null) : null;
+  const previewRoutine = find(previewId);
+  const previewIndex = ordered.findIndex((r) => r.id === previewId);
+  const sortName = (value: RoutineSort) =>
+    value === "name" ? t("routineTile.sortName") : t("routineTile.sortRecent");
+
   return (
-    <div className="col-12">
+    <div className="col-12 routines-panel">
       {workoutStart.confirmation}
       {query !== null && (
         <label className="search-field routine-search">
@@ -253,82 +399,118 @@ export default function RoutinesPanel({
           />
         </label>
       )}
-      {cards.length > 0 && (
-        <MotionList className="routine-cards" resetKey={query?.trim() ?? ""}>
-          {cards.map((slot) => {
-            if (slot.kind === "undo")
-              return (
-                <UndoPlaceholder key={`u${slot.entry.id}`} entry={slot.entry} />
-              );
-            const { item: r, index } = slot;
-            const done = lastDone.get(r.id);
-            return (
-              <RoutineCard
-                key={r.id}
-                exercises={r.payload.exercises}
-                title={
-                  <>
-                    {r.payload.name}
-                    {r.payload.sharedId && (
-                      <span className="stat-chip strong">
-                        {t("exercises.shared")}
-                      </span>
-                    )}
-                  </>
-                }
-                meta={
-                  <>
-                    {countLabel(r.payload.exercises.length, "exercise")} ·{" "}
-                    {countLabel(setCount(r.payload), "set")} ·{" "}
-                    {done
-                      ? t("routines.lastDone", {
-                          when: lastUsedLabel(done, now),
-                        })
-                      : t("routines.neverDone")}
-                  </>
-                }
-                detail={
-                  r.payload.exercises.map((ex) => ex.name).join(" · ") ||
-                  undefined
-                }
-                openLabel={t("routines.editNamed", { name: r.payload.name })}
-                onOpen={() => {
-                  if (!busy) startEdit(r.id, r.payload);
-                }}
-                startLabel={t("routine.startNamed", { name: r.payload.name })}
-                disabled={busy || workoutStart.busy}
-                onStart={() =>
-                  void workoutStart.start(
-                    newWorkout(Object.values(state.records), { routine: r }),
-                  )
-                }
-                actions={
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    aria-label={t("routines.options", {
-                      name: r.payload.name,
-                    })}
-                    disabled={busy}
-                    onClick={() => routineMenu.open(r.id, index)}
-                  >
-                    <MoreHorizontal size={22} aria-hidden="true" />
-                  </button>
-                }
-                swipeActions={routineSwipeActions(
-                  () => routineMenu.open(r.id, index),
-                  () => void routineMenu.remove(r, index),
-                )}
-                tip={index === 0 ? "swipeRoutine" : undefined}
-              />
-            );
-          })}
-        </MotionList>
+      {records.length > 0 && (
+        <>
+          <div
+            className="facet-chips folder-chips"
+            role="group"
+            aria-label={t("folders.label")}
+          >
+            <button
+              type="button"
+              className="filter-chip"
+              aria-pressed={!activeFolder}
+              onClick={() => setFolder(null)}
+            >
+              {t("folders.all")}
+              <span className="chip-count">{records.length}</span>
+            </button>
+            {folders.map((f) => (
+              <button
+                key={f.name}
+                type="button"
+                className="filter-chip"
+                aria-pressed={activeFolder === f.name}
+                onClick={() => setFolder(f.name)}
+              >
+                {f.name}
+                <span className="chip-count">{f.count}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              className="filter-chip is-add"
+              aria-label={t("folders.newTitle")}
+              onClick={() => setNewFolder([])}
+            >
+              <Plus size={16} aria-hidden="true" />
+              {t("folders.add")}
+            </button>
+          </div>
+          <div className="routine-list-head">
+            <span>{countLabel(ordered.length, "routine")}</span>
+            <button
+              type="button"
+              className="text-button routine-sort"
+              aria-haspopup="dialog"
+              aria-label={t("routineTile.sortLabel", { sort: sortName(sort) })}
+              onClick={() => setSortOpen(true)}
+            >
+              {sortName(sort)}
+              <ChevronDown size={16} aria-hidden="true" />
+            </button>
+          </div>
+        </>
       )}
+      <div className="routine-grid" ref={grid}>
+        {cards.map((slot) => {
+          if (slot.kind === "undo")
+            return (
+              <div
+                key={`u${slot.entry.id}`}
+                className="routine-tile-slot"
+                data-key={`u${slot.entry.id}`}
+              >
+                <UndoPlaceholder entry={slot.entry} />
+              </div>
+            );
+          const { item: r, index } = slot;
+          const facts = ownTileFacts(
+            r.id,
+            r.payload,
+            state.records,
+            lastDone.get(r.id),
+            now,
+          );
+          return (
+            <RoutineTile
+              key={r.id}
+              itemKey={r.id}
+              name={r.payload.name}
+              icons={facts.icons}
+              more={facts.more}
+              meta={facts.meta}
+              foot={facts.foot}
+              shared={!!r.payload.sharedId}
+              highlight={highlight === r.id}
+              openLabel={t("routine.preview", { name: r.payload.name })}
+              onOpen={() => {
+                if (!busy) setPreviewId(r.id);
+              }}
+              menuLabel={t("routines.options", { name: r.payload.name })}
+              onMenu={() => {
+                if (!busy) routineMenu.open(r.id, index);
+              }}
+              action={{
+                kind: "start",
+                label: t("routine.startNamed", { name: r.payload.name }),
+                disabled: busy || workoutStart.busy,
+                onClick: () => start(r),
+              }}
+            />
+          );
+        })}
+        <NewRoutineTile
+          label={edit ? t("routines.resumeDraft") : t("routineTile.new")}
+          onClick={create}
+        />
+      </div>
       <Reveal>
-        {records.length > 0 && !shown.length && (
+        {records.length > 0 && !ordered.length && (
           <p className="empty" role="status">
-            {t("routines.noMatch")}
+            {activeFolder && !needle
+              ? t("folders.empty", { folder: activeFolder })
+              : t("routines.noMatch")}
           </p>
         )}
       </Reveal>
@@ -347,20 +529,97 @@ export default function RoutinesPanel({
           </p>
         )}
       </Reveal>
-      <button type="button" className="btn-dashed" onClick={create}>
-        <Plus size={20} aria-hidden="true" />
-        {edit ? t("routines.resumeDraft") : t("routines.new")}
-      </button>
-      <div className="list">
-        <Link className="row shared-routines-row" to="/library/shared">
-          <Globe size={20} aria-hidden="true" />
-          <span className="row-main">
-            <span className="row-title">{t("library.sharedRow")}</span>
-          </span>
-          <ChevronRight className="chev" size={20} aria-hidden="true" />
-        </Link>
-      </div>
       {routineMenu.sheet}
+      <LibraryRoutineSheet
+        routine={previewRoutine}
+        records={state.records}
+        sessions={sessions}
+        minutes={
+          previewRoutine
+            ? ownTileFacts(
+                previewRoutine.id,
+                previewRoutine.payload,
+                state.records,
+                undefined,
+                now,
+              ).minutes
+            : null
+        }
+        lastDone={previewRoutine ? lastDone.get(previewRoutine.id) : undefined}
+        now={now}
+        disabled={busy || workoutStart.busy}
+        onClose={() => setPreviewId(null)}
+        onStart={() => {
+          if (!previewRoutine) return;
+          setPreviewId(null);
+          start(previewRoutine);
+        }}
+        onEdit={() =>
+          previewRoutine && startEdit(previewRoutine.id, previewRoutine.payload)
+        }
+        onMenu={() =>
+          previewRoutine &&
+          routineMenu.open(previewRoutine.id, Math.max(0, previewIndex))
+        }
+      />
+      <ShareRoutineSheet
+        routine={find(shareId)}
+        records={state.records}
+        canShare={shared.canShare}
+        ready={shared.ready}
+        sharing={shared.sharing}
+        onClose={() => setShareId(null)}
+        onShare={(r, on) =>
+          void (on ? shared.share(r.id) : shared.stopSharing(r.id))
+        }
+      />
+      <MoveFolderSheet
+        routine={find(moveId)}
+        folders={folderNames}
+        busy={busy}
+        onClose={() => setMoveId(null)}
+        onMove={async (r, target) => {
+          if (!(await moveTo([r.id], target))) return;
+          setMoveId(null);
+          notify(
+            target
+              ? t("folders.moved", { name: r.payload.name, folder: target })
+              : t("folders.movedOut", { name: r.payload.name }),
+          );
+        }}
+        onNew={(r) => {
+          setMoveId(null);
+          setNewFolder([r.id]);
+        }}
+      />
+      <NewFolderSheet
+        open={newFolder !== null}
+        routines={records}
+        folders={folderNames}
+        preselected={newFolder ?? []}
+        busy={busy}
+        onClose={() => setNewFolder(null)}
+        onCreate={async (name, ids) => {
+          if (!(await moveTo(ids, name))) return;
+          setNewFolder(null);
+          setFolder(name);
+        }}
+      />
+      <ChoiceSheet<RoutineSort>
+        open={sortOpen}
+        onClose={() => setSortOpen(false)}
+        title={t("routineTile.sortTitle")}
+        value={sort}
+        options={[
+          { value: "recent", label: t("routineTile.sortRecent") },
+          { value: "name", label: t("routineTile.sortName") },
+        ]}
+        hint={t("routineTile.sortHint")}
+        onChoose={(value) => {
+          setSort(value);
+          writeStored(storageKeys.routineSort, value === "name" ? value : null);
+        }}
+      />
       <Dialog
         open={open && !!edit}
         onOpenChange={(value) => {
@@ -375,6 +634,13 @@ export default function RoutinesPanel({
           className="routine-dialog"
           // The title says it all; there is no description line.
           aria-describedby={undefined}
+          onOpenAutoFocus={(event) => {
+            if (!focusName.current) return;
+            focusName.current = false;
+            event.preventDefault();
+            nameInput.current?.focus();
+            nameInput.current?.select();
+          }}
         >
           <DialogHeader className="has-close">
             <div className="dialog-header-text">
@@ -391,6 +657,7 @@ export default function RoutinesPanel({
               <label>
                 {t("routines.name")}
                 <input
+                  ref={nameInput}
                   value={edit.data.name}
                   maxLength={100}
                   onChange={(e) =>
@@ -401,11 +668,17 @@ export default function RoutinesPanel({
                   }
                 />
               </label>
+              {edit.data.exercises.length > 0 && (
+                <p className="sheet-hint routine-values-hint">
+                  {t("routines.valuesHint")}
+                </p>
+              )}
               <MotionList className="routine-editor-list" resetKey={edit.id}>
                 {edit.data.exercises.map((ex) => (
                   <RoutinePlan
                     key={ex.id}
                     exercise={ex}
+                    lastSession={sessions.get(ex.exerciseId)}
                     defaults={categories.get(ex.exerciseId)}
                     onChange={update}
                     onReorderExercises={

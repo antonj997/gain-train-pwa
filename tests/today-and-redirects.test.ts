@@ -122,11 +122,22 @@ test("old tab links redirect to the subscreens", () => {
   assert.equal(legacyRedirect("/progress/", "?tab=goals"), "/progress/goals");
   assert.equal(legacyRedirect("/progress", "?tab=stats"), "/progress");
   assert.equal(legacyRedirect("/library", "?tab=plan"), "/library/plan");
-  assert.equal(legacyRedirect("/library", "?view=shared"), "/library/shared");
-  assert.equal(legacyRedirect("/library", "?tab=shared"), "/library/shared");
+  assert.equal(
+    legacyRedirect("/library", "?view=shared"),
+    "/library?tab=discover",
+  );
+  assert.equal(
+    legacyRedirect("/library", "?tab=shared"),
+    "/library?tab=discover",
+  );
+  assert.equal(legacyRedirect("/library/shared", ""), "/library?tab=discover");
+  assert.equal(
+    legacyRedirect("/library/shared/", "?shared=abc"),
+    "/library?shared=abc&tab=discover",
+  );
   assert.equal(
     legacyRedirect("/library", "?tab=routines&view=shared"),
-    "/library/shared",
+    "/library?tab=discover",
   );
   assert.equal(legacyRedirect("/library", "?tab=routines"), "/library");
   assert.equal(legacyRedirect("/routines", ""), "/library");
@@ -158,7 +169,8 @@ test("current URLs are left alone", () => {
     ["/library", "?edit=abc"],
     ["/library", "?tab=exercises&view=shared"],
     ["/library/plan", ""],
-    ["/library/shared", ""],
+    ["/library", "?tab=discover"],
+    ["/library", "?tab=discover&shared=abc"],
     ["/settings", ""],
     ["/exercise/builtin%3Asquat", "?tab=history"],
   ])

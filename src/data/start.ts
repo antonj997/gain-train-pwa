@@ -13,28 +13,35 @@ import { activePlans } from "./plans";
 import { applyPlanStart, planStartFor } from "./phase";
 import { equipmentLookup } from "./progression";
 import { autoWorkoutName } from "../lib/workout-name";
+import { startValues } from "../lib/routine-targets";
 
+/**
+ * A routine's exercises as a new workout fills them: each set with a target's
+ * typed values, else last time's result, else the routine's older values
+ * (startValues in routine-targets.ts).
+ */
 export function suggestedExercises(items: Exercise[], records: RecordDoc[]) {
   const history = completedWorkouts(records);
-  return repeatExercises(items).map((ex) => {
+  return repeatExercises(items).map((ex, exerciseIndex) => {
+    // The routine's own sets: a new set does not carry the target flag.
+    const planned = items[exerciseIndex].sets;
     const lastSession = history.find((r) =>
       r.payload.exercises.some(
         (e) => e.exerciseId === ex.exerciseId && e.sets.some((s) => s.done),
       ),
     );
-    if (!lastSession) return ex;
-    const prior = lastSession.payload.exercises
-      .filter((e) => e.exerciseId === ex.exerciseId)
-      .flatMap((e) => e.sets);
+    const prior = lastSession
+      ? lastSession.payload.exercises
+          .filter((e) => e.exerciseId === ex.exerciseId)
+          .flatMap((e) => e.sets)
+      : [];
     return {
       ...ex,
       sets: ex.sets.map((set, index) => {
-        const previous = previousResult(prior, ex.sets, index);
-        return newSet(
-          previous
-            ? { ...set, reps: previous.reps, weight: previous.weight }
-            : set,
-        );
+        const previous = lastSession
+          ? previousResult(prior, ex.sets, index)
+          : undefined;
+        return newSet({ ...set, ...startValues(planned[index], previous) });
       }),
     };
   });

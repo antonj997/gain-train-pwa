@@ -157,6 +157,33 @@ export function useSharedRoutines({
         setAdding("");
       }
     },
+    /**
+     * Prova en gång: the routine to start a workout from, without saving it
+     * among the user's routines. The sharer's own exercises it uses are saved
+     * (reused when the user has them), as a workout needs them. Null when
+     * nothing in it is usable or saving failed.
+     */
+    prepareTry: async (id: string): Promise<Routine | null> => {
+      const row = shared.rows.find((r) => r.id === id);
+      if (!row || adding) return null;
+      const copy = importSharedRoutine(row, state.records);
+      if (!copy) {
+        notify.error(t("sharedRoutines.unusable", { name: row.name }));
+        return null;
+      }
+      setAdding(row.id);
+      try {
+        for (const exercise of copy.exercises)
+          await save(exercise.id, "exercise", exercise.payload);
+      } catch {
+        notify.error(t("shared.addFailed", { name: row.name }));
+        return null;
+      } finally {
+        setAdding("");
+      }
+      const { sharedFrom: _sharedFrom, ...routine } = copy.routine;
+      return routine;
+    },
     /** Publishes a routine. Resolves true when it was shared. */
     share: async (id: string) => {
       const payload = routinePayload(id);

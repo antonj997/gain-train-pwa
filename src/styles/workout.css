@@ -53,10 +53,13 @@
     column-gap: var(--gt-space-2);
   }
 }
-/* A routine's planned set has no previous result and no check: three columns. */
+/* A routine's planned set: badge, last time's result (Förra), load and
+   count; no arrow slot and no check. */
 .set-line[data-mode="plan"],
 .set-columns[data-mode="plan"] {
-  grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns:
+    44px minmax(0, 1fr) var(--set-load-w)
+    var(--set-count-w);
 }
 /* Done: a green tone across the whole row, drops included; no rail. */
 .set-line.is-done {
@@ -278,6 +281,10 @@
   color: var(--gt-ink-2);
   font-weight: 400;
   opacity: 1;
+}
+/* A routine's empty field shows last time's result: plainly not filled in. */
+.set-line[data-mode="plan"] .set-field input::placeholder {
+  color: var(--gt-ink-3);
 }
 .set-line .set-field input::selection {
   background-color: var(--gt-accent);

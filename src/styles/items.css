@@ -610,3 +610,229 @@ button.ex-row-main {
 .calendar-day.day-cell.is-override {
   background-color: var(--gt-accent-soft);
 }
+
+/* Library tile (RoutineTile, Library concept step 13): equal tiles, two to
+   a row. Every tile has the same four lines in the same places: up to three
+   category icons (⋯ at their right), the name in two lines' room, "6
+   övningar · ~55 min", and at the foot when it was last done beside a round
+   44px play (or +). grid-auto-rows: 1fr keeps a row's tiles the same height. */
+.routine-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 10px;
+}
+.routine-tile,
+.routine-tile-new,
+.routine-tile-slot {
+  min-width: 0;
+}
+.routine-tile {
+  --glyph: 26px;
+  --glyph-gap: 4px;
+  position: relative;
+  display: flex;
+  border-radius: var(--gt-radius-item);
+  background-color: var(--gt-routine-fill);
+  box-shadow: 0 0 0 0 transparent;
+  transition: box-shadow var(--gt-dur-morph) var(--gt-ease-out);
+}
+/* The copy Duplicate just made: a short accent ring. */
+.routine-tile.is-highlight {
+  box-shadow: 0 0 0 2px var(--gt-accent);
+}
+.routine-tile.is-inert {
+  pointer-events: none;
+}
+.routine-tile-open {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--gt-space-1);
+  min-width: 0;
+  padding: var(--gt-space-3);
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--gt-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.routine-tile-open:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: -3px;
+}
+/* Room at the right for ⋯ (44px from the tile's edge). */
+.routine-tile-icons {
+  display: flex;
+  gap: var(--glyph-gap);
+  height: var(--glyph);
+  margin-bottom: var(--gt-space-1);
+  padding-right: calc(44px - var(--gt-space-3));
+  overflow: hidden;
+}
+.routine-glyph {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--glyph, 26px);
+  height: var(--glyph, 26px);
+  border-radius: 8px;
+  background-color: var(--tone-bg, var(--gt-cat-other-bg));
+  color: var(--tone-fg, var(--gt-cat-other-fg));
+}
+.routine-glyph.is-lg {
+  --glyph: 36px;
+  border-radius: var(--gt-radius-sm);
+}
+.routine-glyph svg {
+  display: block;
+  width: 64%;
+  height: 64%;
+}
+.routine-glyph.is-lg svg {
+  width: 22px;
+  height: 22px;
+}
+.routine-tile-more {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  min-width: 22px;
+  height: var(--glyph);
+  padding: 0 4px;
+  border-radius: 8px;
+  background-color: var(--gt-surface);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 700;
+}
+/* Two lines' room, whatever the name: the lines under it stay in place. */
+.routine-tile-name {
+  display: -webkit-box;
+  min-height: calc(2 * 1.25em);
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+}
+.routine-tile-globe {
+  display: inline-block;
+  margin-left: var(--gt-space-1);
+  color: var(--gt-accent);
+  vertical-align: -1px;
+}
+.routine-tile-meta {
+  overflow: hidden;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Beside the 44px play: up to two short lines, centred on it. */
+.routine-tile-foot {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: auto;
+  padding-right: 48px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.routine-tile-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--gt-ink-2);
+}
+.routine-tile-action {
+  position: absolute;
+  right: var(--gt-space-3);
+  bottom: var(--gt-space-3);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  cursor: pointer;
+  transition: transform var(--gt-motion);
+}
+.routine-tile-action.is-start svg {
+  margin-left: 2px;
+}
+.routine-tile-action.is-save {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.routine-tile-action.is-saved {
+  background-color: var(--gt-done-soft);
+  color: var(--gt-done);
+  cursor: default;
+}
+.routine-tile-action:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.routine-tile-action:disabled:not(.is-saved) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.routine-tile-action:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.routine-tile-new {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gt-space-1);
+  min-height: 160px;
+  padding: var(--gt-space-3);
+  border: 1.5px dashed var(--gt-line-strong);
+  border-radius: var(--gt-radius-item);
+  background: transparent;
+  color: var(--gt-accent);
+  font: inherit;
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+  cursor: pointer;
+}
+.routine-tile-new:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.routine-tile-slot {
+  display: flex;
+}
+.routine-tile-slot > .undo-placeholder {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-item);
+  text-align: center;
+}
+/* At 360px three icons and a "+N" still fit beside ⋯. */
+@media (max-width: 379px) {
+  .routine-tile {
+    --glyph: 24px;
+    --glyph-gap: 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .routine-tile {
+    transition: none;
+  }
+}

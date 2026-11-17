@@ -233,12 +233,35 @@ test("drops and planned sets have no done button", async () => {
   });
   assert.doesNotMatch(planned, /aria-pressed/);
   assert.doesNotMatch(planned, /<button[^>]*aria-label="(Complete|Uncheck)/);
-  // A planned row is three columns: badge, load and count.
-  assert.doesNotMatch(planned, /set-line-spacer|set-previous/);
+  // A planned row is badge, last time's result (Förra), load and count.
+  assert.doesNotMatch(planned, /set-line-spacer/);
+  assert.match(planned, /class="set-previous"/);
+  assert.doesNotMatch(planned, /set-previous is-fill/);
   assert.match(planned, /data-mode="plan"/);
   const logged = await setLine({ set: { ...model.newSet(), reps: 5 } });
   assert.match(logged, /aria-pressed="false"/);
   assert.doesNotMatch(logged, /set-line-spacer/);
+});
+
+test("a routine's empty fields show last time's result; a typed target reads as one", async () => {
+  const empty = await setLine({
+    set: model.newSet(),
+    mode: "plan",
+    previous: "85 kg × 5",
+    placeholders: { weight: "85", reps: "5" },
+  });
+  const inputs = tags(empty, "input");
+  assert.match(inputs[0], /placeholder="85"/);
+  assert.match(inputs[0], /value=""/);
+  assert.match(inputs[1], /placeholder="5"/);
+  assert.match(empty, /85 kg × 5/);
+  assert.doesNotMatch(empty, /is-target/);
+  const target = await setLine({
+    set: { ...model.newSet(), weight: 90, reps: 5, target: true },
+    mode: "plan",
+  });
+  assert.match(target, /class="set-line is-target"/);
+  assert.match(tags(target, "input")[0], /value="90"/);
 });
 
 test("a set waiting on its drops explains the disabled check", async () => {

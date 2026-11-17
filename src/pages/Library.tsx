@@ -7,25 +7,29 @@ import RoutinesPanel from "@/components/library/RoutinesPanel";
 import ExercisesPanel, {
   type PanelRequest,
 } from "@/components/library/ExercisesPanel";
+import DiscoverPanel from "@/components/library/DiscoverPanel";
 import { useT } from "@/i18n/useT";
 
-type Tab = "routines" | "exercises";
+type Tab = "routines" | "exercises" | "discover";
 const tabs = [
   { value: "routines", label: "library.routines" },
   { value: "exercises", label: "library.exercises" },
+  { value: "discover", label: "library.discover" },
 ] as const;
+const tabOf = (value: string | null): Tab =>
+  value === "exercises" || value === "discover" ? value : "routines";
 
 /**
- * Library, the training setup: routines (the workouts you repeat, with the
- * plan's phase card on top and shared routines at the end) and exercises (the
- * catalogue plus your own), chosen with `?tab=`. The header's Search and +
- * act on the chosen section. Plan and Shared routines are subscreens
- * (/library/plan, /library/shared).
+ * Library, the training setup, in three tabs chosen with `?tab=`: Rutiner
+ * (your routines as tiles, with folders), Övningar (the catalogue plus your
+ * own) and Upptäck (what people shared: routines and exercises). The header's
+ * Search acts on the chosen tab, and + makes a routine or an exercise. Plan
+ * is a subscreen (/library/plan); /library/shared now opens Upptäck.
  */
 export default function Library() {
   const [params, setParams] = useSearchParams();
   const { t } = useT();
-  const tab: Tab = params.get("tab") === "exercises" ? "exercises" : "routines";
+  const tab = tabOf(params.get("tab"));
   const [request, setRequest] = useState<PanelRequest>(null);
   const ask = (kind: "new" | "search") =>
     setRequest((r) => ({ kind, n: (r?.n ?? 0) + 1 }));
@@ -41,22 +45,26 @@ export default function Library() {
               aria-label={t(
                 tab === "routines"
                   ? "library.searchRoutines"
-                  : "library.searchExercises",
+                  : tab === "exercises"
+                    ? "library.searchExercises"
+                    : "library.searchDiscover",
               )}
               onClick={() => ask("search")}
             >
               <Search size={22} aria-hidden="true" />
             </button>
-            <button
-              type="button"
-              className="icon-btn filled"
-              aria-label={t(
-                tab === "routines" ? "routines.new" : "exercises.new",
-              )}
-              onClick={() => ask("new")}
-            >
-              <Plus size={22} aria-hidden="true" />
-            </button>
+            {tab !== "discover" && (
+              <button
+                type="button"
+                className="icon-btn filled"
+                aria-label={t(
+                  tab === "routines" ? "routines.new" : "exercises.new",
+                )}
+                onClick={() => ask("new")}
+              >
+                <Plus size={22} aria-hidden="true" />
+              </button>
+            )}
           </div>
         }
       />
@@ -70,6 +78,7 @@ export default function Library() {
       />
       {tab === "routines" && <RoutinesPanel request={request} />}
       {tab === "exercises" && <ExercisesPanel request={request} />}
+      {tab === "discover" && <DiscoverPanel request={request} />}
     </div>
   );
 }

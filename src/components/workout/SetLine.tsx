@@ -140,8 +140,9 @@ function cardioInputs({ distanceUnit: unit }: CardioFields): CardioInput[] {
 
 /**
  * One set as a single line: badge, previous result, load, count and done.
- * `mode: "plan"` is a routine's planned set: just badge, load and count, with
- * no previous result and no check. In a log, drops have no check of their own
+ * `mode: "plan"` is a routine's planned set: badge, last time's result (no
+ * tap to fill), load and count with that result as grey placeholders, and no
+ * check. In a log, drops have no check of their own
  * either, since their set above is checked for them.
  */
 export default function SetLine({
@@ -170,9 +171,16 @@ export default function SetLine({
   onChange,
   onToggleDone,
   onFocus,
+  placeholders,
 }: {
   set: WorkoutSet;
   mode: "log" | "plan";
+  /**
+   * A routine's set (plan mode): the grey text in its empty kg and reps
+   * fields, last time's result (routine-targets.ts). Strings, so a memoised
+   * row compares them.
+   */
+  placeholders?: { weight?: string; reps?: string };
   name: string;
   badge: SetBadgeInfo;
   previous?: string;
@@ -465,6 +473,8 @@ export default function SetLine({
     drop && "is-drop",
     next && "is-next",
     editing && "is-editing",
+    // A routine's typed target: its values read in the accent.
+    mode === "plan" && set.target && "is-target",
   ]
     .filter(Boolean)
     .join(" ");
@@ -490,7 +500,9 @@ export default function SetLine({
         min="1"
         max="10000"
         step="1"
-        placeholder={timed ? t("set.phSec") : t("set.phReps")}
+        placeholder={
+          placeholders?.reps ?? (timed ? t("set.phSec") : t("set.phReps"))
+        }
         value={set.reps}
         inputText={getSetInputText(set, "reps")}
         readOnly={locked}
@@ -576,6 +588,9 @@ export default function SetLine({
             : onOpenSheet(set.id)
         }
       />
+      {mode === "plan" && !cardio && (
+        <PreviousCell previous={previous} next={false} />
+      )}
       {mode === "log" && !cardio && (
         <PreviousCell
           previous={previous}
@@ -726,7 +741,9 @@ export default function SetLine({
                 min="0"
                 max="10000"
                 step="any"
-                placeholder={marker === "kg" ? undefined : unit}
+                placeholder={
+                  placeholders?.weight ?? (marker === "kg" ? undefined : unit)
+                }
                 // Shown and typed in the unit; stored in kg. An untouched
                 // field never writes, so its exact kg value stays.
                 value={shownWeight}

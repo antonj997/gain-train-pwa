@@ -1,4 +1,6 @@
-import type { Exercise, RecordDoc } from "../data/model";
+import type { Exercise, RecordDoc, Routine } from "../data/model";
+import { previousResult, type LastSession } from "../data/workouts";
+import { shortSetText } from "./set-target";
 import { holdLabel, holdOf } from "./rep-hold";
 import { completedWorkouts } from "../data/selectors";
 import { isDrop } from "../data/drops";
@@ -88,4 +90,112 @@ export function exerciseExtras(exercise: Exercise) {
   ]
     .filter(Boolean)
     .join(" · ");
+}
+
+/** Minutes a planned set takes with its rest, for a routine never done. */
+export const SET_MINUTES = { working: 3, other: 1.5, drop: 0.5 } as const;
+/** Minutes to set up each exercise. */
+export const EXERCISE_MINUTES = 2;
+/** A cardio set without a planned time counts this long. */
+export const CARDIO_MINUTES = 10;
+
+/**
+ * A routine's length estimated from its sets, rounded to 5 minutes, for a
+ * routine with no finished workout: 3 minutes a working set (with its rest),
+ * 1.5 a warm-up or cool-down, half a minute a drop, a cardio set's planned
+ * time (else 10 minutes) and 2 minutes to set up each exercise. Null with no
+ * sets.
+ */
+export function estimatedMinutes(routine: Pick<Routine, "exercises">) {
+  let minutes = 0;
+  let sets = 0;
+  for (const exercise of routine.exercises) {
+    if (!exercise.sets.length) continue;
+    minutes += EXERCISE_MINUTES;
+    for (const set of exercise.sets) {
+      sets += 1;
+      if (isCardioSet(set))
+        minutes += set.durationSec ? set.durationSec / 60 : CARDIO_MINUTES;
+      else if (isDrop(set)) minutes += SET_MINUTES.drop;
+      else if (set.section === "working") minutes += SET_MINUTES.working;
+      else minutes += SET_MINUTES.other;
+    }
+  }
+  return sets ? roundToFive(minutes) : null;
+}
+
+/**
+ * A routine's length for its tile and preview: the average of its finished
+ * workouts, else the estimate from its sets (`estimated`).
+ */
+export function routineLength(
+  routineId: string,
+  routine: Pick<Routine, "exercises">,
+  records: readonly RecordDoc[] | Record<string, RecordDoc>,
+): { minutes: number | null; estimated: boolean } {
+  const average = routineAverageMinutes(routineId, records);
+  if (average !== null) return { minutes: average, estimated: false };
+  return { minutes: estimatedMinutes(routine), estimated: true };
+}
+
+/** "8–12 reps", or "30–45 s" for a hold. */
+export function repRangeLabel(
+  range: Exercise["repRange"],
+  timed = false,
+): string {
+  if (!range) return "";
+  const span =
+    range.min === range.max ? `${range.min}` : `${range.min}–${range.max}`;
+  return t(timed ? "routineTile.rangeSeconds" : "routineTile.rangeReps", {
+    range: span,
+  });
+}
+
+/**
+ * A planned exercise in the preview: "1 warm-up + 3 sets · 8–12 reps".
+ * Drops and cool-downs are added when there are any.
+ */
+export function previewSetsLine(exercise: Exercise) {
+  const real = exercise.sets.filter((s) => !isDrop(s));
+  const count = (section: Exercise["sets"][number]["section"]) =>
+    real.filter((s) => s.section === section).length;
+  const working = count("working");
+  const warmup = count("warmup");
+  const winddown = count("winddown");
+  const drops = exercise.sets.length - real.length;
+  if (!real.length) return t("routine.noSets");
+  const main = [
+    warmup && t("routineTile.warmupsShort", { count: warmup }),
+    working && countLabel(working, "set"),
+    winddown && t("routineTile.cooldownsShort", { count: winddown }),
+  ]
+    .filter(Boolean)
+    .join(" + ");
+  const timed = real.some((s) => s.measure === "seconds");
+  return [
+    main,
+    drops && countLabel(drops, "drop"),
+    repRangeLabel(exercise.repRange, timed),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+/**
+ * Last time's result for an exercise, as the preview shows it beside
+ * "Förra": its first working set's match in the last session ("80 × 8",
+ * "BW × 12", "60 s"). Null with no history or for cardio.
+ */
+export function lastResultText(
+  exercise: Exercise,
+  last: LastSession | undefined,
+) {
+  if (!last) return null;
+  const index = exercise.sets.findIndex(
+    (s) => s.section === "working" && !isDrop(s),
+  );
+  const at = index >= 0 ? index : exercise.sets.findIndex((s) => !isDrop(s));
+  if (at < 0 || isCardioSet(exercise.sets[at])) return null;
+  const result = previousResult(last.sets, exercise.sets, at);
+  return result ? shortSetText(result, result) : null;
 }

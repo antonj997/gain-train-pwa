@@ -4,7 +4,8 @@
  *
  * - `/progress?tab=goals` → `/progress/goals` (Goals became a subscreen).
  * - `/library?tab=plan` → `/library/plan` (Plan became a subscreen).
- * - `/library?view=shared` or `?tab=shared` → `/library/shared`.
+ * - `/library/shared`, `/library?view=shared` or `?tab=shared` →
+ *   `/library?tab=discover` (Shared routines became the Upptäck tab).
  * - `/routines` → `/library`, `/my-exercises` → `/library?tab=exercises`.
  * - `?tab=stats` and `?tab=routines` name the default and are dropped.
  *
@@ -34,10 +35,12 @@ export function legacyRedirect(
     if (tab !== null) return go("/progress", ["tab"]);
     return null;
   }
+  if (path === "/library/shared")
+    return go("/library", ["tab", "view"], { tab: "discover" });
   if (path === "/library") {
     if (tab === "plan") return go("/library/plan", ["tab", "view"]);
     if (tab === "shared" || (view === "shared" && tab !== "exercises"))
-      return go("/library/shared", ["tab", "view"]);
+      return go("/library", ["tab", "view"], { tab: "discover" });
     if (tab === "routines") return go("/library", ["tab"]);
     return null;
   }
