@@ -441,8 +441,9 @@ export default function NumberPad({
     }));
   };
 
-  const name = setBadge(exercise.sets, index).name;
-  const title = `${name.charAt(0).toUpperCase()}${name.slice(1)} · ${exercise.name}`;
+  // The exercise gets the whole title line; the set's short name leads the
+  // line below so neither is cut beside the field toggle.
+  const setName = setBadge(exercise.sets, index).short;
   const stepName = (direction: 1 | -1) =>
     field === "reps"
       ? t("pad.stepReps", { step: padStepLabel(field, unit, direction, mark) })
@@ -480,11 +481,11 @@ export default function NumberPad({
       </button>
       <div className="number-pad-head">
         <div className="number-pad-titles">
-          <p className="number-pad-title">{title}</p>
+          <p className="number-pad-title">{exercise.name}</p>
           <p className="number-pad-meta">
             {prior
-              ? t("pad.previous", { value: labelSet(prior) })
-              : t("pad.noPrevious")}
+              ? `${setName} · ${t("pad.previous", { value: labelSet(prior) })}`
+              : setName}
           </p>
           {/* The Target key: fills the set's target in one tap. */}
           {goal && (
