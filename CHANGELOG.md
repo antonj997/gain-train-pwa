@@ -1,5 +1,23 @@
 # Changelog
 
+## 17 November 2026 — sort by hold and drag
+
+- **Reorder exercises and Reorder sets: hold a row and drag it.** The ↑ and ↓ buttons are gone.
+  - Hold a row for 250 ms, or press its grip for at once, and it **lifts**: a little larger (spring `SPRING.lift`), on a raised surface with a shadow, and a short vibration where the phone has one.
+  - It follows the finger while the rows it passes **slide out of its way**, leaving a gap where it will land.
+  - Let go and it **settles into the gap** (`SPRING.drop`).
+  - A finger that moves before the hold still scrolls the list, and a downward swipe still closes the sheet. Held at the sheet's edge, the list scrolls.
+  - With a mouse, dragging a row picks it up.
+- **Commit once, at release.** The DOM order stays put while a row is held. On release the new order is committed at once, and the dropped row springs into its slot from where the finger left it (FLIP), so the next row can be picked up straight away.
+  - Escape, or dropping it where it was, sends it back while the others slide home.
+  - Reduced motion keeps the lift state but drops the movement.
+- **Keyboard.** The grip still moves a row: Space or Enter, the arrow keys, Escape. The screen-reader instructions are now translated.
+- `src/lib/sort-drag.ts` holds the slot geometry (`slotPitch`, `slotShift`, `dropOffset`, `moveItem`), tested in `tests/sort-drag.test.ts`. The old fake-hook harness for SortableSetList (`tests/set-component.test.ts`) drove the removed pointer handlers; a Playwright smoke now covers that behaviour in Chromium and WebKit:
+  - lift and shadow, rows sliding aside, one commit on release, and an immediate second drag;
+  - a quick swipe not reordering, and Escape cancelling with the sheet staying open;
+  - edge scroll, the keyboard, and Reorder sets.
+  `moveId` and the arrow strings are removed.
+
 ## 17 November 2026 — exercises are added in the order you pick them
 
 - **Bug.** Picking several exercises added them in the list's order, not the order they were tapped. Now the first one picked becomes the first in the workout (or routine).

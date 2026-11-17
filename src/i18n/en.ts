@@ -322,8 +322,6 @@ export const en = {
   "exercise.reorderSets": "Reorder sets",
   "exercise.reorderExercises": "Reorder exercises",
   "exercise.moveHandle": "Move {name}, position {n}",
-  "exercise.moveUpNamed": "Move {name} up",
-  "exercise.moveDownNamed": "Move {name} down",
   "load.count": "Count",
   "load.reps": "Reps",
   "load.appliesUnchecked": "Applies to the sets you haven't checked yet.",
@@ -409,6 +407,8 @@ export const en = {
   "set.droppedAt": "Set dropped at position {position} of {total}.",
   "set.movingAt":
     "Set at position {position} of {total}. Use arrow keys or drag to move, Space or Enter to drop.",
+  "set.sortInstructions":
+    "Hold a row and drag it into place. With a keyboard, press Space or Enter to grab, use the arrow keys to move, then Space or Enter to drop. Escape cancels the move.",
   "set.moveHandle": "Move {name} set {n}",
   "change.title": "Swap to {name}?",
   "change.cardioToStrength": {

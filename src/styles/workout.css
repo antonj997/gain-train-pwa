@@ -971,6 +971,54 @@
   color: var(--gt-accent);
   cursor: grabbing;
 }
+/* Hold a row and drag it: it lifts (a little larger, a shadow, a raised
+   surface) and follows the finger; the rows it passes slide out of its way;
+   let go, it settles into its slot. A finger can still scroll the list. */
+.sortable-set-item {
+  position: relative;
+  border-radius: var(--gt-radius-sm);
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition:
+    box-shadow var(--gt-dur-quick) var(--gt-ease-out),
+    background-color var(--gt-dur-quick) var(--gt-ease-out);
+}
+.sortable-set-list[data-sorting] .sortable-set-item {
+  transition:
+    translate var(--gt-dur-week-slide) var(--gt-ease-out),
+    box-shadow var(--gt-dur-quick) var(--gt-ease-out),
+    background-color var(--gt-dur-quick) var(--gt-ease-out);
+}
+.sortable-set-item[data-lifted],
+.sortable-set-item[data-settling] {
+  z-index: 2;
+}
+/* The held row follows the finger with no lag, and settles on its spring. */
+.sortable-set-list .sortable-set-item[data-lifted],
+.sortable-set-list .sortable-set-item[data-settling] {
+  transition:
+    box-shadow var(--gt-dur-quick) var(--gt-ease-out),
+    background-color var(--gt-dur-quick) var(--gt-ease-out);
+}
+.sortable-set-list .sortable-set-item[data-lifted] {
+  background-color: var(--gt-surface-2);
+  box-shadow: var(--gt-shadow-chip);
+  cursor: grabbing;
+}
+.sortable-set-item[data-lifted] .reorder-item {
+  border-bottom-color: transparent;
+}
+.sortable-set-item[data-lifted] .set-drag-handle {
+  color: var(--gt-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sortable-set-list[data-sorting] .sortable-set-item {
+    transition: none;
+  }
+}
 
 /* Exercise card: name, column headings and rows. */
 .ex-card {
@@ -1124,8 +1172,8 @@
   padding-bottom: var(--gt-space-2);
 }
 
-/* Reorder exercises: handle, name and set count, then ↑ and ↓. The exercise
-   whose menu opened the sheet has the accent ring of an edited row. */
+/* Reorder exercises: handle, name and set count. The exercise whose menu
+   opened the sheet has the accent ring of an edited row. */
 .reorder-exercise .reorder-row {
   gap: var(--gt-space-1);
 }
@@ -1146,9 +1194,6 @@
   outline: 2px solid var(--gt-accent);
   outline-offset: -2px;
   background-color: var(--gt-accent-soft);
-}
-.reorder-exercise .icon-btn:disabled {
-  opacity: 0.35;
 }
 
 /* The dock at the foot of a live workout (WorkoutDock): the rest dock, with
