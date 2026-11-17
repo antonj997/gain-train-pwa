@@ -1,5 +1,18 @@
 # Changelog
 
+## 17 November 2026 — a simpler done card, and "Log workout"
+
+- **Shorter card.** The done card reads “Klart för i dag”, the workout's name, “49 min · 11 set” and, inside a plan, only “Nästa: Press i morgon”.
+  - The plan week (“Vecka 2 av 12 · Deload”) and “2 av 6 pass den här veckan” are gone. The week card above already counts the week, and the two counts disagreed (weekly goal vs. plan).
+  - `weekProgress` and its strings are removed.
+- **No ⋯.** Its two actions moved:
+  - *View plan* is a tap on the card, which opens the plan's status page inside a plan (and the workout in Kalender otherwise).
+  - *Log a past workout* is the renamed button.
+- **“Logga pass” / “Log workout”** (was “Kör ett till pass”) opens a new workout on a choice (`LogChoiceSheet`):
+  - **Ett till pass i dag** (“Klockan startar nu”) keeps the clock running. Closing the sheet does the same.
+  - **Ett tidigare pass** (“Välj datum och längd”) stops the clock (`startedAt: null`, so Train lists it as a draft, not running) and opens the details sheet on its date and duration.
+  - `useStartWorkout().start` takes `{ choose }`, and the workout screen reads it from the navigation state.
+
 ## 17 November 2026 — sort by hold and drag
 
 - **Reorder exercises and Reorder sets: hold a row and drag it.** The ↑ and ↓ buttons are gone.

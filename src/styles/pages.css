@@ -985,13 +985,6 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   color: var(--gt-ink-2);
   overflow-wrap: anywhere;
 }
-.today-done-week {
-  font-weight: 600;
-  color: var(--gt-ink);
-}
-.today-done-week.is-met {
-  color: var(--gt-done);
-}
 /* Off plan: what was planned, with Move and Count as. */
 .today-done-off {
   display: flex;

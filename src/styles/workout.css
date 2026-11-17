@@ -1769,3 +1769,16 @@
   font-size: var(--gt-fs-2);
   white-space: nowrap;
 }
+
+/* "Log workout": two choices, each with a line under it. */
+.log-choice .sheet-menu-item {
+  min-height: 60px;
+}
+.log-choice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.log-choice-text .row-sub {
+  font-weight: 400;
+}

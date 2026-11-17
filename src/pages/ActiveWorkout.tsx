@@ -70,6 +70,7 @@ import { wakeLockSupported } from "@/lib/keep-screen-on";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import WorkoutBanners from "@/components/workout/WorkoutBanners";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
+import LogChoiceSheet from "@/components/workout/LogChoiceSheet";
 import WorkoutTopBar from "@/components/workout/WorkoutTopBar";
 import "@/styles/workout.css";
 import { useT } from "@/i18n/useT";
@@ -163,6 +164,8 @@ function Editor({
       location.state as {
         suggest?: string[];
         details?: boolean;
+        /** "Log workout" on Train: ask today's or an earlier one first. */
+        choose?: boolean;
         /** Added from a long-press menu elsewhere (Library, Progress). */
         add?: ExerciseTarget[];
       } | null,
@@ -177,6 +180,7 @@ function Editor({
   const [finish, setFinish] = useState(false);
   const [routine, setRoutine] = useState(false);
   const [details, setDetails] = useState(() => !!startState?.details);
+  const [choosing, setChoosing] = useState(() => !!startState?.choose);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
@@ -581,6 +585,16 @@ function Editor({
         onClose={() => setPicker(false)}
         onAdd={add}
         suggested={suggested}
+      />
+      <LogChoiceSheet
+        open={choosing}
+        onToday={() => setChoosing(false)}
+        onEarlier={() => {
+          setChoosing(false);
+          // An earlier workout has no clock: its date and length are picked.
+          change({ ...w, startedAt: null });
+          setDetails(true);
+        }}
       />
       <WorkoutDetailsSheet
         open={details}

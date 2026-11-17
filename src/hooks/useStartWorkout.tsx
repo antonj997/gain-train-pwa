@@ -19,6 +19,8 @@ type PendingStart = {
   replacing?: StartedWorkout[];
   /** Catalogue categories the new workout's exercise picker opens filtered to. */
   suggest?: string[];
+  /** Ask first whether it is another workout today or an earlier one. */
+  choose?: boolean;
 };
 
 export function useStartWorkout() {
@@ -48,11 +50,12 @@ export function useStartWorkout() {
       const past = request.workout.startedAt === null;
       navigate(
         workoutPath(request.id),
-        request.suggest?.length || past
+        request.suggest?.length || past || request.choose
           ? {
               state: {
                 suggest: request.suggest,
                 details: past || undefined,
+                choose: request.choose || undefined,
               },
             }
           : undefined,
@@ -85,8 +88,11 @@ export function useStartWorkout() {
       setBusy(false);
     }
   };
-  const start = (workout: Workout, suggest?: string[]) =>
-    attempt({ id: crypto.randomUUID(), workout, suggest });
+  const start = (
+    workout: Workout,
+    suggest?: string[],
+    { choose = false }: { choose?: boolean } = {},
+  ) => attempt({ id: crypto.randomUUID(), workout, suggest, choose });
   /** A new running workout with the same exercises as a finished one, today. */
   const repeat = (workout: Workout) => {
     const now = Date.now();

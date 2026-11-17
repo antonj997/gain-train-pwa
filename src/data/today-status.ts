@@ -1,7 +1,6 @@
 import type { Workout } from "./model";
 import type { PlannedDay } from "./plans";
 import type { CategoriesOf } from "./muscle-sets";
-import type { Adherence } from "./plan-status";
 import { doneSetCount } from "./selectors";
 import { shiftDate } from "../lib/dates";
 
@@ -191,22 +190,5 @@ export function todayStatus<W extends DoneWorkout>({
       fit === "other"
         ? today
         : (upcoming.find((u) => u.date > today)?.date ?? null),
-  };
-}
-
-/**
- * This week's planned workouts in the plan and how many are done ("2 of 3
- * workouts this week"), from the adherence's column for `week`. Null when the
- * week plans none.
- */
-export function weekProgress(
-  adherence: Pick<Adherence, "weeks">,
-  week: number,
-): { done: number; planned: number } | null {
-  const column = adherence.weeks.find((w) => w.week === week);
-  if (!column?.days.length) return null;
-  return {
-    done: column.days.filter((d) => d.state === "done").length,
-    planned: column.days.length,
   };
 }

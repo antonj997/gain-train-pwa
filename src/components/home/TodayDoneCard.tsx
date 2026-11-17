@@ -1,43 +1,19 @@
-import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import {
-  CalendarDays,
-  Check,
-  ChevronRight,
-  History,
-  MoreHorizontal,
-  Plus,
-} from "lucide-react";
+import { Check, ChevronRight, Plus } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import type { Plan, WorkoutRecord } from "@/data/model";
-import {
-  activePlans,
-  currentPlan,
-  plannedFor,
-  type PlanItem,
-} from "@/data/plans";
+import { plannedFor, type PlanItem } from "@/data/plans";
 import { restoreDay, snapshotDay } from "@/data/plan-moves";
-import {
-  doneDatesOf,
-  pausedCountUntil,
-  planAdherence,
-  type IsWorkout,
-} from "@/data/plan-status";
-import { phaseWeek } from "@/data/phase";
 import { doneSetCount } from "@/data/selectors";
-import {
-  weekProgress,
-  type TodayStatus,
-  type UpcomingDay,
-} from "@/data/today-status";
+import { type TodayStatus, type UpcomingDay } from "@/data/today-status";
 import { usePlanDaySheet } from "@/hooks/usePlanDaySheet";
-import Sheet from "@/components/ui/Sheet";
 import { WEEK_SCOPE } from "@/components/home/WeekCard";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { localizedDate, shiftDate } from "@/lib/dates";
 import { notify } from "@/lib/message-store";
 import { EASE, MOTION, SPRING, play, playSpring } from "@/lib/motion";
-import { PLANS_PATH, historyPath, planStatusPath } from "@/lib/routes";
+import { historyPath, planStatusPath } from "@/lib/routes";
 import { workoutTitle } from "@/lib/workout-name";
 import { useT } from "@/i18n/useT";
 
@@ -47,13 +23,12 @@ type Props = {
   status: Done;
   /** The plan running today, with a "planDone" status. */
   plan: PlanItem | null;
-  isWorkout: IsWorkout;
   /** The coming planned workout days, the first being the next one. */
   upcoming: readonly UpcomingDay[];
   day: string;
   starting: boolean;
-  onStartEmpty: () => void;
-  onLogPast: () => void;
+  /** "Log workout": a new one, asking today's or an earlier one first. */
+  onLog: () => void;
 };
 
 /** A workout finished this recently plays the done card's entrance once. */
@@ -66,27 +41,23 @@ const planOf = ({ id: _id, ...plan }: PlanItem): Plan => plan;
  * Train's Today card once a workout is finished today: a calm card with a
  * done-green check, "Done for today" and the newest workout's name and
  * length, in place of the suggestion and its big Start. Without a running
- * plan the card opens the workout in Calendar; inside one it reads the plan
- * week, this week's planned workouts done and the next one, and opens the
- * plan's status page. When today's workout was not the plan's (another
+ * plan the card opens the workout in Calendar; inside one it names the next
+ * planned workout and opens the plan's status page. When today's workout was not the plan's (another
  * workout, a rest day, nothing planned) it says so and offers to move the
  * planned workout with the day sheet, or to count today's workout as a
- * matching day ahead (src/data/today-status.ts). "Another workout" starts an
- * empty one; ⋯ keeps View plan and Log a past workout.
+ * matching day ahead (src/data/today-status.ts). "Log workout" starts a new
+ * one, which asks first whether it is another today or an earlier one.
  */
 export default function TodayDoneCard({
   status,
   plan,
-  isWorkout,
   upcoming,
   day,
   starting,
-  onStartEmpty,
-  onLogPast,
+  onLog,
 }: Props) {
   const { t } = useT();
-  const { state, save } = useData();
-  const [menu, setMenu] = useState(false);
+  const { save } = useData();
   // Set while "count as" moves a day, which says so itself.
   const counting = useRef(false);
   const days = usePlanDaySheet({
@@ -98,8 +69,6 @@ export default function TodayDoneCard({
       if (!counting.current) notify(text, { key: "today-move" });
     },
   });
-  // ⋯ → View plan: the current plan (running, next or paused), else the list.
-  const shownPlan = currentPlan(activePlans(state.records), day);
 
   const [latest] = status.workouts;
   const w = latest.payload;
@@ -113,16 +82,6 @@ export default function TodayDoneCard({
   const count = status.workouts.length;
 
   const planDone = status.kind === "planDone" && plan ? status : null;
-  const phase = planDone && plan ? phaseWeek(plan, day) : null;
-  const doneDates = useMemo(() => doneDatesOf(state.records), [state.records]);
-  const progress = useMemo(() => {
-    if (!planDone || !plan || !phase) return null;
-    const adherence = planAdherence(plan, doneDates, day, {
-      isWorkout,
-      countUntil: pausedCountUntil(plan, doneDates, day),
-    });
-    return weekProgress(adherence, phase.week);
-  }, [planDone, plan, phase, doneDates, day, isWorkout]);
   const next = planDone ? upcoming[0] : undefined;
   const when = (date: string) =>
     date === shiftDate(day, 1)
@@ -133,13 +92,7 @@ export default function TodayDoneCard({
           month: "short",
         });
 
-  const label = [
-    t("todayDone.title"),
-    phase && t("plan.weekOf", { week: phase.week, weeks: phase.weeks }),
-    phase?.deload && t("plan.deload"),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const label = t("todayDone.title");
   const to =
     planDone && plan ? planStatusPath(plan.id) : historyPath(latest.id);
   const linkLabel =
@@ -239,28 +192,13 @@ export default function TodayDoneCard({
           </span>
           <strong className="today-done-title">{title}</strong>
           <span className="row-sub">{meta}</span>
-          {/* Inside a plan: this week's planned workouts done, and the next. */}
-          {(progress || next) && (
+          {/* Inside a plan: the next planned workout. */}
+          {next && (
             <span className="today-done-plan">
-              {progress && (
-                <span
-                  className={
-                    "today-done-week" +
-                    (progress.done >= progress.planned ? " is-met" : "")
-                  }
-                >
-                  {t("todayDone.week", {
-                    done: progress.done,
-                    count: progress.planned,
-                  })}
-                </span>
-              )}
-              {progress && next && " · "}
-              {next &&
-                t("todayDone.next", {
-                  name: next.day.title,
-                  when: when(next.date),
-                })}
+              {t("todayDone.next", {
+                name: next.day.title,
+                when: when(next.date),
+              })}
             </span>
           )}
         </span>
@@ -299,44 +237,12 @@ export default function TodayDoneCard({
           type="button"
           className="btn-secondary btn-sm"
           disabled={starting}
-          onClick={onStartEmpty}
+          onClick={onLog}
         >
           <Plus size={18} aria-hidden="true" />
-          {starting ? t("home.starting") : t("todayDone.another")}
-        </button>
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={t("home.todayMenu")}
-          aria-haspopup="dialog"
-          onClick={() => setMenu(true)}
-        >
-          <MoreHorizontal size={22} aria-hidden="true" />
+          {starting ? t("home.starting") : t("todayDone.log")}
         </button>
       </div>
-      <Sheet open={menu} onClose={() => setMenu(false)} title={label}>
-        <div className="sheet-menu">
-          <Link
-            className="sheet-menu-item"
-            to={shownPlan ? planStatusPath(shownPlan.id) : PLANS_PATH}
-          >
-            <CalendarDays size={20} aria-hidden="true" />
-            {t("home.showPlan")}
-          </Link>
-          <button
-            type="button"
-            className="sheet-menu-item"
-            disabled={starting}
-            onClick={() => {
-              setMenu(false);
-              onLogPast();
-            }}
-          >
-            <History size={20} aria-hidden="true" />
-            {t("home.logPast")}
-          </button>
-        </div>
-      </Sheet>
       {days.sheetNode}
     </section>
   );
