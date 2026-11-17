@@ -169,7 +169,8 @@ test("current URLs are left alone", () => {
     ["/library", "?edit=abc"],
     ["/library", "?tab=exercises&view=shared"],
     ["/library/plan", ""],
-    ["/library/shared", ""],
+    ["/library", "?tab=discover"],
+    ["/library", "?tab=discover&shared=abc"],
     ["/settings", ""],
     ["/exercise/builtin%3Asquat", "?tab=history"],
   ])
