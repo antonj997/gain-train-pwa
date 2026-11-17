@@ -1,8 +1,7 @@
 import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
 import type { Exercise } from "@/data/model";
 import { isDrop } from "@/data/drops";
-import { moveId, orderChanged, reorderByIds } from "@/lib/exercise-order";
+import { orderChanged, reorderByIds } from "@/lib/exercise-order";
 import { countLabel } from "@/lib/labels";
 import Sheet from "@/components/ui/Sheet";
 import SortableSetList from "@/components/SortableSetList";
@@ -10,8 +9,8 @@ import { t } from "@/i18n";
 
 /**
  * "Reorder exercises": the workout's or routine's exercises with their set
- * counts, moved with the same handles as Reorder sets or with ↑ and ↓. The
- * exercise whose menu opened it is marked. The order is saved on Done (or
+ * counts. Hold a row (or press its grip) and drag it into place, as in
+ * Reorder sets. The exercise whose menu opened it is marked. The order is saved on Done (or
  * when the sheet closes), once.
  */
 export default function ReorderExercisesSheet({
@@ -43,14 +42,6 @@ export default function ReorderExercisesSheet({
     setDraft(null);
     onClose();
   };
-  const step = (id: string, by: -1 | 1) =>
-    setDraft(
-      moveId(
-        order.map((ex) => ex.id),
-        id,
-        by,
-      ),
-    );
   return (
     <Sheet
       open={open}
@@ -87,24 +78,6 @@ export default function ReorderExercisesSheet({
                   {countLabel(ex.sets.filter((s) => !isDrop(s)).length, "set")}
                 </span>
               </span>
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label={t("exercise.moveUpNamed", { name: ex.name })}
-                disabled={index === 0}
-                onClick={() => step(ex.id, -1)}
-              >
-                <ArrowUp size={18} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                className="icon-btn"
-                aria-label={t("exercise.moveDownNamed", { name: ex.name })}
-                disabled={index === order.length - 1}
-                onClick={() => step(ex.id, 1)}
-              >
-                <ArrowDown size={18} aria-hidden="true" />
-              </button>
             </div>
           </div>
         )}

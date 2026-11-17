@@ -320,8 +320,6 @@ export const sv = {
   "exercise.reorderSets": "Ändra ordning på set",
   "exercise.reorderExercises": "Ändra ordning på övningar",
   "exercise.moveHandle": "Flytta {name}, plats {n}",
-  "exercise.moveUpNamed": "Flytta upp {name}",
-  "exercise.moveDownNamed": "Flytta ner {name}",
   "load.count": "Mäts i",
   "load.reps": "Reps",
   "load.appliesUnchecked": "Gäller de set du inte har kryssat i än.",
@@ -408,6 +406,8 @@ export const sv = {
   "set.droppedAt": "Setet släpptes på plats {position} av {total}.",
   "set.movingAt":
     "Setet är på plats {position} av {total}. Flytta med piltangenterna eller dra, släpp med mellanslag eller Enter.",
+  "set.sortInstructions":
+    "Håll på en rad och dra den till sin plats. Med tangentbord: tryck Mellanslag eller Enter för att ta tag, flytta med piltangenterna och släpp med Mellanslag eller Enter. Escape avbryter.",
   "set.moveHandle": "Flytta {name} set {n}",
   "change.title": "Byta till {name}?",
   "change.cardioToStrength": {
