@@ -53,10 +53,7 @@ export default function LibraryRoutineSheet({
   onMenu,
 }: Props) {
   const { t } = useT();
-  const exercises = useMemo(
-    () => routine?.payload.exercises ?? [],
-    [routine],
-  );
+  const exercises = useMemo(() => routine?.payload.exercises ?? [], [routine]);
   const categoryOf = (id: string) => exerciseCategory(records, id);
   const items = exercises.map((exercise): PreviewItem => {
     const first = exercise.sets.find(
@@ -108,9 +105,7 @@ export default function LibraryRoutineSheet({
     >
       {routine && (
         <>
-          <SetsBar
-            groups={plannedSetsByCategory(exercises, categoryOf)}
-          />
+          <SetsBar groups={plannedSetsByCategory(exercises, categoryOf)} />
           <PreviewExercises
             items={items}
             lastLabel={t("exercise.colPrevious")}

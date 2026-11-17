@@ -140,7 +140,11 @@ export function MoveFolderSheet({
             <FolderMinus size={20} aria-hidden="true" />
             <span>{t("folders.none")}</span>
             {!current && (
-              <Check size={20} className="sheet-menu-check" aria-hidden="true" />
+              <Check
+                size={20}
+                className="sheet-menu-check"
+                aria-hidden="true"
+              />
             )}
           </button>
           {folders.map((folder) => (

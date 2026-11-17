@@ -24,7 +24,6 @@ import ExerciseRow from "@/components/library/ExerciseRow";
 import ExerciseEditorSheet from "@/components/library/ExerciseEditorSheet";
 import LibraryExerciseMenu from "@/components/library/LibraryExerciseMenu";
 import { useExerciseMenu } from "@/components/gestures/ExerciseMenu";
-import SharedExerciseList from "@/components/library/SharedExerciseList";
 import {
   filterExercises,
   groupExercises,
@@ -36,11 +35,11 @@ import { t, type MessageKey } from "@/i18n";
 import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
 import MotionList from "@/components/motion/MotionList";
 
-type Filter = ExerciseFilter | "shared";
+// Exercises others shared live in Library → Upptäck.
+type Filter = ExerciseFilter;
 const filters = [
   { value: "all", label: "exercises.filterAll" },
   { value: "mine", label: "exercises.filterMine" },
-  { value: "shared", label: "exercises.filterShared" },
   { value: "recent", label: "exercises.filterRecent" },
   { value: "hidden", label: "exercises.filterHidden" },
 ] as const satisfies readonly { value: Filter; label: MessageKey }[];
@@ -84,7 +83,7 @@ export default function ExercisesPanel({
   const activeFilters =
     Number(filter !== "all") + Number(!!category) + Number(!!equipment);
   const shared = useSharedExercises({
-    browsing: filter === "shared",
+    browsing: false,
     // An open draft of the exercise follows its shared id.
     onSharedId: (id, sharedId) => {
       if (edit?.id !== id) return;
@@ -101,37 +100,13 @@ export default function ExercisesPanel({
   );
   const groups = useMemo(
     () =>
-      filter === "shared"
-        ? []
-        : groupExercises(
-            filterExercises(all, search, filter, { category, equipment }),
-            filter,
-            !!search.trim(),
-            category,
-          ),
-    [all, search, filter, category, equipment],
-  );
-  const sharedItems = useMemo(
-    () =>
-      filterExercises(
-        shared.rows.map((r) => ({
-          id: r.id,
-          name: r.name,
-          category: r.category,
-          equipment: r.equipment ?? undefined,
-          aliases: r.aliases,
-          custom: false,
-          favourite: false,
-          note: "",
-          lastDate: null,
-          best: null,
-          ...(r.by_name ? { sharedBy: r.by_name } : {}),
-        })),
-        search,
-        "all",
-        { category, equipment },
+      groupExercises(
+        filterExercises(all, search, filter, { category, equipment }),
+        filter,
+        !!search.trim(),
+        category,
       ),
-    [shared.rows, search, category, equipment],
+    [all, search, filter, category, equipment],
   );
   const customPayload = (id: string) => {
     const record = state.records[id];
@@ -342,19 +317,6 @@ export default function ExercisesPanel({
           onChange={setEquipment}
         />
       </CollapsibleFilters>
-      {filter === "shared" && (
-        <SharedExerciseList
-          canShare={shared.canShare}
-          ready={shared.ready}
-          status={shared.status}
-          hasRows={shared.hasRows}
-          items={sharedItems}
-          narrowed={!!(search.trim() || category || equipment)}
-          adding={shared.adding}
-          onRetry={shared.retry}
-          onAdd={(id) => void shared.add(id)}
-        />
-      )}
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title}>
           <h2 className="group-title">{group.title}</h2>
@@ -397,7 +359,7 @@ export default function ExercisesPanel({
         .map((entry) => (
           <UndoPlaceholder key={`u${entry.id}`} entry={entry} />
         ))}
-      {filter !== "shared" && !groups.length && (
+      {!groups.length && (
         <p className="empty" role="status">
           {filter === "recent" && !search.trim()
             ? t("exercises.emptyRecent")

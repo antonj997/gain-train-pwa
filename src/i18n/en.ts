@@ -777,9 +777,7 @@ export const en = {
   "library.plan": "Plan",
   "library.searchRoutines": "Search routines",
   "library.searchExercises": "Search exercises",
-  "library.sharedRow": "Explore shared routines",
   "library.planTitle": "Plan",
-  "library.sharedTitle": "Shared routines",
   "routines.find": "Find a routine",
   "routines.noMatch": "No routine matches your search.",
 
@@ -870,7 +868,6 @@ export const en = {
   "exercises.filterMine": "Mine",
   "exercises.filterRecent": "Recently used",
   "exercises.filterHidden": "Hidden",
-  "exercises.filterShared": "Shared",
   "exercises.groupResults": "Results",
   "exercises.groupAz": "A–Z",
   "exercises.groupFavourites": "Favourites",
@@ -978,12 +975,9 @@ export const en = {
   "sharedPreview.repsHold": "reps + hold",
   "sharedPreview.seconds": "seconds",
   "sharedPreview.cardio": "Cardio",
-  "sharedPreview.newExercise": "New exercise",
   "sharedPreview.byYou": "Shared by you",
   "sharedPreview.empty":
     "Sets come without weights or reps. Your own history fills them in when you start.",
-  "sharedPreview.add": "Add to my routines",
-  "sharedPreview.alreadyAdded": "In your routines",
   "sharedPreview.stopTitle": "Stop sharing {name}?",
   "sharedPreview.stopText":
     "It leaves the shared library. Your routine stays, and copies others added are not affected.",

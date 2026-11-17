@@ -90,5 +90,6 @@ export function sharedTileFacts(row: SharedRoutineRow) {
     foot: row.mine ? t("sharedPreview.byYou") : sharedByLine(row.by_name),
     minutes,
     facts,
+    names: parsed.map((exercise) => exercise.name),
   };
 }

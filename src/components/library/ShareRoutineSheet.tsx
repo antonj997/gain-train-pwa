@@ -11,11 +11,8 @@ import { notify } from "@/lib/message-store";
 import { estimatedMinutes } from "@/lib/routine-preview";
 import { tileIcons } from "@/lib/routine-library";
 import { tileMeta } from "@/lib/routine-tile-facts";
+import { sharedRoutinePath } from "@/lib/routes";
 import { useT } from "@/i18n/useT";
-
-/** The in-app link that opens a shared routine's preview in Upptäck. */
-export const sharedRoutineLink = (sharedId: string) =>
-  `${window.location.origin}/library?tab=discover&shared=${encodeURIComponent(sharedId)}`;
 
 /**
  * Dela: the routine's tile exactly as others see it in Upptäck (your name,
@@ -48,7 +45,14 @@ export default function ShareRoutineSheet({
   const me = useDisplayName();
   const payload = routine?.payload;
   const sharedId = payload?.sharedId;
-  const link = sharedId ? sharedRoutineLink(sharedId) : "";
+  // The app's own address, so it works wherever the app is served from.
+  const link = sharedId
+    ? new URL(
+        import.meta.env.BASE_URL.replace(/\/$/, "") +
+          sharedRoutinePath(sharedId),
+        window.location.origin,
+      ).href
+    : "";
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(link);
@@ -91,9 +95,7 @@ export default function ShareRoutineSheet({
           {canShare ? (
             <Switch
               label={t("shareSheet.show")}
-              hint={
-                ready ? t("shareSheet.showHint") : t("shareSheet.offline")
-              }
+              hint={ready ? t("shareSheet.showHint") : t("shareSheet.offline")}
               checked={!!sharedId}
               disabled={!ready || sharing}
               onChange={(on) => onShare(routine, on)}

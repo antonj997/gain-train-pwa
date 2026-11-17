@@ -34,6 +34,8 @@ type Props = {
   highlight?: boolean;
   /** Preview only (the Dela sheet): drawn as others see it, nothing reacts. */
   inert?: boolean;
+  /** The grid's key for this tile (useGridMotion). */
+  itemKey?: string;
 };
 
 /**
@@ -59,6 +61,7 @@ const RoutineTile = forwardRef<HTMLDivElement, Props>(function RoutineTile(
     action,
     highlight,
     inert,
+    itemKey,
   },
   ref,
 ) {
@@ -68,6 +71,7 @@ const RoutineTile = forwardRef<HTMLDivElement, Props>(function RoutineTile(
   return (
     <div
       ref={ref}
+      data-key={itemKey}
       className={
         "routine-tile" +
         (onMenu && !inert ? " long-press" : "") +
@@ -153,7 +157,12 @@ export function NewRoutineTile({
   onClick: () => void;
 }) {
   return (
-    <button type="button" className="routine-tile-new" onClick={onClick}>
+    <button
+      type="button"
+      className="routine-tile-new"
+      data-key="new"
+      onClick={onClick}
+    >
       <Plus size={22} aria-hidden="true" />
       <span>{label}</span>
     </button>

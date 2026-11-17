@@ -64,6 +64,8 @@ export const storageKeys = {
   /** "false" when a running workout lets the screen sleep; kept on otherwise. */
   keepScreenOn: "gt-keep-screen-on",
   weeklyGoal: "gt-weekly-goal",
+  /** Library → Routines' order: "recent" (the default) or "name". */
+  routineSort: "gt-routine-sort",
   /** "kg" or "lb"; weights are stored in kg either way. */
   weightUnit: "gt-weight-unit",
   persistRequested: "gt-persist-requested",

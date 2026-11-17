@@ -18,6 +18,12 @@ export const exerciseEditPath = (exerciseId: string) =>
 /** Library → Routines, with one routine's editor opened. */
 export const routineEditPath = (routineId: string) =>
   "/library?edit=" + routineId;
+/**
+ * Library → Upptäck with one shared routine's preview open: the Dela sheet's
+ * link. It works for anyone signed in; signed out, Upptäck asks to sign in.
+ */
+export const sharedRoutinePath = (sharedId: string) =>
+  "/library?tab=discover&shared=" + encodeURIComponent(sharedId);
 /** Library → Plan: the plans list and editor. */
 export const PLANS_PATH = "/library/plan";
 /** One plan's status page: how the phase is going, with Edit one tap away. */

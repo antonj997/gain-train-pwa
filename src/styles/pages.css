@@ -2709,12 +2709,6 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   inset: -12px -4px;
 }
 
-/* The last row of Routines: Explore shared routines. */
-.shared-routines-row > svg:first-child {
-  flex: none;
-  color: var(--gt-accent);
-}
-
 /* Settings › Rest timer: a plain switch row; the time row shows only while it
    is on (components/settings/RestControl.tsx). In a list each part is a row;
    in the rest chip's sheet they stack on their own. */
@@ -3090,4 +3084,235 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   display: flex;
   flex-direction: column;
   gap: var(--gt-space-2);
+}
+
+/* Library concept (step 13): Rutiner's folder chips and order, the routine
+   preview's sets bar and exercise list, the folder and Dela sheets, and
+   Upptäck. Tiles live in items.css. */
+.folder-chips .filter-chip,
+.discover-panel .facet-chips .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+.filter-chip.is-add {
+  border-style: dashed;
+  color: var(--gt-accent);
+}
+.routine-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.routine-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gt-accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.routine-values-hint {
+  margin: 0;
+}
+/* A routine's typed target reads in the accent. */
+.set-line.is-target .set-field input {
+  color: var(--gt-accent);
+}
+
+/* The preview's sets per muscle group: one bar with a legend. */
+.sets-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+.sets-bar-track {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+}
+.sets-bar-part {
+  --tone-fg: var(--gt-cat-other-fg);
+  flex-basis: 0;
+  background-color: var(--tone-fg);
+}
+.sets-bar-legend {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.sets-bar-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px var(--gt-space-3);
+}
+.sets-bar-key {
+  --tone-fg: var(--gt-cat-other-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.sets-bar-key::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--tone-fg);
+}
+.sets-bar-total {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.routine-preview-list .routine-preview-item {
+  gap: var(--gt-space-3);
+}
+.routine-preview-last {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.routine-preview-last.is-target {
+  color: var(--gt-accent);
+}
+.routine-preview-new {
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.routine-preview-note,
+.share-private {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gt-space-2);
+  margin: 0;
+}
+.routine-preview-note svg,
+.share-private svg {
+  flex: none;
+  margin-top: 2px;
+}
+.routine-preview-actions,
+.shared-preview-footer {
+  display: grid;
+  gap: var(--gt-space-2);
+}
+.shared-preview-footer .row-sub {
+  margin: 0;
+  text-align: center;
+}
+
+/* New folder: routines to put in it, each a 56px checkbox row. */
+.folder-pick {
+  width: 100%;
+}
+.folder-check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid var(--gt-line-strong);
+  border-radius: 6px;
+  color: var(--gt-on-accent);
+}
+.folder-pick[aria-checked="true"] .folder-check {
+  border-color: var(--gt-accent);
+  background-color: var(--gt-accent);
+}
+
+/* Rep range: two short number fields side by side. */
+.rep-range-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gt-space-3);
+}
+.rep-range-fields label {
+  flex: 1;
+}
+.rep-range-fields > span {
+  padding-bottom: 12px;
+  color: var(--gt-ink-2);
+}
+
+/* Dela: the tile as others see it, the switch and the link. */
+.share-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.share-preview-tile {
+  width: calc(50% - 5px);
+  min-width: 156px;
+}
+.share-link {
+  display: grid;
+  gap: var(--gt-space-2);
+}
+.share-link input {
+  min-height: 44px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.share-link .row-sub {
+  margin: 0;
+}
+
+/* Upptäck. */
+.discover-panel > section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.discover-mine-row {
+  gap: var(--gt-space-2);
+  padding-right: var(--gt-space-2);
+}
+.discover-mine-row .row-open {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gt-space-3);
+  min-width: 0;
+  min-height: 60px;
+  cursor: pointer;
+}
+.discover-mine-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.discover-mine-row .unhide {
+  flex: none;
+  min-height: 44px;
+  padding: 0 var(--gt-space-4);
+  border: 1px solid var(--gt-line);
+  border-radius: var(--gt-radius-md);
+  background: var(--gt-surface);
+  color: var(--gt-ink);
+  font-weight: 600;
 }

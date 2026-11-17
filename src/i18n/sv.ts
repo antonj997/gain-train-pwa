@@ -783,9 +783,7 @@ export const sv = {
   "library.plan": "Schema",
   "library.searchRoutines": "Sök rutiner",
   "library.searchExercises": "Sök övningar",
-  "library.sharedRow": "Utforska delade rutiner",
   "library.planTitle": "Schema",
-  "library.sharedTitle": "Delade rutiner",
   "routines.find": "Hitta en rutin",
   "routines.noMatch": "Ingen rutin matchar sökningen.",
 
@@ -879,7 +877,6 @@ export const sv = {
   "exercises.filterMine": "Mina",
   "exercises.filterRecent": "Nyligen använda",
   "exercises.filterHidden": "Dolda",
-  "exercises.filterShared": "Delade",
   "exercises.groupResults": "Resultat",
   "exercises.groupAz": "A–Ö",
   "exercises.groupFavourites": "Favoriter",
@@ -990,12 +987,9 @@ export const sv = {
   "sharedPreview.repsHold": "reps + håll",
   "sharedPreview.seconds": "sekunder",
   "sharedPreview.cardio": "Kondition",
-  "sharedPreview.newExercise": "Ny övning",
   "sharedPreview.byYou": "Delad av dig",
   "sharedPreview.empty":
     "Seten kommer utan vikter och reps. Din egen historik fyller i dem när du startar.",
-  "sharedPreview.add": "Lägg till i mina rutiner",
-  "sharedPreview.alreadyAdded": "Finns bland dina rutiner",
   "sharedPreview.stopTitle": "Sluta dela {name}?",
   "sharedPreview.stopText":
     "Den tas bort från det delade biblioteket. Din rutin finns kvar, och kopior som andra har lagt till påverkas inte.",
