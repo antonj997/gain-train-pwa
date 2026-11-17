@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { routineFromWorkout } from "@/lib/routine-library";
 import { notify, offerUndo } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import { errorMessage } from "@/lib/errors";
@@ -58,13 +59,12 @@ export function useWorkoutActions(
         if (!editing) requestPersistenceOnce();
         if (saveAsRoutine) {
           try {
-            await save(crypto.randomUUID(), "routine", {
-              name: next.name,
-              exercises: next.exercises.map((ex) => ({
-                ...ex,
-                sets: ex.sets.map((s) => ({ ...s, done: false })),
-              })),
-            });
+            // Exercises and sets only: a routine keeps no weights or reps.
+            await save(
+              crypto.randomUUID(),
+              "routine",
+              routineFromWorkout(next),
+            );
           } catch {
             notify.error(t("actions.routineFailed"));
           }

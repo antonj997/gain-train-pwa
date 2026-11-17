@@ -49,12 +49,29 @@ export const setSchema = z.object({
   done: z.boolean(),
   /** Continues the set above at a lower weight. See drops.ts. */
   drop: z.boolean().optional(),
+  /**
+   * A routine's set only: its weight and reps were typed in the routine
+   * editor as a target ("Mål"), so starting the routine fills them in.
+   * Without it a routine's values are older ones (from before routines
+   * stopped storing weights): the editor shows them as placeholders and a
+   * start uses them only when there is no history. See routine-targets.ts.
+   */
+  target: z.boolean().optional(),
 });
+/** An exercise's rep range in a routine, such as 8–12. */
+export const repRangeSchema = z
+  .object({
+    min: z.number().int().min(1).max(1000),
+    max: z.number().int().min(1).max(1000),
+  })
+  .refine((range) => range.max >= range.min);
 export const exerciseSchema = z.object({
   id: z.string().uuid(),
   exerciseId: z.string().min(1).max(200),
   name: z.string().trim().min(1).max(100),
   sets: z.array(setSchema).max(100),
+  /** Optional rep range a routine plans, such as 8–12. Copied into workouts. */
+  repRange: repRangeSchema.optional(),
 });
 // Records without a schemaVersion were written by version 1. Bump SCHEMA_VERSION
 // when a release changes what existing fields mean; older apps then open those
@@ -64,6 +81,9 @@ export const exerciseSchema = z.object({
 // or the library's cardioFields and repHold: they are new optional fields that
 // older apps keep as they are (keepUnknownFields) and nothing existing changed
 // meaning.
+// Not bumped for a routine's folder, a routine set's target flag or an
+// exercise's repRange either: optional fields older apps keep, and the
+// server trigger does not check them.
 // Not bumped for load "none", a load on a timed hold, a set's rir or the
 // workout's note either: rir and note are optional fields older apps keep, and
 // a record with load "none" or a weighted hold fails an older app's validation,
@@ -111,6 +131,11 @@ export const routineSchema = z.object({
   sharedId: z.string().uuid().optional(),
   /** Id of the shared routine this one was copied from. It works without that row. */
   sharedFrom: z.string().uuid().optional(),
+  /**
+   * The Library folder it sits in ("Push/Pull/Ben"), by name. A folder exists
+   * while a routine is in it. Not shared, and plans ignore it.
+   */
+  folder: z.string().trim().min(1).max(40).optional(),
 });
 export const customSchema = z.object({
   schemaVersion,
