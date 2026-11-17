@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Info, MoreHorizontal, Pencil, Play } from "lucide-react";
 import type { RecordDoc, RoutineRecord } from "@/data/model";
-import { exerciseCategory, setCount } from "@/data/selectors";
+import { exerciseCategory } from "@/data/selectors";
 import type { LastSession } from "@/data/workouts";
 import { isDrop } from "@/data/drops";
 import Sheet from "@/components/ui/Sheet";
@@ -70,6 +70,9 @@ export default function LibraryRoutineSheet({
     };
   });
   const name = routine?.payload.name ?? "";
+  const groups = plannedSetsByCategory(exercises, categoryOf);
+  // Working sets, as the bar counts them; warm-ups show per exercise.
+  const workingSets = groups.reduce((sum, g) => sum + g.sets, 0);
   return (
     <Sheet
       open={!!routine}
@@ -81,7 +84,7 @@ export default function LibraryRoutineSheet({
         routine
           ? [
               countLabel(exercises.length, "exercise"),
-              countLabel(setCount(routine.payload), "set"),
+              countLabel(workingSets, "set"),
               minutes && `~${durationLabel(minutes)}`,
               lastDone
                 ? t("routines.lastDone", { when: lastUsedLabel(lastDone, now) })

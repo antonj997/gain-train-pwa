@@ -674,16 +674,14 @@ button.ex-row-main {
   overflow: hidden;
 }
 .routine-glyph {
-  --tone-bg: var(--gt-cat-other-bg);
-  --tone-fg: var(--gt-cat-other-fg);
   display: inline-grid;
   flex: none;
   place-items: center;
   width: var(--glyph, 26px);
   height: var(--glyph, 26px);
   border-radius: 8px;
-  background-color: var(--tone-bg);
-  color: var(--tone-fg);
+  background-color: var(--tone-bg, var(--gt-cat-other-bg));
+  color: var(--tone-fg, var(--gt-cat-other-fg));
 }
 .routine-glyph.is-lg {
   --glyph: 36px;

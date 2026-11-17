@@ -28,7 +28,7 @@ import { draftKey, parseRoutineDraft } from "@/lib/drafts";
 import type { LibraryExercise } from "@/lib/library";
 import { notify } from "@/lib/message-store";
 import { routineAverageMinutes } from "@/lib/routine-preview";
-import { sharedTileFacts } from "@/lib/routine-tile-facts";
+import { ownTileFacts, sharedTileFacts } from "@/lib/routine-tile-facts";
 import { routineEditPath } from "@/lib/routes";
 import { useT } from "@/i18n/useT";
 
@@ -299,6 +299,16 @@ export default function DiscoverPanel({
           <div className="list discover-mine">
             {mine.map(({ row, icons, meta }) => {
               const local = localOf(row.id);
+              // Your own routine's length comes from your history.
+              const length = local
+                ? ownTileFacts(
+                    local.id,
+                    local.payload,
+                    state.records,
+                    undefined,
+                    "",
+                  ).meta
+                : meta;
               return (
                 <div className="row discover-mine-row" key={row.id}>
                   <button
@@ -316,7 +326,7 @@ export default function DiscoverPanel({
                     )}
                     <span className="discover-mine-text">
                       <span className="row-title">{row.name}</span>
-                      <span className="row-sub">{meta}</span>
+                      <span className="row-sub">{length}</span>
                     </span>
                   </button>
                   <button

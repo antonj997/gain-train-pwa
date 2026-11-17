@@ -117,7 +117,10 @@ export default function SharedRoutinePreviewSheet({
           preview &&
           [
             countLabel(preview.exercises.length, "exercise"),
-            countLabel(preview.sets, "set"),
+            countLabel(
+              preview.groups.reduce((sum, g) => sum + g.sets, 0),
+              "set",
+            ),
             minutes && `~${durationLabel(minutes)}`,
           ]
             .filter(Boolean)
@@ -146,7 +149,12 @@ export default function SharedRoutinePreviewSheet({
               missing={row.mine ? undefined : t("routinePreview.newForYou")}
             />
             <p className="sheet-hint">{t("sharedPreview.empty")}</p>
-            <div className="sheet-footer shared-preview-footer">
+            <div
+              className={
+                "sheet-footer shared-preview-footer" +
+                (row.mine ? " is-mine" : "")
+              }
+            >
               {row.mine ? (
                 <>
                   {canEdit ? (
