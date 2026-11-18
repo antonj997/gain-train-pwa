@@ -23,6 +23,18 @@
   --mi-off: color-mix(in srgb, var(--tone-fg) 15%, var(--tone-bg));
   --mi-help: color-mix(in srgb, var(--tone-fg) 60%, var(--tone-bg));
 }
+/* A plan template day draws the figure straight on the day's surface. */
+.plan-cell-icon {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 55%, var(--gt-surface));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 30%, var(--gt-surface));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 72%, var(--gt-surface));
+  --mi-main: var(--tone-fg);
+}
+.dark .plan-cell-icon {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 35%, var(--gt-surface));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 15%, var(--gt-surface));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 60%, var(--gt-surface));
+}
 /* The Library glyph sizes its icons by percent; the narrow figure takes
    nearly the whole tile. */
 .routine-glyph .muscle-icon {

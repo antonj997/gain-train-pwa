@@ -38,7 +38,7 @@ function CellIcon({ cell }: { cell: string | null }) {
         exerciseId={lead.exerciseId}
         category={category}
         glyph={28}
-        body={36}
+        body={30}
       />
     </span>
   );
