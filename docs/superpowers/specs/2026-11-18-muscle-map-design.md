@@ -99,3 +99,12 @@ Date: 18 November 2026. Owner decisions from the icon and muscle-map rounds on t
 
 - Sharing `muscles` and `icon` with shared exercises (needs a server change).
 - Changing the sets-per-group bars (they keep using categories).
+
+## Interaction and motion (owner reminder)
+
+Everything new follows the app's design for interactivity, touch and motion (DESIGN.md):
+44px touch targets; the existing primitives (`Sheet`, `Segmented`, `ChoiceSheet`, `filter-chip`,
+`Reveal`) rather than new ones; motion only through the `--gt-dur-*` / `--gt-ease-*` tokens and
+`MOTION` in `src/lib/motion.ts` (so admin slow motion and reduced motion apply); the picker's
+level changes, the Enkel/Avancerad switch and the preview map's fills animate like other state
+changes in the app (fills ease, sections open with `Reveal`); no hover-only affordances.
