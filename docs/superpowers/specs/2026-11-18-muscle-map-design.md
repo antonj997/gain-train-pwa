@@ -108,3 +108,9 @@ Everything new follows the app's design for interactivity, touch and motion (DES
 `MOTION` in `src/lib/motion.ts` (so admin slow motion and reduced motion apply); the picker's
 level changes, the Enkel/Avancerad switch and the preview map's fills animate like other state
 changes in the app (fills ease, sections open with `Reveal`); no hover-only affordances.
+
+## After the feature ships (owner's next steps)
+
+1. Rerun the review: user flows, plus a design and training expert agent scoring every category.
+2. Clean the UX demo presentation and publish a new one with the review's suggestions as a mockup.
+3. Iterate the mockup with the reviewers until every category scores 9.
