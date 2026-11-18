@@ -1,0 +1,29 @@
+/* Muscle drawings (src/components/muscles/). Colours come from tokens.css. */
+
+/* The small muscle icon in an exercise avatar or routine badge: the figure is
+   drawn in the category tone mixed into the tint, so it reads in both themes.
+   The body sits at about a third of the tone, untrained zones lighter than
+   it, helping muscles well past it and main muscles in the full tone. */
+.ex-avatar,
+.routine-badge {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 35%, var(--tone-bg));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 15%, var(--tone-bg));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 60%, var(--tone-bg));
+  --mi-main: var(--tone-fg);
+}
+
+/* The detailed muscle map sits on its own panel (light grey-blue, dark navy)
+   with its legend; the drawing fills the panel's width. */
+.muscle-map {
+  padding: var(--gt-space-4) var(--gt-space-3) var(--gt-space-3);
+  border-radius: var(--gt-radius-lg);
+  background-color: var(--gt-map-panel);
+}
+.muscle-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.muscle-map-muscles path {
+  transition: fill var(--gt-motion);
+}
