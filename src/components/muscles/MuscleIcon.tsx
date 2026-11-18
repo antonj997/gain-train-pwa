@@ -9,12 +9,14 @@ import {
 } from "./icon-geometry";
 
 // The colours come from the avatar's category tone (muscles.css defines the
-// --mi-* mixes on .ex-avatar); elsewhere the icon mixes its text colour.
-const BODY =
-  "var(--mi-body, color-mix(in srgb, currentColor 35%, transparent))";
-const OFF = "var(--mi-off, color-mix(in srgb, currentColor 15%, transparent))";
-const HELP =
-  "var(--mi-help, color-mix(in srgb, currentColor 60%, transparent))";
+// --mi-* mixes on .ex-avatar and .routine-badge); elsewhere the icon mixes its
+// text colour into the surface, opaque so the zones keep their order over the
+// body.
+const mix = (percent: number) =>
+  `color-mix(in srgb, currentColor ${percent}%, var(--gt-surface, transparent))`;
+const BODY = `var(--mi-body, ${mix(35)})`;
+const OFF = `var(--mi-off, ${mix(15)})`;
+const HELP = `var(--mi-help, ${mix(60)})`;
 const MAIN = "var(--mi-main, currentColor)";
 const LEVEL_FILL = { 0: OFF, 0.5: HELP, 1: MAIN } as const;
 
