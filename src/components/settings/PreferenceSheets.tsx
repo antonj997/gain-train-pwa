@@ -4,7 +4,10 @@ import { LANGUAGES, LANGUAGE_NAMES } from "@/i18n";
 import { useT } from "@/i18n/useT";
 import { RestSettings } from "@/components/settings/RestControl";
 import Sheet from "@/components/ui/Sheet";
+import Segmented from "@/components/ui/Segmented";
 import Switch from "@/components/ui/Switch";
+import type { MapFigure } from "@/components/muscles/detailed-geometry";
+import { useMapFigure } from "@/hooks/useMapFigure";
 import { canVibrate, type TrainingPreferences } from "@/lib/preferences";
 
 type Preferences = TrainingPreferences;
@@ -119,6 +122,29 @@ export function AskRirSetting({
         hint={t("settings.askRirNote")}
         checked={preferences.askRir}
         onChange={(askRir) => onChange({ askRir })}
+      />
+    </div>
+  );
+}
+
+/** The muscle maps' figure, a man or a woman (the man by default), on this device. */
+export function MapFigureSetting() {
+  const { t } = useT();
+  const [figure, setFigure] = useMapFigure();
+  return (
+    <div className="rest-setting map-figure-setting">
+      <span className="row-main">
+        <span className="rest-setting-label">{t("settings.mapFigure")}</span>
+        <span className="row-sub">{t("settings.mapFigureNote")}</span>
+      </span>
+      <Segmented<MapFigure>
+        label={t("settings.mapFigure")}
+        value={figure}
+        options={[
+          { value: "m", label: t("mapFigure.m") },
+          { value: "f", label: t("mapFigure.f") },
+        ]}
+        onChange={setFigure}
       />
     </div>
   );

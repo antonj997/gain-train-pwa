@@ -1655,6 +1655,10 @@ export const en = {
   "tips.libraryExercise": "Press and hold for more options",
   "tips.calendarDay": "Hold and drag to pick a period",
   "tips.swipeSet": "Swipe left to delete",
+  "settings.mapFigure": "Muscle map",
+  "settings.mapFigureNote": "The figure on the exercise and plan maps.",
+  "mapFigure.m": "Man",
+  "mapFigure.f": "Woman",
   "settings.showTips": "Show tips again",
   "settings.tipsReset": "Tips will show again",
   "exercises.restoreFailed":

@@ -1666,6 +1666,10 @@ export const sv = {
   "tips.libraryExercise": "Håll in för fler val",
   "tips.calendarDay": "Håll in och dra för att välja en period",
   "tips.swipeSet": "Svep vänster för att ta bort",
+  "settings.mapFigure": "Muskelkarta",
+  "settings.mapFigureNote": "Figuren på övningens och planens karta.",
+  "mapFigure.m": "Man",
+  "mapFigure.f": "Kvinna",
   "settings.showTips": "Visa tips igen",
   "settings.tipsReset": "Tipsen visas igen",
   "exercises.restoreFailed":
