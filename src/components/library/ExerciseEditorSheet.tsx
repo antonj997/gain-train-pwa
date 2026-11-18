@@ -6,10 +6,11 @@ import { sameNamedExercise } from "@/lib/exercise-search";
 import { t } from "@/i18n";
 import { categoryLabel } from "@/lib/catalogue-labels";
 import Reveal from "@/components/motion/Reveal";
+import MusclePicker from "@/components/library/MusclePicker";
 
 export type ExerciseDraft = { id: string; data: CustomExercise };
 
-/** The custom exercise form: name, categories and note, kept as a draft until saved. */
+/** The custom exercise form: name, categories, muscles, icon and note, kept as a draft until saved. */
 export default function ExerciseEditorSheet({
   open,
   draft,
@@ -134,6 +135,10 @@ export default function ExerciseEditorSheet({
             </div>
             <p className="row-sub">{t("editor.alsoTrainsHint")}</p>
           </div>
+          <MusclePicker
+            data={draft.data}
+            onChange={(data) => onChange({ ...draft, data })}
+          />
           <label>
             {t("editor.note")}
             <textarea

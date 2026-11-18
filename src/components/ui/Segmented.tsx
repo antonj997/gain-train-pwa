@@ -4,6 +4,8 @@ import { nextOptionIndex } from "@/lib/segmented-keys";
 type Option<T extends string> = {
   value: T;
   label: string;
+  /** A spoken name when the label is a symbol, such as "–" for none. */
+  ariaLabel?: string;
   disabled?: boolean;
 };
 
@@ -70,6 +72,7 @@ export default function Segmented<T extends string>({
           type="button"
           role="radio"
           aria-checked={option.value === value}
+          aria-label={option.ariaLabel}
           tabIndex={index === tabStop ? 0 : -1}
           disabled={option.disabled}
           onClick={() => onChange(option.value)}
