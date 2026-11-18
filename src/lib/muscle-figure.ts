@@ -2,7 +2,13 @@
 // the small exercise icon is split into, which side of the body it shows, and
 // which colour a shape of the detailed map takes. Ported from the approved UX
 // demo ("Övningsikoner och muskelkartor"), so the drawings match it.
-import type { ExerciseMuscles, Muscle, MuscleLevel } from "@/data/muscles";
+import {
+  MUSCLES,
+  type ExerciseMuscles,
+  type Muscle,
+  type MuscleLevel,
+} from "@/data/muscles";
+import { heatStep, type MuscleSets } from "@/data/muscle-map";
 
 export type FigureView = "front" | "back";
 
@@ -126,4 +132,43 @@ export function pickFill(
     }
   }
   return best;
+}
+
+/** A detailed map's colours: a fill per muscle and the rank that wins a shared shape. */
+export type MapFills = {
+  fills: Partial<Record<Muscle, string>>;
+  rank: Partial<Record<Muscle, number>>;
+};
+
+/**
+ * An exercise's map: main muscles red (rank 2), helping ones light pink
+ * (rank 1), so a shape covering both shows the main muscle.
+ */
+export function exerciseMapFills(muscles: ExerciseMuscles): MapFills {
+  const fills: MapFills["fills"] = {};
+  const rank: MapFills["rank"] = {};
+  for (const muscle of MUSCLES) {
+    const level = muscles[muscle];
+    if (!level) continue;
+    fills[muscle] = level === 1 ? "var(--gt-map-main)" : "var(--gt-map-help)";
+    rank[muscle] = level === 1 ? 2 : 1;
+  }
+  return { fills, rank };
+}
+
+/**
+ * A week's map: each muscle in the heat step of its hard sets (heatStep),
+ * ranked by its sets so a shared shape shows the most trained muscle.
+ */
+export function weekMapFills(sets: MuscleSets): MapFills {
+  const fills: MapFills["fills"] = {};
+  const rank: MapFills["rank"] = {};
+  for (const muscle of MUSCLES) {
+    const value = sets[muscle] ?? 0;
+    const step = heatStep(value);
+    if (!step) continue;
+    fills[muscle] = `var(--gt-heat-${step})`;
+    rank[muscle] = value;
+  }
+  return { fills, rank };
 }

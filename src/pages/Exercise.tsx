@@ -15,6 +15,7 @@ import { cardioProgressFor, progressFor } from "@/data/analytics";
 import { exerciseRecords, exerciseSessions } from "@/data/exercise-records";
 import { exerciseOverview } from "@/data/exercise-overview";
 import { favouriteChange } from "@/data/exercises";
+import { exerciseMuscles } from "@/data/exercise-muscles";
 import { today } from "@/data/model";
 import {
   completedWorkouts,
@@ -25,6 +26,7 @@ import { newWorkout } from "@/data/start";
 import { lastSessions } from "@/data/workouts";
 import CardioProgressDetail from "@/components/CardioProgressDetail";
 import ExerciseHistory from "@/components/exercise/ExerciseHistory";
+import ExerciseMuscles from "@/components/exercise/ExerciseMuscles";
 import ExerciseOverview from "@/components/exercise/ExerciseOverview";
 import ExerciseRecords from "@/components/exercise/ExerciseRecords";
 import LibraryExerciseMenu from "@/components/library/LibraryExerciseMenu";
@@ -106,6 +108,10 @@ export default function ExercisePage() {
   );
   const sessions = useMemo(() => exerciseSessions(records, id), [records, id]);
   const best = useMemo(() => exerciseRecords(records, id), [records, id]);
+  const muscles = useMemo(
+    () => exerciseMuscles(state.records, id),
+    [state.records, id],
+  );
   const overview = useMemo(
     () => (strength ? exerciseOverview(sessions, bodyWeightKg) : null),
     [strength, sessions, bodyWeightKg],
@@ -293,6 +299,12 @@ export default function ExercisePage() {
         />
       )}
       {logged && tab === "records" && <ExerciseRecords records={best} />}
+      {exercise && (tab === "overview" || !logged) && (
+        <ExerciseMuscles
+          muscles={muscles}
+          editPath={exercise.custom ? exerciseEditPath(exercise.id) : undefined}
+        />
+      )}
       {(tab === "overview" || !logged) && (
         <button
           type="button"

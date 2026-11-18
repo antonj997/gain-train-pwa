@@ -47,3 +47,80 @@
 .muscle-map-muscles path {
   transition: fill var(--gt-motion);
 }
+
+/* A map's key under the drawing: a swatch and a label per colour, centred
+   and wrapping; round for an exercise's levels, square for heat steps. */
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gt-space-1) var(--gt-space-3);
+  margin: var(--gt-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  line-height: 1.4;
+}
+.map-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.map-swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--swatch);
+}
+.map-legend.is-square .map-swatch {
+  border-radius: 3px;
+}
+
+/* The exercise page's lists: main and helping muscles side by side. */
+.muscle-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--gt-space-3) var(--gt-space-4);
+}
+.muscle-group h3 {
+  margin: 0 0 var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.muscle-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.muscle-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 32px;
+  border-top: 1px solid var(--gt-line);
+  font-size: var(--gt-fs-3);
+}
+.muscle-list li:first-child {
+  border-top: 0;
+}
+.muscle-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--gt-map-main);
+}
+.muscle-dot.is-help {
+  background-color: var(--gt-map-help);
+}
+.muscle-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--gt-space-3);
+}
