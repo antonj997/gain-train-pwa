@@ -1812,6 +1812,11 @@ export const en = {
   "planStatus.noPlan": "No plan",
   "planStatus.muscle": "Sets per muscle group a week",
   "planStatus.muscleHint": "guide {min}–{max} a week",
+  "planStatus.heatUnder": "under {sets}",
+  "planStatus.mapUnit": "sets per week",
+  "planStatus.mapWeek": "Hard sets per muscle in week {week} so far: {muscles}",
+  "planStatus.mapAverage": "Hard sets per muscle in an average week: {muscles}",
+  "planStatus.mapNone": "none yet",
   "planStatus.muscleThisWeek": "Week {week} so far",
   "planStatus.muscleAverage": {
     one: "Average of {count} finished week",

@@ -23,7 +23,7 @@ function MuscleList({
   return (
     <div className="muscle-group">
       <h3 id={id}>{title}</h3>
-      <ul className="muscle-list" aria-labelledby={id}>
+      <ul className="muscle-names" aria-labelledby={id}>
         {muscles.map((muscle) => (
           <li key={muscle}>
             <span className={"muscle-dot is-" + level} aria-hidden="true" />

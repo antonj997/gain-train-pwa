@@ -75,8 +75,16 @@
   border-radius: 50%;
   background-color: var(--swatch);
 }
+.map-legend.is-square {
+  column-gap: var(--gt-space-2);
+}
 .map-legend.is-square .map-swatch {
   border-radius: 3px;
+}
+/* The unit gets a line of its own under the steps. */
+.map-legend-unit {
+  justify-content: center;
+  flex-basis: 100%;
 }
 
 /* The exercise page's lists: main and helping muscles side by side. */
@@ -91,20 +99,20 @@
   font-size: var(--gt-fs-2);
   font-weight: 600;
 }
-.muscle-list {
+.muscle-names {
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.muscle-list li {
+.muscle-names li {
   display: flex;
   align-items: center;
   gap: var(--gt-space-2);
-  min-height: 32px;
+  min-height: 36px;
   border-top: 1px solid var(--gt-line);
   font-size: var(--gt-fs-3);
 }
-.muscle-list li:first-child {
+.muscle-names li:first-child {
   border-top: 0;
 }
 .muscle-dot {

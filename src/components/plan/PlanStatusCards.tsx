@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Play } from "lucide-react";
 import GoalRing from "@/components/items/GoalRing";
@@ -17,9 +18,19 @@ import {
   type PlanMuscleSets,
 } from "@/data/plan-status";
 import { WEEKLY_SET_GUIDE } from "@/data/muscle-sets";
+import {
+  WEEK_HEAT,
+  type MuscleSets,
+  type PlanMuscleMap,
+} from "@/data/muscle-map";
+import { MUSCLES } from "@/data/muscles";
+import MapLegend from "@/components/muscles/MapLegend";
+import MuscleMap from "@/components/muscles/MuscleMap";
+import { useMapFigure } from "@/hooks/useMapFigure";
+import { weekMapFills } from "@/lib/muscle-figure";
 import { addedLoadLabel } from "@/data/exercise-overview";
 import type { GoalCardData } from "@/hooks/useGoals";
-import { categoryLabel } from "@/lib/catalogue-labels";
+import { categoryLabel, muscleLabel } from "@/lib/catalogue-labels";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { exercisePath } from "@/lib/routes";
@@ -304,7 +315,65 @@ export function ProgressionCard({
 
 // ---------------------------------------------------------------- Volume
 
-export function MuscleCard({ muscle }: { muscle: PlanMuscleSets }) {
+/** The heat steps' labels: 0, under 5, 5–9, 10–14, 15–19, 20+. */
+function heatLegend(t: ReturnType<typeof useT>["t"]) {
+  return [
+    { key: "0", colour: "var(--gt-map-off)", label: "0" },
+    ...WEEK_HEAT.map((from, index) => {
+      const next = WEEK_HEAT[index + 1];
+      return {
+        key: String(index + 1),
+        colour: `var(--gt-heat-${index + 1})`,
+        label:
+          index === 0
+            ? t("planStatus.heatUnder", { sets: next })
+            : next === undefined
+              ? `${from}+`
+              : `${from}–${next - 1}`,
+      };
+    }),
+  ];
+}
+
+/**
+ * The plan week on the detailed map: each muscle in the heat step of its
+ * hard sets, this week while the plan runs and the average week after it.
+ */
+function WeekMap({ map }: { map: PlanMuscleMap }) {
+  const { t } = useT();
+  const [figure] = useMapFigure();
+  const sets: MuscleSets = (map.ended ? map.average : map.thisWeek) ?? {};
+  const { fills, rank } = useMemo(
+    () => weekMapFills((map.ended ? map.average : map.thisWeek) ?? {}),
+    [map],
+  );
+  const trained = MUSCLES.filter((m) => sets[m])
+    .map((m) => `${muscleLabel(m)} ${formatDecimal(sets[m]!)}`)
+    .join(", ");
+  const title = t(map.ended ? "planStatus.mapAverage" : "planStatus.mapWeek", {
+    week: map.week,
+    muscles: trained || t("planStatus.mapNone"),
+  });
+  return (
+    <div className="muscle-map">
+      <MuscleMap fills={fills} rank={rank} figure={figure} title={title} />
+      <MapLegend
+        items={heatLegend(t)}
+        shape="square"
+        unit={t("planStatus.mapUnit")}
+      />
+    </div>
+  );
+}
+
+export function MuscleCard({
+  muscle,
+  map,
+}: {
+  muscle: PlanMuscleSets;
+  /** The detailed map of the plan week, above the group bars. */
+  map?: PlanMuscleMap | null;
+}) {
   const { t } = useT();
   const { min, max } = WEEKLY_SET_GUIDE;
   const under = muscle.under.map(categoryLabel);
@@ -324,6 +393,7 @@ export function MuscleCard({ muscle }: { muscle: PlanMuscleSets }) {
           {t("planStatus.muscleHint", { min, max })}
         </span>
       </div>
+      {map && <WeekMap map={map} />}
       <p className="muscle-legend row-sub" aria-hidden="true">
         {live && (
           <span>

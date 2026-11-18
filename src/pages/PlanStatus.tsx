@@ -39,6 +39,8 @@ import {
   type PlanLift,
 } from "@/data/plan-status";
 import { categoriesLookup } from "@/data/muscle-sets";
+import { musclesLookup } from "@/data/exercise-muscles";
+import { planMuscleMap } from "@/data/muscle-map";
 import { equipmentLookup } from "@/data/progression";
 import {
   completedWorkouts,
@@ -129,6 +131,10 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
   );
   const muscle = useMemo(
     () => planMuscleSets(plan, records, today, categoriesLookup(records)),
+    [plan, records, today],
+  );
+  const muscleMap = useMemo(
+    () => planMuscleMap(plan, records, today, musclesLookup(records)),
     [plan, records, today],
   );
   const goalCards = useGoals(null, today);
@@ -235,7 +241,7 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
           bodyweight={isBodyweightLift}
         />
       )}
-      {muscle && <MuscleCard muscle={muscle} />}
+      {muscle && <MuscleCard muscle={muscle} map={muscleMap} />}
       {goals.length > 0 && (
         <GoalsCard goals={goals} today={today} onOpen={goalEditor.edit} />
       )}

@@ -1828,6 +1828,12 @@ export const sv = {
   "planStatus.noPlan": "Ingen plan",
   "planStatus.muscle": "Set per muskelgrupp och vecka",
   "planStatus.muscleHint": "riktmärke {min}–{max} per vecka",
+  "planStatus.heatUnder": "under {sets}",
+  "planStatus.mapUnit": "set per vecka",
+  "planStatus.mapWeek": "Hårda set per muskel hittills vecka {week}: {muscles}",
+  "planStatus.mapAverage":
+    "Hårda set per muskel en genomsnittlig vecka: {muscles}",
+  "planStatus.mapNone": "inga än",
   "planStatus.muscleThisWeek": "Vecka {week} hittills",
   "planStatus.muscleAverage": {
     one: "Snitt av {count} avslutad vecka",
