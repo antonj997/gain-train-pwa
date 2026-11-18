@@ -69,3 +69,22 @@ export type ExerciseMuscles = Partial<Record<Muscle, MuscleLevel>>;
 
 export const isMuscle = (value: string): value is Muscle =>
   (MUSCLES as readonly string[]).includes(value);
+
+export const isMuscleLevel = (value: unknown): value is MuscleLevel =>
+  (MUSCLE_LEVELS as readonly unknown[]).includes(value);
+
+/**
+ * The entries of a stored `muscles` value this version knows, in MUSCLES
+ * order. A newer app may add muscles or levels: they are dropped here rather
+ * than failing the record, and a save keeps them (keepUnknownFields), so
+ * whatever reads a custom exercise's muscles goes through this.
+ */
+export function knownMuscles(value: unknown): ExerciseMuscles {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const stored = value as Record<string, unknown>;
+  const muscles: ExerciseMuscles = {};
+  for (const muscle of MUSCLES)
+    if (Object.hasOwn(stored, muscle) && isMuscleLevel(stored[muscle]))
+      muscles[muscle] = stored[muscle];
+  return muscles;
+}
