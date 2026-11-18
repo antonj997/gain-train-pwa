@@ -57,6 +57,21 @@
   --gt-cat-other-bg: #eef0f3;
   --gt-cat-other-fg: #5b6270;
 
+  /* The detailed muscle map, the one place with a red scale: a black figure
+     (the map's rounding filter needs black) with grey untrained muscles on
+     its own panel. On an exercise main muscles are red and helping ones light
+     pink; over a week five heat steps run from under 5 sets to 20 or more. */
+  --gt-map-panel: #e9ecf2;
+  --gt-map-fig: #000000;
+  --gt-map-off: #9c9c9c;
+  --gt-map-main: #ef4b3f;
+  --gt-map-help: #f9b7b0;
+  --gt-heat-1: #fbd0cb;
+  --gt-heat-2: #f6a49b;
+  --gt-heat-3: #ef776b;
+  --gt-heat-4: #e2483d;
+  --gt-heat-5: #a3241c;
+
   --gt-font:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
@@ -189,6 +204,16 @@
   --gt-cat-full-body-fg: #ff9d86;
   --gt-cat-other-bg: #22262e;
   --gt-cat-other-fg: #a3acba;
+  --gt-map-panel: #232a3b;
+  --gt-map-fig: #000000;
+  --gt-map-off: #9c9c9c;
+  --gt-map-main: #f05046;
+  --gt-map-help: #f9b7b0;
+  --gt-heat-1: #fbd0cb;
+  --gt-heat-2: #f6a49b;
+  --gt-heat-3: #ef776b;
+  --gt-heat-4: #e2483d;
+  --gt-heat-5: #a3241c;
 }
 
 @media (prefers-reduced-motion: reduce) {
