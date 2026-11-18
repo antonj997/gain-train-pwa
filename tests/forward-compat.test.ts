@@ -2,11 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   SCHEMA_VERSION,
+  customSchema,
   isFromNewerApp,
   keepUnknownFields,
   validate,
   type Workout,
 } from "../src/data/model";
+import { customIconOf, customMuscles } from "../src/data/exercise-muscles";
 import { parseWorkoutDraft } from "../src/lib/drafts";
 import { local, session, writeStored } from "../src/lib/storage";
 
@@ -83,6 +85,29 @@ test("records from a newer schema version are recognised", () => {
     true,
   );
   assert.equal(isFromNewerApp(null), false);
+});
+
+test("an own exercise keeps a newer app's muscles but never reads them", () => {
+  const exercise = {
+    name: "Cable press",
+    category: "Chest",
+    note: "",
+    favourite: false,
+    muscles: { chest: 1, triceps: 0.5, neck: 1, abs: 0.25, quads: "x" },
+    icon: "rings",
+  };
+  // This version parses only the muscles and levels it knows ...
+  assert.deepEqual(customSchema.parse(exercise).muscles, {
+    chest: 1,
+    triceps: 0.5,
+  });
+  // ... and a save keeps the rest for the newer app, without failing.
+  const saved = validate("exercise", exercise);
+  assert.deepEqual(saved.muscles, exercise.muscles);
+  assert.equal(saved.icon, "rings");
+  // What the map reads drops them again; an unknown icon is the dumbbell.
+  assert.deepEqual(customMuscles(saved), { chest: 1, triceps: 0.5 });
+  assert.equal(customIconOf(saved), "dumbbell");
 });
 
 test("guarded storage survives browsers that block storage access", () => {

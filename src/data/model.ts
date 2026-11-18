@@ -5,6 +5,7 @@ import { isIsoDay, isoDate } from "../lib/dates";
 import { CARDIO_MAX, cardioLabel } from "../lib/cardio";
 import { HOLD_MAX, holdLabel } from "../lib/rep-hold";
 import { normalizeDrops } from "./drops";
+import { knownMuscles } from "./muscles";
 import { t } from "../i18n";
 import { formatWeightValue, getWeightUnit } from "../lib/units";
 /** Every load a set can have. Older apps know the first three only. */
@@ -154,6 +155,18 @@ export const customSchema = z.object({
   aliases: z.array(z.string().max(100)).max(20).optional(),
   load: z.enum(["weight", "bodyweight", "assisted"]).optional(),
   measure: z.string().max(20).optional(),
+  /**
+   * The muscles it trains, from the muscle picker: muscle id → 1 (main) or
+   * 0.5 (helping). Absent on older exercises, whose categories stand in.
+   * Entries this version doesn't know (a newer app's muscle or level) are
+   * dropped instead of failing the record; a save keeps them. Not shared.
+   */
+  muscles: z.record(z.string(), z.unknown()).transform(knownMuscles).optional(),
+  /**
+   * The icon it shows: "body" or an equipment glyph (CUSTOM_ICONS). Absent,
+   * or one this version doesn't know, shows the dumbbell. Not shared.
+   */
+  icon: z.string().max(30).optional(),
 });
 const isoDay = z
   .string()
