@@ -1,7 +1,7 @@
 import RoutineGlyph from "@/components/library/RoutineGlyph";
 import { categoryLabel } from "@/lib/catalogue-labels";
 import { countLabel } from "@/lib/labels";
-import { categoryTone } from "@/lib/movement-icon";
+import { categoryTone } from "@/lib/exercise-icon";
 import { t } from "@/i18n";
 
 /**
@@ -87,7 +87,6 @@ export function PreviewExercises({
           <RoutineGlyph
             exerciseId={item.exerciseId}
             category={item.category}
-            equipment={item.equipment}
             size={36}
           />
           <span className="row-main">

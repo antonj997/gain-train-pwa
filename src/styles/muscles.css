@@ -1,15 +1,35 @@
 /* Muscle drawings (src/components/muscles/). Colours come from tokens.css. */
 
-/* The small muscle icon in an exercise avatar or routine badge: the figure is
-   drawn in the category tone mixed into the tint, so it reads in both themes.
-   The body sits at about a third of the tone, untrained zones lighter than
-   it, helping muscles well past it and main muscles in the full tone. */
+/* The small muscle icon in an exercise avatar, routine badge or Library
+   glyph: the figure is drawn in the category tone mixed into the tint, so it
+   reads in both themes. Untrained zones sit lightest, then the body (the
+   head and the lines between zones), helping muscles well past it and main
+   muscles in the full tone. The light tints are pale, so the figure takes
+   more of the tone there to stand out from the circle. */
 .ex-avatar,
-.routine-badge {
+.routine-badge,
+.routine-glyph {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 55%, var(--tone-bg));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 30%, var(--tone-bg));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 72%, var(--tone-bg));
+  --mi-main: var(--tone-fg);
+}
+.dark .ex-avatar,
+.dark .routine-badge,
+.dark .routine-glyph {
   --mi-body: color-mix(in srgb, var(--tone-fg) 35%, var(--tone-bg));
   --mi-off: color-mix(in srgb, var(--tone-fg) 15%, var(--tone-bg));
   --mi-help: color-mix(in srgb, var(--tone-fg) 60%, var(--tone-bg));
-  --mi-main: var(--tone-fg);
+}
+/* The Library glyph sizes its icons by percent; the narrow figure takes
+   nearly the whole tile. */
+.routine-glyph .muscle-icon {
+  width: 96%;
+  height: 96%;
+}
+.routine-glyph.is-lg .muscle-icon {
+  width: 34px;
+  height: 34px;
 }
 
 /* The detailed muscle map sits on its own panel (light grey-blue, dark navy)

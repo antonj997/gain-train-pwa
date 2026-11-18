@@ -32,7 +32,6 @@ function ExerciseRow({
     <ExerciseItem
       exerciseId={e.id}
       category={e.category}
-      equipment={e.equipment}
       title={
         <>
           {e.name}

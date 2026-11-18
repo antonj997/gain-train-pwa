@@ -1,5 +1,7 @@
 // The equipment glyphs your own exercises can show (EquipmentIcon).
-import { MOVEMENT_SHAPES, type Shape } from "../icons/exercise/paths";
+
+/** A path's `d`, or a circle (a head, a plate or a wheel). */
+export type Shape = string | { cx: number; cy: number; r: number };
 
 /** The equipment glyphs your own exercises can show; none chosen is the dumbbell. */
 export const EQUIPMENT_ICONS = [
@@ -16,12 +18,22 @@ export type EquipmentIconKind = (typeof EQUIPMENT_ICONS)[number];
 const head = (cx: number, cy: number, r = 2): Shape => ({ cx, cy, r });
 
 /**
- * The glyphs, drawn like the movement icons (paths.ts): Lucide's 24 × 24
- * grid, round 1.8 strokes, no fills, strokes at least 2.5 units apart so they
+ * The glyphs, drawn like Lucide icons: a 24 × 24 grid, round 1.8 strokes, no fills, strokes at least 2.5 units apart so they
  * stay separate at 22px.
  */
 export const EQUIPMENT_SHAPES: Record<EquipmentIconKind, readonly Shape[]> = {
-  dumbbell: MOVEMENT_SHAPES.dumbbell,
+  // A short bar with two plates at each end.
+  dumbbell: [
+    "M7 8V16",
+    "M17 8V16",
+    "M4 10V14",
+    "M20 10V14",
+    "M7 12H17",
+    "M4 10H7",
+    "M4 14H7",
+    "M17 10H20",
+    "M17 14H20",
+  ],
   // A long bar with a big and a small plate at each end.
   barbell: [
     "M2 12H22",

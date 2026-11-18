@@ -438,7 +438,6 @@ export default function ExercisePickerBody({
                     className="picker-item"
                     exerciseId={e.id}
                     category={e.category}
-                    equipment={"equipment" in e ? e.equipment : undefined}
                     pressed={single ? undefined : selected.includes(e.id)}
                     title={
                       <>

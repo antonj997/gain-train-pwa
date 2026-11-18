@@ -1,11 +1,11 @@
 import { useContext } from "react";
 import { Copy, Layers, Moon, Plus, Sparkles } from "lucide-react";
 import { DataContext } from "@/contexts/useData";
-import MovementIcon from "@/components/icons/exercise/MovementIcon";
+import ExerciseIcon from "@/components/muscles/ExerciseIcon";
 import type { Plan } from "@/data/model";
 import { REST, cellText } from "@/data/plans";
 import { exerciseCategory } from "@/data/selectors";
-import { categoryTone, movementIcon } from "@/lib/movement-icon";
+import { categoryTone } from "@/lib/exercise-icon";
 import { type WeekKind, weekKindsOf } from "@/data/phase";
 import { weekdayNames } from "@/lib/dates";
 import { t } from "@/i18n";
@@ -34,9 +34,11 @@ function CellIcon({ cell }: { cell: string | null }) {
   const category = exerciseCategory(data!.state.records, lead.exerciseId);
   return (
     <span className="plan-cell-icon" data-tone={categoryTone(category)}>
-      <MovementIcon
-        movement={movementIcon({ id: lead.exerciseId, category })}
-        size={28}
+      <ExerciseIcon
+        exerciseId={lead.exerciseId}
+        category={category}
+        glyph={28}
+        body={36}
       />
     </span>
   );
