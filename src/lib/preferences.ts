@@ -1,4 +1,5 @@
 import { t } from "../i18n";
+import type { MapFigure } from "../components/muscles/detailed-geometry";
 import { local, storageKeys, writeStored } from "./storage";
 import {
   parseWeightUnit,
@@ -6,6 +7,19 @@ import {
   type WeightUnit,
 } from "./units";
 export const TRAINING_PREFERENCES_EVENT = "gain-preferences-change";
+export const MAP_FIGURE_EVENT = "gain-map-figure-change";
+
+/** A stored figure; anything but "f" is the man, the default. */
+export const parseMapFigure = (value: string | null): MapFigure =>
+  value === "f" ? "f" : "m";
+export const readMapFigure = (): MapFigure =>
+  parseMapFigure(local.getItem(storageKeys.mapFigure));
+/** Saves the figure on this device (the man is the default, so it removes the key). */
+export function saveMapFigure(figure: MapFigure) {
+  writeStored(storageKeys.mapFigure, figure === "f" ? "f" : null);
+  window.dispatchEvent(new Event(MAP_FIGURE_EVENT));
+}
+
 export type TrainingPreferences = {
   restSeconds: number;
   haptics: boolean;

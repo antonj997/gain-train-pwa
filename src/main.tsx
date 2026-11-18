@@ -9,6 +9,7 @@ import "./styles/usability.css";
 import "./styles/pages.css";
 import "./styles/details.css";
 import "./styles/items.css";
+import "./styles/muscles.css";
 import "./styles/messages.css";
 import "./styles/gestures.css";
 

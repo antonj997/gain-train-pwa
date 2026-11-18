@@ -1,15 +1,16 @@
-import { MOVEMENT_SHAPES, type Movement } from "./paths";
+import { memo } from "react";
+import { EQUIPMENT_SHAPES, type EquipmentIconKind } from "./equipment-shapes";
 
 /**
- * One movement icon (see paths.ts), drawn in the current text colour like a
- * Lucide icon. Decorative: the exercise's name always sits next to it.
+ * An equipment glyph for your own exercises, drawn in the current text colour
+ * like a Lucide icon. Decorative: the exercise's name always sits next to it.
  */
-export default function MovementIcon({
-  movement,
+function EquipmentIcon({
+  kind,
   size = 22,
   className,
 }: {
-  movement: Movement;
+  kind: EquipmentIconKind;
   size?: number;
   className?: string;
 }) {
@@ -26,9 +27,9 @@ export default function MovementIcon({
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
-      data-movement={movement}
+      data-equipment={kind}
     >
-      {MOVEMENT_SHAPES[movement].map((shape, index) =>
+      {EQUIPMENT_SHAPES[kind].map((shape, index) =>
         typeof shape === "string" ? (
           <path key={index} d={shape} />
         ) : (
@@ -38,3 +39,5 @@ export default function MovementIcon({
     </svg>
   );
 }
+
+export default memo(EquipmentIcon);

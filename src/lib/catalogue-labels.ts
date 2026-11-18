@@ -1,4 +1,5 @@
 import { t, type MessageKey } from "../i18n";
+import type { Muscle, MuscleLevel } from "../data/muscles";
 
 // Categories and equipment are stored in English (records and the shared
 // library refer to them); only their labels follow the chosen language.
@@ -44,3 +45,10 @@ export function categoryText(category: string, others: readonly string[] = []) {
     ? `${categoryLabel(category)} · ${rest.join(", ")}`
     : categoryLabel(category);
 }
+
+/** A muscle's name to show ("Quads", "Framsida lår"). The type check makes sure every id has one. */
+export const muscleLabel = (muscle: Muscle) => t(`muscleName.${muscle}`);
+
+/** How much an exercise trains a muscle, in words: "Main muscle", "Helping muscle". */
+export const muscleLevelLabel = (level: MuscleLevel) =>
+  t(level === 1 ? "muscleLevel.main" : "muscleLevel.helping");

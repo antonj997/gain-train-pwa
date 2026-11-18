@@ -10,7 +10,6 @@ type Props = {
   exerciseId: string;
   /** The main category, when known; the avatar looks it up otherwise. */
   category?: string;
-  equipment?: string;
   title: ReactNode;
   /** A muted second line. */
   meta?: ReactNode;
@@ -44,7 +43,6 @@ type Props = {
 export default function ExerciseRow({
   exerciseId,
   category,
-  equipment,
   title,
   meta,
   to,
@@ -62,11 +60,7 @@ export default function ExerciseRow({
   const tipRef = useTipTarget<HTMLDivElement>(tip);
   const content = (
     <>
-      <ExerciseAvatar
-        exerciseId={exerciseId}
-        category={category}
-        equipment={equipment}
-      />
+      <ExerciseAvatar exerciseId={exerciseId} category={category} />
       <span className="ex-row-text">
         <span className="ex-row-title">{title}</span>
         {meta && <span className="ex-row-meta">{meta}</span>}

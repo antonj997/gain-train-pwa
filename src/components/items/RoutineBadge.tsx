@@ -1,14 +1,14 @@
 import { memo, useContext } from "react";
 import { Layers } from "lucide-react";
 import { DataContext } from "@/contexts/useData";
-import MovementIcon from "@/components/icons/exercise/MovementIcon";
+import ExerciseIcon from "@/components/muscles/ExerciseIcon";
 import { exerciseCategory } from "@/data/selectors";
-import { categoryTone, movementIcon } from "@/lib/movement-icon";
+import { categoryTone } from "@/lib/exercise-icon";
 
 type Props = {
   /** The routine's exercises in order; the first one leads. */
   exercises: readonly { exerciseId: string }[];
-  /** 48 on routine cards (30px icon), 56 on the Today card (34px icon). */
+  /** 48 on routine cards (30px glyph), 56 on the Today card (34px glyph). */
   size?: 48 | 56;
   /** Show the exercise count at the corner (on by default). */
   count?: boolean;
@@ -17,7 +17,7 @@ type Props = {
 
 /**
  * A routine's badge: a rounded tile tinted by its leading exercise's main
- * category, with that exercise's movement icon and a count badge at the
+ * category, with that exercise's icon and a count badge at the
  * corner. One icon per routine, no mosaic. A routine without exercises shows
  * the layers icon. Decorative: the routine's name is always beside it.
  */
@@ -43,9 +43,11 @@ function RoutineBadge({
       aria-hidden="true"
     >
       {lead ? (
-        <MovementIcon
-          movement={movementIcon({ id: lead.exerciseId, category })}
-          size={icon}
+        <ExerciseIcon
+          exerciseId={lead.exerciseId}
+          category={category}
+          glyph={icon}
+          body={size === 56 ? 48 : 42}
         />
       ) : (
         <Layers size={icon - 6} />

@@ -2,7 +2,13 @@
 // plan is followed, whether the lifts keep up with the planned progression and
 // the weekly sets per muscle group. Pure, so it is tested
 // (tests/plan-status.test.ts); the page only formats what these return.
-import { labelSet, type Plan, type RecordDoc, type WorkoutSet } from "./model";
+import {
+  labelSet,
+  type Plan,
+  type RecordDoc,
+  type Workout,
+  type WorkoutSet,
+} from "./model";
 import { REST, planDay } from "./plans";
 import { isWorkoutCell } from "./plan-moves";
 import { isDeloadWeek, phaseWeek, phaseWeeks, progressionWeeks } from "./phase";
@@ -477,6 +483,50 @@ export type PlanMuscleSets = {
   short: { group: MuscleGroup; left: number }[];
 };
 
+export type PlanVolumeWeeks = {
+  /** The plan week that holds today (the last one after the end). */
+  week: number;
+  /** Finished plan weeks an average is taken over; 0 in the first week. */
+  weeks: number;
+  ended: boolean;
+  /** Finished workouts of the finished weeks. */
+  finished: Workout[];
+  /** Finished workouts so far in the week that holds today; none after the end. */
+  current: Workout[];
+};
+
+/**
+ * The plan's finished workouts split for its volume: the weeks that have
+ * finished, which an average is taken over, and the week that holds today.
+ * The sets per group and the muscle map share it, so they always agree on
+ * the weeks. Null before the plan starts.
+ */
+export function planVolumeWeeks(
+  plan: Plan,
+  records: Records,
+  today: string,
+): PlanVolumeWeeks | null {
+  if (today < plan.startDate) return null;
+  const ended = today > plan.endDate;
+  const end = lastCounted(plan, today);
+  const week = phaseWeek(plan, end)!.week;
+  // The plan week that holds today starts here; weeks before it are finished.
+  const weekFrom = weekFirstDay(plan, week);
+  const inPlan = completedWorkouts(records)
+    .map((r) => r.payload)
+    .filter((w) => w.date >= plan.startDate && w.date <= end);
+  return {
+    week,
+    weeks: ended ? week : week - 1,
+    ended,
+    finished: ended ? inPlan : inPlan.filter((w) => w.date < weekFrom),
+    current: ended ? [] : inPlan.filter((w) => w.date >= weekFrom),
+  };
+}
+
+/** Sets to the half set, as the volume shows them. */
+export const toHalfSet = (sets: number) => Math.round(sets * 2) / 2;
+
 /**
  * Hard sets per muscle group a week over the plan. The average only counts
  * plan weeks that have finished, so a new week never pulls it down before it
@@ -490,32 +540,17 @@ export function planMuscleSets(
   today: string,
   categoriesOf: CategoriesOf,
 ): PlanMuscleSets | null {
-  if (today < plan.startDate) return null;
-  const ended = today > plan.endDate;
-  const end = lastCounted(plan, today);
-  const week = phaseWeek(plan, end)!.week;
-  // The plan week that holds today starts here; weeks before it are finished.
-  const weekFrom = weekFirstDay(plan, week);
-  const weeks = ended ? week : week - 1;
-  const inPlan = completedWorkouts(records)
-    .map((r) => r.payload)
-    .filter((w) => w.date >= plan.startDate && w.date <= end);
-  const finished = hardSetsByMuscle(
-    ended ? inPlan : inPlan.filter((w) => w.date < weekFrom),
-    categoriesOf,
-  );
-  const current = ended
-    ? new Map<MuscleGroup, number>()
-    : hardSetsByMuscle(
-        inPlan.filter((w) => w.date >= weekFrom),
-        categoriesOf,
-      );
-  const half = (n: number) => Math.round(n * 2) / 2;
+  const volume = planVolumeWeeks(plan, records, today);
+  if (!volume) return null;
+  const { week, weeks, ended } = volume;
+  const finished = hardSetsByMuscle(volume.finished, categoriesOf);
+  const current = hardSetsByMuscle(volume.current, categoriesOf);
   const rows = MUSCLE_GROUPS.filter(
     (g) => (finished.get(g) ?? 0) > 0 || (current.get(g) ?? 0) > 0,
   ).map((group): PlanMuscleRow => {
-    const average = weeks > 0 ? half((finished.get(group) ?? 0) / weeks) : null;
-    const thisWeek = half(current.get(group) ?? 0);
+    const average =
+      weeks > 0 ? toHalfSet((finished.get(group) ?? 0) / weeks) : null;
+    const thisWeek = toHalfSet(current.get(group) ?? 0);
     return {
       group,
       average,
@@ -542,7 +577,7 @@ export function planMuscleSets(
           .filter((r) => r.thisWeek < WEEKLY_SET_GUIDE.min)
           .map((r) => ({
             group: r.group,
-            left: half(WEEKLY_SET_GUIDE.min - r.thisWeek),
+            left: toHalfSet(WEEKLY_SET_GUIDE.min - r.thisWeek),
           })),
   };
 }

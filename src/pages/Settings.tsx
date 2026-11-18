@@ -25,6 +25,7 @@ import {
   VibrateSetting,
   AskRirSetting,
   LanguageSheet,
+  MapFigureSetting,
   ThemeSheet,
 } from "@/components/settings/PreferenceSheets";
 import SyncIssues from "@/components/settings/SyncIssues";
@@ -177,6 +178,7 @@ export default function Settings() {
             chevron
             onClick={() => setSheet("theme")}
           />
+          <MapFigureSetting />
           <ListRow
             title={t("language.title")}
             value={LANGUAGE_NAMES[language]}

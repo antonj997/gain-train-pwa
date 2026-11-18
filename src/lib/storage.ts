@@ -69,6 +69,8 @@ export const storageKeys = {
   /** "kg" or "lb"; weights are stored in kg either way. */
   weightUnit: "gt-weight-unit",
   persistRequested: "gt-persist-requested",
+  /** The muscle maps' figure: "f" for the woman; the man otherwise. */
+  mapFigure: "gt-map-figure",
   /** The chart metric an exercise's Overview was last left on ("top", "e1rm", ...). */
   exerciseMetric: (exerciseId: string) => "gt-exercise-metric:" + exerciseId,
   /** The last crash the error screen showed, offered with a bug report. */

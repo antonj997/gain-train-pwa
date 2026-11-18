@@ -37,6 +37,21 @@ test("a custom exercise maps to a row insert", () => {
   });
 });
 
+test("muscles and icon stay out of the shared row", () => {
+  const plain = validate("exercise", {
+    name: "Curl",
+    category: "Arms",
+    note: "",
+  });
+  const mapped = validate("exercise", {
+    ...plain,
+    muscles: { biceps: 1, forearms: 0.5 },
+    icon: "band",
+  });
+  assert.deepEqual(toSharedInsert(mapped), toSharedInsert(plain));
+  assert.equal(sharedFieldsChanged(plain, mapped), false);
+});
+
 test("a row becomes a custom exercise that points back at it", () => {
   const copy = fromSharedRow(row());
   assert.equal(copy.sharedFrom, row().id);

@@ -1,0 +1,261 @@
+/* Muscle drawings (src/components/muscles/). Colours come from tokens.css. */
+
+/* The small muscle icon in an exercise avatar, routine badge or Library
+   glyph: the figure is drawn in the category tone mixed into the tint, so it
+   reads in both themes. Untrained zones sit lightest, then the body (the
+   head and the lines between zones), helping muscles well past it and main
+   muscles in the full tone. The light tints are pale, so the figure takes
+   more of the tone there to stand out from the circle. */
+.ex-avatar,
+.routine-badge,
+.routine-glyph,
+.icon-choice-tile {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 55%, var(--tone-bg));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 30%, var(--tone-bg));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 72%, var(--tone-bg));
+  --mi-main: var(--tone-fg);
+}
+.dark .ex-avatar,
+.dark .routine-badge,
+.dark .routine-glyph,
+.dark .icon-choice-tile {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 35%, var(--tone-bg));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 15%, var(--tone-bg));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 60%, var(--tone-bg));
+}
+/* A plan template day draws the figure straight on the day's surface. */
+.plan-cell-icon {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 55%, var(--gt-surface));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 30%, var(--gt-surface));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 72%, var(--gt-surface));
+  --mi-main: var(--tone-fg);
+}
+.dark .plan-cell-icon {
+  --mi-body: color-mix(in srgb, var(--tone-fg) 35%, var(--gt-surface));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 15%, var(--gt-surface));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 60%, var(--gt-surface));
+}
+/* The Library glyph sizes its icons by percent; the narrow figure takes
+   nearly the whole tile. */
+.routine-glyph .muscle-icon {
+  width: 96%;
+  height: 96%;
+}
+.routine-glyph.is-lg .muscle-icon {
+  width: 34px;
+  height: 34px;
+}
+
+/* The detailed muscle map sits on its own panel (light grey-blue, dark navy)
+   with its legend; the drawing fills the panel's width. */
+.muscle-map {
+  padding: var(--gt-space-4) var(--gt-space-3) var(--gt-space-3);
+  border-radius: var(--gt-radius-lg);
+  background-color: var(--gt-map-panel);
+}
+.muscle-map-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.muscle-map-muscles path {
+  transition: fill var(--gt-motion);
+}
+
+/* A map's key under the drawing: a swatch and a label per colour, centred
+   and wrapping; round for an exercise's levels, square for heat steps. */
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gt-space-1) var(--gt-space-3);
+  margin: var(--gt-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  line-height: 1.4;
+}
+.map-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.map-swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--swatch);
+}
+.map-legend.is-square {
+  column-gap: var(--gt-space-2);
+}
+.map-legend.is-square .map-swatch {
+  border-radius: 3px;
+}
+/* The unit gets a line of its own under the steps. */
+.map-legend-unit {
+  justify-content: center;
+  flex-basis: 100%;
+}
+
+/* The exercise page's lists: main and helping muscles side by side. */
+.muscle-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--gt-space-3) var(--gt-space-4);
+}
+.muscle-group h3 {
+  margin: 0 0 var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.muscle-names {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.muscle-names li {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  min-height: 36px;
+  border-top: 1px solid var(--gt-line);
+  font-size: var(--gt-fs-3);
+}
+.muscle-names li:first-child {
+  border-top: 0;
+}
+.muscle-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--gt-map-main);
+}
+.muscle-dot.is-help {
+  background-color: var(--gt-map-help);
+}
+.muscle-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 var(--gt-space-3);
+}
+
+/* The editor's muscle picker: a small live map, Simple | Advanced, and a
+   row per group or muscle with – / Lite / Mycket at the right. */
+.muscle-map-preview {
+  padding: var(--gt-space-3);
+}
+.muscle-map-preview .muscle-map-svg {
+  max-width: 190px;
+  margin: 0 auto;
+}
+.level-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+.level-rows {
+  display: flex;
+  flex-direction: column;
+}
+.level-group-title {
+  margin: 0;
+  padding-top: var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  min-height: 56px;
+  border-bottom: 1px solid var(--gt-line);
+}
+.level-row:last-child {
+  border-bottom: 0;
+}
+.level-row-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-size: var(--gt-fs-3);
+  overflow-wrap: anywhere;
+}
+.level-row-mixed {
+  color: var(--gt-ink-3);
+  font-size: var(--gt-fs-1);
+}
+.level-row .segmented {
+  flex: 0 0 auto;
+  width: 204px;
+}
+.level-row .segmented button {
+  font-size: var(--gt-fs-2);
+}
+@media (max-width: 370px) {
+  .level-row .segmented {
+    width: 192px;
+  }
+}
+
+/* The icon choices: a tile per icon in the category's tint, its name under
+   it; the chosen one has the accent ring. */
+.icon-choices {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gt-space-2);
+}
+.icon-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gt-space-1);
+  min-height: 44px;
+  padding: var(--gt-space-1) 0;
+  border: 0;
+  background: none;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+}
+.icon-choice-tile {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background-color: var(--tone-bg, var(--gt-cat-other-bg));
+  color: var(--tone-fg, var(--gt-cat-other-fg));
+  box-shadow: 0 0 0 0 transparent;
+  transition: box-shadow var(--gt-motion);
+}
+.icon-choice-tile svg {
+  display: block;
+}
+.icon-choice[aria-pressed="true"] {
+  color: var(--gt-accent);
+}
+.icon-choice[aria-pressed="true"] .icon-choice-tile {
+  box-shadow:
+    0 0 0 2px var(--gt-surface),
+    0 0 0 4px var(--gt-accent);
+}
+.icon-choice-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.icon-choice-label::first-letter {
+  text-transform: uppercase;
+}

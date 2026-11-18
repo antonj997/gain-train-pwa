@@ -2745,6 +2745,15 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   color: var(--gt-ink);
   font-size: var(--gt-fs-3);
 }
+/* Muscle map: the label and its note, then Man | Woman at the right. */
+.map-figure-setting {
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+}
+.map-figure-setting .segmented {
+  flex: 0 0 auto;
+  width: 176px;
+}
 /* The one rest-time control: − 2:00 +. */
 .rest-control {
   display: inline-flex;
