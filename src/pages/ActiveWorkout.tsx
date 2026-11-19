@@ -551,7 +551,9 @@ function Editor({
         </button>
       )}
       <div className="float-stack">
-        {!padTarget && <NextSetChip setId={nextSet?.id} />}
+        {!padTarget && (
+          <NextSetChip setId={nextSet?.id} pad={editing ? null : padApi} />
+        )}
       </div>
       {!editing && (
         <WorkoutDock

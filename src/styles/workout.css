@@ -781,7 +781,8 @@
   position: fixed;
   right: 0;
   bottom: calc(
-    var(--dock-space, 0px) + var(--gt-space-4) + env(safe-area-inset-bottom)
+    var(--viewport-bottom, 0px) + var(--dock-space, 0px) + var(--gt-space-4) +
+      env(safe-area-inset-bottom)
   );
   left: 0;
   z-index: 20;
@@ -1205,11 +1206,15 @@
 
 /* The dock at the foot of a live workout (WorkoutDock): the rest dock, with
    the number pad under it while a field is typed. It is fixed to the bottom
-   and publishes its height (--dock-space), so the page leaves room for it. */
+   and publishes its height (--dock-space), so the page leaves room for it.
+   It rests on the screen's bottom edge, not the layout viewport's: iPhone
+   lets the visible area slide below the layout viewport while the page
+   scrolls (useVisualViewport, --viewport-bottom), and a plain bottom: 0
+   would float up the page. */
 .workout-dock {
   position: fixed;
   right: 0;
-  bottom: 0;
+  bottom: var(--viewport-bottom, 0px);
   left: 0;
   z-index: 20;
   display: flex;
