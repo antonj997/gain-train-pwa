@@ -1,5 +1,12 @@
 # Changelog
 
+## 19 November 2026 — the number pad stays at the screen's foot; a weight unit per exercise
+
+- **The dock no longer floats up on iPhone.** In the installed app, scrolling with the number pad open could carry the visible area below the layout viewport (iPhone does this with a field focused, or after its keyboard closes), and the dock's `bottom: 0` then sat ~190px up the screen with the page showing under it. `useVisualViewport` now also publishes `--viewport-bottom` (`innerHeight − offsetTop − height`, from `viewportMetrics` in `src/lib/visual-viewport.ts`), writes only changed values once a frame, and listens to the window's scroll too; the dock and the floating chip rest on it. Pinch-zoom still leaves them to the browser, and the keyboard still hides them. The Next set chip opens the pad directly on a touch screen instead of focusing an `inputmode="none"` field and scrolling it into view.
+- **The kg/lb heading's sheet changes only that exercise.** An exercise keeps its own unit in the synced library record (`weightUnits`, by exercise id; no migration: the server trigger lets unknown library keys through and older apps keep them), else the default from Settings. Choosing the default clears the exercise's own, so it follows Settings again. The sheet says "Gäller bara Bänkpress" and marks the default; Settings says it is the default.
+  - The exercise's unit is used for its rows, Previous, targets and goal check-ins (on that unit's 2.5 kg / 5 lb grid), the number pad, the Set and reorder sheets, the plan note, the dock's next set, the Finish sheet's records, its exercise page (overview, chart, history, records), History's workout details and the Library and Progress rows. Totals (volume) and goals elsewhere stay in the default unit. Weights are still stored in kg.
+  - `src/lib/exercise-units.ts`, `useWeightUnits`; tested in `tests/exercise-units.test.ts` and `tests/visual-viewport.test.ts`.
+
 ## 17 November 2026 — Library: routine tiles, folders, Upptäck and Dela
 
 - **Three tabs: Rutiner · Övningar · Upptäck** (`/library?tab=routines|exercises|discover`). `/library/shared`, `?tab=shared` and `?view=shared` now open Upptäck (`legacy-routes.ts`, and a `<Navigate>` in `App.tsx`); the Shared routines subscreen (`LibraryShared`, `SharedRoutineList`) is gone, and so is the "Delade" filter in Övningar.
