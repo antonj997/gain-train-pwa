@@ -309,7 +309,10 @@ const unbroken = (text: string) => text.replace(/ /g, "\u00a0");
  * in 11 weeks", "From BW × 8 to BW + 10 kg × 7 in 6 weeks", "Same weight, up 2
  * reps in 3 weeks", "Up 3 reps in 6 weeks", or "First session".
  */
-export function trendVerdict(overview: Overview) {
+export function trendVerdict(
+  overview: Overview,
+  unit: WeightUnit = getWeightUnit(),
+) {
   const { kind, sessions } = overview;
   const first = sessions[0];
   const latest = sessions.at(-1);
@@ -343,12 +346,12 @@ export function trendVerdict(overview: Overview) {
   if (kind === "bodyweight")
     return t("overview.verdictFrom", {
       // Each set stays on one line: the sentence wraps between them.
-      from: unbroken(labelSet(first.top, false)),
-      to: unbroken(labelSet(latest.top, false)),
+      from: unbroken(labelSet(first.top, false, unit)),
+      to: unbroken(labelSet(latest.top, false, unit)),
       period,
     });
   return t(load > 0 ? "overview.verdictUp" : "overview.verdictDown", {
-    change: formatWeight(Math.abs(load)),
+    change: formatWeight(Math.abs(load), unit),
     period,
   });
 }
@@ -467,7 +470,8 @@ export function axisLabel(
 }
 
 /** A set as the caption reads it: "87.5 kg × 5", "BW + 10 kg × 6", "60 sec". */
-const setText = (set: WorkoutSet) => labelSet(set, false);
+const setText = (set: WorkoutSet, unit: WeightUnit) =>
+  labelSet(set, false, unit);
 
 /** The selected point in words, after its date: what it is and where it came from. */
 export function pointCaption(
@@ -489,7 +493,7 @@ export function pointCaption(
       bodyKg === null
         ? formatWeight(shown, unit, 1)
         : addedLoadLabel(shown, unit, 1);
-    const text = t("overview.captionE1rm", { set: setText(set), value });
+    const text = t("overview.captionE1rm", { set: setText(set, unit), value });
     return bodyKg === null
       ? text
       : `${text} ${t("overview.captionWhole", { value: formatWeight(whole, unit, 1) })}`;
@@ -513,7 +517,7 @@ export function pointCaption(
         : t("records.reps", { count: session.total })
     }`;
   const set = metric === "best" || kind === "reps" ? session.best : session.top;
-  return `${setText(set)} · ${sets()}`;
+  return `${setText(set, unit)} · ${sets()}`;
 }
 
 /** The three numbers under the chart. */
@@ -577,8 +581,12 @@ export function nextTarget(
 }
 
 /** A set as a target reads: last time's set with the target's numbers ("87.5 kg × 6"). */
-export const targetText = (target: SetTarget, last: WorkoutSet) =>
-  labelSet({ ...last, weight: target.weight, reps: target.reps }, false);
+export const targetText = (
+  target: SetTarget,
+  last: WorkoutSet,
+  unit: WeightUnit = getWeightUnit(),
+) =>
+  labelSet({ ...last, weight: target.weight, reps: target.reps }, false, unit);
 
 /** One row of the Overview's Records card. */
 export type OverviewRecord = {
@@ -618,7 +626,7 @@ export function overviewRecords(
       rows.push({
         key: "set",
         title: t(seconds ? "overview.longestSet" : "overview.mostRepsSet"),
-        value: setText(set.best),
+        value: setText(set.best, unit),
         date: set.date,
         pill: true,
       });
@@ -640,7 +648,7 @@ export function overviewRecords(
     rows.push({
       key: "heaviest",
       title: t("overview.heaviest"),
-      value: setText(records.heaviest.set),
+      value: setText(records.heaviest.set, unit),
       date: records.heaviest.date,
       pill: true,
     });
@@ -648,7 +656,7 @@ export function overviewRecords(
     rows.push({
       key: "reps",
       title: t("overview.mostReps"),
-      value: setText(records.mostReps.set),
+      value: setText(records.mostReps.set, unit),
       date: records.mostReps.date,
     });
   const strongest = mostIn((s) => s.strength?.whole ?? -Infinity);

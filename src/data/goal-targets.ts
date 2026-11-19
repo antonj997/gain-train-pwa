@@ -8,7 +8,11 @@ import type { GoalInsight, GoalItem } from "./goals";
 import { isDrop } from "./drops";
 import { isCardioSet } from "../lib/cardio";
 import type { FillSource } from "../lib/set-target";
-import { formatWeightValue, getWeightUnit } from "../lib/units";
+import {
+  formatWeightValue,
+  getWeightUnit,
+  type WeightUnit,
+} from "../lib/units";
 import { t } from "../i18n";
 
 export type GoalSetTarget = {
@@ -90,23 +94,29 @@ export function goalSetTargets(
 /** "92.5 × max", "+5 × max", "BW × max", "110 × 1": short, for the Previous column. */
 export function goalTargetValue(
   target: Pick<GoalSetTarget, "weight" | "reps" | "body">,
+  unit: WeightUnit = getWeightUnit(),
 ) {
-  const kg = formatWeightValue(target.weight);
+  const kg = formatWeightValue(target.weight, unit);
   const load = !target.body ? kg : target.weight > 0 ? `+${kg}` : t("label.bw");
   const reps = target.reps === null ? t("goalTarget.max") : target.reps;
   return `${load} × ${reps}`;
 }
 
 /** "Check-in 92.5 × max" or "Test 110 × 1" ("Kontroll …", "Testa …"). */
-export const goalTargetText = (target: GoalSetTarget) =>
+export const goalTargetText = (
+  target: GoalSetTarget,
+  unit: WeightUnit = getWeightUnit(),
+) =>
   t(target.kind === "checkin" ? "goalTarget.checkin" : "goalTarget.test", {
-    value: goalTargetValue(target),
+    value: goalTargetValue(target, unit),
   });
 
 /** The target in the Set sheet's words: "92.5 kg × max", "BW + 5 kg × max". */
-export function goalTargetLabel(target: GoalSetTarget) {
-  const kg = formatWeightValue(target.weight);
-  const unit = getWeightUnit();
+export function goalTargetLabel(
+  target: GoalSetTarget,
+  unit: WeightUnit = getWeightUnit(),
+) {
+  const kg = formatWeightValue(target.weight, unit);
   const n = target.reps === null ? t("goalTarget.max") : target.reps;
   if (!target.body) return t("label.weight", { kg, unit, n });
   return target.weight > 0

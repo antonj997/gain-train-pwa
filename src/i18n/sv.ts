@@ -337,7 +337,12 @@ export const sv = {
   "unit.title": "Viktenhet",
   "unit.kg": "Kilo (kg)",
   "unit.lb": "Pund (lb)",
-  "unit.note": "Vikter sparas i kg, så inget går förlorat.",
+  "unit.exerciseNote":
+    "Gäller bara {name}. Standardenheten för alla övningar väljer du i Inställningar. Vikter sparas i kg, så inget går förlorat.",
+  "unit.default": "Standard",
+  "unit.defaultNote":
+    "Standard för övningar utan egen enhet. En övning kan få en egen från sin kg- eller lb-rubrik i passet. Vikter sparas i kg, så inget går förlorat.",
+  "unit.saveFailed": "Kunde inte spara enheten till nästa gång. Försök igen.",
   "set.optWeight": "Vikt",
   "set.optBw": "KV",
   "set.optBwPlus": "KV + {unit}",
@@ -1379,6 +1384,7 @@ export const sv = {
   "val.holdSec":
     "Ett håll måste vara hela sekunder från 0 till 600, eller tomt.",
   "val.repHold": "Övningarna som räknas som reps + håll kunde inte läsas.",
+  "val.weightUnits": "Övningarnas viktenheter kunde inte läsas.",
   "val.load": "Välj vikt, kroppsvikt, assisterad eller ingen belastning.",
   "val.section": "Välj arbetsset, uppvärmning eller nedvarvning för setet.",
   "val.exercises": "Använd högst 100 övningar per pass.",

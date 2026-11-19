@@ -37,7 +37,7 @@ export default function WorkoutDock({
     setTarget: Dispatch<SetStateAction<PadTarget | null>>;
     workout: Workout;
     previous: Map<string, LastSession>;
-    unit: WeightUnit;
+    unitFor: (exerciseId: string) => WeightUnit;
     changeSet: (setId: string, change: (set: WorkoutSet) => WorkoutSet) => void;
     targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
   };

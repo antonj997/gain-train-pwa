@@ -43,7 +43,7 @@ export function useWorkoutGoals({
   workout,
   historyKey,
   shape,
-  unit,
+  unitFor,
   bodyWeightKg,
   targets,
 }: {
@@ -52,7 +52,8 @@ export function useWorkoutGoals({
   historyKey: string;
   /** The workout's exercises and sets, as a key (ActiveWorkout's `shape`). */
   shape: string;
-  unit: WeightUnit;
+  /** Each exercise's weight unit (useWeightUnits). */
+  unitFor: (exerciseId: string) => WeightUnit;
   bodyWeightKg: number | null;
   targets: ReadonlyMap<string, ShownTarget>;
 }) {
@@ -96,7 +97,7 @@ export function useWorkoutGoals({
           insight: goalInsight(goal, completed, { bodyWeightKg }, date, {
             plans,
             equipmentOf,
-            unit,
+            unit: goal.exerciseId ? unitFor(goal.exerciseId) : undefined,
           }),
         }))
         .filter((c) => !c.insight.progress.met);
@@ -104,14 +105,18 @@ export function useWorkoutGoals({
       for (const { goal, insight } of cards)
         if (goal.exerciseId && !marks.has(goal.exerciseId))
           marks.set(goal.exerciseId, {
-            text: goalLiftText(goal, !!insight.strength?.body),
+            text: goalLiftText(
+              goal,
+              !!insight.strength?.body,
+              unitFor(goal.exerciseId),
+            ),
             label: t("workout.goalMark", { title: goalTitle(goal) }),
           });
       return { cards, marks };
     },
     // goalsKey, historyKey and shape stand in for the records they summarise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [goalsKey, historyKey, shape, date, unit, bodyWeightKg],
+    [goalsKey, historyKey, shape, date, unitFor, bodyWeightKg],
   );
 
   const shown = useMemo(() => {
@@ -124,20 +129,22 @@ export function useWorkoutGoals({
     );
     if (!found.size) return targets;
     const sets = new Map(
-      current.exercises.flatMap((ex) => ex.sets.map((s) => [s.id, s])),
+      current.exercises.flatMap((ex) =>
+        ex.sets.map((s) => [s.id, { set: s, unit: unitFor(ex.exerciseId) }]),
+      ),
     );
     const merged = new Map(targets);
     for (const [setId, target] of found) {
-      const set = sets.get(setId);
-      if (!set) continue;
+      const entry = sets.get(setId);
+      if (!entry) continue;
       merged.set(setId, {
-        text: goalTargetText(target),
-        source: goalFillSource(target, set),
-        label: goalTargetLabel(target),
+        text: goalTargetText(target, entry.unit),
+        source: goalFillSource(target, entry.set),
+        label: goalTargetLabel(target, entry.unit),
       });
     }
     return merged;
-  }, [cards, targets]);
+  }, [cards, targets, unitFor]);
 
   return { marks, targets: shown };
 }

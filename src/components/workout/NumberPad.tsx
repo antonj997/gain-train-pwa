@@ -82,7 +82,7 @@ export default function NumberPad({
   setTarget,
   workout,
   previous,
-  unit,
+  unitFor,
   changeSet,
   targets,
   container,
@@ -93,7 +93,8 @@ export default function NumberPad({
   workout: Workout;
   /** The last session of each exercise, by exercise id. */
   previous: Map<string, LastSession>;
-  unit: WeightUnit;
+  /** Each exercise's weight unit (useWeightUnits): the pad types in it. */
+  unitFor: (exerciseId: string) => WeightUnit;
   changeSet: (setId: string, change: (set: WorkoutSet) => WorkoutSet) => void;
   /** Each set's target by set id: the pad's Target key fills it in. */
   targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
@@ -118,6 +119,7 @@ export default function NumberPad({
   latest.current = { workout, target };
   const found = locate(workout, target.setId);
   const set = found?.set ?? null;
+  const unit = unitFor(found?.exercise.exerciseId ?? "");
   const fields = set ? padFields(set) : [];
   const field = target.field;
   const format = padFormat(field, unit, mark);
@@ -484,7 +486,7 @@ export default function NumberPad({
           <p className="number-pad-title">{exercise.name}</p>
           <p className="number-pad-meta">
             {prior
-              ? `${setName} · ${t("pad.previous", { value: labelSet(prior) })}`
+              ? `${setName} · ${t("pad.previous", { value: labelSet(prior, true, unit) })}`
               : setName}
           </p>
           {/* The Target key: fills the set's target in one tap. */}

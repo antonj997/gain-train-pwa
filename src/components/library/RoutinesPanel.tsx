@@ -43,6 +43,7 @@ import { local, storageKeys, writeStored } from "@/lib/storage";
 import RoutinePlan from "@/components/RoutinePlan";
 import { useCardioFields } from "@/hooks/useCardioFields";
 import { useRepHold } from "@/hooks/useRepHold";
+import { useWeightUnits } from "@/hooks/useWeightUnits";
 import type { PanelRequest } from "@/components/library/ExercisesPanel";
 import { useSharedRoutines } from "@/hooks/useSharedRoutines";
 import { notify } from "@/lib/message-store";
@@ -88,6 +89,7 @@ export default function RoutinesPanel({
   const { account } = useAuth();
   const cardioFields = useCardioFields();
   const repHold = useRepHold();
+  const weightUnits = useWeightUnits();
   const workoutStart = useStartWorkout();
   const draft = useRetainedDraft(
     draftKey(account, "routine"),
@@ -699,6 +701,9 @@ export default function RoutinesPanel({
                     onCardioFields={cardioFields.setFields}
                     repHold={repHold.holdFor(ex.exerciseId)}
                     onRepHold={repHold.setHold}
+                    weightUnit={weightUnits.unitFor(ex.exerciseId)}
+                    defaultWeightUnit={weightUnits.defaultUnit}
+                    onWeightUnit={weightUnits.setUnit}
                   />
                 ))}
               </MotionList>

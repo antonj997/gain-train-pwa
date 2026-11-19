@@ -384,8 +384,12 @@ function liftInsight(
 }
 
 /** "110 × 1", "+20 × 5" or "≈ 120": a lift goal's own lift, short, in the shown unit. */
-export function goalLiftText(goal: Goal, body: boolean) {
-  const kg = formatWeightValue(goal.targetKg, getWeightUnit(), 2);
+export function goalLiftText(
+  goal: Goal,
+  body: boolean,
+  unit: WeightUnit = getWeightUnit(),
+) {
+  const kg = formatWeightValue(goal.targetKg, unit, 2);
   if (goal.estimated) return `≈ ${kg}`;
   return `${body ? "+" : ""}${kg} × ${goal.reps ?? 1}`;
 }

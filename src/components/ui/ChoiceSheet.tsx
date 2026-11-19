@@ -1,7 +1,12 @@
 import { Check } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
 
-type Option<T extends string> = { value: T; label: string };
+type Option<T extends string> = {
+  value: T;
+  label: string;
+  /** A quiet word at the end of the option, such as "Default". */
+  detail?: string;
+};
 
 /**
  * A short sheet that picks one of a few options, such as kg or lb. Choosing
@@ -42,6 +47,9 @@ export default function ChoiceSheet<T extends string>({
               }}
             >
               <span>{option.label}</span>
+              {option.detail && (
+                <span className="sheet-menu-hint">{option.detail}</span>
+              )}
               {current && (
                 <Check
                   size={20}

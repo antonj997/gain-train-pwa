@@ -8,23 +8,29 @@ import {
   type RecordKind,
 } from "@/data/record-rank";
 import { rirLabel } from "@/lib/rir";
+import type { WeightUnit } from "@/lib/units";
 import { t } from "@/i18n";
 
 /** A set's result as the workout screen's checked row reads it: "82.5 kg × 5", the × muted. */
 export function DoneSetValue({
   set,
   distanceUnit,
+  weightUnit,
   withHold = true,
 }: {
   set: WorkoutSet;
   /** A cardio set's distance unit, the one its exercise is typed in. */
   distanceUnit?: DistanceUnit;
+  /** The exercise's weight unit (useWeightUnits); the default otherwise. */
+  weightUnit?: WeightUnit;
   /** False for a record, which is weight × reps without the set's hold. */
   withHold?: boolean;
 }) {
   // "60 kg × 6 · 2 s": the × and the hold's · are muted.
   const parts = (
-    isCardioSet(set) ? cardioLabel(set, distanceUnit) : labelSet(set, withHold)
+    isCardioSet(set)
+      ? cardioLabel(set, distanceUnit)
+      : labelSet(set, withHold, weightUnit)
   ).split(/( × | · )/);
   return (
     <span className="done-value">
@@ -56,6 +62,8 @@ type Props = {
   improved?: ReadonlySet<string>;
   /** Cardio: the unit the exercise's distance shows in. Every value a set holds is listed. */
   distanceUnit?: DistanceUnit;
+  /** The exercise's weight unit (useWeightUnits); the default otherwise. */
+  weightUnit?: WeightUnit;
 };
 
 /**
@@ -71,6 +79,7 @@ export default function DoneSetList({
   records,
   improved,
   distanceUnit,
+  weightUnit,
 }: Props) {
   const done = sets.filter((s) => s.done);
   return (
@@ -96,7 +105,11 @@ export default function DoneSetList({
               </span>
               <span className="sr-only">{badge.name}</span>
             </span>
-            <DoneSetValue set={set} distanceUnit={distanceUnit} />
+            <DoneSetValue
+              set={set}
+              distanceUnit={distanceUnit}
+              weightUnit={weightUnit}
+            />
             {rir && <span className="done-rir">{rir}</span>}
             {improved?.has(set.id) && <ImprovedMark />}
             {kinds?.length ? (

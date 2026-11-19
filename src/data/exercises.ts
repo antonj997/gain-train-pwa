@@ -113,6 +113,7 @@ export function mergeLibraries(base: Library, extra: Library): Library {
   for (const group of extra.groups ?? [])
     if (!groups.some((g) => g.id === group.id)) groups.push(group);
   const cardio = { ...extra.cardioFields, ...base.cardioFields };
+  const units = { ...extra.weightUnits, ...base.weightUnits };
   const repHold = [
     ...new Set([...(base.repHold ?? []), ...(extra.repHold ?? [])]),
   ];
@@ -120,6 +121,9 @@ export function mergeLibraries(base: Library, extra: Library): Library {
     ...extra,
     ...base,
     ...(Object.keys(cardio).length ? { cardioFields: cardio } : {}),
+    ...(base.weightUnits || Object.keys(units).length
+      ? { weightUnits: units }
+      : {}),
     ...(base.repHold || repHold.length
       ? { repHold: repHold.slice(0, MAX_CARDIO_SETTINGS) }
       : {}),

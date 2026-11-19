@@ -5,6 +5,7 @@ import DoneSetList from "@/components/DoneSetList";
 import type { ExerciseSession } from "@/data/exercise-records";
 import { improvedSetIds } from "@/data/set-improvement";
 import type { DistanceUnit } from "@/lib/cardio";
+import type { WeightUnit } from "@/lib/units";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { historyPath } from "@/lib/routes";
@@ -20,10 +21,13 @@ import { t } from "@/i18n";
 export default function ExerciseHistory({
   sessions,
   distanceUnit,
+  weightUnit,
 }: {
   sessions: readonly ExerciseSession[];
   /** A cardio exercise's distance unit. */
   distanceUnit?: DistanceUnit;
+  /** The exercise's weight unit (useWeightUnits). */
+  weightUnit?: WeightUnit;
 }) {
   return (
     <section className="col-12" aria-label={t("exercise.history")}>
@@ -59,6 +63,7 @@ export default function ExerciseHistory({
               sets={session.sets}
               improved={improvedSetIds(session.sets, sessions[index + 1]?.sets)}
               distanceUnit={distanceUnit}
+              weightUnit={weightUnit}
             />
           </Link>
         );

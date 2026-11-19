@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { topBarRootMargin } from "@/lib/root-margin";
 import { useT } from "@/i18n/useT";
+import type { PadField } from "@/lib/number-pad";
+import type { NumberPadApi } from "@/components/workout/number-pad-context";
 
 const reducedMotion = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -9,9 +11,18 @@ const reducedMotion = () =>
 /**
  * A floating "Next set" chip that shows only while the next set's row is out of
  * view: just the button, its arrow pointing to where the row is. Tapping it
- * centres the row and focuses its first field.
+ * centres the row and focuses its first field; on a touch screen it opens the
+ * number pad there instead, which centres the row above the pad
+ * (useKeepAboveSheet).
  */
-export default function NextSetChip({ setId }: { setId?: string }) {
+export default function NextSetChip({
+  setId,
+  pad,
+}: {
+  setId?: string;
+  /** The live workout's number pad; null while a finished workout is edited. */
+  pad?: NumberPadApi | null;
+}) {
   // Where the row is while out of view; null while it is in view.
   const [offscreen, setOffscreen] = useState<"above" | "below" | null>(null);
   const { t } = useT();
@@ -48,9 +59,16 @@ export default function NextSetChip({ setId }: { setId?: string }) {
   const go = () => {
     const row = document.querySelector<HTMLElement>(`[data-set-id="${setId}"]`);
     if (!row) return;
-    row
-      .querySelector<HTMLInputElement>("input:not(:disabled)")
-      ?.focus({ preventScroll: true });
+    const input = row.querySelector<HTMLInputElement>("input:not(:disabled)");
+    const field = input?.getAttribute("data-pad-field") as PadField | null;
+    // A pad field never takes focus on a touch screen: focusing it, even
+    // with inputmode none, makes iPhone shift the visible area away from the
+    // layout viewport while the row scrolls, and the dock floats up.
+    if (pad?.coarse && field) {
+      pad.open(setId, field);
+      return;
+    }
+    input?.focus({ preventScroll: true });
     row.scrollIntoView({
       block: "center",
       behavior: reducedMotion() ? "auto" : "smooth",

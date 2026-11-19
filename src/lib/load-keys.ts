@@ -6,7 +6,7 @@ import {
   hasExtraWeight,
 } from "./set-load";
 import { t, type MessageKey } from "../i18n";
-import { getWeightUnit } from "./units";
+import { getWeightUnit, type WeightUnit } from "./units";
 
 /** A set's load as the Set sheet offers it; "none" is no load at all ("Ingen"). */
 export type LoadKey = "weight" | "bw" | "bwplus" | "assisted" | "none";
@@ -89,8 +89,11 @@ const HEADINGS = {
 } as const satisfies Record<LoadKey, MessageKey>;
 
 /** The load column's heading: "kg" (or "lb"), "BW", "+kg" or "Assist" in English. */
-export function loadHeading(key: LoadKey): string {
-  return t(HEADINGS[key], { unit: getWeightUnit() });
+export function loadHeading(
+  key: LoadKey,
+  unit: WeightUnit = getWeightUnit(),
+): string {
+  return t(HEADINGS[key], { unit });
 }
 
 /**

@@ -6,7 +6,7 @@ import type { SetTarget } from "../data/targets";
 import { loadKeyOf } from "./load-keys";
 import { hasWeightField } from "./set-load";
 import { changeSetNumber } from "./set-input";
-import { formatWeightValue } from "./units";
+import { formatWeightValue, getWeightUnit, type WeightUnit } from "./units";
 import { t } from "../i18n";
 
 /** What a set can be filled from: a result, or a target in its last set's words. */
@@ -31,13 +31,14 @@ const countKind = (set: Pick<WorkoutSet, "measure">) =>
 export function shortSetText(
   values: Pick<WorkoutSet, "weight" | "reps">,
   source: FillSource,
+  unit: WeightUnit = getWeightUnit(),
 ) {
   const count = countKind(source);
   const reps = values.reps ?? 0;
   const kg =
     values.weight === null || values.weight === undefined
       ? null
-      : formatWeightValue(values.weight);
+      : formatWeightValue(values.weight, unit);
   const key = loadKeyOf(source as WorkoutSet);
   const load =
     kg === null
@@ -54,19 +55,25 @@ export function shortSetText(
     return load === null ? hold : `${load} · ${hold}`;
   }
   if (count === "cardio")
-    return labelSet({ ...(source as WorkoutSet), ...values }, false);
+    return labelSet({ ...(source as WorkoutSet), ...values }, false, unit);
   if (load !== null) return `${load} × ${reps}`;
   if (key === "none") return t("label.noneReps", { n: reps });
   return t("label.bwReps", { n: reps });
 }
 
 /** The target as the Previous column shows it (shortSetText). */
-export const targetValueText = (target: SetTarget, source: FillSource) =>
-  shortSetText(target, source);
+export const targetValueText = (
+  target: SetTarget,
+  source: FillSource,
+  unit: WeightUnit = getWeightUnit(),
+) => shortSetText(target, source, unit);
 
 /** "Target 87.5 × 5", "Mål 87,5 × 5". */
-export const targetRowText = (target: SetTarget, source: FillSource) =>
-  t("target.label", { value: targetValueText(target, source) });
+export const targetRowText = (
+  target: SetTarget,
+  source: FillSource,
+  unit: WeightUnit = getWeightUnit(),
+) => t("target.label", { value: targetValueText(target, source, unit) });
 
 /** The target as a set to fill from: last time's set with the target's numbers. */
 export const targetSource = (

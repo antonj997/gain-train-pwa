@@ -1,5 +1,5 @@
 import type { Level, Workout } from "../data/model";
-import { formatWeight } from "./units";
+import { formatWeight, getWeightUnit, type WeightUnit } from "./units";
 import { formatDecimal, t } from "../i18n";
 
 /**
@@ -10,13 +10,18 @@ import { formatDecimal, t } from "../i18n";
 export function planNote(
   plan: Workout["plan"],
   exerciseId: string,
+  /** The exercise's weight unit (useWeightUnits). */
+  unit: WeightUnit = getWeightUnit(),
 ): string | undefined {
   if (!plan) return undefined;
   const kg = plan.loads?.[exerciseId];
   if (kg !== undefined)
     return plan.deload
-      ? t("planNote.deloadLoad", { weight: formatWeight(kg) })
-      : t("planNote.week", { week: plan.week, weight: formatWeight(kg) });
+      ? t("planNote.deloadLoad", { weight: formatWeight(kg, unit) })
+      : t("planNote.week", {
+          week: plan.week,
+          weight: formatWeight(kg, unit),
+        });
   return plan.deload ? t("planNote.deload") : undefined;
 }
 

@@ -339,7 +339,12 @@ export const en = {
   "unit.title": "Weight unit",
   "unit.kg": "Kilograms (kg)",
   "unit.lb": "Pounds (lb)",
-  "unit.note": "Weights are stored in kg, so nothing is lost.",
+  "unit.exerciseNote":
+    "Applies to {name} only. Choose the default unit for every exercise in Settings. Weights are stored in kg, so nothing is lost.",
+  "unit.default": "Default",
+  "unit.defaultNote":
+    "For exercises without a unit of their own. An exercise gets its own from its kg or lb heading in a workout. Weights are stored in kg, so nothing is lost.",
+  "unit.saveFailed": "Could not save the unit for next time. Try again.",
   "set.optWeight": "Weight",
   "set.optBw": "BW",
   "set.optBwPlus": "BW + {unit}",
@@ -1364,6 +1369,7 @@ export const en = {
   "val.cardioFields": "The chosen cardio fields could not be read.",
   "val.holdSec": "A hold must be whole seconds from 0 to 600, or blank.",
   "val.repHold": "The exercises counted as reps + hold could not be read.",
+  "val.weightUnits": "The exercises' weight units could not be read.",
   "val.load": "Choose weight, bodyweight, assisted or no load.",
   "val.section": "Choose working, warm-up or cool-down for this set.",
   "val.exercises": "Use no more than 100 exercises in a session.",
