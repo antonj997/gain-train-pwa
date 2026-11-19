@@ -30,6 +30,7 @@ import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import { useT } from "@/i18n/useT";
 import { useExerciseMenu } from "@/components/gestures/ExerciseMenu";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
+import { useWeightUnits } from "@/hooks/useWeightUnits";
 import { libraryExercises } from "@/lib/library";
 
 const periods = [
@@ -49,9 +50,11 @@ export default function Progress() {
   // Press and hold an exercise row: its menu by the row.
   const exerciseMenu = useExerciseMenu();
   const { hidden } = useHiddenExercises();
+  // Each exercise's best set reads in its own weight unit.
+  const { unitFor } = useWeightUnits();
   const library = useMemo(
-    () => libraryExercises(state.records, hidden),
-    [state.records, hidden],
+    () => libraryExercises(state.records, hidden, unitFor),
+    [state.records, hidden, unitFor],
   );
   const holdRow = (row: { id: string; name: string }, anchor: HTMLElement) =>
     exerciseMenu.open(
@@ -93,7 +96,9 @@ export default function Progress() {
           id: item.id,
           name: item.name,
           sessions: item.points.filter(inPeriod).length,
-          best: t("progress.best", { set: labelSet(stats.best.set, false) }),
+          best: t("progress.best", {
+            set: labelSet(stats.best.set, false, unitFor(item.id)),
+          }),
           // Every comparable session ever, not just the period's.
           trend: stats.comparable.map(stats.valueOf),
         };
@@ -113,7 +118,7 @@ export default function Progress() {
     ]
       .filter((row) => row.sessions > 0)
       .sort((a, b) => b.sessions - a.sessions || a.name.localeCompare(b.name));
-  }, [items, cardioItems, period.start, period.end, t, fieldsFor]);
+  }, [items, cardioItems, period.start, period.end, t, fieldsFor, unitFor]);
   const prs = useMemo(() => rankedRecords(records), [records]);
   const bests = useMemo(
     () => recentBests(prs, period.start, period.end),
@@ -188,7 +193,11 @@ export default function Progress() {
               </div>
               <div className="record-pills">
                 {bests.map((best) => {
-                  const set = labelSet(best.set, false);
+                  const set = labelSet(
+                    best.set,
+                    false,
+                    unitFor(best.exerciseId),
+                  );
                   return (
                     <Link
                       key={best.exerciseId}

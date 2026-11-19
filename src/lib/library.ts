@@ -3,6 +3,7 @@ import { catalogue } from "../data/catalogue";
 import { exerciseStats, progressFor } from "../data/analytics";
 import { favouriteIds, ownExercises } from "../data/exercises";
 import { labelSet, type RecordDoc } from "../data/model";
+import type { WeightUnit } from "./units";
 import { completedWorkouts } from "../data/selectors";
 import {
   matchesFacets,
@@ -49,6 +50,8 @@ export type ExerciseFilter = "all" | "mine" | "recent" | "hidden";
 export function libraryExercises(
   records: Record<string, RecordDoc>,
   hidden: ReadonlySet<string>,
+  /** Each exercise's weight unit (useWeightUnits), for its best set. */
+  unitFor?: (exerciseId: string) => WeightUnit,
 ): LibraryExercise[] {
   const favourites = favouriteIds(records);
   const lastDates = new Map<string, string>();
@@ -59,7 +62,7 @@ export function libraryExercises(
   const bests = new Map(
     progressFor(Object.values(records)).map((item) => [
       item.id,
-      labelSet(exerciseStats(item).best.set, false),
+      labelSet(exerciseStats(item).best.set, false, unitFor?.(item.id)),
     ]),
   );
   const extra = (id: string) => ({

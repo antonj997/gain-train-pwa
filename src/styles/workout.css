@@ -907,6 +907,10 @@
   font-size: var(--gt-fs-2);
   font-weight: 400;
 }
+/* A choice's quiet word ("Default") sits before the current option's check. */
+.sheet-menu-item .sheet-menu-hint + svg.sheet-menu-check {
+  margin-left: 0;
+}
 @media (hover: hover) {
   .sheet-menu-item:hover:not(:disabled) {
     background-color: var(--gt-surface-2);

@@ -68,6 +68,8 @@ import { primeRestSound } from "@/lib/rest-sound";
 import { useKeepScreenOn, useWakeLock } from "@/hooks/useWakeLock";
 import { wakeLockSupported } from "@/lib/keep-screen-on";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
+import { useWeightUnits } from "@/hooks/useWeightUnits";
+import type { WeightUnit } from "@/lib/units";
 import WorkoutBanners from "@/components/workout/WorkoutBanners";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
 import LogChoiceSheet from "@/components/workout/LogChoiceSheet";
@@ -106,9 +108,12 @@ export default function ActiveWorkout() {
 }
 
 /** A record as the Finish sheet's pill reads it: "Bench Press 90 kg × 5". */
-const finishRecord = (record: RankedRecord): FinishRecord => ({
+const finishRecord = (
+  record: RankedRecord,
+  unitFor: (exerciseId: string) => WeightUnit,
+): FinishRecord => ({
   id: record.set.id,
-  text: `${record.name} ${labelSet(record.set, false)}`,
+  text: `${record.name} ${labelSet(record.set, false, unitFor(record.exerciseId))}`,
   label: rankedKindsLabel(record.kinds),
   quiet: quietRecord(record.kinds),
 });
@@ -223,7 +228,10 @@ function Editor({
     initial,
     w.date,
   );
-  const [{ weightUnit, askRir }] = useTrainingPreferences();
+  const [{ askRir }] = useTrainingPreferences();
+  // Each exercise's weight unit: its own, else the default from Settings.
+  const weightUnits = useWeightUnits();
+  const { unitFor } = weightUnits;
   // Each set's target (double progression, targets.ts), worked out again
   // only when the other finished workouts or the shape of this one change:
   // not on every typed value.
@@ -247,16 +255,26 @@ function Editor({
   const planKey = JSON.stringify(w.plan ?? null);
   const targets = useMemo(
     () => {
+      const workout = latestWorkout.current;
       const found = workoutTargets(
         latestRecords.current,
-        { id, payload: latestWorkout.current },
-        weightUnit,
+        { id, payload: workout },
+        unitFor,
+      );
+      const exerciseOf = new Map(
+        workout.exercises.flatMap((ex) =>
+          ex.sets.map((s) => [s.id, ex.exerciseId]),
+        ),
       );
       return new Map(
         [...found].map(([setId, { target, last }]) => [
           setId,
           {
-            text: targetRowText(target, last),
+            text: targetRowText(
+              target,
+              last,
+              unitFor(exerciseOf.get(setId) ?? ""),
+            ),
             source: targetSource(target, last),
           },
         ]),
@@ -264,7 +282,7 @@ function Editor({
     },
     // shape, historyKey and planKey stand in for the records they summarise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [historyKey, shape, planKey, weightUnit, w.date, id],
+    [historyKey, shape, planKey, unitFor, w.date, id],
   );
   // Lift goals: a mark by the exercise's name, and a check-in or the goal's
   // own lift as a set's target.
@@ -273,7 +291,7 @@ function Editor({
     workout: w,
     historyKey,
     shape,
-    unit: weightUnit,
+    unitFor,
     bodyWeightKg,
     targets,
   });
@@ -391,7 +409,9 @@ function Editor({
       if (index < 0) continue;
       const set = ex.sets[index];
       const title = setBadge(ex.sets, index).name;
-      const what = validSet(set) ? `${title} · ${labelSet(set)}` : title;
+      const what = validSet(set)
+        ? `${title} · ${labelSet(set, true, unitFor(ex.exerciseId))}`
+        : title;
       return {
         setId: set.id,
         title,
@@ -400,9 +420,7 @@ function Editor({
       };
     }
     return null;
-    // The unit changes the label.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [w.exercises, lastChecked, weightUnit]);
+  }, [w.exercises, lastChecked, unitFor]);
   // The Finish sheet's numbers, as it opens.
   const finishVolume = useMemo(
     () => (finish ? summarize([w], 1, w.date).volume : 0),
@@ -420,9 +438,9 @@ function Editor({
     [finish],
   );
   const finishRecords = useMemo(
-    () => liveRecords.map(finishRecord),
+    () => liveRecords.map((record) => finishRecord(record, unitFor)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recordsKey, weightUnit],
+    [recordsKey, unitFor],
   );
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
@@ -492,7 +510,7 @@ function Editor({
             planNote={
               deloadWeek && w.plan?.loads?.[ex.exerciseId] === undefined
                 ? undefined
-                : planNote(w.plan, ex.exerciseId)
+                : planNote(w.plan, ex.exerciseId, unitFor(ex.exerciseId))
             }
             deload={deloadWeek}
             targets={editing ? undefined : workoutGoals.targets}
@@ -513,6 +531,9 @@ function Editor({
             onCardioFields={cardioFields.setFields}
             repHold={repHold.holdFor(ex.exerciseId)}
             onRepHold={repHold.setHold}
+            weightUnit={unitFor(ex.exerciseId)}
+            defaultWeightUnit={weightUnits.defaultUnit}
+            onWeightUnit={weightUnits.setUnit}
           />
         ))}
       </NumberPadContext.Provider>
@@ -576,7 +597,7 @@ function Editor({
             setTarget: setPadTarget,
             workout: w,
             previous,
-            unit: weightUnit,
+            unitFor,
             changeSet,
             targets: workoutGoals.targets,
           }}

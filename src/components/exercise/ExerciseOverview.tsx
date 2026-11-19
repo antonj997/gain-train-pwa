@@ -23,7 +23,7 @@ import {
 } from "@/data/exercise-overview";
 import { localizedDate } from "@/lib/dates";
 import { local, storageKeys, writeStored } from "@/lib/storage";
-import { formatWeight, getWeightUnit } from "@/lib/units";
+import { formatWeight, getWeightUnit, type WeightUnit } from "@/lib/units";
 import { formatFixed, t, type MessageKey } from "@/i18n";
 import TrendChart from "./TrendChart";
 
@@ -37,6 +37,8 @@ type Props = {
   today: string;
   /** Opens the Records tab. */
   onAllRecords: () => void;
+  /** The exercise's weight unit (useWeightUnits); the default otherwise. */
+  weightUnit?: WeightUnit;
 };
 
 const shortDate = (date: string) =>
@@ -80,9 +82,10 @@ export default function ExerciseOverview({
   records,
   today,
   onAllRecords,
+  weightUnit,
 }: Props) {
   const { kind, metrics } = overview;
-  const unit = getWeightUnit();
+  const unit = weightUnit ?? getWeightUnit();
   const latest = overview.sessions.at(-1)!;
   const previous = overview.sessions.at(-2) ?? null;
   const [metric, setMetric] = useState<Metric>(
@@ -154,7 +157,7 @@ export default function ExerciseOverview({
                   </span>
                   <span className="sr-only">{badge.name}</span>
                 </span>
-                <DoneSetValue set={set} />
+                <DoneSetValue set={set} weightUnit={unit} />
                 {delta && (
                   <span className={"set-delta " + tone}>
                     <span aria-hidden="true">
@@ -170,7 +173,7 @@ export default function ExerciseOverview({
         {target && (
           <p className="next-target">
             <span>{t("overview.nextTarget")}</span>
-            <strong>{targetText(target.target, target.last)}</strong>
+            <strong>{targetText(target.target, target.last, unit)}</strong>
           </p>
         )}
       </section>
@@ -180,7 +183,7 @@ export default function ExerciseOverview({
         aria-labelledby="overview-verdict"
       >
         <h2 className="trend-verdict" id="overview-verdict">
-          {trendVerdict(overview)}
+          {trendVerdict(overview, unit)}
         </h2>
         {overview.sessions.length > 1 && metrics.length > 1 && (
           <div
@@ -207,6 +210,7 @@ export default function ExerciseOverview({
               points={points}
               kind={kind}
               metric={shown}
+              unit={unit}
               selected={selected}
               onSelect={(index) => setPicked(points[index].workoutId)}
               label={t("overview.chartLabel", {

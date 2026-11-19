@@ -287,13 +287,16 @@ export type WorkoutSetTarget = {
 export function workoutTargets(
   records: Record<string, RecordDoc> | readonly RecordDoc[],
   current: { id: string; payload: Workout },
-  unit: WeightUnit,
+  /** The unit, or each exercise's unit by exercise id (useWeightUnits). */
+  unit: WeightUnit | ((exerciseId: string) => WeightUnit),
 ): Map<string, WorkoutSetTarget> {
   const deload = deloadFor(records, current.payload);
   const targets = new Map<string, WorkoutSetTarget>();
   // Found and sorted once, not again for every set.
   const earlier = earlierWorkouts(records, current);
-  current.payload.exercises.forEach((exercise, exerciseIndex) =>
+  current.payload.exercises.forEach((exercise, exerciseIndex) => {
+    const exerciseUnit =
+      typeof unit === "function" ? unit(exercise.exerciseId) : unit;
     exercise.sets.forEach((set, setIndex) => {
       if (isDrop(set) || set.section !== "working" || isCardioSet(set)) return;
       const history = historyIn(
@@ -302,9 +305,9 @@ export function workoutTargets(
         exerciseIndex,
         setIndex,
       );
-      const target = suggestTarget(history, { deload }, unit);
+      const target = suggestTarget(history, { deload }, exerciseUnit);
       if (target) targets.set(set.id, { target, last: history[0] });
-    }),
-  );
+    });
+  });
   return targets;
 }

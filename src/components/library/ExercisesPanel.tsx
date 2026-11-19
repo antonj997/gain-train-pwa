@@ -11,6 +11,7 @@ import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
 import { useSharedExercises } from "@/hooks/useSharedExercises";
 import { useStableCallback } from "@/hooks/useStableCallback";
+import { useWeightUnits } from "@/hooks/useWeightUnits";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { errorMessage } from "@/lib/errors";
 import { categories, equipmentTypes } from "@/data/catalogue";
@@ -94,9 +95,10 @@ export default function ExercisesPanel({
     },
   });
 
+  const { unitFor } = useWeightUnits();
   const all = useMemo(
-    () => libraryExercises(state.records, hidden),
-    [state.records, hidden],
+    () => libraryExercises(state.records, hidden, unitFor),
+    [state.records, hidden, unitFor],
   );
   const groups = useMemo(
     () =>

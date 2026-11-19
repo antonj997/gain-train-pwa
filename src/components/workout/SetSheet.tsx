@@ -9,7 +9,7 @@ import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import { useT } from "@/i18n/useT";
 import { t, type MessageKey } from "@/i18n";
-import { formatWeight, getWeightUnit } from "@/lib/units";
+import { formatWeight, getWeightUnit, type WeightUnit } from "@/lib/units";
 import { RIR_VALUES, rirOf, rirValueText } from "@/lib/rir";
 
 type BodyProps = {
@@ -29,6 +29,8 @@ type BodyProps = {
   onRir?: (rir: number | null) => void;
   onAddDrop: () => void;
   onDelete: () => void;
+  /** The exercise's weight unit (useWeightUnits); the default otherwise. */
+  weightUnit?: WeightUnit;
 };
 
 const LOAD_OPTIONS: { value: LoadKey; label: MessageKey }[] = [
@@ -64,6 +66,7 @@ function SetSheetBody({
   onRir,
   onAddDrop,
   onDelete,
+  weightUnit,
 }: BodyProps) {
   const drop = isDrop(set);
   const key = loadKeyOf(set);
@@ -73,7 +76,7 @@ function SetSheetBody({
   const canAddDrop = !cardio && !set.done && set.section === "working";
   const { t } = useT();
   const { bodyWeightKg } = useProfile();
-  const unit = getWeightUnit();
+  const unit = weightUnit ?? getWeightUnit();
   // RIR is optional and rare: one quiet "Add RIR" until it is used.
   const rir = rirOf(set);
   const [rirShown, setRirShown] = useState(rir !== null);

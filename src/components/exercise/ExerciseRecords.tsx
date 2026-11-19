@@ -9,6 +9,7 @@ import {
   formatWeightValue,
   getWeightUnit,
   weightTotal,
+  type WeightUnit,
 } from "@/lib/units";
 import { formatFixed, t } from "@/i18n";
 
@@ -19,8 +20,15 @@ const dateOf = (date: string) =>
  * The exercise page's Records. Each row opens the workout it was set in, with
  * the record set highlighted; session volume opens the workout.
  */
-export default function ExerciseRecords({ records }: { records: Records }) {
-  const unit = getWeightUnit();
+export default function ExerciseRecords({
+  records,
+  weightUnit,
+}: {
+  records: Records;
+  /** The exercise's weight unit (useWeightUnits); the default otherwise. */
+  weightUnit?: WeightUnit;
+}) {
+  const unit = weightUnit ?? getWeightUnit();
   const volume = (kg: number) =>
     `${formatFixed(weightTotal(kg, unit), 0)} ${unit}`;
   const rows: {
@@ -39,8 +47,8 @@ export default function ExerciseRecords({ records }: { records: Records }) {
       value: formatWeight(bestE1rm.value, unit, 1),
       sub: (
         <>
-          <DoneSetValue set={bestE1rm.set} withHold={false} /> ·{" "}
-          {dateOf(bestE1rm.date)}
+          <DoneSetValue set={bestE1rm.set} weightUnit={unit} withHold={false} />{" "}
+          · {dateOf(bestE1rm.date)}
         </>
       ),
       to: historyPath(bestE1rm.workoutId, bestE1rm.set.id),
@@ -49,7 +57,9 @@ export default function ExerciseRecords({ records }: { records: Records }) {
     rows.push({
       key: "heaviest",
       title: t("records.heaviest"),
-      value: <DoneSetValue set={heaviest.set} withHold={false} />,
+      value: (
+        <DoneSetValue set={heaviest.set} weightUnit={unit} withHold={false} />
+      ),
       sub: dateOf(heaviest.date),
       to: historyPath(heaviest.workoutId, heaviest.set.id),
     });
@@ -57,7 +67,9 @@ export default function ExerciseRecords({ records }: { records: Records }) {
     rows.push({
       key: "reps",
       title: t("records.mostReps"),
-      value: <DoneSetValue set={mostReps.set} withHold={false} />,
+      value: (
+        <DoneSetValue set={mostReps.set} weightUnit={unit} withHold={false} />
+      ),
       sub: dateOf(mostReps.date),
       to: historyPath(mostReps.workoutId, mostReps.set.id),
     });
@@ -68,8 +80,12 @@ export default function ExerciseRecords({ records }: { records: Records }) {
       value: volume(bestSetVolume.value),
       sub: (
         <>
-          <DoneSetValue set={bestSetVolume.set} withHold={false} /> ·{" "}
-          {dateOf(bestSetVolume.date)}
+          <DoneSetValue
+            set={bestSetVolume.set}
+            weightUnit={unit}
+            withHold={false}
+          />{" "}
+          · {dateOf(bestSetVolume.date)}
         </>
       ),
       to: historyPath(bestSetVolume.workoutId, bestSetVolume.set.id),

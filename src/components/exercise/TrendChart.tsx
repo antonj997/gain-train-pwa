@@ -15,12 +15,15 @@ import {
   type OverviewKind,
 } from "@/data/exercise-overview";
 import { localizedDate } from "@/lib/dates";
+import type { WeightUnit } from "@/lib/units";
 import { t } from "@/i18n";
 
 type Props = {
   points: readonly ChartPoint[];
   kind: OverviewKind;
   metric: Metric;
+  /** The unit the points' loads are in. */
+  unit?: WeightUnit;
   /** The selected point's index in `points`. */
   selected: number;
   onSelect: (index: number) => void;
@@ -52,6 +55,7 @@ export default function TrendChart({
   points,
   kind,
   metric,
+  unit,
   selected,
   onSelect,
   label,
@@ -154,7 +158,7 @@ export default function TrendChart({
               y={y(tick) + 4}
               textAnchor="end"
             >
-              {axisLabel(tick, kind, metric, { thousands })}
+              {axisLabel(tick, kind, metric, { thousands, unit })}
             </text>
           </g>
         ))}

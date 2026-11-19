@@ -154,6 +154,18 @@ export type ExerciseCardProps = {
   repHold?: boolean;
   /** Saves the count's hold choice for this exercise. Without it, "Reps + hold" is not offered. */
   onRepHold?: (exerciseId: string, on: boolean) => void;
+  /**
+   * The exercise's weight unit (useWeightUnits): its own, else the default.
+   * Its weights show and are typed in it; they are stored in kg.
+   */
+  weightUnit?: WeightUnit;
+  /** The default unit from Settings, marked in the unit sheet. */
+  defaultWeightUnit?: WeightUnit;
+  /**
+   * Saves this exercise's unit from its kg or lb heading. Without it the
+   * heading's sheet changes the default unit.
+   */
+  onWeightUnit?: (exerciseId: string, unit: WeightUnit) => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
@@ -228,15 +240,20 @@ function ExerciseCard({
   onCardioFields,
   repHold = false,
   onRepHold,
+  weightUnit: ownUnit,
+  defaultWeightUnit,
+  onWeightUnit,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
   const headingId = useId();
   const { t } = useT();
   const [sheet, setSheet] = useState<OpenSheet>(null);
-  // The unit is the device's; the kg heading switches it for every screen.
+  // The exercise's own unit, picked from its kg or lb heading; the device's
+  // default (Settings) when it has none.
   const [preferences, setPreferences] = useTrainingPreferences();
-  const { weightUnit } = preferences;
+  const defaultUnit = defaultWeightUnit ?? preferences.weightUnit;
+  const weightUnit = ownUnit ?? preferences.weightUnit;
   const setSheetRef = useRef<HTMLDivElement>(null);
   const openSetId = sheet?.kind === "set" ? sheet.setId : null;
   useKeepAboveSheet(openSetId, setSheetRef);
@@ -382,10 +399,10 @@ function ExerciseCard({
     if (!result) return undefined;
     // A hold reads short, as its target does: "+10 · 60 s".
     if (result.measure === "seconds")
-      return shortSetText(result, result)
+      return shortSetText(result, result, weightUnit)
         .replace(/ · /g, "\u00a0·\u00a0")
         .replace(/(\d) s$/, "$1\u00a0s");
-    return keepTogether(labelSet(result), hold);
+    return keepTogether(labelSet(result, true, weightUnit), hold);
   };
   // A tap on Previous fills the set in one go with what it shows: the next
   // set's target, else last time's result.
@@ -404,7 +421,11 @@ function ExerciseCard({
     const found = sets[index] && targets?.get(sets[index].id);
     return found
       ? (found.label ??
-          labelSet({ ...sets[index], ...found.source } as WorkoutSet, false))
+          labelSet(
+            { ...sets[index], ...found.source } as WorkoutSet,
+            false,
+            weightUnit,
+          ))
       : undefined;
   };
 
@@ -516,10 +537,10 @@ function ExerciseCard({
             type="button"
             className="set-heading-btn"
             aria-haspopup="dialog"
-            aria-label={`${loadHeading(defaultKey)}, ${t("unit.title")}`}
+            aria-label={`${loadHeading(defaultKey, weightUnit)}, ${t("unit.title")}`}
             onClick={() => setSheet({ kind: "unit" })}
           >
-            {loadHeading(defaultKey)}
+            {loadHeading(defaultKey, weightUnit)}
             <ChevronDown size={14} aria-hidden="true" />
           </button>
           <button
@@ -632,6 +653,7 @@ function ExerciseCard({
             isDrop(shown) ? 0 : dropGroup(sets, shownIndex).end - shownIndex - 1
           }
           cardio={isCardioSet(shown)}
+          weightUnit={weightUnit}
           onSection={(section) =>
             changeSets(changeSection(sets, shown.id, section))
           }
@@ -660,12 +682,22 @@ function ExerciseCard({
           onClose={close}
           title={t("unit.title")}
           value={weightUnit}
-          options={[
-            { value: "kg", label: t("unit.kg") },
-            { value: "lb", label: t("unit.lb") },
-          ]}
-          hint={t("unit.note")}
-          onChoose={(unit) => setPreferences({ weightUnit: unit })}
+          options={(["kg", "lb"] as const).map((unit) => ({
+            value: unit,
+            label: t(unit === "kg" ? "unit.kg" : "unit.lb"),
+            detail: unit === defaultUnit ? t("unit.default") : undefined,
+          }))}
+          // Only this exercise's unit changes; Settings has the default.
+          hint={
+            onWeightUnit
+              ? t("unit.exerciseNote", { name: ex.name })
+              : t("unit.defaultNote")
+          }
+          onChoose={(unit) =>
+            onWeightUnit
+              ? onWeightUnit(ex.exerciseId, unit)
+              : setPreferences({ weightUnit: unit })
+          }
         />
       )}
       {!cardio && (
@@ -758,6 +790,7 @@ function ExerciseCard({
         exercise={ex}
         onReorder={changeSets}
         onClose={close}
+        weightUnit={weightUnit}
       />
     </section>
   );

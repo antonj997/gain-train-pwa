@@ -5,6 +5,7 @@ import { ChevronRight, Pencil, Repeat, Trash2 } from "lucide-react";
 import DoneSetList from "@/components/DoneSetList";
 import { useData } from "@/contexts/useData";
 import { useCardioFields } from "@/hooks/useCardioFields";
+import { useWeightUnits } from "@/hooks/useWeightUnits";
 import {
   recordBadges,
   recordSetKinds,
@@ -49,6 +50,7 @@ export default function WorkoutDetails({
 }: Props) {
   const { state } = useData();
   const { fieldsFor } = useCardioFields();
+  const { unitFor } = useWeightUnits();
   const body = useRef<HTMLDivElement>(null);
   const prs = useMemo(
     () => workoutRecords(state.records, id),
@@ -133,6 +135,7 @@ export default function WorkoutDetails({
                   previous.get(ex.exerciseId)?.sets,
                 )}
                 distanceUnit={fieldsFor(ex.exerciseId).distanceUnit}
+                weightUnit={unitFor(ex.exerciseId)}
               />
             </section>
           );

@@ -305,7 +305,7 @@ export default function Settings() {
           { value: "kg", label: t("unit.kg") },
           { value: "lb", label: t("unit.lb") },
         ]}
-        hint={t("unit.note")}
+        hint={t("unit.defaultNote")}
         onChoose={(weightUnit) => updatePreferences({ weightUnit })}
       />
       <ThemeSheet open={sheet === "theme"} onClose={closeSheet} />

@@ -9,6 +9,7 @@ import { dropGroup, isDrop, setBadge } from "@/data/drops";
 import Sheet from "@/components/ui/Sheet";
 import SortableSetList from "@/components/SortableSetList";
 import { t } from "@/i18n";
+import type { WeightUnit } from "@/lib/units";
 
 /**
  * The sets in the order of `parentIds`, each followed by its drops. A set that
@@ -30,8 +31,8 @@ export function reorderGroups(
   return [...ordered, ...sets.filter((set) => !placed.has(set.id))];
 }
 
-const summary = (set: WorkoutSet) =>
-  validSet(set) ? labelSet(set) : t("set.notFilled");
+const summary = (set: WorkoutSet, unit?: WeightUnit) =>
+  validSet(set) ? labelSet(set, true, unit) : t("set.notFilled");
 
 /** Moves sets, and the drops that follow them, with handles or arrow keys. */
 export default function ReorderSetsSheet({
@@ -39,11 +40,14 @@ export default function ReorderSetsSheet({
   exercise,
   onReorder,
   onClose,
+  weightUnit,
 }: {
   open: boolean;
   exercise: Exercise;
   onReorder: (sets: WorkoutSet[]) => void;
   onClose: () => void;
+  /** The exercise's weight unit; the default otherwise. */
+  weightUnit?: WeightUnit;
 }) {
   const moving = useRef(false);
   const { sets } = exercise;
@@ -85,13 +89,15 @@ export default function ReorderSetsSheet({
                     {badge.text}
                   </span>
                 </span>
-                <span className="reorder-summary">{summary(set)}</span>
+                <span className="reorder-summary">
+                  {summary(set, weightUnit)}
+                </span>
               </div>
               {drops.map((drop) => (
                 <p key={drop.id} className="reorder-drop">
                   <span aria-hidden="true">↓ </span>
                   <span className="sr-only">{t("set.dropSr") + " "}</span>
-                  {summary(drop)}
+                  {summary(drop, weightUnit)}
                 </p>
               ))}
             </div>

@@ -7,7 +7,11 @@ import { HOLD_MAX, holdLabel } from "../lib/rep-hold";
 import { normalizeDrops } from "./drops";
 import { knownMuscles } from "./muscles";
 import { t } from "../i18n";
-import { formatWeightValue, getWeightUnit } from "../lib/units";
+import {
+  formatWeightValue,
+  getWeightUnit,
+  type WeightUnit,
+} from "../lib/units";
 /** Every load a set can have. Older apps know the first three only. */
 export const SET_LOADS = ["weight", "bodyweight", "assisted", "none"] as const;
 /** The highest reps in reserve a set stores; it reads "3+". */
@@ -79,7 +83,7 @@ export const exerciseSchema = z.object({
 // records read-only instead of saving over them.
 // 2: cardio sets (measure "cardio" with durationSec, distanceM, level, calories).
 // Not bumped for inclinePct and heartRate on cardio sets, holdSec on reps sets,
-// or the library's cardioFields and repHold: they are new optional fields that
+// or the library's cardioFields, repHold and weightUnits: they are new optional fields that
 // older apps keep as they are (keepUnknownFields) and nothing existing changed
 // meaning.
 // Not bumped for a routine's folder, a routine set's target flag or an
@@ -297,6 +301,15 @@ export const librarySchema = z.object({
   repHold: z
     .array(z.string().min(1).max(200))
     .max(MAX_CARDIO_SETTINGS)
+    .optional(),
+  /**
+   * Per exercise id: its own weight unit ("kg" or "lb"), where it differs
+   * from the device's default (exercise-units.ts). Kept as text, so a unit a
+   * newer app adds does not make the library invalid.
+   */
+  weightUnits: z
+    .record(z.string().min(1).max(200), z.string().min(1).max(10))
+    .refine((value) => Object.keys(value).length <= MAX_CARDIO_SETTINGS)
     .optional(),
 });
 
@@ -546,6 +559,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
       holdSec: t("val.holdSec"),
       cardioFields: t("val.cardioFields"),
       repHold: t("val.repHold"),
+      weightUnits: t("val.weightUnits"),
       load: t("val.load"),
       rir: t("val.rir"),
       note: t("val.note"),
@@ -624,14 +638,18 @@ export function validate(kind: Kind, payload: unknown): Payload {
  * adds it, "60 kg × 6 · 2 s", unless `withHold` is false: records and
  * estimated maxes are weight × reps, and their labels leave the hold out.
  */
-export const labelSet = (s: WorkoutSet, withHold = true): string => {
+export const labelSet = (
+  s: WorkoutSet,
+  withHold = true,
+  /** The exercise's unit (useWeightUnits); the default unit otherwise. */
+  unit: WeightUnit = getWeightUnit(),
+): string => {
   if (s.measure === "cardio") return cardioLabel(s);
   const hold = withHold ? holdLabel(s) : "";
-  return hold ? `${labelLift(s)} · ${hold}` : labelLift(s);
+  return hold ? `${labelLift(s, unit)} · ${hold}` : labelLift(s, unit);
 };
-const labelLift = (s: WorkoutSet) => {
-  const kg = s.weight === null ? "null" : formatWeightValue(s.weight);
-  const unit = getWeightUnit();
+const labelLift = (s: WorkoutSet, unit: WeightUnit) => {
+  const kg = s.weight === null ? "null" : formatWeightValue(s.weight, unit);
   if (hasExtraWeight(s))
     return (
       t("label.bwPlus", { kg, unit }) +
