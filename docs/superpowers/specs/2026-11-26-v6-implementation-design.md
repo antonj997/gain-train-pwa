@@ -992,7 +992,7 @@ No mockup frame draws Sport. The copy below is proposed here, following the app'
 
 **"Logga sport" on Train** (`src/pages/Home.tsx`, `TodayCard.tsx`, and a new `src/components/sport/LogSportSheet.tsx`):
 
-- A quiet row-button "Logga sport" (Lucide `Trophy`-free glyph `Activity`) sits under the dashed "Tomt pass".
+- A quiet row-button "Logga sport" (the Lucide `Activity` glyph) sits under the dashed "Tomt pass".
 - The same action appears in Today ⋯ as "Logga sport".
 - On a planned day, the day sheet (`src/components/home/DaySheet.tsx`, `usePlanDaySheet.tsx`) and Today ⋯ offer "Gjorde en sport i stället", for today or a past planned day. It opens the same sheet with that date.
 
@@ -1066,7 +1066,7 @@ The plan (`docs/superpowers/plans/2026-11-26-v6-implementation.md`) splits the w
 
 | Phase | Covers |
 |---|---|
-| P0 Grunden | Tokens, motion, preferences and defaults, schema fields, Swedish display names, language follows the phone, the verify harness |
+| P0 Grunden | Tokens, motion, preferences and defaults, schema fields, Swedish display names, language follows the phone, avatars and tab labels (H4), the verify harness |
 | P1 Passet | B1–B13 and the picker |
 | P2 Kalender, Träna och schemats kalender | A1–A3, C1, F1's period calendar and deload presets, F2's top card and adherence |
 | P3 Muskler, volym och Framsteg | D1–D4, D3b, F1's Planerad vecka, F2's warning, F3, F4, H3 |
