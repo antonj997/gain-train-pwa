@@ -49,7 +49,10 @@ export function writeStored(
 export const storageKeys = {
   account: "gt-account",
   theme: "gain-train-theme",
-  /** "en" or "sv"; absent until this device has chosen. */
+  /**
+   * "en" or "sv" once this device has chosen; "phone" while it follows the
+   * phone's language (v6); absent before either.
+   */
   language: "gt-language",
   /**
    * The rest time for every exercise without its own; 0 (v6) means each

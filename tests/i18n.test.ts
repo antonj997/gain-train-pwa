@@ -5,6 +5,7 @@ import {
   interpolate,
   pluralForm,
   languageOnLaunch,
+  phoneLanguage,
   translate,
 } from "../src/i18n/index.ts";
 import { en } from "../src/i18n/en.ts";
@@ -43,10 +44,22 @@ test("Swedish has exactly the English keys, with the same kind of value", () => 
 
 test("the language prompt shows once, only for a device with a log", () => {
   assert.equal(languageOnLaunch(null, true), "prompt");
-  // A new user keeps English, remembered, so a first workout never prompts.
-  assert.equal(languageOnLaunch(null, false), "default");
+  // A new user follows the phone, stored only once they choose (v6).
+  assert.equal(languageOnLaunch(null, false), "phone");
+  // Once it follows the phone, a first workout never brings up the question.
+  assert.equal(languageOnLaunch("phone", true), "phone");
+  assert.equal(languageOnLaunch("phone", false), "phone");
   assert.equal(languageOnLaunch("en", true), "none");
   assert.equal(languageOnLaunch("sv", false), "none");
+});
+
+test("the phone's first language decides: Swedish for sv, else English", () => {
+  assert.equal(phoneLanguage(["sv-SE", "en"]), "sv");
+  assert.equal(phoneLanguage(["sv"]), "sv");
+  assert.equal(phoneLanguage(["SV-fi"]), "sv");
+  assert.equal(phoneLanguage(["nb-NO", "sv"]), "en");
+  assert.equal(phoneLanguage(["en-US"]), "en");
+  assert.equal(phoneLanguage([]), "en");
 });
 
 test("user data means a live record or a saved bodyweight", () => {
