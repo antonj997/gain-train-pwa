@@ -8,6 +8,7 @@ import ListRow from "@/components/ui/ListRow";
 import Segmented from "@/components/ui/Segmented";
 import Sheet from "@/components/ui/Sheet";
 import type { GoalItem } from "@/data/goals";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 import { type Goal, today as todayDate } from "@/data/model";
 import { shiftDate } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
@@ -163,7 +164,11 @@ export default function GoalEditor({
             <div className="list">
               <ListRow
                 title={t("goals.exercise")}
-                value={exercise?.name ?? t("goals.choose")}
+                value={
+                  exercise
+                    ? exerciseDisplayName(exercise.id, exercise.name)
+                    : t("goals.choose")
+                }
                 chevron
                 onClick={() => setPicking(true)}
               />

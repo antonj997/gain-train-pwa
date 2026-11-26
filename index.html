@@ -22,7 +22,13 @@
         } catch (e) {}
         document.documentElement.classList.add(theme);
         try {
-          if (localStorage.getItem("gt-language") === "sv")
+          // Until a language is chosen it follows the phone's first language.
+          var language = localStorage.getItem("gt-language");
+          if (
+            language === "sv" ||
+            (language !== "en" &&
+              /^sv(-|$)/i.test((navigator.languages || [navigator.language])[0] || ""))
+          )
             document.documentElement.lang = "sv";
         } catch (e) {}
         var meta = document.querySelector('meta[name="theme-color"]');

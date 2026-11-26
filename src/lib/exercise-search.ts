@@ -1,6 +1,9 @@
 import { categoryLabel, equipmentLabel } from "./catalogue-labels";
+import { swedishName } from "./exercise-name";
 /** What search needs to know about an exercise. Custom exercises have no equipment or aliases. */
 export type Searchable = {
+  /** A built-in exercise's id; its Swedish display name is searched too. */
+  id?: string;
   name: string;
   category: string;
   /** Other categories it also trains, besides `category`. */
@@ -61,7 +64,10 @@ const OTHER = 5;
 export function matchRank(item: Searchable, query: string): number | null {
   const typed = normalize(query);
   if (!typed) return OTHER;
-  const name = normalize(item.name);
+  // The stored (English) name and, for a built-in, its Swedish display name
+  // (v6 §D2): both rank as the name in either language.
+  const sv = item.id ? swedishName(item.id) : undefined;
+  const names = [normalize(item.name), ...(sv ? [normalize(sv)] : [])];
   const aliases = (item.aliases ?? []).map(normalize);
   // English values and their labels in the chosen language ("Legs", "Ben").
   const other = normalize(
@@ -72,17 +78,20 @@ export function matchRank(item: Searchable, query: string): number | null {
     ].join(" "),
   );
   const typedWords = words(query);
-  const fields = [name, ...aliases, other];
+  const fields = [...names, ...aliases, other];
   // Each word may match a different field, but every word needs a match.
   if (!typedWords.every((word) => fields.some((f) => f.includes(word))))
     return null;
-  if (name === typed) return EXACT_NAME;
-  if (name.startsWith(typed)) return PREFIX_NAME;
+  if (names.some((name) => name === typed)) return EXACT_NAME;
+  if (names.some((name) => name.startsWith(typed))) return PREFIX_NAME;
   if (aliases.some((alias) => alias === typed || alias.startsWith(typed)))
     return ALIAS;
-  if (typedWords.every((word) => name.includes(word))) return NAME;
+  if (names.some((name) => typedWords.every((word) => name.includes(word))))
+    return NAME;
   if (
-    typedWords.every((word) => [name, ...aliases].some((f) => f.includes(word)))
+    typedWords.every((word) =>
+      [...names, ...aliases].some((f) => f.includes(word)),
+    )
   )
     return NAME_OR_ALIAS;
   return OTHER;

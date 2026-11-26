@@ -33,6 +33,7 @@ import { localizedDate } from "@/lib/dates";
 import { parseSetNumber } from "@/lib/set-input";
 import { t } from "@/i18n";
 import { kgText, levelLabel } from "@/lib/plan-note";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 type Mode = "pct" | "kg";
 
@@ -168,7 +169,12 @@ export default function ProgressionSheet({
   const typedReps = positive(repsText);
 
   return (
-    <Sheet open={open} size="full" onClose={onClose} title={item.name}>
+    <Sheet
+      open={open}
+      size="full"
+      onClose={onClose}
+      title={exerciseDisplayName(item.exerciseId, item.name)}
+    >
       <div className="field-row">
         <label>
           {t("prog.reps")}

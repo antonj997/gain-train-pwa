@@ -78,6 +78,7 @@ import "@/styles/workout.css";
 import { useT } from "@/i18n/useT";
 import { workoutTitle } from "@/lib/workout-name";
 import { planNote } from "@/lib/plan-note";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 export default function ActiveWorkout() {
   const { id } = useParams();
@@ -113,7 +114,7 @@ const finishRecord = (
   unitFor: (exerciseId: string) => WeightUnit,
 ): FinishRecord => ({
   id: record.set.id,
-  text: `${record.name} ${labelSet(record.set, false, unitFor(record.exerciseId))}`,
+  text: `${exerciseDisplayName(record.exerciseId, record.name)} ${labelSet(record.set, false, unitFor(record.exerciseId))}`,
   label: rankedKindsLabel(record.kinds),
   quiet: quietRecord(record.kinds),
 });
@@ -309,7 +310,9 @@ function Editor({
     addedOnArrival.current = true;
     add(items);
     notify.success(
-      t("menu.addedToWorkout", { name: items.map((i) => i.name).join(", ") }),
+      t("menu.addedToWorkout", {
+        name: items.map((i) => exerciseDisplayName(i.id, i.name)).join(", "),
+      }),
     );
     // Only the first render's state counts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -416,7 +419,9 @@ function Editor({
         setId: set.id,
         title,
         label:
-          lastChecked && lastChecked !== ex.id ? `${ex.name} · ${what}` : what,
+          lastChecked && lastChecked !== ex.id
+            ? `${exerciseDisplayName(ex.exerciseId, ex.name)} · ${what}`
+            : what,
       };
     }
     return null;
@@ -633,7 +638,14 @@ function Editor({
       />
       <ConfirmDialog
         open={!!removeExercise}
-        title={t("workout.removeTitle", { name: removeExercise?.name ?? "" })}
+        title={t("workout.removeTitle", {
+          name: removeExercise
+            ? exerciseDisplayName(
+                removeExercise.exerciseId,
+                removeExercise.name,
+              )
+            : "",
+        })}
         description={t("workout.removeText")}
         cancelLabel={t("workout.keepExercise")}
         confirmLabel={t("workout.removeExercise")}

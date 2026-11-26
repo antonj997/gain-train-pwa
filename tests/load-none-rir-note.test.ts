@@ -30,7 +30,14 @@ import {
 import { loadKeyOf, loadMarker, withLoadKey } from "../src/lib/load-keys";
 import { getSetIssues } from "../src/lib/workout-editor";
 import { parseSharedSet } from "../src/lib/shared-routines";
-import { rirLabel, rirOf, rirValueText, withRir } from "../src/lib/rir";
+import {
+  RIR_VALUES,
+  rirIsLegacyPlus,
+  rirLabel,
+  rirOf,
+  rirValueText,
+  withRir,
+} from "../src/lib/rir";
 import {
   WORKOUT_NOTE_MAX,
   cleanWorkoutNote,
@@ -374,4 +381,58 @@ test("finishing saves the note trimmed, or drops a blank one", async () => {
   );
   assert.equal("note" in finishWorkout({ ...base, note: "   " }), false);
   assert.equal("note" in finishWorkout(base), false);
+});
+
+test("RIR 0–5+: 4 and 5 store as rir 3 plus rirHigh", () => {
+  setCurrentLanguage("en");
+  const five = withRir(set(), 5);
+  assert.equal(five.rir, 3);
+  assert.equal(five.rirHigh, 5);
+  assert.equal(rirOf(five), 5);
+  const four = withRir(set(), 4);
+  assert.deepEqual([four.rir, four.rirHigh], [3, 4]);
+  assert.equal(rirOf(four), 4);
+  const two = withRir(five, 2);
+  assert.equal(two.rir, 2);
+  assert.equal("rirHigh" in two, false);
+  const three = withRir(five, 3);
+  assert.equal(three.rir, 3);
+  assert.equal("rirHigh" in three, false);
+  const cleared = withRir(five, null);
+  assert.equal("rir" in cleared, false);
+  assert.equal("rirHigh" in cleared, false);
+  // Above 5 is 5+.
+  assert.deepEqual([withRir(set(), 9).rir, withRir(set(), 9).rirHigh], [3, 5]);
+  assert.deepEqual([...RIR_VALUES], [0, 1, 2, 3, 4, 5]);
+});
+
+test("RIR: a legacy rir 3 reads 3+, and rirHigh counts only behind a 3", () => {
+  setCurrentLanguage("en");
+  assert.equal(rirOf(set({ rir: 3 })), 3);
+  assert.equal(rirLabel(set({ rir: 3 })), "RIR 3+");
+  assert.equal(rirLabel(set({ rir: 3, rirHigh: 5 })), "RIR 5+");
+  assert.equal(rirLabel(set({ rir: 3, rirHigh: 4 })), "RIR 4");
+  assert.equal(rirLabel(withRir(set(), 3)), "RIR 3+");
+  assert.equal(rirOf(set({ rir: 2, rirHigh: 5 })), 2);
+  assert.equal(rirLabel(set({ rir: 2, rirHigh: 5 })), "RIR 2");
+  assert.equal(rirValueText(5), "5+");
+  assert.equal(rirValueText(3), "3");
+  assert.equal(rirValueText(3, true), "3+");
+  assert.equal(rirValueText(4), "4");
+  assert.equal(rirIsLegacyPlus(set({ rir: 3 })), true);
+  assert.equal(rirIsLegacyPlus(set({ rir: 3, rirHigh: 4 })), false);
+  assert.equal(rirIsLegacyPlus(set({ rir: 2 })), false);
+});
+
+test("RIR 5 written by this app still validates in an app without rirHigh", () => {
+  const written = withRir(set(), 5);
+  // An older app's set schema: the same object without rirHigh, which strips
+  // the unknown field, and its validSet with rir 0–3.
+  const older = setSchema.omit({ rirHigh: true });
+  const parsed = older.safeParse(written);
+  assert.ok(parsed.success);
+  assert.equal(parsed.data.rir, 3);
+  assert.ok(validSet(written));
+  const saved = validate("workout", workout([written]));
+  assert.equal(saved.exercises[0].sets[0].rirHigh, 5);
 });

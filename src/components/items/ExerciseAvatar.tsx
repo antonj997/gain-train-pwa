@@ -9,23 +9,38 @@ type Props = {
   exerciseId: string;
   /** The main category when the caller knows it; otherwise it is looked up. */
   category?: string;
-  /** 40 in rows and cards, 60 in the exercise page header. */
-  size?: 40 | 60;
+  /**
+   * "md" (44px) in rows and cards, "lg" (60px) in the exercise page header.
+   * The numbers 40 and 60 are read as "md" and "lg" for older callers.
+   */
+  size?: "md" | "lg" | 40 | 60;
   className?: string;
 };
 
+/** Each size's figure and glyph (v6 H4: 34px figure, 24px glyphs in 44px). */
+const SIZES = {
+  md: { body: 34, glyph: 24 },
+  lg: { body: 50, glyph: 34 },
+} as const;
+
 /**
  * An exercise's avatar: a circle tinted by its main category with its icon
- * (exerciseIcon): the muscle figure about 30px tall in the 40px circle and
- * 46px in the 60px one, or your own exercise's equipment glyph (22px, 34px).
- * Decorative: the name is always beside it.
+ * (exerciseIcon): the muscle figure, 34px in the 44px circle and 50px in the
+ * 60px one, or your own exercise's equipment glyph (24px, 34px) at a 1.8
+ * line. Decorative: the name is always beside it.
  */
-function ExerciseAvatar({ exerciseId, category, size = 40, className }: Props) {
+function ExerciseAvatar({
+  exerciseId,
+  category,
+  size = "md",
+  className,
+}: Props) {
   const data = useContext(DataContext);
   const main =
     category ??
     (data ? exerciseCategory(data.state.records, exerciseId) : undefined);
-  const large = size === 60;
+  const large = size === "lg" || size === 60;
+  const { body, glyph } = SIZES[large ? "lg" : "md"];
   return (
     <span
       className={
@@ -39,8 +54,8 @@ function ExerciseAvatar({ exerciseId, category, size = 40, className }: Props) {
       <ExerciseIcon
         exerciseId={exerciseId}
         category={main}
-        glyph={large ? 34 : 22}
-        body={large ? 50 : 32}
+        glyph={glyph}
+        body={body}
       />
     </span>
   );

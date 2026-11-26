@@ -28,6 +28,7 @@ import {
 import { routines as routineRecords } from "@/data/selectors";
 import { countLabel } from "@/lib/labels";
 import { t } from "@/i18n";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /**
  * Progression: lifts to raise over the phase. Lifts are added one at a time
@@ -147,7 +148,9 @@ export default function PlanProgression({
                       >
                         <ExerciseAvatar exerciseId={item.exerciseId} />
                         <span className="prog-lift-text">
-                          <span className="prog-lift-name">{item.name}</span>
+                          <span className="prog-lift-name">
+                            {exerciseDisplayName(item.exerciseId, item.name)}
+                          </span>
                           <span className="row-sub">
                             {missing
                               ? t("prog.enterStart")
@@ -173,7 +176,10 @@ export default function PlanProgression({
                             type="button"
                             className="prog-cell"
                             aria-label={t("prog.cellLabel", {
-                              name: item.name,
+                              name: exerciseDisplayName(
+                                item.exerciseId,
+                                item.name,
+                              ),
                               n: c.week,
                               kg: kgText(c.kg),
                             })}
@@ -240,7 +246,9 @@ export default function PlanProgression({
             <ListRow
               key={r.id}
               title={r.payload.name}
-              sub={r.payload.exercises.map((e) => e.name).join(" · ")}
+              sub={r.payload.exercises
+                .map((e) => exerciseDisplayName(e.exerciseId, e.name))
+                .join(" · ")}
               onClick={() => {
                 const fresh = add(
                   r.payload.exercises.filter(progressable).map((e) => ({

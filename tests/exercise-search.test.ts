@@ -133,3 +133,23 @@ test("sameNamedExercise matches names ignoring case, accents and punctuation", (
   assert.equal(sameNamedExercise("  ", list), undefined);
   assert.equal(sameNamedExercise("Bench", list), undefined);
 });
+
+test("v6: the Swedish display name is searchable, and the English one still is", async () => {
+  const { setCurrentLanguage } = await import("../src/i18n");
+  for (const language of ["sv", "en"] as const) {
+    setCurrentLanguage(language);
+    const ids = (query: string) =>
+      searchExercises(catalogue, query).map((e) => e.id);
+    assert.ok(ids("rodd").includes("builtin:barbell-row"), language);
+    assert.ok(ids("framåtböjd").includes("builtin:barbell-row"), language);
+    assert.equal(ids("Bench")[0], "builtin:bench-press", language);
+    assert.ok(ids("tricepsnedtryck").includes("builtin:tricep-pushdown"));
+  }
+  setCurrentLanguage("sv");
+  // The Swedish name ranks as a name: an exact one comes first.
+  assert.equal(
+    searchExercises(catalogue, "Latsdrag")[0].id,
+    "builtin:lat-pulldown",
+  );
+  setCurrentLanguage("en");
+});

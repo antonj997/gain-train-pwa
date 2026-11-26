@@ -40,6 +40,7 @@ import { SPRING, playSpring } from "@/lib/motion";
 import { primeRestSound } from "@/lib/rest-sound";
 import Segmented from "@/components/ui/Segmented";
 import { playStep } from "@/components/workout/set-motion";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 const DIGITS = [
   ["1", "2", "3"],
@@ -483,7 +484,9 @@ export default function NumberPad({
       </button>
       <div className="number-pad-head">
         <div className="number-pad-titles">
-          <p className="number-pad-title">{exercise.name}</p>
+          <p className="number-pad-title">
+            {exerciseDisplayName(exercise.exerciseId, exercise.name)}
+          </p>
           <p className="number-pad-meta">
             {prior
               ? `${setName} · ${t("pad.previous", { value: labelSet(prior, true, unit) })}`

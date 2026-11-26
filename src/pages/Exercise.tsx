@@ -48,6 +48,7 @@ import { exerciseEditPath } from "@/lib/routes";
 import { addExercises } from "@/lib/workout-editor";
 import { autoWorkoutName } from "@/lib/workout-name";
 import { useT } from "@/i18n/useT";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 type Tab = "overview" | "history" | "records";
 const tabs = [
@@ -123,11 +124,13 @@ export default function ExercisePage() {
   );
   // A deleted custom exercise still has its sessions, under the name it had.
   const name = exercise?.name ?? strength?.name ?? cardio?.name ?? null;
+  // The name as shown; a new workout keeps the stored one.
+  const shownName = name === null ? null : exerciseDisplayName(id, name);
 
   const header = (
     <PageHeader
       eyebrow={t("exercise.eyebrow")}
-      title={name ?? t("exercise.notFoundTitle")}
+      title={shownName ?? t("exercise.notFoundTitle")}
       notices={false}
       leading={<BackButton onClick={back} />}
       action={
@@ -140,7 +143,7 @@ export default function ExercisePage() {
                 exercise.favourite
                   ? "exercises.unfavouriteNamed"
                   : "exercises.favouriteNamed",
-                { name: exercise.name },
+                { name: shownName },
               )}
               aria-pressed={exercise.favourite}
               onClick={() => void toggleFavourite(exercise)}
@@ -154,7 +157,7 @@ export default function ExercisePage() {
             <button
               type="button"
               className="icon-btn"
-              aria-label={t("exercises.moreFor", { name: exercise.name })}
+              aria-label={t("exercises.moreFor", { name: shownName })}
               onClick={() => setMenu(exercise)}
             >
               <MoreHorizontal size={22} aria-hidden="true" />
@@ -191,11 +194,15 @@ export default function ExercisePage() {
     try {
       await setHidden(e.id, hide);
       setMenu(null);
-      notify(t(hide ? "exercises.hidden" : "exercises.back", { name: e.name }));
+      notify(
+        t(hide ? "exercises.hidden" : "exercises.back", {
+          name: exerciseDisplayName(e.id, e.name),
+        }),
+      );
     } catch {
       notify.error(
         t(hide ? "exercises.hideFailed" : "exercises.unhideFailed", {
-          name: e.name,
+          name: exerciseDisplayName(e.id, e.name),
         }),
       );
     }
@@ -230,7 +237,7 @@ export default function ExercisePage() {
           <ExerciseAvatar
             exerciseId={exercise.id}
             category={exercise.category}
-            size={60}
+            size="lg"
           />
           <p className="exercise-meta">
             <span className="exercise-meta-main">
@@ -276,13 +283,13 @@ export default function ExercisePage() {
       {!logged && (
         <div className="empty-card" role="status">
           <h2>{t("exercise.neverTitle")}</h2>
-          <p>{t("exercise.neverText", { name })}</p>
+          <p>{t("exercise.neverText", { name: shownName })}</p>
         </div>
       )}
       {logged && tab === "overview" && overview && (
         <ExerciseOverview
           exerciseId={id}
-          name={name}
+          name={shownName ?? name}
           overview={overview}
           sessions={sessions}
           records={records}

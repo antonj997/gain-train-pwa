@@ -89,29 +89,37 @@ test("rest countdown survives reload using its end time and expires when time pa
   assert.equal(extendRestEnd(1000, 21000, 30), 51000);
 });
 test("rest and haptics stay off for absent or malformed preferences", () => {
+  // v6 adds restOn (a saved time reads as on), workout tips and the fatigue mode.
+  const v6 = { workoutTips: true, fatigueMode: "suggest" };
   assert.deepEqual(normalizeTrainingPreferences(null, null), {
+    restOn: false,
     restSeconds: 0,
     haptics: false,
     weeklyGoal: null,
     weightUnit: "kg",
     restSound: true,
     askRir: false,
+    ...v6,
   });
   assert.deepEqual(normalizeTrainingPreferences("-10", "yes"), {
+    restOn: false,
     restSeconds: 0,
     haptics: false,
     weeklyGoal: null,
     weightUnit: "kg",
     restSound: true,
     askRir: false,
+    ...v6,
   });
   assert.deepEqual(normalizeTrainingPreferences("90", "true"), {
+    restOn: true,
     restSeconds: 90,
     haptics: true,
     weeklyGoal: null,
     weightUnit: "kg",
     restSound: true,
     askRir: false,
+    ...v6,
   });
 });
 

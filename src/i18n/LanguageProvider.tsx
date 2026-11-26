@@ -7,6 +7,8 @@ import {
 } from "react";
 import {
   LOCALES,
+  deviceLanguage,
+  forgetLanguage,
   getLanguage,
   readStoredLanguage,
   setCurrentLanguage,
@@ -28,6 +30,16 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setState(next);
   }, []);
 
+  // Until the device chooses, the language follows the phone; nothing is
+  // stored, so a later change of the phone's language is followed too.
+  const followPhone = useCallback(() => {
+    const next = deviceLanguage();
+    setCurrentLanguage(next);
+    forgetLanguage();
+    setChosen(false);
+    setState(next);
+  }, []);
+
   useEffect(() => {
     document.documentElement.lang = language;
     document.title = translate(language, "app.documentTitle");
@@ -40,8 +52,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       t: (key, params) => translate(language, key, params),
       setLanguage,
       chosen,
+      followsPhone: !chosen,
+      followPhone,
     }),
-    [language, setLanguage, chosen],
+    [language, setLanguage, chosen, followPhone],
   );
   return (
     <LanguageContext.Provider value={value}>

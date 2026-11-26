@@ -52,6 +52,7 @@ import {
 } from "@/lib/routine-targets";
 import { repRangeLabel } from "@/lib/routine-preview";
 import { withRir } from "@/lib/rir";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import {
@@ -248,6 +249,8 @@ function ExerciseCard({
   const { sets } = ex;
   const headingId = useId();
   const { t } = useT();
+  // The name as shown (Swedish for a built-in in Swedish); the record keeps its own.
+  const exerciseName = exerciseDisplayName(ex.exerciseId, ex.name);
   const [sheet, setSheet] = useState<OpenSheet>(null);
   // The exercise's own unit, picked from its kg or lb heading; the device's
   // default (Settings) when it has none.
@@ -440,7 +443,7 @@ function ExerciseCard({
         <div className="ex-titles">
           <div className="ex-title-row">
             <h2 id={headingId} className="ex-title">
-              {ex.name}
+              {exerciseName}
             </h2>
             {goalMark && mode === "log" && (
               <span
@@ -500,7 +503,7 @@ function ExerciseCard({
         <button
           type="button"
           className="icon-btn"
-          aria-label={t("exercise.options", { name: ex.name })}
+          aria-label={t("exercise.options", { name: exerciseName })}
           aria-haspopup="dialog"
           onClick={() => setSheet({ kind: "menu" })}
         >
@@ -582,7 +585,7 @@ function ExerciseCard({
             }
             hold={hold}
             mode={mode}
-            name={ex.name}
+            name={exerciseName}
             badge={setBadge(sets, i)}
             previous={previousOf(i)}
             improved={improved?.has(s.id) ?? false}
@@ -690,7 +693,7 @@ function ExerciseCard({
           // Only this exercise's unit changes; Settings has the default.
           hint={
             onWeightUnit
-              ? t("unit.exerciseNote", { name: ex.name })
+              ? t("unit.exerciseNote", { name: exerciseName })
               : t("unit.defaultNote")
           }
           onChoose={(unit) =>
@@ -720,7 +723,7 @@ function ExerciseCard({
       <ExerciseMenuSheet
         open={sheet?.kind === "menu"}
         onClose={close}
-        name={ex.name}
+        name={exerciseName}
         fieldsHint={
           cardio ? cardioFields.fields.map(heading).join(" · ") : undefined
         }
@@ -760,7 +763,7 @@ function ExerciseCard({
         <CardioFieldsSheet
           open={sheet?.kind === "fields"}
           onClose={close}
-          name={ex.name}
+          name={exerciseName}
           value={cardioFields}
           onChange={(fields) => onCardioFields(ex.exerciseId, fields)}
         />
@@ -776,7 +779,7 @@ function ExerciseCard({
       {mode === "plan" && (
         <RepRangeSheet
           open={sheet?.kind === "range"}
-          name={ex.name}
+          name={exerciseName}
           value={ex.repRange}
           onClose={close}
           onChange={(range) => {

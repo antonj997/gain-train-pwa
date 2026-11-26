@@ -35,6 +35,7 @@ import {
 import { t, type MessageKey } from "@/i18n";
 import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
 import MotionList from "@/components/motion/MotionList";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 // Exercises others shared live in Library → Upptäck.
 type Filter = ExerciseFilter;
@@ -130,12 +131,14 @@ export default function ExercisesPanel({
         await setHidden(e.id, hide);
         setMenu(null);
         notify(
-          t(hide ? "exercises.hidden" : "exercises.back", { name: e.name }),
+          t(hide ? "exercises.hidden" : "exercises.back", {
+            name: exerciseDisplayName(e.id, e.name),
+          }),
         );
       } catch {
         notify.error(
           t(hide ? "exercises.hideFailed" : "exercises.unhideFailed", {
-            name: e.name,
+            name: exerciseDisplayName(e.id, e.name),
           }),
         );
       }

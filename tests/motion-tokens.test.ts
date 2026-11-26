@@ -51,3 +51,24 @@ test("the sheet, banner and list rows match the v5 motion table", () => {
   assert.equal(EASE.collapse, "cubic-bezier(0.3, 0, 0.2, 1)");
   assert.equal(MOTION.reduced, 120);
 });
+
+test("v6 motion tokens equal MOTION", () => {
+  const ms = (name: string) =>
+    Number(new RegExp(`--gt-dur-${name}:\\s*(\\d+)ms;`).exec(root)?.[1]);
+  assert.equal(ms("dock-in"), MOTION.dockIn);
+  assert.equal(MOTION.dockIn, 240);
+  assert.equal(ms("dock-out"), MOTION.dockOut);
+  assert.equal(MOTION.dockOut, 200);
+  assert.equal(ms("settle"), MOTION.settle);
+  assert.equal(MOTION.settle, 320);
+  assert.equal(ms("reward"), MOTION.reward);
+  assert.equal(MOTION.reward, 420);
+  assert.equal(ms("sheen"), MOTION.sheen);
+  assert.equal(MOTION.sheen, 600);
+  assert.match(root, /--gt-ease-swipe:\s*cubic-bezier/);
+  assert.match(root, /--gt-ease-swipe-open:\s*cubic-bezier/);
+  assert.equal(
+    squash(/--gt-ease-swipe-open:\s*([^;]+);/.exec(root)?.[1] ?? ""),
+    squash(EASE.swipeOpen),
+  );
+});

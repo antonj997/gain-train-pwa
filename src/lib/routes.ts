@@ -29,3 +29,18 @@ export const PLANS_PATH = "/library/plan";
 /** One plan's status page: how the phase is going, with Edit one tap away. */
 export const planStatusPath = (planId: string) =>
   PLANS_PATH + "/" + encodeURIComponent(planId);
+/**
+ * v6: Library → Rutiner with Upptäck chosen (its "Mina | Upptäck" segment).
+ * Library's v6 tabs arrive in P4; until then the link opens Rutiner.
+ */
+export const discoverPath = () => "/library?view=discover";
+/** v6: Library → Scheman, the plans tab (P4). */
+export const plansTabPath = () => "/library?tab=plans";
+/**
+ * v6: Library → Scheman with a new plan's editor open, from a standard
+ * programme when `programId` names one (P4 handles both parameters).
+ */
+export const newPlanPath = (programId?: string) =>
+  plansTabPath() +
+  "&new=plan" +
+  (programId ? "&program=" + encodeURIComponent(programId) : "");

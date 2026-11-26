@@ -67,6 +67,7 @@ function LevelRow({
       <Segmented<LevelChoice | "mixed">
         label={name}
         value={value}
+        neutral="none"
         options={LEVEL_CHOICES.map((choice) => ({
           value: choice,
           label: t(`muscles.level.${choice}`),

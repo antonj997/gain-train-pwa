@@ -46,6 +46,7 @@ import {
   categoryText,
   equipmentLabel,
 } from "@/lib/catalogue-labels";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /** A chosen exercise; a custom one carries the defaults it was saved with. */
 export type PickedExercise = { id: string; name: string } & ExerciseDefaults;
@@ -295,7 +296,9 @@ export default function ExercisePickerBody({
           </label>
           {twin && (
             <p id="picker-name-twin" className="field-warning" role="status">
-              {t("editor.twin", { name: twin.name })}
+              {t("editor.twin", {
+                name: exerciseDisplayName(twin.id, twin.name),
+              })}
             </p>
           )}
           <label>
@@ -441,7 +444,7 @@ export default function ExercisePickerBody({
                     pressed={single ? undefined : selected.includes(e.id)}
                     title={
                       <>
-                        {e.name}
+                        {exerciseDisplayName(e.id, e.name)}
                         {e.favourite && <FavouriteStar />}
                         {own.has(e.id) && (
                           <span className="stat-chip">

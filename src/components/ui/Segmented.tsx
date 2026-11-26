@@ -15,6 +15,11 @@ type Props<T extends string> = {
   value: T;
   options: Option<T>[];
   onChange: (value: T) => void;
+  /**
+   * An option that stays neutral when chosen ("Ingen" in a level picker): it
+   * is selected, but not drawn in the selected look.
+   */
+  neutral?: T;
 };
 
 /** A radio group drawn as joined buttons. Styles live in styles/components.css. */
@@ -23,6 +28,7 @@ export default function Segmented<T extends string>({
   value,
   options,
   onChange,
+  neutral,
 }: Props<T>) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   // One tab stop: the checked option, or the first enabled one when that is disabled.
@@ -58,7 +64,10 @@ export default function Segmented<T extends string>({
         <span
           className={
             "segmented-thumb" +
-            (options[selected].disabled ? " is-disabled" : "")
+            (options[selected].disabled ? " is-disabled" : "") +
+            (neutral !== undefined && options[selected].value === neutral
+              ? " is-neutral"
+              : "")
           }
           aria-hidden="true"
         />
@@ -70,6 +79,9 @@ export default function Segmented<T extends string>({
             buttons.current[index] = node;
           }}
           type="button"
+          className={
+            "seg-option" + (option.value === neutral ? " is-neutral" : "")
+          }
           role="radio"
           aria-checked={option.value === value}
           aria-label={option.ariaLabel}

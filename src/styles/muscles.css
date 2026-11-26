@@ -15,13 +15,20 @@
   --mi-help: color-mix(in srgb, var(--tone-fg) 72%, var(--tone-bg));
   --mi-main: var(--tone-fg);
 }
+/* Dark (v6 H4): the circle is the tint darkened by half, and the figure
+   takes more of the tone (body 65 %, untrained 50 %, helping 78 %, main the
+   tone plus 15 % white), so the body reads at 4:1 or more on the circle and
+   untrained zones at 3:1 in every tone (tests/exercise-icon.test.ts). */
 .dark .ex-avatar,
 .dark .routine-badge,
 .dark .routine-glyph,
 .dark .icon-choice-tile {
-  --mi-body: color-mix(in srgb, var(--tone-fg) 35%, var(--tone-bg));
-  --mi-off: color-mix(in srgb, var(--tone-fg) 15%, var(--tone-bg));
-  --mi-help: color-mix(in srgb, var(--tone-fg) 60%, var(--tone-bg));
+  --mi-circle: color-mix(in srgb, var(--tone-bg) 50%, black);
+  --mi-body: color-mix(in srgb, var(--tone-fg) 65%, var(--tone-bg));
+  --mi-off: color-mix(in srgb, var(--tone-fg) 50%, var(--tone-bg));
+  --mi-help: color-mix(in srgb, var(--tone-fg) 78%, var(--tone-bg));
+  --mi-main: color-mix(in srgb, var(--tone-fg) 85%, white);
+  background-color: var(--mi-circle);
 }
 /* A plan template day draws the figure straight on the day's surface. */
 .plan-cell-icon {

@@ -37,6 +37,7 @@ import { exercisePath } from "@/lib/routes";
 import { formatWeight } from "@/lib/units";
 import { currentLocale, formatDecimal, type MessageKey } from "@/i18n";
 import { useT } from "@/i18n/useT";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /*
  * The cards of a plan's status page (pages/PlanStatus.tsx), top to bottom:
@@ -277,7 +278,9 @@ export function ProgressionCard({
             <li key={lift.exerciseId}>
               <Link className="status-lift" to={exercisePath(lift.exerciseId)}>
                 <span className="status-lift-text">
-                  <strong className="row-title">{lift.name}</strong>
+                  <strong className="row-title">
+                    {exerciseDisplayName(lift.exerciseId, lift.name)}
+                  </strong>
                   <span className="row-sub">
                     {startNowText(start, lift.now, t("planStatus.noSession"))}
                     {" · "}
@@ -298,7 +301,9 @@ export function ProgressionCard({
           <li key={lift.exerciseId}>
             <Link className="status-lift" to={exercisePath(lift.exerciseId)}>
               <span className="status-lift-text">
-                <strong className="row-title">{lift.name}</strong>
+                <strong className="row-title">
+                  {exerciseDisplayName(lift.exerciseId, lift.name)}
+                </strong>
                 <span className="row-sub">
                   {startNowText(lift.start, lift.now, "")}
                 </span>

@@ -57,11 +57,12 @@ select,
   text-decoration: underline;
   text-underline-offset: 4px;
 }
-/* A tab is an icon, so focus rings it instead of underlining a label. */
+/* A tab is an icon over its name; focus rings the whole tab instead of
+   underlining the name. */
 .bottom-nav .nav-tab:focus-visible {
   outline: 2px solid var(--gt-accent);
   outline-offset: -4px;
-  border-radius: 999px;
+  border-radius: var(--gt-radius-md);
 }
 .icon-button:focus-visible {
   outline: none;

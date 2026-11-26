@@ -2,15 +2,16 @@
    Shapes). Colours come from tokens.css. Components live in
    src/components/items/. */
 
-/* Exercise avatar: a circle tinted by the main category. */
+/* Exercise avatar: a circle tinted by the main category, 44px (v6 H4). In
+   dark the circle is the tint darkened by half (muscles.css, --mi-circle). */
 .ex-avatar {
   --tone-bg: var(--gt-cat-other-bg);
   --tone-fg: var(--gt-cat-other-fg);
   display: inline-grid;
   flex: none;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background-color: var(--tone-bg);
   color: var(--tone-fg);

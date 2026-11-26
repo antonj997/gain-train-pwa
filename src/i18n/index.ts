@@ -51,7 +51,7 @@ export function translate(
 export const isLanguage = (value: unknown): value is Language =>
   value === "en" || value === "sv";
 
-/** The language this device chose, or null before anyone has chosen. */
+/** The language this device chose, or null before anyone has chosen (or while it follows the phone). */
 export function readStoredLanguage(): Language | null {
   try {
     const saved = local.getItem(storageKeys.language);
@@ -65,10 +65,52 @@ export function readStoredLanguage(): Language | null {
 export const storeLanguage = (language: Language) =>
   writeStored(storageKeys.language, language);
 
+/**
+ * The language a phone's preferred languages ask for: Swedish when the first
+ * one is Swedish ("sv", "sv-SE", "sv-FI"), English otherwise. Only the first
+ * entry decides, so "nb-NO, sv" is English.
+ */
+export function phoneLanguage(languages: readonly string[]): Language {
+  return /^sv(?:-|$)/i.test(languages[0] ?? "") ? "sv" : "en";
+}
+
+/** The browser's preferred languages, or none outside a browser. */
+export function navigatorLanguages(): readonly string[] {
+  if (typeof navigator === "undefined") return [];
+  if (navigator.languages?.length) return navigator.languages;
+  return navigator.language ? [navigator.language] : [];
+}
+
+/** The language until this device chooses one: the phone's (v6). */
+export const deviceLanguage = (): Language =>
+  phoneLanguage(navigatorLanguages());
+
+/**
+ * What the language key holds while the language follows the phone: no
+ * language is stored, only that this device follows the phone, so a device
+ * that starts logging is never asked the first-launch question later.
+ */
+export const FOLLOWS_PHONE = "phone";
+
+/** The device's language setting: a chosen language, the phone, or nothing yet. */
+export function readLanguageSetting(): Language | typeof FOLLOWS_PHONE | null {
+  try {
+    const saved = local.getItem(storageKeys.language);
+    return isLanguage(saved) || saved === FOLLOWS_PHONE ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Forgets the device's choice, so the language follows the phone again. */
+export const forgetLanguage = () =>
+  writeStored(storageKeys.language, FOLLOWS_PHONE);
+
 // The language every string is built in. Code outside React (helpers, the
 // crash screen, toasts from data actions) reads it here; LanguageProvider
-// changes it and re-renders the app.
-let current: Language = readStoredLanguage() ?? "en";
+// changes it and re-renders the app. Until the device chooses, it follows
+// the phone.
+let current: Language = readStoredLanguage() ?? deviceLanguage();
 
 export const getLanguage = () => current;
 export function setCurrentLanguage(language: Language) {
@@ -94,16 +136,17 @@ export const formatFixed = (value: number, decimals: number) =>
 
 /**
  * What to do about the language when the log has loaded: nothing once this
- * device has chosen; ask once on a device that already holds someone's log;
- * otherwise (a new user) keep English and remember it, so logging a first
- * workout never brings up the question later.
+ * device has chosen; ask once on a device that already holds someone's log
+ * from before the app had a choice; otherwise (a new user) follow the phone,
+ * storing nothing until they choose in Settings (v6 §D7).
  */
 export function languageOnLaunch(
-  stored: Language | null,
+  stored: Language | typeof FOLLOWS_PHONE | null,
   hasUserData: boolean,
-): "none" | "prompt" | "default" {
+): "none" | "prompt" | "phone" {
+  if (stored === FOLLOWS_PHONE) return "phone";
   if (stored !== null) return "none";
-  return hasUserData ? "prompt" : "default";
+  return hasUserData ? "prompt" : "phone";
 }
 
 /** True when the log holds anything the user made: workouts, routines, exercises, or a profile. */

@@ -3,6 +3,7 @@ import { categoryLabel } from "@/lib/catalogue-labels";
 import { countLabel } from "@/lib/labels";
 import { categoryTone } from "@/lib/exercise-icon";
 import { t } from "@/i18n";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /**
  * A routine's working sets per main category as one bar, a segment each in
@@ -90,7 +91,9 @@ export function PreviewExercises({
             size={36}
           />
           <span className="row-main">
-            <span className="row-title">{item.name}</span>
+            <span className="row-title">
+              {exerciseDisplayName(item.exerciseId, item.name)}
+            </span>
             <span className="row-sub">{item.line}</span>
           </span>
           {item.target ? (

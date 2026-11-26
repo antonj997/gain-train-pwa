@@ -287,3 +287,42 @@ test("theme-color and manifest colours follow the ground tokens", () => {
     for (const text of [html, theme, vite])
       assert.equal(text.toLowerCase().includes(old), false, old);
 });
+
+test("v6 tokens exist in both themes", () => {
+  const heat = ["#fde3df", "#f4978c", "#ea6658", "#d63a2f", "#9a1f17"];
+  for (const [name, tokens] of themes) {
+    heat.forEach((value, i) =>
+      assert.equal(
+        tokens.get(`--gt-heat-${i + 1}`)?.toLowerCase(),
+        value,
+        `--gt-heat-${i + 1} in ${name}`,
+      ),
+    );
+    for (const token of ["map-panel", "map-halo", "scrim", "scrim-lite"])
+      assert.ok(tokens.get(`--gt-${token}`), `--gt-${token} in ${name}`);
+    assert.match(tokens.get("--gt-line-control") ?? "", hex, name);
+  }
+  assert.equal(dark.get("--gt-map-panel"), "#2f3746");
+  assert.equal(light.get("--gt-map-halo"), "transparent");
+  assert.equal(dark.get("--gt-map-halo"), "#6f7a8d");
+  assert.equal(dark.get("--gt-scrim"), "rgb(10 12 16 / 0.58)");
+  // The one selected look (H1) follows the accent, so it flips with it.
+  assert.equal(light.get("--gt-sel-bg"), "var(--gt-accent-soft)");
+  assert.equal(light.get("--gt-sel-line"), "var(--gt-accent)");
+  assert.equal(light.get("--gt-sel-ink"), "var(--gt-accent)");
+  assert.equal(dark.has("--gt-sel-bg"), false, "sel tokens are not repeated");
+});
+
+test("the dialog overlay dims through the scrim tokens", () => {
+  const css = read("src/styles/primitives.css");
+  const overlay = topLevelRules(css).find(
+    (r) => r.selector === ".dialog-overlay",
+  );
+  assert.ok(overlay);
+  assert.match(overlay.body, /background-color:\s*var\(--gt-scrim\)/);
+  const lite = topLevelRules(css).find(
+    (r) => r.selector === '.dialog-overlay[data-backdrop="light"]',
+  );
+  assert.ok(lite);
+  assert.match(lite.body, /background-color:\s*var\(--gt-scrim-lite\)/);
+});

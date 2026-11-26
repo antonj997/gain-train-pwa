@@ -117,9 +117,20 @@ export function mergeLibraries(base: Library, extra: Library): Library {
   const repHold = [
     ...new Set([...(base.repHold ?? []), ...(extra.repHold ?? [])]),
   ];
+  // v6's per-exercise settings merge by exercise id, like the units.
+  const perExercise = {} as Pick<
+    Library,
+    "exerciseNotes" | "weightSteps" | "restSeconds"
+  >;
+  for (const key of ["exerciseNotes", "weightSteps", "restSeconds"] as const) {
+    const merged = { ...extra[key], ...base[key] };
+    if (base[key] || Object.keys(merged).length)
+      (perExercise as Record<string, unknown>)[key] = merged;
+  }
   return {
     ...extra,
     ...base,
+    ...perExercise,
     ...(Object.keys(cardio).length ? { cardioFields: cardio } : {}),
     ...(base.weightUnits || Object.keys(units).length
       ? { weightUnits: units }

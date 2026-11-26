@@ -14,6 +14,7 @@ import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import type { SwipeAction } from "@/components/gestures/Swipeable";
 import type { TipId } from "@/lib/tips";
 import { useT } from "@/i18n/useT";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 export type RoutineStats = {
   /** Average length in minutes, rounded to 5; null with no finished workout. */
@@ -119,7 +120,9 @@ export function RoutinePreviewSheet({
                 <li className="row preview-item" key={exercise.id}>
                   <ExerciseAvatar exerciseId={exercise.exerciseId} />
                   <span className="row-main">
-                    <span className="row-title">{exercise.name}</span>
+                    <span className="row-title">
+                      {exerciseDisplayName(exercise.exerciseId, exercise.name)}
+                    </span>
                     {extras && <span className="row-sub">{extras}</span>}
                   </span>
                   <span className="row-value">{plannedSummary(exercise)}</span>

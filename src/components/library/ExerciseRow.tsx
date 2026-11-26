@@ -5,6 +5,7 @@ import ExerciseItem from "@/components/items/ExerciseRow";
 import { exerciseSub, type LibraryExercise } from "@/lib/library";
 import { exercisePath } from "@/lib/routes";
 import { t } from "@/i18n";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /**
  * One exercise in the Library list: the exercise item (avatar, name and
@@ -34,7 +35,7 @@ function ExerciseRow({
       category={e.category}
       title={
         <>
-          {e.name}
+          {exerciseDisplayName(e.id, e.name)}
           {e.favourite && <FavouriteStar />}
           {e.custom && <span className="stat-chip">{t("exercises.mine")}</span>}
           {e.sharedId && (
@@ -51,7 +52,9 @@ function ExerciseRow({
           <button
             type="button"
             className="unhide"
-            aria-label={t("exercises.unhideNamed", { name: e.name })}
+            aria-label={t("exercises.unhideNamed", {
+              name: exerciseDisplayName(e.id, e.name),
+            })}
             onClick={() => onUnhide(e)}
           >
             {t("exercises.unhide")}
@@ -60,7 +63,9 @@ function ExerciseRow({
           <button
             type="button"
             className="icon-btn"
-            aria-label={t("exercises.moreFor", { name: e.name })}
+            aria-label={t("exercises.moreFor", {
+              name: exerciseDisplayName(e.id, e.name),
+            })}
             onClick={() => onMenu(e)}
           >
             <MoreHorizontal size={20} aria-hidden="true" />

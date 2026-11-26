@@ -1024,11 +1024,12 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   color: var(--gt-accent);
 }
 
-/* Bottom navigation: four icon tabs. The current one also shows its name, in
-   an accent-soft pill that slides between the tabs while the tabs make room
-   (Layout.tsx sets --nav-index). The bar is a translucent surface with a
-   hairline on top; it has its own view-transition-name, so a page slide
-   passes under it. Swedish "Bibliotek" fits the pill at 360px. */
+/* Bottom navigation (v6 H4): four equal tabs, each an icon over its name
+   (12/600, ink-2; the current one accent). The current tab's icon sits in a
+   56 × 30 accent-soft pill that slides between the tabs (Layout.tsx sets
+   --nav-index). The bar is an opaque surface with a hairline on top; it has
+   its own view-transition-name, so a page slide passes under it. Swedish
+   "Bibliotek" fits a quarter of the bar at 360px. */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1043,30 +1044,21 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   background-color: var(--gt-surface);
   view-transition-name: bottom-nav;
 }
-@supports (
-  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
-) {
-  .bottom-nav {
-    background-color: color-mix(in srgb, var(--gt-surface) 88%, transparent);
-    -webkit-backdrop-filter: saturate(1.6) blur(16px);
-    backdrop-filter: saturate(1.6) blur(16px);
-  }
-}
 .bottom-nav-track {
-  /* How much wider the current tab is than the others. */
-  --nav-grow: 1.7;
   position: relative;
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   max-width: 480px;
   margin-inline: auto;
 }
 .nav-pill {
   position: absolute;
-  inset-block: 4px;
+  top: 4px;
   left: 0;
-  width: calc(100% * var(--nav-grow) / (3 + var(--nav-grow)));
+  width: 25%;
+  height: 30px;
   opacity: 0;
-  transform: translateX(calc(var(--nav-index, 0) * 100% / var(--nav-grow)));
+  transform: translateX(calc(var(--nav-index, 0) * 100%));
   transition:
     transform var(--gt-slide),
     opacity var(--gt-motion);
@@ -1075,8 +1067,12 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 .nav-pill::before {
   content: "";
   position: absolute;
-  inset: 0 4px;
-  border-radius: 999px;
+  top: 0;
+  left: 50%;
+  width: 56px;
+  height: 30px;
+  margin-left: -28px;
+  border-radius: 15px;
   background-color: var(--gt-accent-soft);
 }
 .bottom-nav.has-active .nav-pill {
@@ -1085,42 +1081,30 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 .nav-tab {
   position: relative;
   display: flex;
-  flex: 1 1 0;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 3px;
   min-width: 0;
-  min-height: 48px;
-  color: var(--gt-ink-3);
+  min-height: 52px;
+  padding-top: 8px;
+  color: var(--gt-ink-2);
   text-decoration: none;
-  transition:
-    flex-grow var(--gt-slide),
-    color var(--gt-motion);
+  transition: color var(--gt-motion);
 }
 .nav-tab > svg {
   flex: none;
 }
 .nav-tab.is-active {
-  flex-grow: var(--nav-grow);
   color: var(--gt-accent);
 }
 .nav-tab-label {
+  max-width: 100%;
   overflow: hidden;
-  max-width: 0;
-  margin-left: 0;
-  opacity: 0;
-  font-size: var(--gt-fs-2);
+  font-size: var(--gt-fs-1);
   font-weight: 600;
   line-height: 1.2;
+  text-overflow: ellipsis;
   white-space: nowrap;
-  transition:
-    max-width var(--gt-slide),
-    margin-left var(--gt-slide),
-    opacity var(--gt-motion);
-}
-.nav-tab.is-active .nav-tab-label {
-  max-width: 7.5em;
-  margin-left: 6px;
-  opacity: 1;
 }
 
 /* Settings. */
@@ -1437,21 +1421,7 @@ span.sparkline {
   flex-wrap: wrap;
   gap: var(--gt-space-2);
 }
-.filter-chip {
-  min-height: 44px;
-  padding: 0 var(--gt-space-4);
-  border: 1px solid var(--gt-line);
-  border-radius: 999px;
-  background-color: var(--gt-surface);
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
-}
-.filter-chip[aria-pressed="true"] {
-  border-color: var(--gt-ink);
-  background-color: var(--gt-ink);
-  color: var(--gt-ground);
-}
+/* .filter-chip itself is a primitive (styles/components.css). */
 /* A single row of chips that scrolls sideways instead of wrapping. */
 .facet-chips {
   display: flex;
