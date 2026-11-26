@@ -20,7 +20,10 @@ const set = (overrides: Record<string, unknown> = {}) =>
     done: true,
     ...overrides,
   }) as WorkoutSet;
-const workout = (sets: WorkoutSet[], exercise: Record<string, unknown> = {}) => ({
+const workout = (
+  sets: WorkoutSet[],
+  exercise: Record<string, unknown> = {},
+) => ({
   name: "Benpass",
   date: "2026-11-19",
   duration: 50,
@@ -96,10 +99,7 @@ test("the per-exercise library fields reject values out of range", () => {
 });
 
 test("an exercise keeps fatigue lowered", () => {
-  const saved = validate(
-    "workout",
-    workout([set()], { fatigue: "lowered" }),
-  );
+  const saved = validate("workout", workout([set()], { fatigue: "lowered" }));
   assert.equal(saved.exercises[0].fatigue, "lowered");
   assert.throws(
     () => validate("workout", workout([set()], { fatigue: "raised" })),
@@ -130,6 +130,9 @@ test("merging two libraries keeps both sides' per-exercise settings, base first"
   assert.deepEqual(merged.exerciseNotes, { a: "mine", b: "other" });
   assert.deepEqual(merged.weightSteps, { a: 2, b: 5 });
   assert.deepEqual(merged.restSeconds, { a: 0, b: 90 });
-  const none = mergeLibraries({ hiddenExerciseIds: [] }, { hiddenExerciseIds: [] });
+  const none = mergeLibraries(
+    { hiddenExerciseIds: [] },
+    { hiddenExerciseIds: [] },
+  );
   assert.equal("exerciseNotes" in none, false);
 });

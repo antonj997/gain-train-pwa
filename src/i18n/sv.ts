@@ -2055,4 +2055,16 @@ export const sv = {
 
   // ---- v6 P0 Grunden ----
   "exercise.own": "egen",
+
+  // ---- v6 P1 Passet ----
+
+  // ---- v6 P2 Kalender ----
+
+  // ---- v6 P3 Muskler ----
+
+  // ---- v6 P4 Bibliotek ----
+
+  // ---- v6 P5 Inställningar ----
+
+  // ---- v6 P6 Sport ----
 } satisfies Messages;

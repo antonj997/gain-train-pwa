@@ -375,7 +375,9 @@ test("segmented options and the icon button keep a 44px target", () => {
 const ruleBody = (css: string, selector: string) => {
   const plain = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?:^|\\})\\s*${escaped}\\s*\\{([^}]*)\\}`).exec(plain)?.[1];
+  return new RegExp(`(?:^|\\})\\s*${escaped}\\s*\\{([^}]*)\\}`).exec(
+    plain,
+  )?.[1];
 };
 
 test("pressed segment and chip use the sel tokens", () => {

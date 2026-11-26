@@ -10,8 +10,7 @@ import { setCurrentLanguage } from "../src/i18n";
 
 test("every Swedish name is a catalogue exercise's", () => {
   assert.ok(Object.keys(SV_NAMES).length >= 30);
-  for (const id of Object.keys(SV_NAMES))
-    assert.ok(catalogueById.has(id), id);
+  for (const id of Object.keys(SV_NAMES)) assert.ok(catalogueById.has(id), id);
 });
 
 test("Swedish shows the Swedish name of a built-in, else the stored name", () => {
@@ -29,7 +28,11 @@ test("Swedish shows the Swedish name of a built-in, else the stored name", () =>
     "Cable Fly",
   );
   assert.equal(
-    exerciseDisplayName("3b0c1d9e-0000-4000-8000-000000000001", "Knästående pallofpress", "sv"),
+    exerciseDisplayName(
+      "3b0c1d9e-0000-4000-8000-000000000001",
+      "Knästående pallofpress",
+      "sv",
+    ),
     "Knästående pallofpress",
   );
   // The language defaults to the app's current one.

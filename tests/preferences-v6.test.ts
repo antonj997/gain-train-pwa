@@ -88,11 +88,17 @@ test("effectiveRest: own, then off, then the all-exercises time, then the tier",
   const on = prefs({ restOn: true });
   const off = prefs({ restOn: false });
   assert.equal(effectiveRest(on, undefined, 90), 90);
-  assert.equal(effectiveRest(prefs({ restOn: true, restSeconds: 150 }), undefined, 90), 150);
+  assert.equal(
+    effectiveRest(prefs({ restOn: true, restSeconds: 150 }), undefined, 90),
+    150,
+  );
   assert.equal(effectiveRest(off, 120, 90), 120);
   assert.equal(effectiveRest(on, 0, 90), 0);
   assert.equal(effectiveRest(off, undefined, 90), 0);
-  assert.equal(effectiveRest(prefs({ restOn: false, restSeconds: 150 }), undefined, 90), 0);
+  assert.equal(
+    effectiveRest(prefs({ restOn: false, restSeconds: 150 }), undefined, 90),
+    0,
+  );
 });
 
 test("reading the device: an upgrade keeps the saved time on", () => {

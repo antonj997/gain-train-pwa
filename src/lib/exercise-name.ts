@@ -44,7 +44,9 @@ export function exerciseSubtitle(entry: {
   if (entry.equipment) parts.push(equipmentLabel(entry.equipment));
   if (entry.custom) {
     parts.push(categoryLabel(entry.category), t("exercise.own"));
-  } else if (exerciseDisplayName(entry.id, entry.englishName) !== entry.englishName) {
+  } else if (
+    exerciseDisplayName(entry.id, entry.englishName) !== entry.englishName
+  ) {
     parts.push(entry.englishName);
   }
   return parts.join(" · ");

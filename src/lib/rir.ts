@@ -48,9 +48,7 @@ export const rirIsLegacyPlus = (set: RirFields) =>
  * "3 or more" passes `legacyPlus` and reads "3+".
  */
 export const rirValueText = (rir: Rir, legacyPlus = false) =>
-  rir >= RIR_TOP || (legacyPlus && rir === RIR_MAX)
-    ? `${rir}+`
-    : String(rir);
+  rir >= RIR_TOP || (legacyPlus && rir === RIR_MAX) ? `${rir}+` : String(rir);
 
 /** A set's value text: rirValueText with the legacy "3+" applied. */
 export function rirSetText(set: RirFields): string {

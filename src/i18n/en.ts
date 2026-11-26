@@ -2042,4 +2042,16 @@ export const en = {
   // ---- v6 P0 Grunden ----
   /** The subtitle's mark on your own exercise: "cable · Core · own". */
   "exercise.own": "own",
+
+  // ---- v6 P1 Passet ----
+
+  // ---- v6 P2 Kalender ----
+
+  // ---- v6 P3 Muskler ----
+
+  // ---- v6 P4 Bibliotek ----
+
+  // ---- v6 P5 Inställningar ----
+
+  // ---- v6 P6 Sport ----
 };

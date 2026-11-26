@@ -43,10 +43,7 @@ test("weight step: own, else the equipment default; the default clears it", () =
   assert.equal(id in (back.weightSteps ?? {}), false);
   assert.equal(weightStepOf(back, id, "barbell"), 2.5);
   // Without the equipment, 2.5 is the default too.
-  assert.equal(
-    id in (withWeightStep(lib(), id, 2.5).weightSteps ?? {}),
-    false,
-  );
+  assert.equal(id in (withWeightStep(lib(), id, 2.5).weightSteps ?? {}), false);
   assert.equal(id in (withWeightStep(two, id, null).weightSteps ?? {}), false);
   // A dumbbell exercise keeps a chosen 2.5, which is not its default.
   assert.deepEqual(
@@ -66,7 +63,10 @@ test("exercise note: trimmed, at most 300 characters, empty removes", () => {
   assert.equal(exerciseNote(lib(), id), "");
   const noted = withExerciseNote(lib(), id, "  Hälarna i golvet ");
   assert.equal(exerciseNote(noted, id), "Hälarna i golvet");
-  assert.equal(id in (withExerciseNote(noted, id, "  ").exerciseNotes ?? {}), false);
+  assert.equal(
+    id in (withExerciseNote(noted, id, "  ").exerciseNotes ?? {}),
+    false,
+  );
   assert.equal(
     exerciseNote(withExerciseNote(lib(), id, "x".repeat(400)), id).length,
     300,

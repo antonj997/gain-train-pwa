@@ -1,8 +1,4 @@
-import {
-  EXERCISE_NOTE_MAX,
-  REST_MAX,
-  type Library,
-} from "../data/model";
+import { EXERCISE_NOTE_MAX, REST_MAX, type Library } from "../data/model";
 
 /**
  * Each exercise's own settings in the synced library (v6 §D5), keyed by
@@ -120,9 +116,7 @@ export function restOf(
   exerciseId: string,
 ): number | undefined {
   const seconds = own(library.restSeconds, exerciseId);
-  return typeof seconds === "number" &&
-    Number.isFinite(seconds) &&
-    seconds >= 0
+  return typeof seconds === "number" && Number.isFinite(seconds) && seconds >= 0
     ? Math.min(Math.round(seconds), REST_MAX)
     : undefined;
 }

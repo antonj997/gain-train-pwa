@@ -59,8 +59,5 @@ test("ISOLATION_EXERCISES names catalogue exercises only", () => {
   // A built-in goes by its catalogue entry, whatever name the record kept.
   const curl = catalogueById.get("builtin:dumbbell-curl");
   assert.ok(curl);
-  assert.equal(
-    restTier({ id: curl.id, name: "Biceps", muscles: {} }),
-    90,
-  );
+  assert.equal(restTier({ id: curl.id, name: "Biceps", muscles: {} }), 90);
 });

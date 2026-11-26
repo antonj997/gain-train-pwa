@@ -54,7 +54,9 @@ export function parseWeeklyGoal(value: string | null): number | null {
   const goal = Number(value);
   return Number.isInteger(goal) && goal >= 1 && goal <= 14 ? goal : null;
 }
-export const parseFatigueMode = (value: string | null | undefined): FatigueMode =>
+export const parseFatigueMode = (
+  value: string | null | undefined,
+): FatigueMode =>
   (FATIGUE_MODES as readonly (string | null | undefined)[]).includes(value)
     ? (value as FatigueMode)
     : "suggest";
@@ -219,9 +221,7 @@ export function saveRestTimerOn(on: boolean) {
       ...(restSeconds > 0
         ? {}
         : {
-            restSeconds: restWhenOn(
-              local.getItem(storageKeys.restLastSeconds),
-            ),
+            restSeconds: restWhenOn(local.getItem(storageKeys.restLastSeconds)),
           }),
     });
     return;
