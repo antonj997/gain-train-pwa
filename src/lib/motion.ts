@@ -18,7 +18,10 @@ export const MOTION = {
   slot: 180,
   next: 180,
   sweep: 240,
+  /** A record mark's one light sweep. */
   sheen: 600,
+  /** A reward pops (the record mark, spring 400/22, about this long). */
+  reward: 420,
   rowIn: 200,
   /** A removed item folds away; the items under it slide up. */
   rowOut: 240,

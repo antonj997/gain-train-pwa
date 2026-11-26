@@ -15,16 +15,16 @@
 
 /* Dialogs. Every dialog is a bottom sheet on phones and a centred panel from
    640px up. The overlay's data-backdrop picks how far the page is dimmed: "light"
-   keeps it readable behind a sheet that edits it. The scrim and shadow are
-   translucent neutrals, so they read the same in both themes. */
+   keeps it readable behind a sheet that edits it. The scrim tokens dim a little
+   more in dark (v6), so the page behind does not read as active. */
 .dialog-overlay {
   position: fixed;
   inset: 0px;
   z-index: 50;
-  background-color: rgb(20 22 26 / 0.38);
+  background-color: var(--gt-scrim);
 }
 .dialog-overlay[data-backdrop="light"] {
-  background-color: rgb(20 22 26 / 0.08);
+  background-color: var(--gt-scrim-lite);
 }
 
 .dialog-content {

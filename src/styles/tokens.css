@@ -66,11 +66,29 @@
   --gt-map-off: #9c9c9c;
   --gt-map-main: #ef4b3f;
   --gt-map-help: #f9b7b0;
-  --gt-heat-1: #fbd0cb;
-  --gt-heat-2: #f6a49b;
-  --gt-heat-3: #ef776b;
-  --gt-heat-4: #e2483d;
-  --gt-heat-5: #a3241c;
+  /* v6 (H3): heat steps 1 and 2 sit further apart, still one red scale, the
+     same in both themes. The halo is a thin outline round the figure that
+     only dark draws. */
+  --gt-heat-1: #fde3df;
+  --gt-heat-2: #f4978c;
+  --gt-heat-3: #ea6658;
+  --gt-heat-4: #d63a2f;
+  --gt-heat-5: #9a1f17;
+  --gt-map-halo: transparent;
+
+  /* v6 (H1): the one selected look for a pressed segment, a pressed chip and
+     a level picker: soft accent, a 1.5px accent line and accent text. Defined
+     once from the accent tokens, so it flips with the theme. */
+  --gt-sel-bg: var(--gt-accent-soft);
+  --gt-sel-line: var(--gt-accent);
+  --gt-sel-ink: var(--gt-accent);
+  /* A control's outline that is not a state: a planned day's ring, a missed
+     day's dashed ring (green means done only). */
+  --gt-line-control: #878f9c;
+  /* A sheet's backdrop dims the page; "lite" keeps it readable behind a sheet
+     that edits it (the Set sheet). */
+  --gt-scrim: rgb(20 22 26 / 0.38);
+  --gt-scrim-lite: rgb(20 22 26 / 0.08);
 
   --gt-font:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
@@ -148,6 +166,18 @@
   --gt-dur-quick: 150ms;
   --gt-dur-zoom: 540ms;
   --gt-dur-zoom-step: 20ms;
+  /* v6 (H5): names for numbers the motion table already has. The rest dock
+     rises in 240ms and leaves in 200ms; a swiped item settles in 320ms on the
+     swipe curve (a little overshoot) or opens on its buttons on swipe-open; a
+     reward (the record pop, spring 400/22) takes about 420ms and its one
+     light sweep 600ms. */
+  --gt-dur-dock-in: 240ms;
+  --gt-dur-dock-out: 200ms;
+  --gt-dur-settle: 320ms;
+  --gt-dur-reward: 420ms;
+  --gt-dur-sheen: 600ms;
+  --gt-ease-swipe: cubic-bezier(0.2, 1.3, 0.4, 1);
+  --gt-ease-swipe-open: cubic-bezier(0.2, 0.9, 0.3, 1);
 
   /* The rest bar and the next-set chip are the only floating controls. The
      shadows are translucent neutrals, so they read the same in both themes. */
@@ -204,16 +234,23 @@
   --gt-cat-full-body-fg: #ff9d86;
   --gt-cat-other-bg: #22262e;
   --gt-cat-other-fg: #a3acba;
-  --gt-map-panel: #232a3b;
+  /* v6: lifted from #232a3b so the black figure reads; a 1px halo round
+     head, hands and feet. */
+  --gt-map-panel: #2f3746;
   --gt-map-fig: #000000;
   --gt-map-off: #9c9c9c;
   --gt-map-main: #f05046;
   --gt-map-help: #f9b7b0;
-  --gt-heat-1: #fbd0cb;
-  --gt-heat-2: #f6a49b;
-  --gt-heat-3: #ef776b;
-  --gt-heat-4: #e2483d;
-  --gt-heat-5: #a3241c;
+  --gt-heat-1: #fde3df;
+  --gt-heat-2: #f4978c;
+  --gt-heat-3: #ea6658;
+  --gt-heat-4: #d63a2f;
+  --gt-heat-5: #9a1f17;
+  --gt-map-halo: #6f7a8d;
+  --gt-line-control: #6c7585;
+  /* v6: the page behind a sheet reads as dimmed, not active. */
+  --gt-scrim: rgb(10 12 16 / 0.58);
+  --gt-scrim-lite: rgb(10 12 16 / 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {
