@@ -22,7 +22,7 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useDisplayName } from "@/hooks/useDisplayName";
 import {
   GoalSheet,
-  VibrateSetting,
+  CoachSettings,
   AskRirSetting,
   LanguageSheet,
   MapFigureSetting,
@@ -132,6 +132,58 @@ export default function Settings() {
         />
       </div>
 
+      {/* v6 §G1: grouped by what belongs together. */}
+      <section>
+        <h2 className="group-title">{t("settings.groupAppearance")}</h2>
+        <div className="list">
+          <ListRow
+            title={t("settings.theme")}
+            value={theme === "dark" ? t("settings.dark") : t("settings.light")}
+            chevron
+            onClick={() => setSheet("theme")}
+          />
+          <MapFigureSetting />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.restTimer")}</h2>
+        <div className="list">
+          {/* The switch; sound and vibrate show only while it is on. */}
+          <RestSettings
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.groupLogging")}</h2>
+        <div className="list">
+          <ListRow
+            title={t("unit.title")}
+            sub={t("settings.weightUnitNote")}
+            value={preferences.weightUnit}
+            chevron
+            onClick={() => setSheet("unit")}
+          />
+          <AskRirSetting
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.groupCoach")}</h2>
+        <div className="list">
+          <CoachSettings
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+        </div>
+      </section>
+
       <section>
         <h2 className="group-title">{t("settings.training")}</h2>
         <div className="list">
@@ -153,34 +205,14 @@ export default function Settings() {
             chevron
             onClick={() => setSheet("goal")}
           />
-          {/* A plain on/off switch; the time shows only while it is on. */}
-          <RestSettings
-            preferences={preferences}
-            onChange={updatePreferences}
-          />
-          <VibrateSetting
-            preferences={preferences}
-            onChange={updatePreferences}
-          />
-          <AskRirSetting
-            preferences={preferences}
-            onChange={updatePreferences}
-          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.groupGeneral")}</h2>
+        <div className="list">
           <ListRow
-            title={t("unit.title")}
-            value={preferences.weightUnit}
-            chevron
-            onClick={() => setSheet("unit")}
-          />
-          <ListRow
-            title={t("settings.theme")}
-            value={theme === "dark" ? t("settings.dark") : t("settings.light")}
-            chevron
-            onClick={() => setSheet("theme")}
-          />
-          <MapFigureSetting />
-          <ListRow
-            title={t("language.title")}
+            title={t("settings.languageRow")}
             value={LANGUAGE_NAMES[language]}
             chevron
             onClick={() => setSheet("language")}

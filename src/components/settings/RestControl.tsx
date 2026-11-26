@@ -1,13 +1,15 @@
 import { Minus, Plus } from "lucide-react";
 import Switch from "@/components/ui/Switch";
+import Reveal from "@/components/motion/Reveal";
 import { useT } from "@/i18n/useT";
 import {
   MAX_REST_SECONDS,
+  canVibrate,
   restLabel,
-  saveRestTimerOn,
   stepRest,
   type TrainingPreferences,
 } from "@/lib/preferences";
+import { switchRestTimer } from "@/lib/rest-timer-switch";
 
 /**
  * The one control for a rest time: − 2:00 +. Settings and the workout's rest
@@ -53,58 +55,57 @@ export function RestControl({
 }
 
 /**
- * The rest timer as a plain on/off switch; its time, and whether a short
- * sound marks the end of a rest, show only while it is on.
- * Off keeps the time it had, for when it is switched on again.
+ * Settings → Vilotimer (v6 §G1): the switch, and under it "Ljud när vilan är
+ * slut" and "Vibrera", which show only while it is on. No time here: times
+ * are per exercise (the tiers, or the exercise's own in the workout).
+ * Switching saves through switchRestTimer, which keeps a saved time.
  */
 export function RestSettings({
   preferences,
   onChange,
-  switchLabel,
 }: {
   preferences: TrainingPreferences;
-  /**
-   * The switch's label. Settings lists it as "Rest timer"; the rest timer
-   * sheet already has that title, so there it says "On".
-   */
-  switchLabel?: string;
   /** Saves a change; an empty one only re-reads what was saved. */
   onChange: (patch: Partial<TrainingPreferences>) => void;
 }) {
   const { t } = useT();
-  const on = preferences.restSeconds > 0;
+  const on = preferences.restOn;
   return (
     <>
       <div className="rest-setting">
         <Switch
-          label={switchLabel ?? t("settings.restTimer")}
+          label={t("settings.restTimer")}
+          hint={t("settings.restTimerNote")}
           checked={on}
           onChange={(next) => {
-            saveRestTimerOn(next);
+            switchRestTimer(next);
             onChange({});
           }}
         />
       </div>
-      {on && (
-        <div className="rest-setting rest-setting-time">
-          <span className="rest-setting-label" aria-hidden="true">
-            {t("settings.restTime")}
-          </span>
-          <RestControl
-            seconds={preferences.restSeconds}
-            onChange={(restSeconds) => onChange({ restSeconds })}
-          />
-        </div>
-      )}
-      {on && (
-        <div className="rest-setting rest-setting-sound">
-          <Switch
-            label={t("settings.restSound")}
-            checked={preferences.restSound}
-            onChange={(restSound) => onChange({ restSound })}
-          />
-        </div>
-      )}
+      <Reveal className="rest-setting-more">
+        {on && (
+          <>
+            <div className="rest-setting rest-setting-sub">
+              <Switch
+                label={t("settings.restSound")}
+                checked={preferences.restSound}
+                onChange={(restSound) => onChange({ restSound })}
+              />
+            </div>
+            {/* iPhone Safari cannot vibrate, so the row is left out there. */}
+            {canVibrate() && (
+              <div className="rest-setting rest-setting-sub">
+                <Switch
+                  label={t("settings.vibrate")}
+                  checked={preferences.haptics}
+                  onChange={(haptics) => onChange({ haptics })}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </Reveal>
     </>
   );
 }

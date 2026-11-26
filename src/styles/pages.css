@@ -1170,6 +1170,11 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 .sign-in-prompt .btn-primary {
   margin-top: var(--gt-space-1);
 }
+/* v6 G1: the rows that belong to a switch sit indented under it, and fold
+   open with it (Reveal). */
+.list .rest-setting-sub {
+  padding-left: var(--gt-space-5);
+}
 
 /* History and Progress. */
 .row-selected {
