@@ -1175,6 +1175,14 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 .list .rest-setting-sub {
   padding-left: var(--gt-space-5);
 }
+/* Tema: the whole row is the switch; the day/night switch is drawn in it. */
+.theme-row .theme-switch {
+  display: block;
+}
+.theme-follow {
+  min-height: 52px;
+  padding-block: var(--gt-space-1);
+}
 
 /* History and Progress. */
 .row-selected {

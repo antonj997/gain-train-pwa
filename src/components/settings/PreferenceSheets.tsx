@@ -1,4 +1,6 @@
+import { useId } from "react";
 import { Minus, Moon, Plus, Sun } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
 import { useTheme } from "@/contexts/useTheme";
 import { LANGUAGES, LANGUAGE_NAMES } from "@/i18n";
 import { useT } from "@/i18n/useT";
@@ -185,37 +187,62 @@ export function MapFigureSetting() {
   );
 }
 
-export function ThemeSheet({
-  open,
-  onClose,
-}: Pick<SheetProps, "open" | "onClose">) {
-  const { theme, toggleTheme } = useTheme();
+/**
+ * Settings → Utseende → Tema (v6 §G1): the whole row is the switch, with the
+ * day/night switch drawn inside it. A tap toggles day and night (650 ms);
+ * the value says whether it follows the phone. After a choice by hand a row
+ * under it offers "Följ telefonen igen".
+ */
+export function ThemeSetting() {
+  const { theme, toggleTheme, chosen, followPhone } = useTheme();
   const { t } = useT();
+  const valueId = useId();
+  const light = theme === "light";
+  const value = chosen
+    ? t(light ? "settings.light" : "settings.dark")
+    : t(light ? "settings.themeFollowsLight" : "settings.themeFollowsDark");
   return (
-    <Sheet open={open} onClose={onClose} title={t("settings.theme")}>
-      <div className="theme-setting">
-        <p>{theme === "dark" ? t("settings.dark") : t("settings.light")}</p>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={theme === "light"}
-          aria-label={t("settings.lightAppearance")}
-          className={
-            "theme-switch " + (theme === "light" ? "is-day" : "is-night")
-          }
-          onClick={toggleTheme}
-        >
-          <span className="theme-stars" aria-hidden="true">
-            ✦ · ✧
+    <>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={light}
+        aria-label={t("settings.themeSwitch")}
+        aria-describedby={valueId}
+        className="row theme-row"
+        onClick={toggleTheme}
+      >
+        <span className="row-main">
+          <span className="row-title">{t("settings.theme")}</span>
+          <span className="row-sub" id={valueId}>
+            {value}
           </span>
-          <span className="theme-orb" aria-hidden="true">
+        </span>
+        <span
+          className={"theme-switch " + (light ? "is-day" : "is-night")}
+          aria-hidden="true"
+        >
+          <span className="theme-stars">✦ · ✧</span>
+          <span className="theme-orb">
             <Moon className="theme-moon" size={22} />
             <Sun className="theme-sun" size={24} />
           </span>
-          <span className="theme-horizon" aria-hidden="true" />
-        </button>
-      </div>
-    </Sheet>
+          <span className="theme-horizon" />
+        </span>
+      </button>
+      <Reveal>
+        {chosen && (
+          <div className="row theme-follow">
+            <span className="row-main row-sub">
+              {t("settings.themeChosen")}
+            </span>
+            <button type="button" className="text-link" onClick={followPhone}>
+              {t("settings.themeFollowAgain")}
+            </button>
+          </div>
+        )}
+      </Reveal>
+    </>
   );
 }
 
@@ -251,15 +278,18 @@ export function LanguageSheet({
   open,
   onClose,
 }: Pick<SheetProps, "open" | "onClose">) {
-  const { t, setLanguage } = useT();
+  const { t, setLanguage, followsPhone } = useT();
   return (
-    <Sheet open={open} onClose={onClose} title={t("language.title")}>
+    <Sheet open={open} onClose={onClose} title={t("settings.languageRow")}>
       <LanguageChoices
         onChoose={(language) => {
           setLanguage(language);
           onClose();
         }}
       />
+      {followsPhone && (
+        <p className="row-sub">{t("settings.languageFollowsNote")}</p>
+      )}
     </Sheet>
   );
 }

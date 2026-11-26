@@ -4,7 +4,6 @@ import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
-import { useTheme } from "@/contexts/useTheme";
 import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
 import ProfileForm from "@/components/ProfileForm";
@@ -26,7 +25,7 @@ import {
   AskRirSetting,
   LanguageSheet,
   MapFigureSetting,
-  ThemeSheet,
+  ThemeSetting,
 } from "@/components/settings/PreferenceSheets";
 import SyncIssues from "@/components/settings/SyncIssues";
 import { LANGUAGE_NAMES } from "@/i18n";
@@ -41,21 +40,13 @@ import { usePageBack } from "@/hooks/usePageTransitions";
 import Reveal from "@/components/motion/Reveal";
 
 type SheetName =
-  | "bodyweight"
-  | "goal"
-  | "theme"
-  | "language"
-  | "unit"
-  | "account"
-  | "name"
-  | "feedback";
+  "bodyweight" | "goal" | "language" | "unit" | "account" | "name" | "feedback";
 
 export default function Settings() {
   const { user, account, signOut } = useAuth(),
     { state, syncing, error, online } = useData(),
-    { theme } = useTheme(),
     { bodyWeightKg } = useProfile(),
-    { t, language } = useT(),
+    { t, language, followsPhone } = useT(),
     displayName = useDisplayName(),
     admin = useAdmin({ withCount: true });
   const [sheet, setSheet] = useState<SheetName | null>(null);
@@ -136,12 +127,7 @@ export default function Settings() {
       <section>
         <h2 className="group-title">{t("settings.groupAppearance")}</h2>
         <div className="list">
-          <ListRow
-            title={t("settings.theme")}
-            value={theme === "dark" ? t("settings.dark") : t("settings.light")}
-            chevron
-            onClick={() => setSheet("theme")}
-          />
+          <ThemeSetting />
           <MapFigureSetting />
         </div>
       </section>
@@ -213,7 +199,13 @@ export default function Settings() {
         <div className="list">
           <ListRow
             title={t("settings.languageRow")}
-            value={LANGUAGE_NAMES[language]}
+            value={
+              followsPhone
+                ? t("settings.languagePhone", {
+                    language: LANGUAGE_NAMES[language],
+                  })
+                : LANGUAGE_NAMES[language]
+            }
             chevron
             onClick={() => setSheet("language")}
           />
@@ -340,7 +332,6 @@ export default function Settings() {
         hint={t("unit.defaultNote")}
         onChoose={(weightUnit) => updatePreferences({ weightUnit })}
       />
-      <ThemeSheet open={sheet === "theme"} onClose={closeSheet} />
       <LanguageSheet open={sheet === "language"} onClose={closeSheet} />
       <AccountSheet
         open={sheet === "account"}

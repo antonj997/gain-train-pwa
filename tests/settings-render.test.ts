@@ -209,3 +209,52 @@ test("Träning keeps Kroppsvikt and Veckomål; Allmänt has the language and tip
   );
   assert.match(words, /Muskelkarta Figuren på övningens och schemats karta/);
 });
+
+test("the theme row is one switch with the day/night switch inside, following the phone", async () => {
+  store.clear();
+  const html = await renderSettings({
+    theme: { theme: "light", chosen: false },
+  });
+  const row = switchFor(html, "Följer telefonen (ljust nu)");
+  assert.ok(row, "the Tema row is a switch");
+  assert.match(row, /class="row theme-row"/);
+  assert.match(row, /aria-checked="true"/);
+  assert.match(row, />Tema</);
+  // The day/night switch is drawn inside the row, not a button of its own.
+  assert.match(row, /<span class="theme-switch is-day" aria-hidden="true">/);
+  assert.doesNotMatch(html, /<button[^>]*class="theme-switch/);
+  assert.doesNotMatch(html, /Följ telefonen igen/);
+  const dark = await renderSettings({
+    theme: { theme: "dark", chosen: false },
+  });
+  assert.match(text(dark), /Tema Följer telefonen \(mörkt nu\)/);
+});
+
+test("after a manual choice the row names it and offers Följ telefonen igen", async () => {
+  store.clear();
+  const html = await renderSettings({ theme: { theme: "dark", chosen: true } });
+  const row = switchFor(html, "theme-row");
+  assert.ok(row);
+  assert.match(row, /aria-checked="false"/);
+  assert.match(text(html), /Tema Mörkt/);
+  assert.match(text(html), /Valt för hand\. Följ telefonen igen/);
+  assert.match(
+    html,
+    /<button type="button" class="text-link"[^>]*>Följ telefonen igen</,
+  );
+  const light = await renderSettings({
+    theme: { theme: "light", chosen: true },
+  });
+  assert.match(text(light), /Tema Ljust/);
+});
+
+test("the language row says Svenska, som telefonen while it follows the phone", async () => {
+  store.clear();
+  const following = await renderSettings({ followsPhone: true });
+  assert.match(text(following), /Språk · Language Svenska, som telefonen/);
+  const chosen = await renderSettings({ followsPhone: false });
+  assert.match(text(chosen), /Språk · Language Svenska /);
+  assert.doesNotMatch(text(chosen), /som telefonen/);
+  const english = await renderSettings({ followsPhone: true, language: "en" });
+  assert.match(text(english), /English, som telefonen/);
+});
