@@ -2053,6 +2053,9 @@ export const en = {
   "library.plans": "Plans",
   "library.mine": "Mine",
   "library.routinesView": "Routines to show",
+  "exercises.groupMine": "My exercises",
+  "exercises.showHidden": "Show hidden ({count})",
+  "exercises.hideHidden": "Hide hidden exercises",
 
   // ---- v6 P5 Inställningar ----
 

@@ -2,26 +2,26 @@ import { memo } from "react";
 import { MoreHorizontal } from "lucide-react";
 import FavouriteStar from "@/components/ui/FavouriteStar";
 import ExerciseItem from "@/components/items/ExerciseRow";
-import { exerciseSub, type LibraryExercise } from "@/lib/library";
+import type { LibraryExercise } from "@/lib/library";
+import { libraryRowSubtitle } from "@/lib/library-list";
 import { exercisePath } from "@/lib/routes";
 import { t } from "@/i18n";
 import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /**
- * One exercise in the Library list: the exercise item (avatar, name and
- * details, opening the exercise page), a star when it is a favourite, and its menu or Unhide. The
+ * One exercise in the Library list: the exercise item (avatar, name and the
+ * subtitle, "skivstång · Bench Press" or "kabel · Bål · egen", opening the
+ * exercise page), a star when it is a favourite, and its menu or Unhide. The
  * star only marks it; Favourite is in the menu and on the exercise page.
  */
 function ExerciseRow({
   exercise: e,
-  now,
   onUnhide,
   onMenu,
   onHold,
   tip = false,
 }: {
   exercise: LibraryExercise;
-  now: string;
   onUnhide: (exercise: LibraryExercise) => void;
   onMenu: (exercise: LibraryExercise) => void;
   /** Press and hold: the long-press menu. */
@@ -43,7 +43,7 @@ function ExerciseRow({
           )}
         </>
       }
-      meta={exerciseSub(e, now)}
+      meta={libraryRowSubtitle(e)}
       to={exercisePath(e.id)}
       onLongPress={onHold && ((anchor) => onHold(e, anchor))}
       tip={tip ? "libraryExercise" : undefined}

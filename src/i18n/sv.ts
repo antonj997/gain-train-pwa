@@ -944,7 +944,7 @@ export const sv = {
   "exercises.deleted": "Övningen {name} borttagen",
   "exercises.deleteFailed":
     "Kunde inte radera. Övningen finns kvar; försök igen.",
-  "exercises.search": "Sök övningar",
+  "exercises.search": "Sök övning",
   "exercises.show": "Visa övningar",
   "exercises.emptyRecent": "Övningar du har tränat dyker upp här.",
   "exercises.emptyMine": "Övningar du skapar dyker upp här.",
@@ -2066,6 +2066,9 @@ export const sv = {
   "library.plans": "Scheman",
   "library.mine": "Mina",
   "library.routinesView": "Rutiner att visa",
+  "exercises.groupMine": "Mina övningar",
+  "exercises.showHidden": "Visa dolda ({count})",
+  "exercises.hideHidden": "Dölj dolda övningar",
 
   // ---- v6 P5 Inställningar ----
 
