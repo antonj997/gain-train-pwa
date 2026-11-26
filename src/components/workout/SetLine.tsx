@@ -13,7 +13,14 @@ import { getSetIssues } from "@/lib/workout-editor";
 import { bodyWeightForSet } from "@/lib/set-editing";
 import { hasExtraWeight } from "@/lib/set-load";
 import { padFields, stepPadValue, type PadField } from "@/lib/number-pad";
-import { RIR_VALUES, rirLabel, rirOf, rirValueText, withRir } from "@/lib/rir";
+import {
+  RIR_VALUES,
+  rirLabel,
+  rirOf,
+  rirSetText,
+  rirValueText,
+  withRir,
+} from "@/lib/rir";
 import { motionMs } from "@/lib/slow-motion";
 import { EASE, MOTION, play, settled } from "@/lib/motion";
 import type { LockedAttempt, SetInputGestures } from "@/lib/set-input";
@@ -523,7 +530,7 @@ export default function SetLine({
         <span className="set-rir">
           <span aria-hidden="true">{rirLabel(set)}</span>
           <span className="sr-only">
-            {t("set.rirSr", { value: rirValueText(rir) })}
+            {t("set.rirSr", { value: rirSetText(set) })}
           </span>
         </span>
       )}

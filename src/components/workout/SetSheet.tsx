@@ -10,7 +10,7 @@ import Segmented from "@/components/ui/Segmented";
 import { useT } from "@/i18n/useT";
 import { t, type MessageKey } from "@/i18n";
 import { formatWeight, getWeightUnit, type WeightUnit } from "@/lib/units";
-import { RIR_VALUES, rirOf, rirValueText } from "@/lib/rir";
+import { RIR_VALUES, rirOf, rirValueText, type Rir } from "@/lib/rir";
 
 type BodyProps = {
   badge: SetBadgeInfo;
@@ -41,7 +41,7 @@ const LOAD_OPTIONS: { value: LoadKey; label: MessageKey }[] = [
   { value: "none", label: "set.optNone" },
 ];
 
-type RirChoice = "off" | "0" | "1" | "2" | "3";
+type RirChoice = "off" | `${Rir}`;
 
 const SECTION_OPTIONS: { value: WorkoutSet["section"]; label: MessageKey }[] = [
   { value: "warmup", label: "set.optWarmup" },
