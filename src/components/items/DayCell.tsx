@@ -41,7 +41,9 @@ export function MovedBadge({
       >
         <path
           d="M4 12h14M13 6l6 6-6 6"
-          transform={side === "right" ? "translate(24 0) scale(-1 1)" : undefined}
+          transform={
+            side === "right" ? "translate(24 0) scale(-1 1)" : undefined
+          }
         />
       </svg>
     </span>

@@ -141,11 +141,7 @@ test("the week card's head is one week reference: Den här veckan · 1 av 3 pass
 test("the legend says where a moved workout came from: Flyttat hit från mån", () => {
   setCurrentLanguage("sv");
   try {
-    const legend = weekLegend([
-      {},
-      { movedFrom: "2026-11-16" },
-      {},
-    ]);
+    const legend = weekLegend([{}, { movedFrom: "2026-11-16" }, {}]);
     assert.equal(legend.moved, "mån");
     assert.equal(
       t("week.legendMoved", { day: legend.moved! }),
@@ -158,10 +154,15 @@ test("the legend says where a moved workout came from: Flyttat hit från mån", 
 });
 
 test("the routine badge renders no number", async () => {
-  const RoutineBadge = await loadComponent("@/components/items/RoutineBadge.tsx");
+  const RoutineBadge = await loadComponent(
+    "@/components/items/RoutineBadge.tsx",
+  );
   const html = renderToStaticMarkup(
     createElement(RoutineBadge, {
-      exercises: [{ exerciseId: "builtin:squat" }, { exerciseId: "builtin:lunge" }],
+      exercises: [
+        { exerciseId: "builtin:squat" },
+        { exerciseId: "builtin:lunge" },
+      ],
     }),
   );
   assert.match(html, /class="routine-badge"/);

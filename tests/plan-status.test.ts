@@ -281,9 +281,14 @@ test("adherence by week: this week ahead of the plan is ahead; extras count apar
     // Friday's pull done a day early.
     { id: "t", date: THURSDAY_W4, routineId: PULL },
   ];
-  const a = planAdherence(plan(), new Set(workouts.map((w) => w.date)), THURSDAY_W4, {
-    workouts,
-  });
+  const a = planAdherence(
+    plan(),
+    new Set(workouts.map((w) => w.date)),
+    THURSDAY_W4,
+    {
+      workouts,
+    },
+  );
   assert.equal(a.weeksFulfilled, 3);
   assert.equal(a.extras, 1);
   assert.equal(a.total, 13);

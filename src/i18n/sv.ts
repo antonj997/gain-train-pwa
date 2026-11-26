@@ -2075,6 +2075,20 @@ export const sv = {
   "home.dayMovedFrom": ", flyttat från {day}",
   "home.dayMovedTo": ", flyttat till {day}",
   "home.todayPlan": "I dag · {plan}, vecka {week} av {weeks}",
+  "home.firstLabel": "I dag · inget planerat",
+  "home.firstTitle": "Kör ditt första pass",
+  "home.firstText":
+    "Lägg till övningar medan du tränar. Allt sparas på mobilen, även utan konto.",
+  "home.firstStart": "Starta tomt pass",
+  "home.getStarted": "Kom igång",
+  "home.getRoutine": "Välj en färdig rutin",
+  "home.getRoutineSub": "Bibliotek → Upptäck",
+  "home.getBuild": "Bygg en egen rutin",
+  "home.getBuildSub": "Övningar och set du kör ofta",
+  "home.getPlan": "Lägg upp ett schema",
+  "home.getPlanSub": "Veckor, deload och mål",
+  "home.languageRow": "Språk · Language",
+  "home.languageFollows": "{language}, som telefonen",
 
   // ---- v6 P3 Muskler ----
 

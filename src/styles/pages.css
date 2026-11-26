@@ -939,6 +939,26 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 .today-card .btn-quiet {
   align-self: center;
 }
+/* First start (v6 A1): the card's label is plain text, and the Kom igång
+   rows lead with a Lucide glyph on surface-2. */
+.first-start-label {
+  margin: 0;
+}
+.get-started {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.get-started-glyph {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
+}
 .home-log-past {
   align-self: center;
 }

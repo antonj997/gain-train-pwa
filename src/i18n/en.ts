@@ -2064,6 +2064,21 @@ export const en = {
   "home.dayMovedTo": ", moved to {day}",
   /** The Today card's label inside a plan: "Today · Strength block, week 3 of 12". */
   "home.todayPlan": "Today · {plan}, week {week} of {weeks}",
+  /** First start (A1): nothing logged yet. */
+  "home.firstLabel": "Today · nothing planned",
+  "home.firstTitle": "Run your first workout",
+  "home.firstText":
+    "Add exercises as you train. Everything is saved on your phone, even without an account.",
+  "home.firstStart": "Start an empty workout",
+  "home.getStarted": "Get started",
+  "home.getRoutine": "Pick a ready-made routine",
+  "home.getRoutineSub": "Library → Discover",
+  "home.getBuild": "Build your own routine",
+  "home.getBuildSub": "Exercises and sets you do often",
+  "home.getPlan": "Set up a plan",
+  "home.getPlanSub": "Weeks, deload and goals",
+  "home.languageRow": "Språk · Language",
+  "home.languageFollows": "{language}, like the phone",
 
   // ---- v6 P3 Muskler ----
 

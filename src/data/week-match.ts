@@ -25,12 +25,7 @@ export type DoneWorkout = {
 };
 
 export type DayState =
-  | "done"
-  | "missed"
-  | "planned"
-  | "plannedToday"
-  | "today"
-  | "rest";
+  "done" | "missed" | "planned" | "plannedToday" | "today" | "rest";
 
 export type DayMatch = {
   date: string;
