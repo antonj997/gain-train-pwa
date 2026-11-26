@@ -40,6 +40,10 @@ export default function WorkoutDock({
     unitFor: (exerciseId: string) => WeightUnit;
     changeSet: (setId: string, change: (set: WorkoutSet) => WorkoutSet) => void;
     targets?: ReadonlyMap<string, { text: string; source: FillSource }>;
+    /** Each exercise's weight step in kg (v6 §D5). */
+    stepFor?: (exerciseId: string) => number;
+    /** "Fråga efter RIR": the pad has an RIR field (v6 B12). */
+    askRir?: boolean;
   };
 }) {
   const root = useRef<HTMLDivElement>(null);

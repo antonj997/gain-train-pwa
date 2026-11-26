@@ -616,6 +616,8 @@ function Editor({
             unitFor,
             changeSet,
             targets: workoutGoals.targets,
+            stepFor: exerciseSettings.stepFor,
+            askRir,
           }}
         />
       )}

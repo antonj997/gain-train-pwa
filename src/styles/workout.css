@@ -1432,8 +1432,9 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  font-size: var(--gt-fs-4);
-  font-weight: 700;
+  /* v6 B1: the exercise name at 20/600. */
+  font-size: var(--gt-fs-5);
+  font-weight: 600;
   line-height: 1.25;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
@@ -1445,29 +1446,50 @@
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
 }
+/* A key that changed nothing says why for a moment (v6 B1). */
+.number-pad-meta.is-hint {
+  color: var(--gt-ink);
+  font-weight: 600;
+}
 .number-pad-head .segmented {
   flex: none;
   width: 132px;
 }
-/* The keys take every touch as a press: no pan, no zoom. */
+/* kg | Reps | RIR (v6 B12). */
+.number-pad-head[data-fields="3"] .segmented {
+  width: 180px;
+}
+/*
+ * The keys take every touch as a press: no pan, no zoom. v6 decision 5: the
+ * body is one fixed height, the key grid's four rows, in every mode, so RIR
+ * mode (the slider) is exactly as tall and nothing jumps when the field
+ * changes.
+ */
+.number-pad {
+  --pad-key-h: 54px;
+  --pad-gap: 6px;
+  --pad-body-h: calc(4 * var(--pad-key-h) + 3 * var(--pad-gap));
+}
 .number-pad-grid {
   touch-action: none;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1.3fr;
-  gap: 6px;
+  grid-template-rows: repeat(4, var(--pad-key-h));
+  gap: var(--pad-gap);
+  height: var(--pad-body-h);
 }
 .number-pad-key {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 54px;
+  height: var(--pad-key-h);
   padding: 0;
   border: 0;
   border-radius: var(--gt-radius-md);
   background-color: var(--gt-surface);
   color: var(--gt-ink);
-  font-size: 22px;
+  font-size: var(--gt-fs-5);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   touch-action: manipulation;
@@ -1489,7 +1511,8 @@
 .number-pad-key.is-go.is-check {
   background-color: var(--gt-done);
 }
-.number-pad-key:disabled {
+.number-pad-key:disabled,
+.number-pad-key.is-muted {
   opacity: 0.4;
 }
 /* Pressed as the finger lands (is-pressed, set on pointerdown) until it

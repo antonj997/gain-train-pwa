@@ -12,12 +12,14 @@ import {
 import { Check, ChevronRight, Delete } from "lucide-react";
 import type { Workout, WorkoutSet } from "@/data/model";
 import { labelSet } from "@/data/model";
-import { dropGroup, setBadge } from "@/data/drops";
+import { dropGroup, isDrop, setBadge } from "@/data/drops";
 import { previousResult, type LastSession } from "@/data/workouts";
 import { groupComplete } from "@/lib/workout-editor";
 import { changeSetNumber, getSetInputText } from "@/lib/set-input";
 import {
+  dropMinus20,
   padAfterCheck,
+  padHint,
   padKeyFor,
   padFields,
   padFormat,
@@ -30,8 +32,10 @@ import {
   stepPadValue,
   type PadField,
   type PadKey,
+  type PadKeyField,
   type PadTarget,
 } from "@/lib/number-pad";
+import { motionMs } from "@/lib/slow-motion";
 import { fromUnit, toUnit, type WeightUnit } from "@/lib/units";
 import { fillFrom, type FillSource } from "@/lib/set-target";
 import { formatDecimal } from "@/i18n";
@@ -42,6 +46,9 @@ import Segmented from "@/components/ui/Segmented";
 import { playStep } from "@/components/workout/set-motion";
 import { exerciseDisplayName } from "@/lib/exercise-name";
 
+/** How long a key's hint replaces the subline (v6 B1). */
+const HINT_MS = 1500;
+
 const DIGITS = [
   ["1", "2", "3"],
   ["4", "5", "6"],
@@ -49,8 +56,8 @@ const DIGITS = [
 ] as const;
 
 const inputFor = (target: PadTarget) =>
-  document.querySelector<HTMLInputElement>(
-    `[data-set-id="${CSS.escape(target.setId)}"] input[data-pad-field="${target.field}"]`,
+  document.querySelector<HTMLElement>(
+    `[data-set-id="${CSS.escape(target.setId)}"] [data-pad-field="${target.field}"]`,
   );
 
 function locate(workout: Workout, setId: string) {
@@ -62,7 +69,7 @@ function locate(workout: Workout, setId: string) {
 }
 
 /** A field's value in what the row shows: the load in the unit, or the reps. */
-const shownValue = (set: WorkoutSet, field: PadField, unit: WeightUnit) =>
+const shownValue = (set: WorkoutSet, field: PadKeyField, unit: WeightUnit) =>
   field === "weight"
     ? set.weight === null
       ? null
@@ -88,7 +95,13 @@ export default function NumberPad({
   targets,
   container,
   dropFrom,
+  stepFor = () => 2.5,
+  askRir = false,
 }: {
+  /** Each exercise's weight step in kg (v6 §D5): the ± keys and −20 %. */
+  stepFor?: (exerciseId: string) => number;
+  /** "Fråga efter RIR" (v6 B12): the pad has an RIR field after reps. */
+  askRir?: boolean;
   target: PadTarget;
   setTarget: Dispatch<SetStateAction<PadTarget | null>>;
   workout: Workout;
@@ -121,13 +134,29 @@ export default function NumberPad({
   const found = locate(workout, target.setId);
   const set = found?.set ?? null;
   const unit = unitFor(found?.exercise.exerciseId ?? "");
-  const fields = set ? padFields(set) : [];
+  const kgStep = stepFor(found?.exercise.exerciseId ?? "");
+  const fields = set ? padFields(set, askRir) : [];
   const field = target.field;
-  const format = padFormat(field, unit, mark);
+  // RIR takes the slider (RirSlider); the keys type the load and the reps.
+  const keyField: PadKeyField = field === "rir" ? "reps" : field;
+  const format = padFormat(keyField, unit, mark);
   const text = set
-    ? (getSetInputText(set, field) ??
-      padText(shownValue(set, field, unit), mark))
+    ? (getSetInputText(set, keyField) ??
+      padText(shownValue(set, keyField, unit), mark))
     : "";
+  // A key that changed nothing says why, in place of the subline (v6 B1).
+  const [hint, setHint] = useState<string | null>(null);
+  const hintTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(hintTimer.current), []);
+  const showHint = (message: string | null) => {
+    if (!message) return;
+    window.clearTimeout(hintTimer.current);
+    setHint(message);
+    hintTimer.current = window.setTimeout(
+      () => setHint(null),
+      motionMs(HINT_MS),
+    );
+  };
   // `fresh` until the first key: the next digit replaces what is shown.
   const key = `${target.setId}:${field}`;
   const [entry, setEntry] = useState({ key, text, fresh: true });
@@ -142,7 +171,8 @@ export default function NumberPad({
   // the row's ✓ (which move it first): it moves on to the next open set of the
   // exercise, or closes at the end of it. A deleted or no longer typed field
   // closes it.
-  const gone = !set || set.done || !fields.includes(field);
+  // A checked set's RIR can still change: it is picked after the set (B12).
+  const gone = !set || (set.done && field !== "rir") || !fields.includes(field);
   useEffect(() => {
     if (!gone) return;
     setTarget((current) => {
@@ -156,9 +186,11 @@ export default function NumberPad({
   /** Typed text that is not a finished number ("87,") is cleaned up on leaving. */
   const commit = (at: PadTarget | null) => {
     if (!at) return;
+    if (at.field === "rir") return;
+    const atField = at.field;
     const here = locate(latest.current.workout, at.setId)?.set;
-    if (!here || getSetInputText(here, at.field) === undefined) return;
-    changeSet(at.setId, (s) => changeSetNumber(s, at.field, s[at.field]));
+    if (!here || getSetInputText(here, atField) === undefined) return;
+    changeSet(at.setId, (s) => changeSetNumber(s, atField, s[atField]));
   };
   const close = () => {
     commit(latest.current.target);
@@ -334,20 +366,27 @@ export default function NumberPad({
     exercise.sets,
     index,
   );
-  const next = padNext(workout.exercises, target);
+  const next = padNext(workout.exercises, target, askRir);
   const willCheck = next.kind === "check";
+  const drop = isDrop(set);
 
   const write = (nextText: string) => {
     const value = padValue(nextText);
     const stored =
-      field === "weight" && value !== null ? fromUnit(value, unit) : value;
+      keyField === "weight" && value !== null ? fromUnit(value, unit) : value;
     const unfinished = nextText !== padText(value, mark) ? nextText : undefined;
-    changeSet(set.id, (s) => changeSetNumber(s, field, stored, unfinished));
+    changeSet(set.id, (s) => changeSetNumber(s, keyField, stored, unfinished));
   };
   const press = (k: PadKey) => {
     const before = entryRef.current;
     const after = pressPadKey(before, k, format);
-    if (after.text === before.text && after.fresh === before.fresh) return;
+    if (after.text === before.text && after.fresh === before.fresh) {
+      showHint(padHint(k, keyField, before.fresh ? "" : before.text, format));
+      return;
+    }
+    // A fresh field's backspace clears what it showed; once empty, say so.
+    if (k === "backspace" && !before.text)
+      showHint(padHint(k, keyField, "", format));
     const next = { key, ...after };
     entryRef.current = next;
     setEntry(next);
@@ -357,8 +396,9 @@ export default function NumberPad({
     const value = stepPadValue(
       padValue(entryRef.current.text),
       direction,
-      field,
+      keyField,
       unit,
+      kgStep,
     );
     const nextText = padText(value, mark);
     const next = { key, text: nextText, fresh: true };
@@ -398,7 +438,23 @@ export default function NumberPad({
     for (const f of fields) playStep(inputFor({ setId: set.id, field: f }), 1);
   };
   const same = () => fill(prior);
+  // On a drop "Som förra passet" is "−20 %": 20 % under the row above,
+  // rounded to the exercise's step (v6 B1, B5).
+  const above = drop ? exercise.sets[index - 1] : undefined;
+  const minus20 = () => {
+    if (above?.weight == null) return;
+    const kg = dropMinus20(above.weight, kgStep);
+    changeSet(set.id, (s) => changeSetNumber(s, "weight", kg));
+    setEntry((e) => ({ ...e, fresh: true }));
+    playStep(inputFor({ setId: set.id, field: "weight" }), -1);
+  };
   const goal = targets?.get(set.id);
+  const range = exercise.repRange;
+  // "Mål 100 × 6 (5–7)": the target chip, with the rep range.
+  const goalText =
+    goal && range
+      ? `${goal.text} (${range.min === range.max ? range.min : `${range.min}–${range.max}`})`
+      : goal?.text;
   const onNext = () => {
     // A tap: the rest's tone may play after the check below (iPhone Safari).
     primeRestSound();
@@ -447,10 +503,41 @@ export default function NumberPad({
   // The exercise gets the whole title line; the set's short name leads the
   // line below so neither is cut beside the field toggle.
   const setName = setBadge(exercise.sets, index).short;
+  const stepLabel = (direction: 1 | -1) =>
+    padStepLabel(keyField, unit, direction, mark, kgStep);
   const stepName = (direction: 1 | -1) =>
-    field === "reps"
-      ? t("pad.stepReps", { step: padStepLabel(field, unit, direction, mark) })
-      : `${padStepLabel(field, unit, direction, mark)} ${unit}`;
+    keyField === "reps"
+      ? t("pad.stepReps", { step: stepLabel(direction) })
+      : `${stepLabel(direction)} ${unit}`;
+  // "Set 2 · Förra 100 kg × 5"; a drop says how its weight was filled in
+  // (v6 B5): "Drop efter set 3 · 50 kg förifyllt (−20 % …)".
+  const subline = (() => {
+    if (!drop) {
+      return prior
+        ? `${setName} · ${t("pad.previous", { value: labelSet(prior, true, unit) })}`
+        : setName;
+    }
+    const { start } = dropGroup(exercise.sets, index);
+    const parent = setBadge(exercise.sets, start).text;
+    const position = index - start;
+    const filled =
+      above?.weight != null &&
+      set.weight !== null &&
+      unit === "kg" &&
+      set.weight === dropMinus20(above.weight, kgStep);
+    if (!filled) return t("pad.dropPlain", { set: parent });
+    const kg = formatDecimal(set.weight!);
+    const stepText = formatDecimal(kgStep);
+    return position <= 1
+      ? t("pad.dropFirst", { set: parent, kg, step: stepText })
+      : t("pad.dropNext", {
+          n: position,
+          set: parent,
+          kg,
+          from: formatDecimal(above!.weight!),
+          step: stepText,
+        });
+  })();
 
   return (
     <div
@@ -482,25 +569,29 @@ export default function NumberPad({
       >
         <span aria-hidden="true" />
       </button>
-      <div className="number-pad-head">
+      <div
+        className="number-pad-head"
+        data-fields={askRir && fields.includes("rir") ? 3 : 2}
+      >
         <div className="number-pad-titles">
           <p className="number-pad-title">
             {exerciseDisplayName(exercise.exerciseId, exercise.name)}
           </p>
-          <p className="number-pad-meta">
-            {prior
-              ? `${setName} · ${t("pad.previous", { value: labelSet(prior, true, unit) })}`
-              : setName}
+          <p
+            className={`number-pad-meta${hint ? " is-hint" : ""}`}
+            aria-live="polite"
+          >
+            {hint ?? subline}
           </p>
           {/* The Target key: fills the set's target in one tap. */}
-          {goal && (
+          {goal && goalText && (
             <button
               type="button"
               className="number-pad-target"
               aria-label={t("pad.fillTarget", { value: goal.text })}
               onClick={() => fill(goal.source)}
             >
-              {goal.text}
+              {goalText}
             </button>
           )}
         </div>
@@ -518,6 +609,9 @@ export default function NumberPad({
               label: t("pad.reps"),
               disabled: !fields.includes("reps"),
             },
+            ...(askRir && fields.includes("rir")
+              ? [{ value: "rir" as const, label: t("pad.rir") }]
+              : []),
           ]}
           onChange={(value) => moveTo({ setId: set.id, field: value })}
         />
@@ -542,7 +636,7 @@ export default function NumberPad({
                 aria-label={stepName(-1)}
                 {...keyPress(() => step(-1))}
               >
-                {padStepLabel(field, unit, -1, mark)}
+                {stepLabel(-1)}
               </button>
             )}
             {r === 1 && (
@@ -552,26 +646,38 @@ export default function NumberPad({
                 aria-label={stepName(1)}
                 {...keyPress(() => step(1))}
               >
-                {padStepLabel(field, unit, 1, mark)}
+                {stepLabel(1)}
               </button>
             )}
-            {r === 2 && (
-              <button
-                type="button"
-                className="number-pad-key is-step is-same"
-                disabled={!prior}
-                onClick={same}
-              >
-                {t("pad.same")}
-              </button>
-            )}
+            {r === 2 &&
+              (drop ? (
+                <button
+                  type="button"
+                  className="number-pad-key is-step is-same"
+                  aria-label={t("pad.dropMinusLabel")}
+                  disabled={above?.weight == null}
+                  onClick={minus20}
+                >
+                  {t("pad.dropMinus")}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="number-pad-key is-step is-same"
+                  disabled={!prior}
+                  onClick={same}
+                >
+                  {t("pad.same")}
+                </button>
+              ))}
           </Fragment>
         ))}
         <button
           type="button"
-          className="number-pad-key"
+          // Reps take no decimal: the key stays, muted, and says why.
+          className={`number-pad-key${format.decimals === 0 ? " is-muted" : ""}`}
           aria-label={t("pad.decimal")}
-          disabled={format.decimals === 0}
+          aria-disabled={format.decimals === 0 || undefined}
           {...keyPress(() => press("decimal"))}
         >
           {mark}
@@ -602,8 +708,8 @@ export default function NumberPad({
         >
           {willCheck ? (
             <>
-              <Check size={20} strokeWidth={2.5} aria-hidden="true" />
               {t("pad.check")}
+              <Check size={20} strokeWidth={2.5} aria-hidden="true" />
             </>
           ) : (
             <>
