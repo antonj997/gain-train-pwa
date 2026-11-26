@@ -2079,6 +2079,22 @@ export const sv = {
   "library.planFulfilled": "{done} av {weeks} veckor fullföljda",
   "library.plansNote":
     "Ett schema lägger rutiner på veckodagar under en period, med deload och mål. Bara ett schema är aktivt åt gången.",
+  "discover.level.beginner": "Nybörjare",
+  "discover.level.experienced": "Van",
+  "discover.level.beginnerToExperienced": "Nybörjare–van",
+  "discover.days.ab": "3 dagar, A B A och sedan B A B",
+  "discover.days.ou": "4 dagar: mån, tis, tor, fre",
+  "discover.days.tdb": "6 dagar, eller 3 dagar med halva volymen",
+  "discover.program.hk.why":
+    "Hela kroppen två gånger i veckan; de flesta huvudmuskler får 5–13 hårda set i veckan, nog de första månaderna. Flerledsövningar först, 1–3 reps kvar i tanken, dubbel progression.",
+  "discover.program.ou.why":
+    "Varje muskel två gånger i veckan och de flesta huvudmuskler 10–18 hårda set, tunga flerled (5–8 reps) först och lättare isolering (10–20) sist.",
+  "discover.program.tdb.why":
+    "Tryck, drag och ben två varv i veckan: 10–16 hårda set per huvudmuskel. Kör ett varv (3 dagar) om tiden inte räcker; då halveras volymen.",
+  "discover.program.gs.why":
+    "Knäböj, bänkpress, axelpress och marklyft i 3–5 reps med längre vila (3–5 min). Fokus är styrka; mindre muskler får avsiktligt lite volym.",
+  "discover.program.hm.why":
+    "Bara hantlar och kroppsvikt, utan vader. Hela kroppen två gånger i veckan; reps upp till 15–20 när hantlarna blir för lätta.",
 
   // ---- v6 P5 Inställningar ----
 

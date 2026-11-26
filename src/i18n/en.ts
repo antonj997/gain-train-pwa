@@ -2066,6 +2066,22 @@ export const en = {
   "library.planFulfilled": "{done} of {weeks} weeks completed",
   "library.plansNote":
     "A plan puts routines on weekdays over a period, with deloads and goals. Only one plan is active at a time.",
+  "discover.level.beginner": "Beginner",
+  "discover.level.experienced": "Experienced",
+  "discover.level.beginnerToExperienced": "Beginner to experienced",
+  "discover.days.ab": "3 days, A B A and then B A B",
+  "discover.days.ou": "4 days: Mon, Tue, Thu, Fri",
+  "discover.days.tdb": "6 days, or 3 days at half the volume",
+  "discover.program.hk.why":
+    "The whole body twice a week; most main muscles get 5–13 hard sets a week, enough for the first months. Compound lifts first, 1–3 reps in reserve, double progression.",
+  "discover.program.ou.why":
+    "Every muscle twice a week and most main muscles 10–18 hard sets, heavy compound lifts (5–8 reps) first and lighter isolation (10–20) last.",
+  "discover.program.tdb.why":
+    "Push, pull and legs twice round the week: 10–16 hard sets per main muscle. Do one round (3 days) when time is short; the volume is then halved.",
+  "discover.program.gs.why":
+    "Squat, bench press, overhead press and deadlift for 3–5 reps with longer rests (3–5 min). The focus is strength; smaller muscles get little volume on purpose.",
+  "discover.program.hm.why":
+    "Only dumbbells and bodyweight, no calves. The whole body twice a week; reps up to 15–20 when the dumbbells get too light.",
 
   // ---- v6 P5 Inställningar ----
 
