@@ -2063,6 +2063,9 @@ export const sv = {
   // ---- v6 P3 Muskler ----
 
   // ---- v6 P4 Bibliotek ----
+  "library.plans": "Scheman",
+  "library.mine": "Mina",
+  "library.routinesView": "Rutiner att visa",
 
   // ---- v6 P5 Inställningar ----
 

@@ -17,7 +17,6 @@ const Settings = lazy(() => import("@/pages/Settings"));
 const Library = lazy(() => import("@/pages/Library"));
 const Progress = lazy(() => import("@/pages/Progress"));
 const ProgressGoals = lazy(() => import("@/pages/ProgressGoals"));
-const LibraryPlan = lazy(() => import("@/pages/LibraryPlan"));
 const PlanStatus = lazy(() => import("@/pages/PlanStatus"));
 const AdminReports = lazy(() => import("@/pages/AdminReports"));
 const Exercise = lazy(() => import("@/pages/Exercise"));
@@ -38,12 +37,15 @@ function AccountApp() {
               <Route path="settings" element={<Settings />} />
               <Route path="settings/admin" element={<AdminReports />} />
               <Route path="library" element={<Library />} />
-              <Route path="library/plan" element={<LibraryPlan />} />
+              <Route
+                path="library/plan"
+                element={<Navigate to="/library?tab=plans" replace />}
+              />
               <Route path="library/plan/:id" element={<PlanStatus />} />
               {/* Shared routines became Library → Upptäck (legacy-routes.ts). */}
               <Route
                 path="library/shared"
-                element={<Navigate to="/library?tab=discover" replace />}
+                element={<Navigate to="/library?view=discover" replace />}
               />
               <Route path="exercise/:id" element={<Exercise />} />
               {/* Old URLs (/routines, ?tab=plan, ?tab=goals …) are

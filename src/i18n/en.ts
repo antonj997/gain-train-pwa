@@ -2050,6 +2050,9 @@ export const en = {
   // ---- v6 P3 Muskler ----
 
   // ---- v6 P4 Bibliotek ----
+  "library.plans": "Plans",
+  "library.mine": "Mine",
+  "library.routinesView": "Routines to show",
 
   // ---- v6 P5 Inställningar ----
 
