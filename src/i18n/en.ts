@@ -2044,6 +2044,19 @@ export const en = {
   "exercise.own": "own",
 
   // ---- v6 P1 Passet ----
+  "exercise.equip.barbell": "Barbell",
+  "exercise.equip.dumbbell": "Dumbbells",
+  "exercise.equip.machine": "Machine",
+  "exercise.equip.cable": "Cable",
+  "exercise.equip.kettlebell": "Kettlebell",
+  "exercise.equip.bodyweight": "Bodyweight",
+  "exercise.equip.band": "Band",
+  "exercise.equip.smith": "Smith machine",
+  "exercise.perHand": "{unit} per hand",
+  "exercise.perLeg": "per leg",
+  "exercise.rangeLine": "{range} reps · {sets}",
+  "exercise.noteSr": "Note:",
+  "exercise.saveFailed": "The exercise's setting could not be saved. Try again.",
 
   // ---- v6 P2 Kalender ----
 

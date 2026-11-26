@@ -172,6 +172,47 @@ export function bodyWeightForSet(
   return set.done ? (set.bodyWeightKg ?? null) : profileWeight;
 }
 
+/**
+ * One set of an exercise changed to `next`. When it is an unchecked working
+ * set whose weight changed, the later unchecked working sets (not drops) with
+ * the same load that still had its old weight take the new one too (v6
+ * R4-17): raise set 1 to 102.5 and sets 2 and 3 follow. A set typed apart,
+ * a checked set or a drop keeps its own. The same array comes back when the
+ * set is unchanged.
+ */
+export function carryWeight(
+  sets: WorkoutSet[],
+  next: WorkoutSet,
+): WorkoutSet[] {
+  const index = sets.findIndex((s) => s.id === next.id);
+  if (index < 0) return sets;
+  const before = sets[index];
+  if (before === next) return sets;
+  const carries =
+    !next.done &&
+    next.section === "working" &&
+    next.drop !== true &&
+    before.weight !== next.weight &&
+    next.weight !== null &&
+    before.load === next.load;
+  return sets.map((s, i) => {
+    if (i === index) return next;
+    if (
+      !carries ||
+      i < index ||
+      s.done ||
+      s.drop === true ||
+      s.section !== "working" ||
+      s.load !== next.load ||
+      s.weight !== before.weight ||
+      // Half-typed in its own field: it is being typed apart.
+      (s as { inputText?: { weight?: string } }).inputText?.weight !== undefined
+    )
+      return s;
+    return { ...s, weight: next.weight };
+  });
+}
+
 export function toggleSetCompletion(
   set: WorkoutSet,
   profileWeight: number | null,

@@ -1,6 +1,13 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { memo, useCallback, useContext, useId, useRef, useState } from "react";
-import { ChevronDown, MoreHorizontal, Plus, Target, Timer } from "lucide-react";
+import {
+  ChevronDown,
+  MoreHorizontal,
+  Plus,
+  StickyNote,
+  Target,
+  Timer,
+} from "lucide-react";
 import {
   type Exercise,
   type WorkoutSet,
@@ -11,7 +18,6 @@ import {
   type ExerciseDefaults,
   type LastSession,
   previousResult,
-  workingSetChange,
 } from "@/data/workouts";
 import {
   addDrop,
@@ -53,8 +59,8 @@ import {
 import { repRangeLabel } from "@/lib/routine-preview";
 import { withRir } from "@/lib/rir";
 import { exerciseDisplayName } from "@/lib/exercise-name";
-import { localizedDate } from "@/lib/dates";
-import { countLabel } from "@/lib/labels";
+import { headingMeta, headingRange, isPerLeg } from "@/lib/exercise-heading";
+import { carryWeight } from "@/lib/set-editing";
 import {
   type CardioFields,
   type CardioMetric,
@@ -167,6 +173,12 @@ export type ExerciseCardProps = {
    * heading's sheet changes the default unit.
    */
   onWeightUnit?: (exerciseId: string, unit: WeightUnit) => void;
+  /** v6 B1: the exercise's equipment, for the heading's meta line. */
+  equipment?: string;
+  /** v6 §D5: the exercise's weight step in kg (weightStepOf). */
+  weightStep?: number;
+  /** v6 §D5: the exercise's note, shown under the heading. */
+  note?: string;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
@@ -244,6 +256,9 @@ function ExerciseCard({
   weightUnit: ownUnit,
   defaultWeightUnit,
   onWeightUnit,
+  equipment,
+  weightStep = 2.5,
+  note,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
@@ -289,8 +304,13 @@ function ExerciseCard({
   const close = useCallback(() => setSheet(null), []);
   const changeSets = (next: WorkoutSet[]) => onChange({ ...ex, sets: next });
   // Stable for SetLine: they always act on this render's sets.
+  // A live workout's raised weight carries to the later open sets (R4-17).
   const updateSet = useStableCallback((next: WorkoutSet) =>
-    changeSets(sets.map((s) => (s.id === next.id ? next : s))),
+    changeSets(
+      mode === "log"
+        ? carryWeight(sets, next)
+        : sets.map((s) => (s.id === next.id ? next : s)),
+    ),
   );
   // A routine's row edits what it shows (shownPlannedSet): typed numbers
   // become the set's target, anything else keeps its stored values.
@@ -384,7 +404,17 @@ function ExerciseCard({
     close();
     pad.open(hit.setId, hit.field);
   };
-  const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
+  // v6 B1: "Hantlar ±2 · kg per hand · per ben" and "8–10 reps · 3 set".
+  const meta = headingMeta({
+    equipment,
+    step: weightStep,
+    perHand: equipment === "dumbbell",
+    perLeg: isPerLeg(ex.exerciseId),
+    unit: weightUnit,
+  });
+  const workingSets = sets.filter(
+    (s) => s.section === "working" && !isDrop(s),
+  ).length;
   // "Reps + hold" changes the count to reps and is remembered for the exercise.
   const chooseCount = (choice: CountChoice) => {
     changeSets(
@@ -465,22 +495,29 @@ function ExerciseCard({
               </span>
             )}
           </div>
-          {mode === "log" && lastSession && (
+          {/* v6 B1: cardio has no Förra column, so last time's totals
+              stay under its name. */}
+          {mode === "log" && cardio && lastSession && (
             <p className="ex-last">
-              {t("exercise.last")}{" "}
-              {cardio
-                ? totalsLabel(
-                    cardioTotals(
-                      lastSession.sets.filter(
-                        (set) => isCardioSet(set) && set.done && validSet(set),
-                      ),
-                    ),
-                    unit,
-                  )
-                : localizedDate(lastSession.date, {
-                    day: "numeric",
-                    month: "short",
-                  })}
+              {t("exercise.colPrevious")}{" "}
+              {totalsLabel(
+                cardioTotals(
+                  lastSession.sets.filter(
+                    (set) => isCardioSet(set) && set.done && validSet(set),
+                  ),
+                ),
+                unit,
+              )}
+            </p>
+          )}
+          {/* v6 B1: the equipment and its step, then the rep range and the
+              working sets counted live. Last time stays under Förra. */}
+          {mode === "log" && !cardio && meta && (
+            <p className="ex-last ex-meta">{meta}</p>
+          )}
+          {mode === "log" && !cardio && (
+            <p className="ex-last ex-meta ex-range">
+              {headingRange(ex.repRange, workingSets)}
             </p>
           )}
           {mode === "plan" && ex.repRange && (
@@ -490,14 +527,6 @@ function ExerciseCard({
           )}
           {planNote && mode === "log" && (
             <p className="ex-last ex-plan-note">{planNote}</p>
-          )}
-          {setChange && (
-            <p className="ex-last ex-set-change">
-              {t("exercise.workingSetsNote", {
-                sets: countLabel(setChange.now, "working set"),
-                last: setChange.last,
-              })}
-            </p>
           )}
         </div>
         <button
@@ -510,6 +539,16 @@ function ExerciseCard({
           <MoreHorizontal size={23} aria-hidden="true" />
         </button>
       </div>
+      {/* v6 B1: the exercise's own note, in every workout. */}
+      {note && mode === "log" && (
+        <p className="ex-note">
+          <StickyNote size={15} aria-hidden="true" />
+          <span>
+            <span className="sr-only">{t("exercise.noteSr") + " "}</span>
+            {note}
+          </span>
+        </p>
+      )}
       {cardio ? (
         <div className="set-columns" data-mode={mode} data-kind="cardio">
           <span>{t("exercise.colSet")}</span>

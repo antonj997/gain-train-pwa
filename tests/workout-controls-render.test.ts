@@ -450,3 +450,66 @@ test("rows of the same kind get different names", async () => {
   // The bodyweight text of the second warm-up names its row too.
   assert.match(html[1], /Bench Press warm-up set 2: Bodyweight/);
 });
+
+// ---- v6 P1: the exercise card ----
+
+const workSet = (id: string, extra: Partial<model.WorkoutSet> = {}) => ({
+  ...model.newSet(),
+  id,
+  weight: 22,
+  reps: 8,
+  ...extra,
+});
+
+/** An exercise card in a live workout, rendered on the server. */
+async function exerciseCard(props: Record<string, unknown> = {}) {
+  const ExerciseCard = await loadComponent(
+    "../src/components/ExerciseCard.tsx",
+  );
+  const exercise: model.Exercise = {
+    id: "00000000-0000-4000-8000-000000000001",
+    exerciseId: "builtin:bulgarian-split-squat",
+    name: "Bulgarian Split Squat",
+    repRange: { min: 8, max: 10 },
+    sets: [workSet("s1"), workSet("s2"), workSet("s3")],
+    ...((props.exercise as object) ?? {}),
+  };
+  return renderToStaticMarkup(
+    createElement(ExerciseCard, {
+      onChange: () => {},
+      onRemove: () => {},
+      onChangeExercise: () => {},
+      lastSession: {
+        date: "2026-11-12",
+        sets: [workSet("p1", { weight: 20, reps: 10, done: true })],
+      },
+      equipment: "dumbbell",
+      weightStep: 2,
+      ...props,
+      exercise,
+    }),
+  );
+}
+
+test("the v6 heading: step and range, the note, no Last date or set-change line", async () => {
+  const html = await exerciseCard({ note: "Stånghöjd: hål 4" });
+  assert.doesNotMatch(html, /Last:|Senast:/);
+  assert.doesNotMatch(html, /ex-set-change|sets? · last time/);
+  assert.match(html, /Dumbbells ±2 · kg per hand · per leg/);
+  assert.match(html, /8–10 reps · 3 sets/);
+  assert.match(html, /class="ex-note"[\s\S]*Stånghöjd: hål 4/);
+  // The working sets are counted live.
+  const two = await exerciseCard({
+    exercise: { sets: [workSet("s1"), workSet("s2")] },
+  });
+  assert.match(two, /8–10 reps · 2 sets/);
+  // No note, no note line.
+  assert.doesNotMatch(await exerciseCard(), /class="ex-note"/);
+});
+
+test("the ↑ mark in a workout row is drawn in the accent", () => {
+  assert.match(
+    css("src/styles/workout.css"),
+    /\.set-line \.set-up \{\s*color: var\(--gt-accent\);/,
+  );
+});

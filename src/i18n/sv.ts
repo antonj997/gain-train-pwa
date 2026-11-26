@@ -2057,6 +2057,19 @@ export const sv = {
   "exercise.own": "egen",
 
   // ---- v6 P1 Passet ----
+  "exercise.equip.barbell": "Skivstång",
+  "exercise.equip.dumbbell": "Hantlar",
+  "exercise.equip.machine": "Maskin",
+  "exercise.equip.cable": "Kabel",
+  "exercise.equip.kettlebell": "Kettlebell",
+  "exercise.equip.bodyweight": "Kroppsvikt",
+  "exercise.equip.band": "Gummiband",
+  "exercise.equip.smith": "Smithmaskin",
+  "exercise.perHand": "{unit} per hand",
+  "exercise.perLeg": "per ben",
+  "exercise.rangeLine": "{range} reps · {sets}",
+  "exercise.noteSr": "Anteckning:",
+  "exercise.saveFailed": "Övningens inställning kunde inte sparas. Försök igen.",
 
   // ---- v6 P2 Kalender ----
 

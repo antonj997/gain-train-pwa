@@ -1059,6 +1059,31 @@
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
 }
+/* v6 B1: the equipment and step, then the range and working sets. */
+.ex-meta {
+  font-variant-numeric: tabular-nums;
+}
+/* v6 B1: the exercise's note under its heading, with a note glyph. */
+.ex-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: var(--gt-space-1) 0 0;
+  padding-inline: var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ex-note svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--gt-ink-3);
+}
+/* v6 B1: ↑ (a set beat last time's Epley e1RM) is in the accent. */
+.set-line .set-up {
+  color: var(--gt-accent);
+}
 .set-columns {
   padding: 0 var(--gt-space-1);
   color: var(--gt-ink-2);

@@ -203,3 +203,45 @@ test("edge scrolling uses the container edges and stops at its scroll bounds", (
   assert.equal(edgeScrollDelta(100, 100, 300, 0, 400, 16), 0);
   assert.equal(edgeScrollDelta(300, 100, 300, 50, 400, 5000), 24);
 });
+
+test("a raised weight carries to the later unchecked sets that followed it (R4-17)", async () => {
+  const { carryWeight } = await import("../src/lib/set-editing.ts");
+  const s = (id: string, weight: number | null, done = false, extra = {}) => ({
+    ...newSet(),
+    id,
+    weight,
+    reps: 6,
+    done,
+    ...extra,
+  });
+  const before = [
+    s("w", 60, true, { section: "warmup" }),
+    s("1", 100),
+    s("2", 100),
+    s("3", 100),
+  ];
+  assert.deepEqual(
+    carryWeight(before, { ...before[1], weight: 102.5 }).map((x) => x.weight),
+    [60, 102.5, 102.5, 102.5],
+  );
+  // A checked set, a set typed apart and a drop keep their own weight.
+  const mixed = [
+    s("1", 100),
+    s("2", 100, true),
+    s("3", 95),
+    s("d", 100, false, { drop: true }),
+    s("4", 100),
+  ];
+  assert.deepEqual(
+    carryWeight(mixed, { ...mixed[0], weight: 102.5 }).map((x) => x.weight),
+    [102.5, 100, 95, 100, 102.5],
+  );
+  // A drop's own change carries nowhere.
+  const drops = [s("1", 100), s("d", 80, false, { drop: true }), s("2", 100)];
+  assert.deepEqual(
+    carryWeight(drops, { ...drops[1], weight: 70 }).map((x) => x.weight),
+    [100, 70, 100],
+  );
+  // Nothing else changed: the same array comes back.
+  assert.equal(carryWeight(drops, drops[0]), drops);
+});

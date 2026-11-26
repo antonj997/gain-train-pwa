@@ -69,6 +69,8 @@ import { useKeepScreenOn, useWakeLock } from "@/hooks/useWakeLock";
 import { wakeLockSupported } from "@/lib/keep-screen-on";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import { useWeightUnits } from "@/hooks/useWeightUnits";
+import { useExerciseSettings } from "@/hooks/useExerciseSettings";
+import { carryWeight } from "@/lib/set-editing";
 import type { WeightUnit } from "@/lib/units";
 import WorkoutBanners from "@/components/workout/WorkoutBanners";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
@@ -233,6 +235,8 @@ function Editor({
   // Each exercise's weight unit: its own, else the default from Settings.
   const weightUnits = useWeightUnits();
   const { unitFor } = weightUnits;
+  // v6 §D5: each exercise's note, weight step and rest time.
+  const exerciseSettings = useExerciseSettings();
   // Each set's target (double progression, targets.ts), worked out again
   // only when the other finished workouts or the shape of this one change:
   // not on every typed value.
@@ -399,7 +403,11 @@ function Editor({
           ex.sets.some((s) => s.id === setId)
             ? {
                 ...ex,
-                sets: ex.sets.map((s) => (s.id === setId ? edit(s) : s)),
+                // A raised weight carries to the later open sets (R4-17).
+                sets: carryWeight(
+                  ex.sets,
+                  edit(ex.sets.find((s) => s.id === setId)!),
+                ),
               }
             : ex,
         ),
@@ -539,6 +547,9 @@ function Editor({
             weightUnit={unitFor(ex.exerciseId)}
             defaultWeightUnit={weightUnits.defaultUnit}
             onWeightUnit={weightUnits.setUnit}
+            equipment={exerciseSettings.equipmentFor(ex.exerciseId)}
+            weightStep={exerciseSettings.stepFor(ex.exerciseId)}
+            note={exerciseSettings.noteFor(ex.exerciseId)}
           />
         ))}
       </NumberPadContext.Provider>
