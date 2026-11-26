@@ -1,25 +1,17 @@
-import { Suspense, useEffect, useRef, type CSSProperties } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
-import { Outlet, Link, Navigate, useLocation } from "react-router-dom";
-import { Dumbbell, CalendarDays, TrendingUp, Library } from "lucide-react";
+import { Outlet, Navigate, useLocation } from "react-router-dom";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { useLegacyPlanImport } from "@/hooks/useLegacyPlanImport";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import LanguagePrompt from "@/components/LanguagePrompt";
 import Tips from "@/components/Tips";
+import BottomNav from "@/components/BottomNav";
 import { useT } from "@/i18n/useT";
 import { usePageTransitions } from "@/hooks/usePageTransitions";
-import { TAB_PATHS, tabIndex } from "@/lib/page-transition";
+import { tabIndex } from "@/lib/page-transition";
 import { legacyRedirect } from "@/lib/legacy-routes";
-
-// In the order of TAB_PATHS, which sets the slide direction.
-const tabs = [
-  { title: "nav.train", Icon: Dumbbell },
-  { title: "nav.history", Icon: CalendarDays },
-  { title: "nav.progress", Icon: TrendingUp },
-  { title: "nav.library", Icon: Library },
-] as const;
 
 export default function Layout() {
   useVisualViewport();
@@ -67,35 +59,7 @@ export default function Layout() {
           <p className="empty">{t("app.openingLog")}</p>
         )}
       </main>
-      {!activeWorkout && (
-        <nav
-          className={"bottom-nav" + (active >= 0 ? " has-active" : "")}
-          aria-label={t("nav.main")}
-          style={{ "--nav-index": pillAt.current } as CSSProperties}
-        >
-          <div className="bottom-nav-track">
-            <span className="nav-pill" aria-hidden="true" />
-            {tabs.map((tab, index) => {
-              const current = index === active;
-              const label = t(tab.title);
-              return (
-                <Link
-                  key={tab.title}
-                  to={TAB_PATHS[index]}
-                  className={"nav-tab" + (current ? " is-active" : "")}
-                  aria-label={label}
-                  aria-current={current ? "page" : undefined}
-                >
-                  <tab.Icon size={22} aria-hidden="true" />
-                  <span className="nav-tab-label" aria-hidden="true">
-                    {label}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
-      )}
+      {!activeWorkout && <BottomNav active={active} pillAt={pillAt.current} />}
       {ready && <LanguagePrompt />}
       {ready && <Tips />}
     </div>

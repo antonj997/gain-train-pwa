@@ -237,7 +237,7 @@ export default function ExercisePage() {
           <ExerciseAvatar
             exerciseId={exercise.id}
             category={exercise.category}
-            size={60}
+            size="lg"
           />
           <p className="exercise-meta">
             <span className="exercise-meta-main">

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { RecordDoc } from "../src/data/model.ts";
@@ -109,7 +110,7 @@ const ExerciseAvatar = await loadComponent(
   { "@/contexts/useData": useData },
 );
 
-const avatar = (exerciseId: string, size?: 40 | 60) =>
+const avatar = (exerciseId: string, size?: "md" | "lg") =>
   renderToStaticMarkup(
     createElement(
       useData.DataContext.Provider,
@@ -122,15 +123,109 @@ test("the avatar draws the muscle figure, the heart or the glyph", () => {
   const squat = avatar("builtin:squat");
   assert.match(squat, /class="ex-avatar"/);
   assert.match(squat, /data-tone="legs"/);
-  assert.match(squat, /class="muscle-icon" width="32"/);
+  // v6 (H4): a 44px circle with a 34px figure and 24px glyphs by default.
+  assert.match(squat, /class="muscle-icon" width="34"/);
   assert.doesNotMatch(squat, /data-view="cardio"/);
-  assert.match(avatar("builtin:squat", 60), /class="muscle-icon" width="50"/);
+  assert.match(avatar("builtin:squat", "lg"), /class="ex-avatar ex-avatar-lg"/);
+  assert.match(avatar("builtin:squat", "lg"), /class="muscle-icon" width="50"/);
   assert.match(avatar("builtin:rowing-machine"), /data-view="cardio"/);
   const plain = avatar("plain");
   assert.match(plain, /data-tone="chest"/);
   assert.match(plain, /data-equipment="dumbbell"/);
-  assert.match(plain, /width="22"/);
-  assert.match(avatar("kettle", 60), /data-equipment="kettlebell"/);
+  assert.match(plain, /width="24"/);
+  assert.match(plain, /stroke-width="1.8"/);
+  assert.match(avatar("kettle", "lg"), /data-equipment="kettlebell"/);
+  assert.match(avatar("kettle", "lg"), /width="34"/);
   assert.match(avatar("body"), /data-tone="back"/);
   assert.match(avatar("body"), /class="muscle-icon"/);
+});
+
+test("the avatar circle is 44px (60px large)", () => {
+  const css = readFileSync(
+    new URL("../src/styles/items.css", import.meta.url),
+    "utf8",
+  );
+  const rule = (selector: string) =>
+    new RegExp(
+      `(?:^|\\})\\s*${selector.replace(".", "\\.")}\\s*\\{([^}]*)\\}`,
+    ).exec(css.replace(/\/\*[\s\S]*?\*\//g, ""))?.[1] ?? "";
+  assert.match(rule(".ex-avatar"), /width:\s*44px/);
+  assert.match(rule(".ex-avatar"), /height:\s*44px/);
+  assert.match(rule(".ex-avatar-lg"), /width:\s*60px/);
+});
+
+// --- H4: the dark avatar mixes. color-mix(in srgb, …) mixes the encoded
+// channels, as mix() does here.
+type Rgb = [number, number, number];
+const hex = (value: string): Rgb =>
+  [1, 3, 5].map((i) => parseInt(value.slice(i, i + 2), 16)) as Rgb;
+const mix = (a: Rgb, b: Rgb, share: number): Rgb =>
+  a.map((v, i) => v * share + b[i] * (1 - share)) as Rgb;
+const luminance = (c: Rgb) => {
+  const [r, g, b] = c.map((v) => {
+    const x = v / 255;
+    return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a: Rgb, b: Rgb) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+test("dark avatars: body/circle at least 4:1 and untrained/circle 3:1 in every tone", () => {
+  const tokens = readFileSync(
+    new URL("../src/styles/tokens.css", import.meta.url),
+    "utf8",
+  );
+  const dark = tokens.slice(tokens.indexOf(".dark {"));
+  const token = (name: string) => {
+    const found = new RegExp(`--gt-${name}:\\s*(#[0-9a-f]{6});`, "i").exec(
+      dark,
+    )?.[1];
+    assert.ok(found, name);
+    return hex(found);
+  };
+  const muscles = readFileSync(
+    new URL("../src/styles/muscles.css", import.meta.url),
+    "utf8",
+  );
+  const block = /\.dark \.ex-avatar,[^{]*\{([^}]*)\}/.exec(muscles)?.[1] ?? "";
+  const share = (name: string, other: string) => {
+    const found = new RegExp(
+      `--mi-${name}:\\s*color-mix\\(in srgb,\\s*var\\(--tone-fg\\) (\\d+)%,\\s*${other}\\)`,
+    ).exec(block)?.[1];
+    assert.ok(found, `--mi-${name} in the dark block`);
+    return Number(found) / 100;
+  };
+  // Spec H4: the circle is the tone's background darkened by half; body 65 %,
+  // untrained 50 %, helping 78 %, main the tone plus 15 % white.
+  assert.match(
+    block,
+    /--mi-circle:\s*color-mix\(in srgb,\s*var\(--tone-bg\) 50%,\s*black\)/,
+  );
+  assert.equal(share("body", "var\\(--tone-bg\\)"), 0.65);
+  assert.equal(share("off", "var\\(--tone-bg\\)"), 0.5);
+  assert.equal(share("help", "var\\(--tone-bg\\)"), 0.78);
+  assert.equal(share("main", "white"), 0.85);
+  const tones = [
+    "chest",
+    "back",
+    "shoulders",
+    "arms",
+    "legs",
+    "glutes",
+    "core",
+    "cardio",
+    "full-body",
+  ];
+  for (const tone of tones) {
+    const fg = token(`cat-${tone}-fg`);
+    const bg = token(`cat-${tone}-bg`);
+    const circle = mix(bg, [0, 0, 0], 0.5);
+    const body = contrast(mix(fg, bg, 0.65), circle);
+    const off = contrast(mix(fg, bg, 0.5), circle);
+    assert.ok(body >= 4, `${tone}: body/circle ${body.toFixed(2)}:1`);
+    assert.ok(off >= 3, `${tone}: untrained/circle ${off.toFixed(2)}:1`);
+  }
 });

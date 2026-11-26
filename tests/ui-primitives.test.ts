@@ -440,3 +440,50 @@ test("Segmented marks its neutral option and the thumb under it", async () => {
   assert.match(none, /class="seg-option"[^>]*>Main</);
   assert.match(render("main"), /class="segmented-thumb"/);
 });
+
+test("the tab bar labels every tab, visibly, on an opaque bar", async () => {
+  const router = await import("react-router-dom");
+  const { translate } = await import("../src/i18n");
+  const sv = {
+    useT: () => ({
+      t: (key: Parameters<typeof translate>[1]) => translate("sv", key),
+    }),
+  };
+  const BottomNav = await loadComponent("../src/components/BottomNav.tsx", {
+    "react-router-dom": router,
+    "@/i18n/useT": sv,
+  });
+  const html = renderToStaticMarkup(
+    createElement(
+      router.MemoryRouter,
+      null,
+      createElement(BottomNav, { active: 1, pillAt: 1 }),
+    ),
+  );
+  const labels = [
+    ...html.matchAll(/<span class="nav-tab-label">([^<]*)<\/span>/g),
+  ].map((m) => m[1]);
+  assert.deepEqual(labels, ["Träna", "Kalender", "Framsteg", "Bibliotek"]);
+  assert.doesNotMatch(html, /sr-only/);
+  assert.doesNotMatch(html, /nav-tab-label" aria-hidden/);
+  assert.equal(count(html, 'aria-current="page"'), 1);
+  assert.match(html, /aria-current="page"[^>]*>.*?Kalender/);
+
+  const css = readFileSync(
+    new URL("../src/styles/pages.css", import.meta.url),
+    "utf8",
+  );
+  const label = ruleBody(css, ".nav-tab-label");
+  assert.ok(label);
+  assert.match(label, /font-size:\s*var\(--gt-fs-1\)/);
+  assert.match(label, /font-weight:\s*600/);
+  assert.doesNotMatch(label, /opacity:\s*0|max-width:\s*0/);
+  const bar = ruleBody(css, ".bottom-nav");
+  assert.ok(bar);
+  assert.match(bar, /background-color:\s*var\(--gt-surface\)/);
+  assert.doesNotMatch(css, /\.bottom-nav\s*\{[^}]*backdrop-filter/);
+  assert.match(
+    ruleBody(css, ".nav-tab") ?? "",
+    /min-height:\s*(4[4-9]|[5-9]\d)px/,
+  );
+});
