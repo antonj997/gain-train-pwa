@@ -221,7 +221,7 @@ function ResumeCard({
         </small>
         <span className="resume-main">
           {r.payload.exercises.length > 0 && (
-            <RoutineBadge exercises={r.payload.exercises} count={false} />
+            <RoutineBadge exercises={r.payload.exercises} />
           )}
           <span className="resume-text">
             <strong className="resume-title">

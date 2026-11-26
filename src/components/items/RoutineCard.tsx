@@ -8,7 +8,7 @@ import { t } from "@/i18n";
 
 type Props = {
   title: ReactNode;
-  /** The routine's exercises: the first one's icon and the count make its badge. */
+  /** The routine's exercises: the first one's icon makes its badge. */
   exercises: readonly { exerciseId: string }[];
   /** A muted line: exercises, length, when it was last done. */
   meta?: ReactNode;
@@ -33,7 +33,7 @@ type Props = {
 
 /**
  * The routine item: a card on surface-2 (20px corners) with a 48px badge
- * (the leading exercise's icon and the exercise count), the name and a muted line, and a round 44px play button that starts
+ * (the leading exercise's icon), the name and a muted line, and a round 44px play button that starts
  * it. Tapping the rest of the card opens the routine. With `swipeActions`
  * it swipes (Swipeable): right to start, left for its buttons.
  */

@@ -2046,6 +2046,24 @@ export const en = {
   // ---- v6 P1 Passet ----
 
   // ---- v6 P2 Kalender ----
+  /** The week card's head (A2): one week reference, no ISO week number. */
+  "week.thisWeekOf": {
+    one: "This week · {done} of {planned} workout",
+    other: "This week · {done} of {planned} workouts",
+  },
+  "week.thisWeekCount": {
+    one: "This week · {count} workout",
+    other: "This week · {count} workouts",
+  },
+  "week.legendDone": "Done",
+  "week.legendPlanned": "Planned",
+  "week.legendToday": "Today",
+  "week.legendMoved": "Moved here from {day}",
+  "home.dayMissed": ", missed",
+  "home.dayMovedFrom": ", moved from {day}",
+  "home.dayMovedTo": ", moved to {day}",
+  /** The Today card's label inside a plan: "Today · Strength block, week 3 of 12". */
+  "home.todayPlan": "Today · {plan}, week {week} of {weeks}",
 
   // ---- v6 P3 Muskler ----
 

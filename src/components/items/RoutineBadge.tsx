@@ -10,23 +10,17 @@ type Props = {
   exercises: readonly { exerciseId: string }[];
   /** 48 on routine cards (30px glyph), 56 on the Today card (34px glyph). */
   size?: 48 | 56;
-  /** Show the exercise count at the corner (on by default). */
-  count?: boolean;
   className?: string;
 };
 
 /**
  * A routine's badge: a rounded tile tinted by its leading exercise's main
- * category, with that exercise's icon and a count badge at the
- * corner. One icon per routine, no mosaic. A routine without exercises shows
- * the layers icon. Decorative: the routine's name is always beside it.
+ * category, with that exercise's icon. One icon per routine, no mosaic and no
+ * number (v6 R8-2: the card beside it already says how many exercises). A
+ * routine without exercises shows the layers icon. Decorative: the routine's
+ * name is always beside it.
  */
-function RoutineBadge({
-  exercises,
-  size = 48,
-  count = true,
-  className,
-}: Props) {
+function RoutineBadge({ exercises, size = 48, className }: Props) {
   const data = useContext(DataContext);
   const lead = exercises[0];
   const category =
@@ -51,9 +45,6 @@ function RoutineBadge({
         />
       ) : (
         <Layers size={icon - 6} />
-      )}
-      {count && exercises.length > 0 && (
-        <span className="routine-badge-count">{exercises.length}</span>
       )}
     </span>
   );

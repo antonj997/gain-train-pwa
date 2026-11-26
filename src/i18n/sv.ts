@@ -2059,6 +2059,22 @@ export const sv = {
   // ---- v6 P1 Passet ----
 
   // ---- v6 P2 Kalender ----
+  "week.thisWeekOf": {
+    one: "Den här veckan · {done} av {planned} pass",
+    other: "Den här veckan · {done} av {planned} pass",
+  },
+  "week.thisWeekCount": {
+    one: "Den här veckan · {count} pass",
+    other: "Den här veckan · {count} pass",
+  },
+  "week.legendDone": "Gjort",
+  "week.legendPlanned": "Planerat",
+  "week.legendToday": "I dag",
+  "week.legendMoved": "Flyttat hit från {day}",
+  "home.dayMissed": ", missat",
+  "home.dayMovedFrom": ", flyttat från {day}",
+  "home.dayMovedTo": ", flyttat till {day}",
+  "home.todayPlan": "I dag · {plan}, vecka {week} av {weeks}",
 
   // ---- v6 P3 Muskler ----
 

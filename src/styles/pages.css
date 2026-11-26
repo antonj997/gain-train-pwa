@@ -465,6 +465,11 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   color: var(--gt-ink);
 }
 .week-card-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
   color: inherit;
   text-decoration: none;
 }
@@ -488,8 +493,49 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   flex-direction: column;
   gap: 6px;
 }
+/* v6 A2: 44 px days, 3 px apart (the mockup's strip); a movable day's hit
+   area reaches 2 px into the gaps, so it is at least 44 px wide at 360 px. */
 .week-card .week {
+  gap: 3px;
+}
+.day-cell.week-move::before {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  left: -2px;
+  content: "";
+}
+/* The legend under the strip: Gjort · Planerat · I dag, and "Flyttat hit
+   från mån" with the moved badge when the week holds a moved workout. */
+.week-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  line-height: 1.4;
+}
+.week-legend > span {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
+}
+.week-legend .legend-mark {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+.week-legend .legend-mark.is-trained {
+  background-color: var(--gt-done);
+}
+.week-legend .legend-mark.is-planned {
+  box-shadow: inset 0 0 0 2px var(--gt-line-control);
+}
+.week-legend .legend-mark.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
 }
 .week-days .day {
   position: relative;
@@ -532,7 +578,7 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 /* The day the sheet is about: its outline gets an accent halo. */
 .week-card .week-days .day-cell.is-selected-day {
   box-shadow:
-    inset 0 0 0 2px var(--gt-done),
+    inset 0 0 0 2px var(--gt-line-control),
     0 0 0 2px var(--gt-surface),
     0 0 0 4px var(--gt-accent);
 }
@@ -551,7 +597,7 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   z-index: 3;
   display: none;
   border-radius: var(--gt-radius-day);
-  box-shadow: inset 0 0 0 2px var(--gt-done);
+  box-shadow: inset 0 0 0 2px var(--gt-line-control);
   pointer-events: none;
 }
 .week-ring[data-on] {
@@ -735,9 +781,6 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   padding: var(--gt-space-3);
   border-radius: var(--gt-radius-item);
   background-color: var(--gt-routine-fill);
-}
-.day-sheet-item .routine-badge-count {
-  border-color: var(--gt-routine-fill);
 }
 .day-sheet-tile {
   display: grid;

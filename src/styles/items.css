@@ -186,27 +186,6 @@ button.ex-row-main {
 .routine-badge svg {
   display: block;
 }
-.routine-badge-count {
-  position: absolute;
-  right: -5px;
-  bottom: -5px;
-  display: grid;
-  place-items: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 5px;
-  border: 2px solid var(--gt-routine-fill);
-  border-radius: 999px;
-  background-color: var(--gt-ink);
-  color: var(--gt-surface);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-.today-card .routine-badge-count {
-  border-color: var(--gt-accent-soft);
-}
 .routine-card-text {
   display: flex;
   flex: 1;
@@ -238,8 +217,9 @@ button.ex-row-main {
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background-color: var(--gt-accent);
-  color: var(--gt-on-accent);
+  /* Secondary (v6 R3-1): the Today card's Start is the one primary action. */
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
   cursor: pointer;
   transition: transform var(--gt-motion);
 }
