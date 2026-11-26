@@ -234,6 +234,70 @@ test("a paused plan stops counting after its last workout", () => {
   );
 });
 
+/** Every planned day of weeks 1–3 (Mon, Wed, Fri from 26 Oct) done. */
+const FULL_WEEKS = [
+  "2026-10-26",
+  "2026-10-28",
+  "2026-10-30",
+  "2026-11-02",
+  "2026-11-04",
+  "2026-11-06",
+  "2026-11-09",
+  "2026-11-11",
+  "2026-11-13",
+];
+const THURSDAY_W4 = "2026-11-19";
+
+test("adherence by week: 3 finished weeks all fulfilled are 3 of 3, status on", () => {
+  const a = planAdherence(
+    plan(),
+    new Set([...FULL_WEEKS, "2026-11-16"]),
+    THURSDAY_W4,
+  );
+  assert.equal(a.weeksFinished, 3);
+  assert.equal(a.weeksFulfilled, 3);
+  assert.equal(a.status, "on");
+  assert.equal(a.extras, 0);
+  assert.equal(a.total, 10);
+  // This week: Monday done; Wednesday (yesterday) missed, Friday ahead.
+  assert.deepEqual(a.thisWeek, { matched: 1, planned: 3 });
+});
+
+test("adherence by week: one week short is behind", () => {
+  const short = FULL_WEEKS.filter((d) => d !== "2026-11-04");
+  const a = planAdherence(plan(), new Set(short), THURSDAY_W4);
+  assert.equal(a.weeksFinished, 3);
+  assert.equal(a.weeksFulfilled, 2);
+  assert.equal(a.status, "behind");
+});
+
+test("adherence by week: this week ahead of the plan is ahead; extras count apart", () => {
+  const workouts = [
+    ...FULL_WEEKS.map((date, i) => ({ id: "w" + i, date })),
+    // An extra Saturday in week 2.
+    { id: "x", date: "2026-11-07" },
+    { id: "m", date: "2026-11-16", routineId: PUSH },
+    { id: "w", date: "2026-11-18", routineId: LEGS },
+    // Friday's pull done a day early.
+    { id: "t", date: THURSDAY_W4, routineId: PULL },
+  ];
+  const a = planAdherence(plan(), new Set(workouts.map((w) => w.date)), THURSDAY_W4, {
+    workouts,
+  });
+  assert.equal(a.weeksFulfilled, 3);
+  assert.equal(a.extras, 1);
+  assert.equal(a.total, 13);
+  assert.deepEqual(a.thisWeek, { matched: 3, planned: 3 });
+  assert.equal(a.status, "ahead");
+});
+
+test("adherence by week: the first week has none finished and is on", () => {
+  const a = planAdherence(plan(), new Set(["2026-10-26"]), "2026-10-27");
+  assert.equal(a.weeksFinished, 0);
+  assert.equal(a.weeksFulfilled, 0);
+  assert.equal(a.status, "on");
+});
+
 test("the next planned day skips today once it is done, and a paused plan has none", () => {
   const p = plan({ overrides: { [TODAY]: LEGS } });
   assert.equal(nextPlannedDay(p, TODAY, false), TODAY);
