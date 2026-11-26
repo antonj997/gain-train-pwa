@@ -51,7 +51,24 @@ export const storageKeys = {
   theme: "gain-train-theme",
   /** "en" or "sv"; absent until this device has chosen. */
   language: "gt-language",
+  /**
+   * The rest time for every exercise without its own; 0 (v6) means each
+   * exercise's tier. Before v6 a time above 0 meant the timer was on.
+   */
   restSeconds: "gt-rest-seconds",
+  /**
+   * v6: "true" or "false" once the rest timer was switched; absent before
+   * that, when a saved time above 0 reads as on (preferences.ts).
+   */
+  restOn: "gt-rest-on",
+  /** v6: "false" when the Set sheet leaves out its warm-up and drop tips. */
+  workoutTips: "gt-workout-tips",
+  /** v6: "off" or "auto" for a tired muscle late in a workout; "suggest" otherwise. */
+  fatigueMode: "gt-fatigue-mode",
+  /** v6: the bar's weight in kg (20, 15 or 10) for the warm-up sheet's plates. */
+  barKg: "gt-bar-kg",
+  /** v6: the plates at hand for the warm-up sheet (its own format, P1). */
+  plates: "gt-plates",
   /** The rest time to go back to when the rest timer is switched on again. */
   restLastSeconds: "gt-rest-last-seconds",
   haptics: "gt-haptics",

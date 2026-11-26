@@ -20,7 +20,20 @@ export function saveMapFigure(figure: MapFigure) {
   window.dispatchEvent(new Event(MAP_FIGURE_EVENT));
 }
 
+/** v6: what to do when a muscle tires late in the workout (Settings → Coach). */
+export const FATIGUE_MODES = ["off", "suggest", "auto"] as const;
+export type FatigueMode = (typeof FATIGUE_MODES)[number];
+
 export type TrainingPreferences = {
+  /**
+   * Whether the rest timer runs (v6). Off for a new user; a device that saved
+   * a rest time before v6 reads as on (see normalizeTrainingPreferences).
+   */
+  restOn: boolean;
+  /**
+   * The rest time for every exercise without its own, in seconds; 0 means
+   * each exercise's tier (rest-tiers.ts). See effectiveRest.
+   */
   restSeconds: number;
   haptics: boolean;
   /** Workouts per week to aim for (1-14); null when off. */
@@ -29,46 +42,106 @@ export type TrainingPreferences = {
   weightUnit: WeightUnit;
   /** A short sound when a rest runs out (on unless switched off). */
   restSound: boolean;
-  /** After a set is checked, offer reps in reserve for a few seconds (off unless switched on). */
+  /** Ask for reps in reserve after reps (off unless switched on). */
   askRir: boolean;
+  /** "Tips i passet": the warm-up and drop rows in the Set sheet (on). */
+  workoutTips: boolean;
+  /** "Trött muskel sent i passet": off, suggest (the default) or auto. */
+  fatigueMode: FatigueMode;
 };
 export function parseWeeklyGoal(value: string | null): number | null {
   if (value === null || value.trim() === "") return null;
   const goal = Number(value);
   return Number.isInteger(goal) && goal >= 1 && goal <= 14 ? goal : null;
 }
+export const parseFatigueMode = (value: string | null | undefined): FatigueMode =>
+  (FATIGUE_MODES as readonly (string | null | undefined)[]).includes(value)
+    ? (value as FatigueMode)
+    : "suggest";
+
+/** The stored strings of the training preferences, each null when absent. */
+export type StoredTrainingPreferences = {
+  rest?: string | null;
+  restOn?: string | null;
+  haptics?: string | null;
+  weeklyGoal?: string | null;
+  weightUnit?: string | null;
+  restSound?: string | null;
+  askRir?: string | null;
+  workoutTips?: string | null;
+  fatigueMode?: string | null;
+};
+
+/**
+ * The preferences from their stored strings, with every default. The rest
+ * timer's migration (decision 4): with no stored on/off, a saved rest time
+ * above 0 reads as on, with that time kept for every exercise; otherwise it
+ * is off. An explicit "false" wins and keeps the time.
+ *
+ * The positional form (rest, haptics, weeklyGoal, weightUnit, restSound,
+ * askRir) is kept for older callers.
+ */
+export function normalizeTrainingPreferences(
+  stored: StoredTrainingPreferences,
+): TrainingPreferences;
 export function normalizeTrainingPreferences(
   rest: string | null,
   haptics: string | null,
+  weeklyGoal?: string | null,
+  weightUnit?: string | null,
+  restSound?: string | null,
+  askRir?: string | null,
+): TrainingPreferences;
+export function normalizeTrainingPreferences(
+  first: StoredTrainingPreferences | string | null,
+  haptics: string | null = null,
   weeklyGoal: string | null = null,
   weightUnit: string | null = null,
   restSound: string | null = null,
   askRir: string | null = null,
 ): TrainingPreferences {
-  const value = Number(rest);
+  const stored: StoredTrainingPreferences =
+    first !== null && typeof first === "object"
+      ? first
+      : { rest: first, haptics, weeklyGoal, weightUnit, restSound, askRir };
+  const value = Number(stored.rest ?? null);
+  const restSeconds =
+    Number.isInteger(value) && value >= 0 && value <= MAX_REST_SECONDS
+      ? value
+      : 0;
+  const restOn =
+    stored.restOn === "true" || (stored.restOn == null && restSeconds > 0);
   return {
-    restSeconds:
-      Number.isInteger(value) && value >= 0 && value <= 600 ? value : 0,
-    haptics: haptics === "true",
-    weeklyGoal: parseWeeklyGoal(weeklyGoal),
-    weightUnit: parseWeightUnit(weightUnit),
-    restSound: restSound !== "false",
-    askRir: askRir === "true",
+    restOn,
+    restSeconds,
+    haptics: stored.haptics === "true",
+    weeklyGoal: parseWeeklyGoal(stored.weeklyGoal ?? null),
+    weightUnit: parseWeightUnit(stored.weightUnit ?? null),
+    restSound: stored.restSound !== "false",
+    askRir: stored.askRir === "true",
+    workoutTips: stored.workoutTips !== "false",
+    fatigueMode: parseFatigueMode(stored.fatigueMode),
   };
 }
 export function readTrainingPreferences(): TrainingPreferences {
-  return normalizeTrainingPreferences(
-    local.getItem(storageKeys.restSeconds),
-    local.getItem(storageKeys.haptics),
-    local.getItem(storageKeys.weeklyGoal),
-    local.getItem(storageKeys.weightUnit),
-    local.getItem(storageKeys.restSound),
-    local.getItem(storageKeys.askRir),
-  );
+  return normalizeTrainingPreferences({
+    rest: local.getItem(storageKeys.restSeconds),
+    restOn: local.getItem(storageKeys.restOn),
+    haptics: local.getItem(storageKeys.haptics),
+    weeklyGoal: local.getItem(storageKeys.weeklyGoal),
+    weightUnit: local.getItem(storageKeys.weightUnit),
+    restSound: local.getItem(storageKeys.restSound),
+    askRir: local.getItem(storageKeys.askRir),
+    workoutTips: local.getItem(storageKeys.workoutTips),
+    fatigueMode: local.getItem(storageKeys.fatigueMode),
+  });
 }
 export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
   const next = { ...readTrainingPreferences(), ...change };
   writeStored(storageKeys.restSeconds, String(next.restSeconds));
+  // Written either way once saved, so the upgrade's reading (a saved time
+  // reads as on) never applies again.
+  writeStored(storageKeys.restOn, String(next.restOn));
   writeStored(storageKeys.haptics, String(next.haptics));
   writeStored(
     storageKeys.weeklyGoal,
@@ -77,9 +150,33 @@ export function saveTrainingPreferences(change: Partial<TrainingPreferences>) {
   writeStored(storageKeys.weightUnit, next.weightUnit);
   writeStored(storageKeys.restSound, next.restSound ? null : "false");
   writeStored(storageKeys.askRir, next.askRir ? "true" : null);
+  writeStored(storageKeys.workoutTips, next.workoutTips ? null : "false");
+  writeStored(
+    storageKeys.fatigueMode,
+    next.fatigueMode === "suggest" ? null : next.fatigueMode,
+  );
   // Labels built outside React read the unit from its module, so it changes first.
   setCurrentWeightUnit(next.weightUnit);
   window.dispatchEvent(new Event(TRAINING_PREFERENCES_EVENT));
+}
+
+/**
+ * An exercise's rest time in seconds, 0 meaning no timer (v6 §D7):
+ *
+ * 1. its own time from the library (restOf), if any; 0 turns it off even
+ *    while the timer is on;
+ * 2. otherwise 0 while the timer is off;
+ * 3. otherwise the all-exercises time when it is above 0;
+ * 4. otherwise its tier (restTier).
+ */
+export function effectiveRest(
+  prefs: Pick<TrainingPreferences, "restOn" | "restSeconds">,
+  own: number | undefined,
+  tier: number,
+): number {
+  if (own !== undefined) return own;
+  if (!prefs.restOn) return 0;
+  return prefs.restSeconds > 0 ? prefs.restSeconds : tier;
 }
 /** Rest time as shown on the row: "Off", "0:30", "2:00". */
 export const restLabel = (seconds: number) =>
@@ -109,19 +206,29 @@ export function restWhenOn(last: string | null) {
     ? value
     : DEFAULT_REST_SECONDS;
 }
-/** Switches the rest timer off (time 0) or on again with the time it had. */
+/**
+ * Switches the rest timer off or on, writing restOn. As before v6, off keeps
+ * the time to come back to and sets it to 0, and on restores it (else 2:00),
+ * so the screens that still read `restSeconds > 0` as "on" agree.
+ */
 export function saveRestTimerOn(on: boolean) {
   const { restSeconds } = readTrainingPreferences();
   if (on) {
-    if (restSeconds > 0) return;
     saveTrainingPreferences({
-      restSeconds: restWhenOn(local.getItem(storageKeys.restLastSeconds)),
+      restOn: true,
+      ...(restSeconds > 0
+        ? {}
+        : {
+            restSeconds: restWhenOn(
+              local.getItem(storageKeys.restLastSeconds),
+            ),
+          }),
     });
     return;
   }
   if (restSeconds > 0)
     writeStored(storageKeys.restLastSeconds, String(restSeconds));
-  saveTrainingPreferences({ restSeconds: 0 });
+  saveTrainingPreferences({ restOn: false, restSeconds: 0 });
 }
 /** Whether this browser can vibrate at all; iPhone Safari cannot. */
 export const canVibrate = () =>
