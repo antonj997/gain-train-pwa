@@ -40,6 +40,8 @@ npm run lint
 npm run build
 ```
 
+The Playwright verify harness checks the built app in Chromium and WebKit at 360, 390 and 1100 px, light and dark, on a seeded log: `node scripts/verify/run.cjs --phase p0` (builds `dist/` if missing, `--build` rebuilds; it needs the globally installed Playwright, and `npx playwright install webkit` once if WebKit is missing). It prints PASS/FAIL lines and saves screenshots to `verify-output/<phase>/`.
+
 The optional cloud integration test uses QA_EMAIL and QA_PASSWORD for a disposable confirmed test account. It is skipped when those variables are absent.
 
 ## Code map
