@@ -1183,6 +1183,19 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   min-height: 52px;
   padding-block: var(--gt-space-1);
 }
+/* Coach: "Trött muskel sent i passet", its note, then Av | Föreslå |
+   Automatiskt across the row. */
+.list .coach-fatigue {
+  flex-wrap: wrap;
+  gap: var(--gt-space-2);
+  padding-block: 10px var(--gt-space-3);
+}
+.coach-fatigue .row-main {
+  flex-basis: 100%;
+}
+.coach-fatigue .segmented {
+  width: 100%;
+}
 
 /* History and Progress. */
 .row-selected {

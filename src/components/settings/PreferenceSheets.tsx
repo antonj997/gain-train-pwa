@@ -10,7 +10,11 @@ import Segmented from "@/components/ui/Segmented";
 import Switch from "@/components/ui/Switch";
 import type { MapFigure } from "@/components/muscles/detailed-geometry";
 import { useMapFigure } from "@/hooks/useMapFigure";
-import { saveRestTimerOn, type TrainingPreferences } from "@/lib/preferences";
+import {
+  saveRestTimerOn,
+  type FatigueMode,
+  type TrainingPreferences,
+} from "@/lib/preferences";
 
 type Preferences = TrainingPreferences;
 type SheetProps = {
@@ -127,7 +131,9 @@ export function RestSheet({
 
 /**
  * Settings → Coach (v6 §G1): "Tips i passet" (the warm-up and drop rows in
- * the Set sheet, on by default).
+ * the Set sheet, on by default) and "Trött muskel sent i passet" (decision
+ * 2: Av | Föreslå | Automatiskt, Föreslå by default; the workout's fatigue
+ * row reads it).
  */
 export function CoachSettings({
   preferences,
@@ -135,14 +141,32 @@ export function CoachSettings({
 }: Pick<SheetProps, "preferences" | "onChange">) {
   const { t } = useT();
   return (
-    <div className="rest-setting">
-      <Switch
-        label={t("settings.workoutTips")}
-        hint={t("settings.workoutTipsNote")}
-        checked={preferences.workoutTips}
-        onChange={(workoutTips) => onChange({ workoutTips })}
-      />
-    </div>
+    <>
+      <div className="rest-setting">
+        <Switch
+          label={t("settings.workoutTips")}
+          hint={t("settings.workoutTipsNote")}
+          checked={preferences.workoutTips}
+          onChange={(workoutTips) => onChange({ workoutTips })}
+        />
+      </div>
+      <div className="rest-setting coach-fatigue">
+        <span className="row-main">
+          <span className="rest-setting-label">{t("settings.fatigue")}</span>
+          <span className="row-sub">{t("settings.fatigueNote")}</span>
+        </span>
+        <Segmented<FatigueMode>
+          label={t("settings.fatigue")}
+          value={preferences.fatigueMode}
+          options={[
+            { value: "off", label: t("settings.fatigueOff") },
+            { value: "suggest", label: t("settings.fatigueSuggest") },
+            { value: "auto", label: t("settings.fatigueAuto") },
+          ]}
+          onChange={(fatigueMode) => onChange({ fatigueMode })}
+        />
+      </div>
+    </>
   );
 }
 

@@ -1,11 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createElement } from "react";
+import { createElement, type ElementType } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { MemoryRouter } from "react-router-dom";
 import * as i18n from "../src/i18n";
+import {
+  readTrainingPreferences,
+  saveTrainingPreferences,
+} from "../src/lib/preferences";
 import { storageKeys } from "../src/lib/storage";
-import { loadComponent } from "./helpers/render";
+import { loadComponent, loadModule } from "./helpers/render";
 
 // Settings (v6 §G1) rendered with React's server renderer in Swedish, with
 // the app's contexts replaced by plain values. The device's localStorage is a
@@ -257,4 +261,77 @@ test("the language row says Svenska, som telefonen while it follows the phone", 
   assert.doesNotMatch(text(chosen), /som telefonen/);
   const english = await renderSettings({ followsPhone: true, language: "en" });
   assert.match(text(english), /English, som telefonen/);
+});
+
+test("Coach: Tips i passet is on, and Trött muskel sent i passet has Föreslå pressed by default", async () => {
+  store.clear();
+  const html = await renderSettings();
+  const tips = switchFor(html, "Tips i passet");
+  assert.ok(tips, "the tips switch");
+  assert.match(tips, /aria-checked="true"/);
+  assert.match(tips, /Uppvärmning och drop i setbladet/);
+  assert.match(
+    text(html),
+    /Trött muskel sent i passet En rad under övningen, aldrig en ändring av sig själv/,
+  );
+  const group = html.match(
+    /<div class="segmented" role="radiogroup" aria-label="Trött muskel sent i passet"[\s\S]*?<\/div>/,
+  )?.[0];
+  assert.ok(group, "the fatigue segment");
+  const options = [
+    ...group.matchAll(/aria-checked="(true|false)"[^>]*>([^<]+)</g),
+  ].map((m) => [m[2], m[1]]);
+  assert.deepEqual(options, [
+    ["Av", "false"],
+    ["Föreslå", "true"],
+    ["Automatiskt", "false"],
+  ]);
+});
+
+test("choosing Av saves gt-fatigue-mode = off", async () => {
+  store.clear();
+  const sheets = await loadModule<{ CoachSettings: ElementType }>(
+    "../src/components/settings/PreferenceSheets.tsx",
+    {
+      "@/i18n": i18n,
+      "@/i18n/useT": {
+        useT: () => ({
+          t: (key: i18n.MessageKey) => i18n.translate("sv", key),
+        }),
+      },
+    },
+  );
+  // The elements CoachSettings renders, to reach its Segmented's onChange.
+  let tree: unknown;
+  const Capture = () => {
+    tree = (sheets.CoachSettings as (props: object) => unknown)({
+      preferences: readTrainingPreferences(),
+      onChange: saveTrainingPreferences,
+    });
+    return null;
+  };
+  renderToStaticMarkup(createElement(Capture));
+  type Found = { onChange: (value: string) => void };
+  const find = (node: unknown): Found | null => {
+    if (!node || typeof node !== "object") return null;
+    if (Array.isArray(node)) {
+      for (const child of node) {
+        const hit = find(child);
+        if (hit) return hit;
+      }
+      return null;
+    }
+    const props = (node as { props?: Record<string, unknown> }).props;
+    if (props?.label === "Trött muskel sent i passet" && props.options)
+      return props as Found;
+    return find(props?.children);
+  };
+  const segment = find(tree);
+  assert.ok(segment, "the fatigue Segmented");
+  segment.onChange("off");
+  assert.equal(store.get(storageKeys.fatigueMode), "off");
+  assert.equal(readTrainingPreferences().fatigueMode, "off");
+  segment.onChange("suggest");
+  // The default is stored as nothing.
+  assert.equal(store.get(storageKeys.fatigueMode), undefined);
 });
