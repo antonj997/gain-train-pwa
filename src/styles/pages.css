@@ -1478,6 +1478,29 @@ span.sparkline {
   gap: var(--gt-space-2);
 }
 
+/* v6 P4 (§E2): Library → Scheman's rows: the name, a status line and the
+   status word on its own line ("Aktivt" in the accent). */
+.plans-row .row-title {
+  font-weight: 600;
+}
+.plans-row-line,
+.plans-row-word {
+  display: block;
+}
+.plans-row-word {
+  font-weight: 600;
+}
+.plans-row-word.is-active {
+  color: var(--gt-accent);
+}
+.plans-note {
+  margin: 0;
+  padding-inline: 2px;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+
 /* Training plan and the Train row it feeds. */
 .plan-month {
   flex: 1;

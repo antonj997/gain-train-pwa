@@ -8,7 +8,7 @@ import ExercisesPanel, {
   type PanelRequest,
 } from "@/components/library/ExercisesPanel";
 import DiscoverPanel from "@/components/library/DiscoverPanel";
-import PlanPanel from "@/components/plan/PlanPanel";
+import PlansTab from "@/components/library/PlansTab";
 import {
   LIBRARY_TABS,
   ROUTINE_VIEWS,
@@ -105,7 +105,7 @@ export default function Library() {
       {tab === "routines" && !discover && <RoutinesPanel request={request} />}
       {discover && <DiscoverPanel request={request} />}
       {tab === "exercises" && <ExercisesPanel request={request} />}
-      {tab === "plans" && <PlanPanel />}
+      {tab === "plans" && <PlansTab request={request} />}
     </div>
   );
 }

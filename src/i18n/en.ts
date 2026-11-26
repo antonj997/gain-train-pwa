@@ -2056,6 +2056,16 @@ export const en = {
   "exercises.groupMine": "My exercises",
   "exercises.showHidden": "Show hidden ({count})",
   "exercises.hideHidden": "Hide hidden exercises",
+  "library.planUpcoming": "Upcoming",
+  "library.planPerWeek": {
+    one: "{count} workout a week",
+    other: "{count} workouts a week",
+  },
+  "library.planPerWeekRange": "{min}–{max} workouts a week",
+  "library.planDeloadWeek": "deload wk {week}",
+  "library.planFulfilled": "{done} of {weeks} weeks completed",
+  "library.plansNote":
+    "A plan puts routines on weekdays over a period, with deloads and goals. Only one plan is active at a time.",
 
   // ---- v6 P5 Inställningar ----
 

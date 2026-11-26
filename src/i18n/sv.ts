@@ -2069,6 +2069,16 @@ export const sv = {
   "exercises.groupMine": "Mina övningar",
   "exercises.showHidden": "Visa dolda ({count})",
   "exercises.hideHidden": "Dölj dolda övningar",
+  "library.planUpcoming": "Kommande",
+  "library.planPerWeek": {
+    one: "{count} pass i veckan",
+    other: "{count} pass i veckan",
+  },
+  "library.planPerWeekRange": "{min}–{max} pass i veckan",
+  "library.planDeloadWeek": "deload v. {week}",
+  "library.planFulfilled": "{done} av {weeks} veckor fullföljda",
+  "library.plansNote":
+    "Ett schema lägger rutiner på veckodagar under en period, med deload och mål. Bara ett schema är aktivt åt gången.",
 
   // ---- v6 P5 Inställningar ----
 
