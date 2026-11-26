@@ -36,6 +36,14 @@ export const setSchema = z.object({
    * means "3 or more". Absent (or null) when nobody chose one. See rir.ts.
    */
   rir: z.number().int().min(0).max(RIR_MAX).nullish(),
+  /**
+   * The finer reps in reserve behind a stored 3 (v6's 0–5+ scale): 4, or 5
+   * meaning "5 or more". Read only when rir is 3 (rirOf in rir.ts); a set with
+   * rir 3 and no rirHigh is an older "3 or more". The server trigger checks
+   * rir alone (0–3), so RIR 4 and 5 need no migration, and older apps keep
+   * the field and read "3+", which is still true.
+   */
+  rirHigh: z.union([z.literal(4), z.literal(5)]).nullish(),
   /** Cardio sets (gym machines) only: reps and weight stay null. */
   durationSec: z.number().int().min(0).max(CARDIO_MAX.durationSec).nullish(),
   distanceM: z.number().finite().min(0).max(CARDIO_MAX.distanceM).nullish(),
@@ -77,6 +85,12 @@ export const exerciseSchema = z.object({
   sets: z.array(setSchema).max(100),
   /** Optional rep range a routine plans, such as 8–12. Copied into workouts. */
   repRange: repRangeSchema.optional(),
+  /**
+   * A workout's exercise only: its target was lowered by the fatigue rule
+   * (v6 §D10), so the next target is not based on this session. Removed by
+   * Undo. Unknown exercise fields pass the server trigger; no migration.
+   */
+  fatigue: z.literal("lowered").optional(),
 });
 // Records without a schemaVersion were written by version 1. Bump SCHEMA_VERSION
 // when a release changes what existing fields mean; older apps then open those
@@ -93,6 +107,10 @@ export const exerciseSchema = z.object({
 // workout's note either: rir and note are optional fields older apps keep, and
 // a record with load "none" or a weighted hold fails an older app's validation,
 // so it parks the row (sync's quarantine) instead of misreading it.
+// Not bumped for v6 either: a set's rirHigh, an exercise's fatigue mark and
+// the library's exerciseNotes, weightSteps and restSeconds are optional fields
+// older apps keep, and nothing existing changed meaning (rir stays 0–3, where
+// 3 still means "3 or more"). The server trigger checks none of them.
 export const SCHEMA_VERSION = 2;
 const schemaVersion = z.number().int().positive().optional();
 export const workoutSchema = z.object({
@@ -286,6 +304,10 @@ export const cardioFieldsSchema = z.object({
   distanceUnit: z.string().max(10).optional(),
 });
 export const MAX_CARDIO_SETTINGS = 2000;
+/** An exercise note's longest length, in characters (library exerciseNotes). */
+export const EXERCISE_NOTE_MAX = 300;
+/** The longest rest time an exercise can have, in seconds. */
+export const REST_MAX = 600;
 
 /** The user's synced exercise settings and routine groups. One record per account. */
 export const librarySchema = z.object({
@@ -309,6 +331,32 @@ export const librarySchema = z.object({
    */
   weightUnits: z
     .record(z.string().min(1).max(200), z.string().min(1).max(10))
+    .refine((value) => Object.keys(value).length <= MAX_CARDIO_SETTINGS)
+    .optional(),
+  /**
+   * v6, per exercise id (built-in or custom): the note shown under the
+   * exercise's heading in every workout. Empty text removes the entry
+   * (exercise-settings.ts).
+   */
+  exerciseNotes: z
+    .record(z.string().min(1).max(200), z.string().max(EXERCISE_NOTE_MAX))
+    .refine((value) => Object.keys(value).length <= MAX_CARDIO_SETTINGS)
+    .optional(),
+  /**
+   * v6, per exercise id: its weight step in kg (the pad's −/+, drop and
+   * fatigue rounding, targets). Absent means the equipment's default.
+   */
+  weightSteps: z
+    .record(z.string().min(1).max(200), z.number().finite().positive().max(20))
+    .refine((value) => Object.keys(value).length <= MAX_CARDIO_SETTINGS)
+    .optional(),
+  /**
+   * v6, per exercise id: its own rest time in seconds, 0–600, where 0 turns
+   * the timer off for that exercise. Absent means it follows the rest
+   * preference (preferences.ts, rest-tiers.ts).
+   */
+  restSeconds: z
+    .record(z.string().min(1).max(200), z.number().int().min(0).max(REST_MAX))
     .refine((value) => Object.keys(value).length <= MAX_CARDIO_SETTINGS)
     .optional(),
 });
@@ -562,6 +610,7 @@ export function validate(kind: Kind, payload: unknown): Payload {
       weightUnits: t("val.weightUnits"),
       load: t("val.load"),
       rir: t("val.rir"),
+      rirHigh: t("val.rir"),
       note: t("val.note"),
       section: t("val.section"),
       exercises: t("val.exercises"),
