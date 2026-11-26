@@ -338,31 +338,31 @@ button.ex-row-main {
   border-radius: var(--gt-radius-md);
   background-color: var(--gt-surface-2);
 }
+/* v6 H1: the weekday 12/700 over the number 17/700. */
 .date-tile-band {
   width: 100%;
-  height: 16px;
+  height: 18px;
   background-color: var(--gt-done);
   color: var(--gt-on-accent);
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 16px;
-  letter-spacing: 0.05em;
+  font-size: var(--gt-fs-1);
+  font-weight: 700;
+  line-height: 18px;
   text-align: center;
-  text-transform: uppercase;
 }
-/* A planned day to come: the band is an outline, like a planned day cell. */
+/* A planned day to come: the band is a neutral outline, like a planned day
+   cell (green means done). */
 .date-tile.is-planned .date-tile-band {
   border-radius: var(--gt-radius-md) var(--gt-radius-md) 0 0;
   background-color: transparent;
-  box-shadow: inset 0 0 0 1.5px var(--gt-done);
+  box-shadow: inset 0 0 0 1.5px var(--gt-line-control);
   color: var(--gt-ink-2);
 }
 .date-tile-day {
   display: flex;
   flex: 1;
   align-items: center;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: var(--gt-fs-4);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -455,9 +455,10 @@ button.ex-row-main {
 }
 
 /* Day item: one cell shape for every calendar. Trained is filled with the
-   done colour, today has an accent ring, planned days a done-coloured
-   outline, rest and empty days surface-2; two or more workouts carry the
-   count badge. Rings are inset shadows, so nothing shifts. */
+   done colour, today has an accent ring, planned days a neutral
+   (`--gt-line-control`) ring, a missed day a dashed one, rest and empty days
+   surface-2; two or more workouts carry the count badge and a moved workout
+   the moved badge. Rings are inset shadows, so nothing shifts (v6 H1). */
 .day-cell {
   position: relative;
   display: grid;
@@ -474,7 +475,7 @@ button.ex-row-main {
 }
 .day-cell.is-week {
   width: 100%;
-  height: 40px;
+  height: 44px;
 }
 .day-cell.is-month {
   width: 100%;
@@ -488,12 +489,20 @@ button.ex-row-main {
 }
 .day-cell.is-planned {
   background-color: transparent;
-  box-shadow: inset 0 0 0 2px var(--gt-done);
+  box-shadow: inset 0 0 0 2px var(--gt-line-control);
   color: var(--gt-ink);
   font-weight: 600;
 }
 .day-cell.is-grid.is-planned {
-  box-shadow: inset 0 0 0 1.5px var(--gt-done);
+  box-shadow: inset 0 0 0 1.5px var(--gt-line-control);
+}
+.day-cell.is-missed {
+  border: 1.5px dashed var(--gt-line-control);
+  background-color: transparent;
+  color: var(--gt-ink-2);
+}
+.day-cell.is-grid.is-missed {
+  border-width: 1px;
 }
 .day-cell.is-trained {
   background-color: var(--gt-done);
@@ -513,6 +522,69 @@ button.ex-row-main {
 }
 .day-cell.is-grid.is-today {
   box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+/* Planned today (A2): today's one accent ring, and a 4 px dot under the
+   number instead of a second ring. */
+.day-cell.is-planned.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+.day-cell.is-planned-today::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  pointer-events: none;
+}
+/* Today in the 12 px grids (C1, F2, R8-8): a 4 px dot in the middle, accent
+   on an empty or planned day and ink on a trained one; no ring. */
+.day-cell.is-today-dot::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  pointer-events: none;
+}
+.day-cell.is-trained.is-today-dot::after {
+  background-color: var(--gt-ink);
+}
+/* The moved badge (A2, R8-1): the count badge's shape in the corner on the
+   side the workout came from, its arrow pointing the way it moved. */
+.moved-badge {
+  position: absolute;
+  top: -6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--gt-ink);
+  color: var(--gt-surface);
+  box-shadow: 0 0 0 2px var(--gt-surface);
+  pointer-events: none;
+}
+.moved-badge.is-left {
+  left: -5px;
+}
+.moved-badge.is-right {
+  right: -5px;
+}
+.moved-badge.is-inline {
+  position: static;
+  display: inline-grid;
+  width: 16px;
+  height: 16px;
+  box-shadow: none;
+  vertical-align: -3px;
 }
 .day-count {
   position: absolute;

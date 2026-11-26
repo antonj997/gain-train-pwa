@@ -512,12 +512,6 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   outline: 3px solid var(--gt-accent);
   outline-offset: 2px;
 }
-/* Today with a planned workout keeps its green outline inside the accent ring. */
-.week-card .day-cell.is-planned.is-today {
-  box-shadow:
-    inset 0 0 0 2px var(--gt-done),
-    0 0 0 2px var(--gt-accent);
-}
 /* While its ring is lifted or sliding, the day shows no outline of its own
    (today keeps its accent ring). */
 .week-card .week-days .day-cell.is-ghosted {
