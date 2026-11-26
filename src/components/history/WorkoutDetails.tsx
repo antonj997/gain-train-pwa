@@ -20,6 +20,7 @@ import { countLabel, durationLabel, volumeLabel } from "@/lib/labels";
 import { exercisePath, workoutPath } from "@/lib/routes";
 import { workoutNoteOf } from "@/lib/workout-note";
 import { t } from "@/i18n";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 type Props = {
   id: string;
@@ -113,11 +114,17 @@ export default function WorkoutDetails({
         {w.exercises.map((ex) => {
           const done = ex.sets.filter((s) => s.done);
           return (
-            <section key={ex.id} className="card ex-card" aria-label={ex.name}>
+            <section
+              key={ex.id}
+              className="card ex-card"
+              aria-label={exerciseDisplayName(ex.exerciseId, ex.name)}
+            >
               <Link className="ex-head-link" to={exercisePath(ex.exerciseId)}>
                 <ExerciseAvatar exerciseId={ex.exerciseId} />
                 <span className="ex-titles">
-                  <h3 className="ex-title">{ex.name}</h3>
+                  <h3 className="ex-title">
+                    {exerciseDisplayName(ex.exerciseId, ex.name)}
+                  </h3>
                   <span className="ex-last">
                     {done.length
                       ? countLabel(done.filter((s) => !s.drop).length, "set")

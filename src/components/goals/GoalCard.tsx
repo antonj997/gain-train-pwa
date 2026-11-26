@@ -2,7 +2,7 @@ import GoalRing from "@/components/items/GoalRing";
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import Sparkline from "@/components/Sparkline";
-import { goalLiftText, goalTitle } from "@/data/goals";
+import { goalExerciseName, goalLiftText, goalTitle } from "@/data/goals";
 import { goalTargetLabel } from "@/data/goal-targets";
 import { statusChip } from "@/components/goals/goal-status";
 import { today } from "@/data/model";
@@ -195,7 +195,7 @@ export default function GoalCard({
             </strong>
             <span className="row-sub">
               {t("goals.checkinHow", {
-                name: goal.exerciseName ?? t("goals.lift"),
+                name: goalExerciseName(goal),
               })}
             </span>
           </span>
@@ -257,7 +257,7 @@ export default function GoalCard({
       )}
       {goal.kind === "lift" && goal.exerciseId && (
         <Link className="goal-exercise-link" to={exercisePath(goal.exerciseId)}>
-          {goal.exerciseName ?? t("goals.lift")}
+          {goalExerciseName(goal)}
           <ChevronRight size={16} aria-hidden="true" />
         </Link>
       )}

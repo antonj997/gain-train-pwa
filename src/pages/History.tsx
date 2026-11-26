@@ -57,6 +57,7 @@ import {
 import { t } from "@/i18n";
 import { workoutTitle } from "@/lib/workout-name";
 import MotionList from "@/components/motion/MotionList";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 /** "This week", or the Monday–Sunday span such as "19–25 Oct". */
 function weekTitle(week: string, now: string) {
   if (week === weekStart(now)) return t("history.thisWeek");
@@ -349,7 +350,7 @@ export default function History() {
                 countLabel(doneSetCount(w), "set"),
                 w.exercises
                   .slice(0, 2)
-                  .map((ex) => ex.name)
+                  .map((ex) => exerciseDisplayName(ex.exerciseId, ex.name))
                   .join(", ") || null,
               ]
                 .filter(Boolean)

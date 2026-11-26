@@ -6,6 +6,7 @@ import { countLabel } from "@/lib/labels";
 import Sheet from "@/components/ui/Sheet";
 import SortableSetList from "@/components/SortableSetList";
 import { t } from "@/i18n";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /**
  * "Reorder exercises": the workout's or routine's exercises with their set
@@ -55,7 +56,10 @@ export default function ReorderExercisesSheet({
         sets={order}
         name=""
         handleLabel={(ex, index) =>
-          t("exercise.moveHandle", { name: ex.name, n: index + 1 })
+          t("exercise.moveHandle", {
+            name: exerciseDisplayName(ex.exerciseId, ex.name),
+            n: index + 1,
+          })
         }
         onMovingChange={(value) => {
           moving.current = value;
@@ -73,7 +77,9 @@ export default function ReorderExercisesSheet({
             <div className="reorder-row">
               {handle}
               <span className="reorder-exercise-text">
-                <span className="reorder-exercise-name">{ex.name}</span>
+                <span className="reorder-exercise-name">
+                  {exerciseDisplayName(ex.exerciseId, ex.name)}
+                </span>
                 <span className="row-sub">
                   {countLabel(ex.sets.filter((s) => !isDrop(s)).length, "set")}
                 </span>

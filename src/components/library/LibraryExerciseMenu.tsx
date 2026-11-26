@@ -3,6 +3,7 @@ import { Eye, EyeOff, Share2, Star } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
 import { exerciseSub, type LibraryExercise } from "@/lib/library";
 import { t } from "@/i18n";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /** A Library exercise's menu: favourite, edit, share and hide. */
 export default function LibraryExerciseMenu({
@@ -34,7 +35,7 @@ export default function LibraryExerciseMenu({
     <Sheet
       open={!!menu}
       onClose={onClose}
-      title={menu?.name ?? ""}
+      title={menu ? exerciseDisplayName(menu.id, menu.name) : ""}
       description={menu ? exerciseSub(menu, now) : undefined}
     >
       {menu && (

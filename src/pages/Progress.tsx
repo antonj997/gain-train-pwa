@@ -32,6 +32,7 @@ import { useExerciseMenu } from "@/components/gestures/ExerciseMenu";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
 import { useWeightUnits } from "@/hooks/useWeightUnits";
 import { libraryExercises } from "@/lib/library";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 const periods = [
   { value: "4w", label: "progress.p4w", before: "progress.before4w" },
@@ -125,8 +126,10 @@ export default function Progress() {
     [prs, period.start, period.end],
   );
   const query = search.trim().toLocaleLowerCase();
-  const shown = rows.filter((row) =>
-    row.name.toLocaleLowerCase().includes(query),
+  const shown = rows.filter(
+    (row) =>
+      row.name.toLocaleLowerCase().includes(query) ||
+      exerciseDisplayName(row.id, row.name).toLocaleLowerCase().includes(query),
   );
   const hasData = items.length > 0 || cardioItems.length > 0;
   const current = periods.find((p) => p.value === range)!;
@@ -204,7 +207,7 @@ export default function Progress() {
                       className="record-link"
                       to={historyPath(best.workoutId, best.set.id)}
                       aria-label={t("progress.recordOpen", {
-                        name: best.name,
+                        name: exerciseDisplayName(best.exerciseId, best.name),
                         set,
                         kinds: rankedKindsText(best.kinds),
                         date:
@@ -218,7 +221,7 @@ export default function Progress() {
                       })}
                     >
                       <RecordPill quiet={best.top === "e1rm"}>
-                        {best.name} {set}
+                        {exerciseDisplayName(best.exerciseId, best.name)} {set}
                       </RecordPill>
                     </Link>
                   );
@@ -246,7 +249,7 @@ export default function Progress() {
                   <ExerciseRow
                     key={row.id}
                     exerciseId={row.id}
-                    title={row.name}
+                    title={exerciseDisplayName(row.id, row.name)}
                     meta={`${row.best} · ${countLabel(row.sessions, "session")}`}
                     end={
                       <>

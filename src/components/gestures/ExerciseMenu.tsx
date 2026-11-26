@@ -27,6 +27,7 @@ import { exercisePath, workoutPath } from "@/lib/routes";
 import { autoWorkoutName } from "@/lib/workout-name";
 import ContextMenu, { type MenuItem } from "./ContextMenu";
 import { t } from "@/i18n";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /** What a row's menu needs to know about its exercise. */
 export type MenuExercise = {
@@ -145,13 +146,13 @@ export function useExerciseMenu({
             await setHidden(e.id, !isHidden);
             notify(
               t(isHidden ? "exercises.back" : "exercises.hidden", {
-                name: e.name,
+                name: exerciseDisplayName(e.id, e.name),
               }),
             );
           } catch {
             notify.error(
               t(isHidden ? "exercises.unhideFailed" : "exercises.hideFailed", {
-                name: e.name,
+                name: exerciseDisplayName(e.id, e.name),
               }),
             );
           }
@@ -183,8 +184,14 @@ export function useExerciseMenu({
       {workoutStart.confirmation}
       <ContextMenu
         anchor={open?.anchor ?? null}
-        title={open?.exercise.name ?? ""}
-        label={t("menu.optionsFor", { name: open?.exercise.name ?? "" })}
+        title={
+          open ? exerciseDisplayName(open.exercise.id, open.exercise.name) : ""
+        }
+        label={t("menu.optionsFor", {
+          name: open
+            ? exerciseDisplayName(open.exercise.id, open.exercise.name)
+            : "",
+        })}
         items={open ? items(open.exercise) : []}
         onClose={() => setOpen(null)}
       />

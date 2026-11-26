@@ -2052,4 +2052,7 @@ export const sv = {
   "shareSheet.linkHint":
     "Länken öppnar rutinen i Upptäck för den som är inloggad i Gain Train.",
   "shareSheet.offline": "Du är offline. Delning kräver en anslutning.",
+
+  // ---- v6 P0 Grunden ----
+  "exercise.own": "egen",
 } satisfies Messages;

@@ -9,6 +9,7 @@ import {
 import { isDrop } from "./drops";
 import { catalogueById } from "./catalogue";
 import { t } from "../i18n";
+import { exerciseDisplayName } from "../lib/exercise-name";
 
 type Records = Record<string, RecordDoc> | readonly RecordDoc[];
 const list = (records: Records) =>
@@ -127,7 +128,10 @@ export function nextSetLabel({ exercises }: HasSets) {
       if (isDrop(set)) continue;
       number++;
       if (!set.done)
-        return t("badge.nextSet", { exercise: exercise.name, n: number });
+        return t("badge.nextSet", {
+          exercise: exerciseDisplayName(exercise.exerciseId, exercise.name),
+          n: number,
+        });
     }
   }
   return null;

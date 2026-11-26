@@ -10,6 +10,7 @@ import Sheet from "@/components/ui/Sheet";
 import SortableSetList from "@/components/SortableSetList";
 import { t } from "@/i18n";
 import type { WeightUnit } from "@/lib/units";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 
 /**
  * The sets in the order of `parentIds`, each followed by its drops. A set that
@@ -63,7 +64,7 @@ export default function ReorderSetsSheet({
     >
       <SortableSetList
         sets={sets.filter((set) => !isDrop(set))}
-        name={exercise.name}
+        name={exerciseDisplayName(exercise.exerciseId, exercise.name)}
         onMovingChange={(value) => {
           moving.current = value;
         }}

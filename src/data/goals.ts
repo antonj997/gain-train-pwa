@@ -35,6 +35,7 @@ import {
   trendPerDay,
 } from "../lib/goal-pace";
 import { t } from "../i18n";
+import { exerciseDisplayName } from "../lib/exercise-name";
 
 export type GoalItem = Goal & { id: string };
 
@@ -394,12 +395,24 @@ export function goalLiftText(
   return `${body ? "+" : ""}${kg} × ${goal.reps ?? 1}`;
 }
 
+/**
+ * A lift goal's exercise as shown (the Swedish name of a built-in in
+ * Swedish); the goal keeps the stored name.
+ */
+export function goalExerciseName(
+  goal: Pick<Goal, "exerciseId" | "exerciseName">,
+  fallback = t("goals.lift"),
+) {
+  const name = goal.exerciseName ?? fallback;
+  return goal.exerciseId ? exerciseDisplayName(goal.exerciseId, name) : name;
+}
+
 /** A goal's name for lists: "Bench Press 110 kg × 1" or "Bodyweight 80 kg" (or lb). */
 export function goalTitle(goal: Goal) {
   const kg = (value: number) => formatWeight(value, getWeightUnit(), 2);
   if (goal.kind === "bodyweight")
     return t("goals.titleBodyweight", { kg: kg(goal.targetKg) });
-  const name = goal.exerciseName ?? t("goals.lift");
+  const name = goalExerciseName(goal);
   return goal.estimated
     ? t("goals.titleEstimated", { name, kg: kg(goal.targetKg) })
     : `${name} ${kg(goal.targetKg)} × ${goal.reps ?? 1}`;

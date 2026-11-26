@@ -2038,4 +2038,8 @@ export const en = {
   "shareSheet.linkHint":
     "The link opens the routine in Discover for anyone signed in to Gain Train.",
   "shareSheet.offline": "You're offline. Sharing needs a connection.",
+
+  // ---- v6 P0 Grunden ----
+  /** The subtitle's mark on your own exercise: "cable · Core · own". */
+  "exercise.own": "own",
 };
