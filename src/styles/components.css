@@ -207,15 +207,21 @@
   width: calc(
     (100% - (var(--seg-count) + 1) * var(--gt-space-1)) / var(--seg-count)
   );
-  border: 1px solid var(--gt-accent);
+  border: 1.5px solid var(--gt-sel-line);
   border-radius: var(--gt-radius-sm);
-  background-color: var(--gt-accent-soft);
+  background-color: var(--gt-sel-bg);
   transform: translateX(calc(var(--seg-index) * (100% + var(--gt-space-1))));
   transition: transform var(--gt-slide);
   pointer-events: none;
 }
 .segmented-thumb.is-disabled {
   opacity: 0.45;
+}
+/* A pressed option that stays neutral ("Ingen" in a level picker): chosen,
+   but only the levels that set something read in accent. */
+.segmented-thumb.is-neutral {
+  border-color: var(--gt-line-strong);
+  background-color: var(--gt-surface);
 }
 .segmented button {
   flex: 1 1 0;
@@ -235,7 +241,10 @@
     border-color var(--gt-motion);
 }
 .segmented button[aria-checked="true"] {
-  color: var(--gt-accent);
+  color: var(--gt-sel-ink);
+}
+.segmented button.is-neutral[aria-checked="true"] {
+  color: var(--gt-ink);
 }
 .segmented button:disabled {
   opacity: 0.45;
@@ -243,6 +252,26 @@
 }
 .segmented button:focus-visible {
   outline-offset: 1px;
+}
+
+/* Filter chip: a 44px pill that filters a list. Pressed is the one selected
+   look (H1): soft accent, a 1.5px accent line and accent text; the padding
+   gives up the half pixel the thicker line takes. */
+.filter-chip {
+  min-height: 44px;
+  padding: 0 var(--gt-space-4);
+  border: 1px solid var(--gt-line);
+  border-radius: 999px;
+  background-color: var(--gt-surface);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.filter-chip[aria-pressed="true"] {
+  padding: 0 calc(var(--gt-space-4) - 0.5px);
+  border: 1.5px solid var(--gt-sel-line);
+  background-color: var(--gt-sel-bg);
+  color: var(--gt-sel-ink);
 }
 
 /* Switch: a labelled row with a track and thumb (ui/Switch.tsx). The off track

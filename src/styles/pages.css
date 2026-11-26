@@ -1437,21 +1437,7 @@ span.sparkline {
   flex-wrap: wrap;
   gap: var(--gt-space-2);
 }
-.filter-chip {
-  min-height: 44px;
-  padding: 0 var(--gt-space-4);
-  border: 1px solid var(--gt-line);
-  border-radius: 999px;
-  background-color: var(--gt-surface);
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
-}
-.filter-chip[aria-pressed="true"] {
-  border-color: var(--gt-ink);
-  background-color: var(--gt-ink);
-  color: var(--gt-ground);
-}
+/* .filter-chip itself is a primitive (styles/components.css). */
 /* A single row of chips that scrolls sideways instead of wrapping. */
 .facet-chips {
   display: flex;
