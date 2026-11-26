@@ -513,3 +513,67 @@ test("the ↑ mark in a workout row is drawn in the accent", () => {
     /\.set-line \.set-up \{\s*color: var\(--gt-accent\);/,
   );
 });
+
+test("with RIR on, a set has an RIR box showing – and no check-time chooser", async () => {
+  const html = await setLine({
+    set: { ...model.newSet(), weight: 75, reps: 8 },
+    askRir: true,
+  });
+  assert.match(
+    html,
+    /<button[^>]*class="set-field set-rir-box is-empty"[^>]*data-pad-field="rir"[^>]*aria-label="Bench Press set 1 RIR: No RIR"/,
+  );
+  assert.match(html, /set-rir-box[^>]*>(<[^>]*>)*–/);
+  assert.doesNotMatch(html, /set-rir-ask/);
+  assert.match(html, /class="set-line has-rir/);
+  // A chosen RIR reads in the box, also on a checked set.
+  const checked = await setLine({
+    set: {
+      ...model.newSet(),
+      weight: 75,
+      reps: 8,
+      done: true,
+      rir: 3,
+      rirHigh: 5,
+    },
+    askRir: true,
+  });
+  assert.match(checked, /set-rir-box"[^>]*>(<[^>]*>)*5\+/);
+  // A drop has an empty cell instead.
+  const drop = await setLine({
+    set: { ...model.newSet(), weight: 60, reps: 8, drop: true },
+    askRir: true,
+  });
+  assert.doesNotMatch(drop, /set-rir-box/);
+});
+
+test("with RIR off there is no RIR field", async () => {
+  const html = await setLine({
+    set: { ...model.newSet(), weight: 75, reps: 8, rir: 2 },
+  });
+  assert.doesNotMatch(html, /set-rir-box|data-pad-field="rir"|set-rir-ask/);
+  assert.doesNotMatch(html, /has-rir/);
+});
+
+test("the card heads an RIR column only when RIR is on", async () => {
+  assert.match(
+    await exerciseCard({ askRir: true }),
+    /class="set-columns has-rir"[\s\S]*?<span>RIR<\/span><span>Done<\/span>/,
+  );
+  assert.doesNotMatch(await exerciseCard(), /<span>RIR<\/span>/);
+});
+
+test("the pad's RIR mode has the key grid's fixed height (decision 5)", () => {
+  const sheet = css("src/styles/workout.css");
+  assert.match(
+    sheet,
+    /--pad-body-h: calc\(4 \* var\(--pad-key-h\) \+ 3 \* var\(--pad-gap\)\);/,
+  );
+  assert.match(sheet, /\.number-pad-grid \{[^}]*height: var\(--pad-body-h\);/);
+  assert.match(sheet, /\.number-pad-rir \{[^}]*height: var\(--pad-body-h\);/);
+  // The thumb glides on the motion tokens, and not under reduced motion.
+  assert.match(
+    sheet,
+    /@media \(prefers-reduced-motion: no-preference\) \{\s*\.rir-carrier \{\s*transition: transform var\(--gt-dur-quick\) var\(--gt-ease-out\);/,
+  );
+});

@@ -1533,6 +1533,129 @@
   }
 }
 
+/*
+ * v6 B12: the pad's RIR mode. Its body is --pad-body-h, the key grid's four
+ * rows, exactly (decision 5): the slider block above, the two keys (each two
+ * columns wide) in the grid's last row.
+ */
+.number-pad-rir {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--pad-gap);
+  height: var(--pad-body-h);
+}
+.number-pad-rir-keys {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--pad-gap);
+}
+.rir-slider {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  padding-inline: var(--gt-space-1);
+}
+.rir-track {
+  position: relative;
+  height: 44px;
+  border-radius: 22px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+.rir-track:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 3px;
+}
+/* The rail runs between the thumb's centre at 0 and at 5+. */
+.rir-rail {
+  position: absolute;
+  top: 50%;
+  right: 22px;
+  left: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--gt-line-strong);
+  transform: translateY(-50%);
+}
+.rir-tick {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--tick) * 100%);
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  background-color: var(--gt-ink-3);
+  transform: translate(-50%, -50%);
+}
+/* Carries the thumb: as wide as its travel, so a translate of the carrier's
+   own width times the value lands it on the tick. */
+.rir-carrier {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - 44px);
+  height: 44px;
+  transform: translateX(calc(var(--rir-pos) * 100%));
+  pointer-events: none;
+}
+.rir-thumb {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-4);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.rir-track[data-unset] .rir-thumb {
+  background-color: var(--gt-surface);
+  box-shadow: inset 0 0 0 1.5px var(--gt-line-strong);
+  color: var(--gt-ink-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rir-carrier {
+    transition: transform var(--gt-dur-quick) var(--gt-ease-out);
+  }
+}
+.rir-labels {
+  position: relative;
+  height: 18px;
+  margin: 2px 22px 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+}
+.rir-labels > span {
+  position: absolute;
+  top: 0;
+  left: calc(var(--tick) * 100%);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.rir-labels > span:first-child {
+  transform: translateX(-22px);
+}
+.rir-labels > span:last-child {
+  transform: translateX(calc(-100% + 22px));
+}
+.rir-help {
+  min-height: 2.6em;
+  margin: var(--gt-space-1) 0 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.3;
+  text-align: center;
+}
+
 /* The top bar's "3 of 9 sets": the numbers roll (RollingNumber). */
 .rolling-number {
   position: relative;
@@ -1635,20 +1758,59 @@
   font-size: var(--gt-fs-4);
 }
 
-/* The set's RIR, small and muted under its result. */
-.set-rir {
-  position: absolute;
-  right: 0;
-  bottom: 1px;
-  left: 0;
-  z-index: 1;
-  color: var(--gt-ink-3);
-  font-size: 10px;
+/*
+ * v6 B12: with "Fråga efter RIR" on, a set row has a fourth box, RIR, after
+ * the count: like kg and reps, a 44px field ("–" until filled) that opens the
+ * pad in RIR mode. A checked set's RIR stays changeable (it is picked after
+ * the set). A drop has an empty cell in its place.
+ */
+:is(.set-line, .set-columns).has-rir {
+  --set-rir-w: 44px;
+  grid-template-columns:
+    44px minmax(0, 1fr) var(--set-slot-w) var(--set-load-w)
+    var(--set-count-w) var(--set-rir-w) var(--set-check-w);
+}
+@media (max-width: 379px) {
+  :is(.set-line, .set-columns).has-rir {
+    --set-slot-w: 16px;
+    --set-check-w: 44px;
+  }
+}
+@media (max-width: 359px) {
+  :is(.set-line, .set-columns).has-rir {
+    grid-template-columns:
+      44px var(--set-slot-w) minmax(0, 1fr) minmax(0, 1fr)
+      var(--set-rir-w) var(--set-check-w);
+  }
+}
+.set-rir-box {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-  pointer-events: none;
+  touch-action: manipulation;
+}
+.set-rir-box.is-empty {
+  color: var(--gt-ink-3);
+}
+/* The pad's ring, as on a kg or reps field it types. */
+.set-rir-box[data-pad-target] {
+  border-color: var(--gt-accent);
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+}
+/* A checked row reads as text, but its RIR can still be picked. */
+.set-line.is-done .set-rir-box {
+  background-color: transparent;
 }
 
 /* A rep record or an estimated 1RM: a quieter mark than the heaviest weight's
@@ -1658,53 +1820,6 @@
   box-shadow: inset 0 0 0 1.5px
     color-mix(in srgb, var(--gt-warm-fg) 45%, transparent);
   color: color-mix(in srgb, var(--gt-warm-fg) 80%, var(--gt-ink-2));
-}
-
-/* Ask for RIR after a check: a compact line under the row for 4 s. It grows
-   in below the row, so it covers nothing. */
-.set-rir-ask {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  overflow: hidden;
-  padding: 0 var(--gt-space-1);
-}
-.set-rir-ask-title {
-  flex: none;
-  margin-right: var(--gt-space-1);
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
-}
-.set-rir-choice,
-.set-rir-skip {
-  flex: none;
-  min-width: 44px;
-  height: 40px;
-  padding: 0 var(--gt-space-2);
-  border: 1px solid var(--gt-line-strong);
-  border-radius: var(--gt-radius-sm);
-  background-color: var(--gt-surface);
-  color: var(--gt-ink);
-  font-size: var(--gt-fs-3);
-  font-weight: 600;
-  touch-action: manipulation;
-}
-.set-rir-choice[aria-pressed="true"] {
-  border-color: var(--gt-accent);
-  background-color: var(--gt-accent);
-  color: var(--gt-on-accent);
-}
-.set-rir-skip {
-  display: grid;
-  place-items: center;
-  margin-left: auto;
-  padding: 0;
-  border-color: transparent;
-  background: none;
-  color: var(--gt-ink-2);
 }
 
 /* The Set sheet's quiet way to RIR until it is used. */

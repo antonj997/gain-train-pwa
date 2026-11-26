@@ -45,6 +45,8 @@ import { primeRestSound } from "@/lib/rest-sound";
 import Segmented from "@/components/ui/Segmented";
 import { playStep } from "@/components/workout/set-motion";
 import { exerciseDisplayName } from "@/lib/exercise-name";
+import { rirOf, withRir } from "@/lib/rir";
+import RirSlider from "@/components/workout/RirSlider";
 
 /** How long a key's hint replaces the subline (v6 B1). */
 const HINT_MS = 1500;
@@ -463,7 +465,29 @@ export default function NumberPad({
     checkHead(next.setId);
   };
 
-  keysRef.current = (k) => (k === "next" ? onNext() : press(k));
+  // v6 B12: "Klar ✓" checks the set with the RIR chosen; "Hoppa över"
+  // checks it without one. A checked set's RIR (picked after) just closes.
+  const doneRir = () => {
+    primeRestSound();
+    if (set.done) return close();
+    if (next.kind === "check") checkHead(next.setId);
+    else close();
+  };
+  const skipRir = () => {
+    if (set.done) return close();
+    changeSet(set.id, (s) => withRir(s, null));
+    doneRir();
+  };
+
+  keysRef.current = (k) => {
+    if (field === "rir") {
+      // A keyboard's 0–5 picks the RIR, Enter is Klar.
+      if (k === "next") return doneRir();
+      if (/^[0-5]$/.test(k)) changeSet(set.id, (s) => withRir(s, Number(k)));
+      return;
+    }
+    return k === "next" ? onNext() : press(k);
+  };
 
   // A drag on the handle moves the pad (and the dock above it) down: let go
   // past 90 px, or faster than 0.6 px/ms, and it closes; else it springs back.
@@ -616,109 +640,136 @@ export default function NumberPad({
           onChange={(value) => moveTo({ setId: set.id, field: value })}
         />
       </div>
-      <div className="number-pad-grid">
-        {DIGITS.map((row, r) => (
-          <Fragment key={r}>
-            {row.map((digit) => (
-              <button
-                key={digit}
-                type="button"
-                className="number-pad-key"
-                {...keyPress(() => press(digit))}
-              >
-                {digit}
-              </button>
-            ))}
-            {r === 0 && (
-              <button
-                type="button"
-                className="number-pad-key is-step"
-                aria-label={stepName(-1)}
-                {...keyPress(() => step(-1))}
-              >
-                {stepLabel(-1)}
-              </button>
-            )}
-            {r === 1 && (
-              <button
-                type="button"
-                className="number-pad-key is-step"
-                aria-label={stepName(1)}
-                {...keyPress(() => step(1))}
-              >
-                {stepLabel(1)}
-              </button>
-            )}
-            {r === 2 &&
-              (drop ? (
+      {field === "rir" ? (
+        // v6 B12: the slider in the keys' place, in the same fixed height.
+        <div className="number-pad-rir">
+          <RirSlider
+            value={rirOf(set)}
+            onChange={(value) => changeSet(set.id, (s) => withRir(s, value))}
+          />
+          <div className="number-pad-rir-keys">
+            <button
+              type="button"
+              className="number-pad-key is-step"
+              onClick={skipRir}
+            >
+              {t("pad.rirSkip")}
+            </button>
+            <button
+              type="button"
+              className="number-pad-key is-go is-check"
+              onClick={doneRir}
+            >
+              {t("pad.check")}
+              <Check size={20} strokeWidth={2.5} aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="number-pad-grid">
+          {DIGITS.map((row, r) => (
+            <Fragment key={r}>
+              {row.map((digit) => (
                 <button
+                  key={digit}
                   type="button"
-                  className="number-pad-key is-step is-same"
-                  aria-label={t("pad.dropMinusLabel")}
-                  disabled={above?.weight == null}
-                  onClick={minus20}
+                  className="number-pad-key"
+                  {...keyPress(() => press(digit))}
                 >
-                  {t("pad.dropMinus")}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="number-pad-key is-step is-same"
-                  disabled={!prior}
-                  onClick={same}
-                >
-                  {t("pad.same")}
+                  {digit}
                 </button>
               ))}
-          </Fragment>
-        ))}
-        <button
-          type="button"
-          // Reps take no decimal: the key stays, muted, and says why.
-          className={`number-pad-key${format.decimals === 0 ? " is-muted" : ""}`}
-          aria-label={t("pad.decimal")}
-          aria-disabled={format.decimals === 0 || undefined}
-          {...keyPress(() => press("decimal"))}
-        >
-          {mark}
-        </button>
-        <button
-          type="button"
-          className="number-pad-key"
-          {...keyPress(() => press("0"))}
-        >
-          0
-        </button>
-        <button
-          type="button"
-          className="number-pad-key"
-          aria-label={t("pad.backspace")}
-          {...keyPress(() => press("backspace"))}
-        >
-          <Delete size={24} strokeWidth={1.75} aria-hidden="true" />
-        </button>
-        {/* Next and Check act on the click, not as the finger lands: they
+              {r === 0 && (
+                <button
+                  type="button"
+                  className="number-pad-key is-step"
+                  aria-label={stepName(-1)}
+                  {...keyPress(() => step(-1))}
+                >
+                  {stepLabel(-1)}
+                </button>
+              )}
+              {r === 1 && (
+                <button
+                  type="button"
+                  className="number-pad-key is-step"
+                  aria-label={stepName(1)}
+                  {...keyPress(() => step(1))}
+                >
+                  {stepLabel(1)}
+                </button>
+              )}
+              {r === 2 &&
+                (drop ? (
+                  <button
+                    type="button"
+                    className="number-pad-key is-step is-same"
+                    aria-label={t("pad.dropMinusLabel")}
+                    disabled={above?.weight == null}
+                    onClick={minus20}
+                  >
+                    {t("pad.dropMinus")}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="number-pad-key is-step is-same"
+                    disabled={!prior}
+                    onClick={same}
+                  >
+                    {t("pad.same")}
+                  </button>
+                ))}
+            </Fragment>
+          ))}
+          <button
+            type="button"
+            // Reps take no decimal: the key stays, muted, and says why.
+            className={`number-pad-key${format.decimals === 0 ? " is-muted" : ""}`}
+            aria-label={t("pad.decimal")}
+            aria-disabled={format.decimals === 0 || undefined}
+            {...keyPress(() => press("decimal"))}
+          >
+            {mark}
+          </button>
+          <button
+            type="button"
+            className="number-pad-key"
+            {...keyPress(() => press("0"))}
+          >
+            0
+          </button>
+          <button
+            type="button"
+            className="number-pad-key"
+            aria-label={t("pad.backspace")}
+            {...keyPress(() => press("backspace"))}
+          >
+            <Delete size={24} strokeWidth={1.75} aria-hidden="true" />
+          </button>
+          {/* Next and Check act on the click, not as the finger lands: they
             move the pad or check the set, so a thumb resting on them must
             not fire, and the click is the tap that lets iPhone Safari play
             the rest's tone later. */}
-        <button
-          type="button"
-          className={`number-pad-key is-go${willCheck ? " is-check" : ""}`}
-          onClick={onNext}
-        >
-          {willCheck ? (
-            <>
-              {t("pad.check")}
-              <Check size={20} strokeWidth={2.5} aria-hidden="true" />
-            </>
-          ) : (
-            <>
-              {t("pad.next")}
-              <ChevronRight size={18} strokeWidth={2.5} aria-hidden="true" />
-            </>
-          )}
-        </button>
-      </div>
+          <button
+            type="button"
+            className={`number-pad-key is-go${willCheck ? " is-check" : ""}`}
+            onClick={onNext}
+          >
+            {willCheck ? (
+              <>
+                {t("pad.check")}
+                <Check size={20} strokeWidth={2.5} aria-hidden="true" />
+              </>
+            ) : (
+              <>
+                {t("pad.next")}
+                <ChevronRight size={18} strokeWidth={2.5} aria-hidden="true" />
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

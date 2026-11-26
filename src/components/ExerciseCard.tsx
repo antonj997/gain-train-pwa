@@ -412,6 +412,8 @@ function ExerciseCard({
     perLeg: isPerLeg(ex.exerciseId),
     unit: weightUnit,
   });
+  // v6 B12: "Fråga efter RIR" adds an RIR column after the count.
+  const rirColumn = askRir && mode === "log" && !cardio;
   const workingSets = sets.filter(
     (s) => s.section === "working" && !isDrop(s),
   ).length;
@@ -564,7 +566,7 @@ function ExerciseCard({
         </div>
       ) : (
         <div
-          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}${hold ? " has-hold" : ""}`}
+          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}${hold ? " has-hold" : ""}${rirColumn ? " has-rir" : ""}`}
           data-mode={mode}
         >
           <span>{t("exercise.colSet")}</span>
@@ -595,6 +597,7 @@ function ExerciseCard({
             {countHeading(sets, hold)}
             <ChevronDown size={14} aria-hidden="true" />
           </button>
+          {rirColumn && <span>{t("exercise.colRir")}</span>}
           {mode === "log" && <span>{t("exercise.colDone")}</span>}
         </div>
       )}
@@ -638,7 +641,8 @@ function ExerciseCard({
                 : undefined
             }
             onFill={mode === "log" ? fillSet : undefined}
-            askRir={askRir && mode === "log"}
+            askRir={rirColumn}
+            weightStep={weightStep}
             marker={loadMarker(s, defaultKey)}
             bodyWeightKg={mode === "log" ? bodyWeightKg : null}
             weightUnit={weightUnit}
