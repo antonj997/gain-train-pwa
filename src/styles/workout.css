@@ -1874,14 +1874,15 @@
 }
 
 /* With the RIR column the Previous column can be narrower than 44px: its
-   tap target reaches into the gaps beside it. */
+   tap target reaches over the gap and the mark slot (only the ↑ or record
+   mark, never a control) up to the load field. */
 .set-line .set-previous.is-fill {
   position: relative;
 }
 .set-line .set-previous.is-fill::before {
   content: "";
   position: absolute;
-  inset: 0 -14px 0 -4px;
+  inset: 0 -20px 0 -4px;
 }
 /* The pad's handle: a 44px target around the 24px strip. */
 .number-pad-grab {
