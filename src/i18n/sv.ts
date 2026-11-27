@@ -2100,6 +2100,25 @@ export const sv = {
   "history.dragHint":
     "Håll in och dra för att välja en period, en vecka eller en veckodag över flera veckor.",
   "history.planSince": "{plan}: {workouts} sedan {date}",
+  "history.listLabel": "Pass",
+  "history.done": "Gjort",
+  "history.plannedTab": "Planerat · {count}",
+  "history.olderWeeks": "Äldre veckor",
+  "history.beforePlan": "före schemat",
+  "history.recordCount": {
+    one: "{count} rekord",
+    other: "{count} rekord",
+  },
+  "history.search": "Sök pass",
+  "history.searchPlaceholder": "Sök pass, övning eller datum",
+  "history.searchMatches": {
+    one: "{count} pass matchar ”{query}”",
+    other: "{count} pass matchar ”{query}”",
+  },
+  "history.searchNone": "Inga pass matchar ”{query}”",
+  "history.plannedTodayWeek": "I dag · vecka {week}",
+  "history.plannedWeek": "Vecka {week}",
+  "history.nothingPlanned": "Inget planerat de närmaste två veckorna.",
 
   // ---- v6 P3 Muskler ----
 

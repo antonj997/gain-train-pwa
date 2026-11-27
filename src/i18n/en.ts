@@ -2092,6 +2092,26 @@ export const en = {
   "history.dragHint":
     "Press and hold, then drag to choose a period, a week or a weekday across weeks.",
   "history.planSince": "{plan}: {workouts} since {date}",
+  /** C1: the lists under the calendar. */
+  "history.listLabel": "Workouts",
+  "history.done": "Done",
+  "history.plannedTab": "Planned · {count}",
+  "history.olderWeeks": "Older weeks",
+  "history.beforePlan": "before the plan",
+  "history.recordCount": {
+    one: "{count} record",
+    other: "{count} records",
+  },
+  "history.search": "Search workouts",
+  "history.searchPlaceholder": "Search workouts, exercises or dates",
+  "history.searchMatches": {
+    one: "{count} workout matches “{query}”",
+    other: "{count} workouts match “{query}”",
+  },
+  "history.searchNone": "No workouts match “{query}”",
+  "history.plannedTodayWeek": "Today · week {week}",
+  "history.plannedWeek": "Week {week}",
+  "history.nothingPlanned": "Nothing planned in the next two weeks.",
 
   // ---- v6 P3 Muskler ----
 
