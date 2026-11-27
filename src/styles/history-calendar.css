@@ -143,10 +143,21 @@
   row-gap: var(--hm-gap);
   padding-top: calc(var(--hm-label) + var(--hm-gap) + 2px);
   color: var(--gt-ink-2);
-  font-size: 10px;
+  font-size: var(--gt-fs-1);
   font-weight: 600;
   line-height: var(--hm-size);
   text-align: center;
+}
+/* The grid is one tab stop (C1: no square is a button); the keyboard's
+   cursor is an accent outline on its square. */
+.heatmap-grid:focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.heatmap-day.is-cursor {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 1px;
 }
 /* The only part that scrolls sideways, so the page never does. */
 .heatmap-scroll {
@@ -495,6 +506,35 @@
 }
 .legend-mark.is-today {
   box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+/* Today in the compact grid: a 4 px dot in the middle of the square (R8-8). */
+.legend-mark.is-today-dot {
+  position: relative;
+  background-color: var(--gt-surface-2);
+}
+.legend-mark.is-today-dot::after {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  content: "";
+}
+/* C1: the hint while nothing is chosen, and the plan's line. */
+.history-hint,
+.history-plan-line {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.history-title-count {
+  margin-left: var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
 }
 .history-caption-line {
   display: flex;

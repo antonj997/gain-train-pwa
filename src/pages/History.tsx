@@ -8,7 +8,8 @@ import {
   historyCalendarBounds,
   historySelection,
 } from "@/lib/history-calendar";
-import { periodRangeLabel } from "@/lib/history-caption";
+import { periodRangeLabel, planSinceLine } from "@/lib/history-caption";
+import { plannedFor } from "@/data/plans";
 import { daysBetween } from "@/lib/dates";
 import { summarize } from "@/data/summary";
 import PeriodSummary from "@/components/history/PeriodSummary";
@@ -110,6 +111,15 @@ export default function History() {
   // Planned days ahead open Train's day sheet to move or skip them.
   const days = usePlanDaySheet({ day: now, undoScope: PLAN_SCOPE });
   const maxMonth = calendarMonthLimit(days.plans, now);
+  // "Styrkeblock: 13 pass sedan 19 okt" under the compact grid (C1).
+  const runningPlan = plannedFor(days.plans, now)?.plan ?? null;
+  const planLine = runningPlan
+    ? planSinceLine(
+        runningPlan,
+        records.map((r) => r.payload.date),
+        now,
+      )
+    : null;
   // One record per exercise per workout, strongest first; one badge per workout.
   const prs = useMemo(() => rankedRecords(records), [records]);
   const bests = useMemo(() => recordBadges(prs), [prs]);
@@ -246,11 +256,13 @@ export default function History() {
         picking={picking}
         onPicking={setPicking}
         periodShown={!!chosenPeriod}
+        planLine={planLine}
       />
       {chosenPeriod && periodTotals && (
         <PeriodSummary
           label={chosenPeriod.label}
           days={chosenPeriod.days}
+          weeks={selection?.kind === "dates"}
           workouts={filtered.length}
           sets={periodTotals.sets}
           volumeKg={periodTotals.volumeKg}

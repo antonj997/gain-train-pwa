@@ -540,7 +540,7 @@ export const sv = {
   "history.chooseMonthYear": "Välj månad och år",
   "history.previousYear": "Föregående år",
   "history.nextYear": "Nästa år",
-  "history.clearToYear": "Rensa valet och visa hela året",
+  "history.clearToYear": "Rensa valet och visa hela halvåret",
   "history.clearToMonth": "Rensa valet och visa {month}",
   "history.calendar": "Träningskalender",
   "history.lastYear": "Senaste året",
@@ -559,7 +559,7 @@ export const sv = {
   "history.monthInstructions":
     "Flytta mellan dagar med piltangenterna, inom en vecka med Home och End, och välj ett intervall med Skift och en piltangent. Med pekare: håll in en dag och dra för att välja ett intervall. Intervall tar med båda datumen.",
   "history.heatmapInstructions":
-    "Välj en dag för att filtrera passen. Flytta mellan dagar med piltangenterna, inom en vecka med Home och End, och välj en period med Skift och en piltangent. Med pekare: håll in en dag och dra för att välja en vecka, en veckodag över flera veckor eller en period.",
+    "Flytta mellan dagar med piltangenterna, inom en vecka med Home och End, och välj en period med Skift och en piltangent. Med pekare: håll in en dag och dra för att välja en vecka, en veckodag över flera veckor eller en period.",
   "history.chooseStart": "Välj ett startdatum",
   "history.chooseEndOf": "{date} · välj slutdatum",
   "history.chooseStartOf": "{date} · välj startdatum",
@@ -1879,7 +1879,7 @@ export const sv = {
   "history.zoomIn": "Förstora till månad",
   "history.zoomOut": "Förminska till översikt",
   "history.viewMonth": "Månadsvy, {month}",
-  "history.viewYear": "Översikt över senaste året",
+  "history.viewYear": "Översikt över senaste halvåret",
   "history.plannedDay": "{date}, planerat: {title}. Flytta eller hoppa över",
   "calendarPlan.label": "Schema",
   "calendarPlan.doneOf": "{done} av {planned} pass gjorda",
@@ -2096,6 +2096,10 @@ export const sv = {
   "start.saveRoutineAndEnd": "Spara som rutin och avsluta",
   "start.discardAndStart": "Släng och starta nytt",
   "start.discardAgain": "Tryck igen för att slänga",
+  "history.halfYear": "Senaste halvåret",
+  "history.dragHint":
+    "Håll in och dra för att välja en period, en vecka eller en veckodag över flera veckor.",
+  "history.planSince": "{plan}: {workouts} sedan {date}",
 
   // ---- v6 P3 Muskler ----
 

@@ -2,6 +2,7 @@ import { localizedDate } from "./dates";
 import { lastWorkoutDate } from "./heatmap";
 import { countLabel } from "./labels";
 import { type HistoryCalendarState } from "./history-calendar";
+import { selectionDates, type DragSelection } from "./drag-selection";
 import { t, formatFixed } from "../i18n";
 import { weightTotal, type WeightUnit } from "./units";
 
@@ -23,10 +24,11 @@ export function historyCaption(
   const day = (date: string) =>
     `${shortDay(date)} · ${countLabel(counts.get(date) ?? 0, "workout")}`;
   if (value.dates) {
-    const wanted = new Set(value.dates.dates);
-    let total = 0;
-    for (const [date, count] of counts) if (wanted.has(date)) total += count;
-    return `${value.dates.label} · ${countLabel(total, "workout")}`;
+    const { label, sub } = selectionLines(
+      { kind: "dates", ...value.dates },
+      counts,
+    );
+    return `${label} · ${sub}`;
   }
   if (value.mode === "range") {
     const { from, to } = value;
@@ -53,10 +55,58 @@ export function historyCaption(
   return last ? t("history.lastWorkout", { date: shortDay(last) }) : "";
 }
 
+/**
+ * A compact-calendar selection as its bar reads it (v6 C1): the label in
+ * bold ("Måndagar, 26 okt – 16 nov", "2–17 nov", a day) and under it the
+ * workouts in it, with the weeks for a weekday across weeks ("3 pass · 4
+ * veckor").
+ */
+export function selectionLines(
+  selection: DragSelection,
+  counts: ReadonlyMap<string, number>,
+) {
+  const dates = selectionDates(selection);
+  const wanted = new Set(dates);
+  let total = 0;
+  for (const [date, count] of counts) if (wanted.has(date)) total += count;
+  const label =
+    selection.kind === "dates"
+      ? selection.label
+      : selection.kind === "range"
+        ? periodRangeLabel(selection.from, selection.to)
+        : shortDay(selection.date);
+  const workouts = countLabel(total, "workout");
+  return {
+    label,
+    sub:
+      selection.kind === "dates"
+        ? `${workouts} · ${countLabel(dates.length, "week")}`
+        : workouts,
+  };
+}
+
+/**
+ * The active plan's line under the compact grid (C1): "Styrkeblock: 13 pass
+ * sedan 19 okt", the finished workouts from its start up to today.
+ */
+export function planSinceLine(
+  plan: { name: string; startDate: string },
+  dates: readonly string[],
+  now: string,
+) {
+  const workouts = dates.filter((d) => d >= plan.startDate && d <= now).length;
+  return t("history.planSince", {
+    plan: plan.name,
+    workouts: countLabel(workouts, "workout"),
+    date: shortDate(plan.startDate).replace(/\./g, ""),
+  });
+}
+
 /** A chosen period's dates, short: "2–9 Nov", or "30 Oct–5 Nov" across months. */
 export function periodRangeLabel(from: string, to: string) {
   const day = (date: string) => localizedDate(date, { day: "numeric" });
-  const month = (date: string) => localizedDate(date, { month: "short" });
+  const month = (date: string) =>
+    localizedDate(date, { month: "short" }).replace(/\./g, "");
   if (from === to) return shortDate(from);
   return from.slice(0, 7) === to.slice(0, 7)
     ? `${day(from)}–${day(to)} ${month(to)}`

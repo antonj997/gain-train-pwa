@@ -11,20 +11,6 @@
 module.exports = [
   // Kalender (P2: C1, the compact calendar, the plan card and the date tile).
   {
-    check: "target",
-    page: "Kalender",
-    match: "button.heatmap-day",
-    owner: "P2",
-    why: "the compact year grid's 12 px day squares are buttons (C1)",
-  },
-  {
-    check: "type",
-    page: "Kalender",
-    match: "div.heatmap-weekdays",
-    owner: "P2",
-    why: "the compact grid's weekday letters are 10/600 (C1)",
-  },
-  {
     check: "type",
     page: "Kalender",
     match: "h2.plan-card-name",

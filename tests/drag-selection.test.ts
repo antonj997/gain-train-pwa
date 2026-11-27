@@ -8,7 +8,8 @@ import {
   selectionDates,
   selectionEdges,
 } from "../src/lib/drag-selection";
-import { historyCaption } from "../src/lib/history-caption";
+import { historyCaption, selectionLines } from "../src/lib/history-caption";
+import { setCurrentLanguage } from "../src/i18n";
 import { createHistoryCalendar } from "../src/lib/history-calendar";
 
 // Window starts on Monday 2025-10-27, so 2026-10-26 (Monday) is column 52.
@@ -89,8 +90,40 @@ test("the caption describes a set of dates with its workout count", () => {
   };
   assert.equal(
     historyCaption(state, counts, "2026-10-28"),
-    "Mondays, 5 – 12 Oct · 3 workouts",
+    "Mondays, 5 – 12 Oct · 3 workouts · 2 weeks",
   );
+});
+
+test("a weekday drag reads Måndagar, 26 okt – 16 nov with 3 pass · 4 veckor (C1)", () => {
+  setCurrentLanguage("sv");
+  try {
+    const selection = heatmapDragSelection(
+      "2026-10-26",
+      "2026-11-16",
+      "2026-05-25",
+    );
+    assert.equal(selection.kind, "dates");
+    const counts = new Map([
+      ["2026-10-26", 1],
+      ["2026-11-02", 1],
+      ["2026-11-16", 1],
+      ["2026-11-17", 1],
+    ]);
+    assert.deepEqual(selectionLines(selection, counts), {
+      label: "Måndagar, 26 okt – 16 nov",
+      sub: "3 pass · 4 veckor",
+    });
+    // A period counts its workouts only.
+    assert.deepEqual(
+      selectionLines(
+        { kind: "range", from: "2026-11-02", to: "2026-11-17" },
+        counts,
+      ),
+      { label: "2–17 nov", sub: "3 pass" },
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
 });
 
 test("a selection's edges are its first and last day", () => {

@@ -32,8 +32,9 @@ export function heatmapCell(date: string, windowStart: string): GridCell {
   };
 }
 
+/** "26 okt", without the abbreviation's full stop Swedish dates carry. */
 const short = (date: string) =>
-  localizedDate(date, { day: "numeric", month: "short" });
+  localizedDate(date, { day: "numeric", month: "short" }).replace(/\./g, "");
 
 /** "Mondays, 7 Sep – 26 Oct" */
 export function weekdayLabel(first: string, last: string) {

@@ -539,7 +539,7 @@ export const en = {
   "history.chooseMonthYear": "Choose month and year",
   "history.previousYear": "Previous year",
   "history.nextYear": "Next year",
-  "history.clearToYear": "Clear the selection and show the whole year",
+  "history.clearToYear": "Clear the selection and show the last six months",
   "history.clearToMonth": "Clear the selection and show {month}",
   "history.calendar": "Workout calendar",
   "history.lastYear": "Last year",
@@ -558,7 +558,7 @@ export const en = {
   "history.monthInstructions":
     "Use arrow keys to move between days, Home and End to move within a week, and Shift with an arrow key to select a range. With a pointer, press and hold a day, then drag to select a range. Date ranges include both dates.",
   "history.heatmapInstructions":
-    "Select a day to filter workouts. Use arrow keys to move between days, Home and End to move within a week, and Shift with an arrow key to select a period. With a pointer, press and hold a day, then drag to select a week, a weekday across weeks, or a period.",
+    "Use arrow keys to move between days, Home and End to move within a week, and Shift with an arrow key to select a period. With a pointer, press and hold a day, then drag to select a week, a weekday across weeks, or a period.",
   "history.chooseStart": "Choose a start date",
   "history.chooseEndOf": "{date} · choose the end date",
   "history.chooseStartOf": "{date} · choose the start date",
@@ -1862,7 +1862,7 @@ export const en = {
   "history.zoomIn": "Zoom in to the month",
   "history.zoomOut": "Zoom out to the overview",
   "history.viewMonth": "Month view, {month}",
-  "history.viewYear": "Overview of the last year",
+  "history.viewYear": "Overview of the last six months",
   "history.plannedDay": "{date}, planned: {title}. Move or skip it",
   "calendarPlan.label": "Plan",
   "calendarPlan.doneOf": "{done} of {planned} workouts done",
@@ -2087,6 +2087,11 @@ export const en = {
   "start.saveRoutineAndEnd": "Save as a routine and finish",
   "start.discardAndStart": "Discard and start a new one",
   "start.discardAgain": "Tap again to discard",
+  /** C1: the compact calendar. */
+  "history.halfYear": "Last six months",
+  "history.dragHint":
+    "Press and hold, then drag to choose a period, a week or a weekday across weeks.",
+  "history.planSince": "{plan}: {workouts} since {date}",
 
   // ---- v6 P3 Muskler ----
 

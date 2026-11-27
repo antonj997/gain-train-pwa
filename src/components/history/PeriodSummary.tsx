@@ -17,6 +17,7 @@ const tileWidth = (value: string, unit = "") =>
 export default function PeriodSummary({
   label,
   days,
+  weeks = false,
   workouts,
   sets,
   volumeKg,
@@ -27,6 +28,8 @@ export default function PeriodSummary({
   /** The period's dates, "2–9 Nov", or a heatmap row's name. */
   label: string;
   days: number;
+  /** A weekday across weeks: `days` counts weeks ("Måndagar, … · 4 veckor"). */
+  weeks?: boolean;
   workouts: number;
   sets: number;
   volumeKg: number;
@@ -59,7 +62,7 @@ export default function PeriodSummary({
           {t("history.selectedPeriod")}
           <span className="period-detail">
             {" · "}
-            {label} · {countLabel(days, "day")}
+            {label} · {countLabel(days, weeks ? "week" : "day")}
           </span>
         </h2>
         <button type="button" className="text-button" onClick={onClear}>
