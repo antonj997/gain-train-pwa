@@ -37,7 +37,6 @@ function ExerciseRow({
         <>
           {exerciseDisplayName(e.id, e.name)}
           {e.favourite && <FavouriteStar />}
-          {e.custom && <span className="stat-chip">{t("exercises.mine")}</span>}
           {e.sharedId && (
             <span className="stat-chip strong">{t("exercises.shared")}</span>
           )}
