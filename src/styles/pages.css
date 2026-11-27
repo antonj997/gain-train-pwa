@@ -1562,9 +1562,18 @@ span.sparkline {
   color: var(--gt-ink);
   font-weight: 600;
 }
-.editor-discard {
+.editor-discard,
+.routine-discard {
   align-self: center;
   min-height: 44px;
+}
+/* v6 P4 (§E5): the routine editor's note under Save. */
+.routine-close-note {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  text-align: center;
 }
 
 /* v6 P4 (§E6, E6b): Upptäck's standard programmes. A row opens the

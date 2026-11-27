@@ -2139,6 +2139,7 @@ export const en = {
   "muscles.front": "Front",
   "muscles.back": "Back",
   "muscles.tapHint": "Tap a muscle as a shortcut.",
+  "routines.closeSaves": "Close the sheet and a draft is kept.",
 
   // ---- v6 P5 Inställningar ----
 

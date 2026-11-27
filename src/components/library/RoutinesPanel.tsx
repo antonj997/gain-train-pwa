@@ -24,13 +24,14 @@ import { useGridMotion } from "@/hooks/useGridMotion";
 import { useData } from "@/contexts/useData";
 import { useAuth } from "@/contexts/useAuth";
 import { type Exercise, type Routine } from "@/data/model";
-import { initialSet, hasLoggedExercise, lastSessions } from "@/data/workouts";
+import { hasLoggedExercise, lastSessions } from "@/data/workouts";
 import { draftKey, parseRoutineDraft } from "@/lib/drafts";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import ExercisePicker from "@/components/ExercisePicker";
 import ChangeExercisePicker from "@/components/workout/ChangeExercisePicker";
 import { countLabel } from "@/lib/labels";
 import {
+  addExercisesToRoutine,
   copyName,
   duplicateRoutine,
   folderCounts,
@@ -379,6 +380,13 @@ export default function RoutinesPanel({
     id ? (records.find((r) => r.id === id) ?? null) : null;
   const previewRoutine = find(previewId);
   const previewIndex = ordered.findIndex((r) => r.id === previewId);
+  // The draft differs from what is saved (or, new, has a name or an exercise).
+  const savedRoutine = edit ? state.records[edit.id] : undefined;
+  const changed =
+    !!edit &&
+    (savedRoutine?.kind === "routine" && !savedRoutine.deleted
+      ? JSON.stringify(savedRoutine.payload) !== JSON.stringify(edit.data)
+      : !!edit.data.name.trim() || edit.data.exercises.length > 0);
   const sortName = (value: RoutineSort) =>
     value === "name" ? t("routineTile.sortName") : t("routineTile.sortRecent");
 
@@ -660,6 +668,7 @@ export default function RoutinesPanel({
                 {t("routines.name")}
                 <input
                   ref={nameInput}
+                  autoFocus={!state.records[edit.id]}
                   value={edit.data.name}
                   maxLength={100}
                   onChange={(e) =>
@@ -720,16 +729,11 @@ export default function RoutinesPanel({
                   {t("routines.storageUnavailable")}
                 </p>
               )}
-              <div className="button-row">
+              {/* Nothing to throw away until something changed (v6 §E5). */}
+              {changed && (
                 <button
-                  className="btn-secondary"
-                  disabled={busy}
-                  onClick={() => setOpen(false)}
-                >
-                  {t("routines.closeKeep")}
-                </button>
-                <button
-                  className="text-button danger"
+                  type="button"
+                  className="text-button danger routine-discard"
                   disabled={busy}
                   onClick={() => {
                     setEdit(null);
@@ -738,7 +742,7 @@ export default function RoutinesPanel({
                 >
                   {t("routines.discardDraft")}
                 </button>
-              </div>
+              )}
               {/* Last, so it can stick to the bottom edge of the long form. */}
               <div className="sheet-footer">
                 <Reveal>
@@ -772,6 +776,7 @@ export default function RoutinesPanel({
                 >
                   {busy ? t("common.saving") : t("routines.save")}
                 </button>
+                <p className="routine-close-note">{t("routines.closeSaves")}</p>
               </div>
             </>
           )}
@@ -782,21 +787,7 @@ export default function RoutinesPanel({
         onClose={() => setPicker(false)}
         onAdd={(items) => {
           if (edit)
-            setEdit({
-              ...edit,
-              data: {
-                ...edit.data,
-                exercises: [
-                  ...edit.data.exercises,
-                  ...items.map((item) => ({
-                    id: crypto.randomUUID(),
-                    exerciseId: item.id,
-                    name: item.name,
-                    sets: [initialSet(item.id, item)],
-                  })),
-                ],
-              },
-            });
+            setEdit({ ...edit, data: addExercisesToRoutine(edit.data, items) });
         }}
       />
       <ReorderExercisesSheet

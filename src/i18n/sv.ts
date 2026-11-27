@@ -2152,6 +2152,7 @@ export const sv = {
   "muscles.front": "Fram",
   "muscles.back": "Bak",
   "muscles.tapHint": "Tryck på en muskel som genväg.",
+  "routines.closeSaves": "Stänger du bladet sparas ett utkast.",
 
   // ---- v6 P5 Inställningar ----
 

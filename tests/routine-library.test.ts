@@ -8,7 +8,10 @@ import type {
   WorkoutSet,
 } from "../src/data/model";
 import { validate } from "../src/data/model";
+import { readFileSync } from "node:fs";
 import {
+  NEW_ROUTINE_SETS,
+  addExercisesToRoutine,
   copyName,
   duplicateRoutine,
   folderCounts,
@@ -400,4 +403,53 @@ test("the preview's Förra is last time's first working set", () => {
     lastResultText(exercise("run", [set({ measure: "cardio" })]), last),
     null,
   );
+});
+
+// ---- v6 §E5: a new routine ----
+
+test("v6: exercises added to a routine get three working sets", () => {
+  assert.equal(NEW_ROUTINE_SETS, 3);
+  const routine: Routine = { name: "", exercises: [] };
+  const next = addExercisesToRoutine(routine, [
+    { id: "builtin:bench-press", name: "Bench Press" },
+    { id: "builtin:pull-up", name: "Pull Up" },
+    { id: "own", name: "Mine", category: "Cardio" },
+  ]);
+  assert.equal(next.exercises.length, 3);
+  for (const exercise of next.exercises) {
+    assert.equal(exercise.sets.length, 3);
+    for (const set of exercise.sets) {
+      assert.equal(set.section, "working");
+      assert.equal(set.weight, null);
+      assert.equal(set.reps, null);
+    }
+  }
+  assert.equal(next.exercises[1].sets[0].load, "bodyweight");
+  assert.equal(next.exercises[2].sets[0].measure, "cardio");
+  // New ids for every exercise and set.
+  const ids = next.exercises.flatMap((e) => [e.id, ...e.sets.map((x) => x.id)]);
+  assert.equal(new Set(ids).size, ids.length);
+  // Added after what the routine had.
+  const more = addExercisesToRoutine(next, [
+    { id: "builtin:squat", name: "Squat" },
+  ]);
+  assert.equal(more.exercises[3].exerciseId, "builtin:squat");
+});
+
+test("v6: the routine editor focuses the name and keeps no draft buttons before a change", () => {
+  const source = readFileSync(
+    new URL("../src/components/library/RoutinesPanel.tsx", import.meta.url),
+    "utf8",
+  );
+  // The name field has focus at once in a new routine.
+  assert.match(source, /ref=\{nameInput\}\s+autoFocus=/);
+  // No "Close and keep draft": closing the sheet keeps the draft.
+  assert.doesNotMatch(source, /routines\.closeKeep/);
+  // Discard waits for a change.
+  assert.match(
+    source,
+    /\{changed && \(\s*<button\s+type="button"\s+className="text-button danger/,
+  );
+  assert.match(source, /routines\.closeSaves/);
+  assert.match(source, /addExercisesToRoutine\(/);
 });
