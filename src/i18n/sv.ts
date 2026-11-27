@@ -899,7 +899,7 @@ export const sv = {
   "muscles.simple": "Enkel",
   "muscles.advanced": "Avancerad",
   "muscles.mixed": "Blandat",
-  "muscles.level.none": "–",
+  "muscles.level.none": "Ingen",
   "muscles.level.noneSpoken": "Ingen",
   "muscles.level.some": "Lite",
   "muscles.level.much": "Mycket",
@@ -944,7 +944,7 @@ export const sv = {
   "exercises.deleted": "Övningen {name} borttagen",
   "exercises.deleteFailed":
     "Kunde inte radera. Övningen finns kvar; försök igen.",
-  "exercises.search": "Sök övningar",
+  "exercises.search": "Sök övning",
   "exercises.show": "Visa övningar",
   "exercises.emptyRecent": "Övningar du har tränat dyker upp här.",
   "exercises.emptyMine": "Övningar du skapar dyker upp här.",
@@ -2063,6 +2063,96 @@ export const sv = {
   // ---- v6 P3 Muskler ----
 
   // ---- v6 P4 Bibliotek ----
+  "library.plans": "Scheman",
+  "library.mine": "Mina",
+  "library.routinesView": "Rutiner att visa",
+  "exercises.groupMine": "Mina övningar",
+  "exercises.showHidden": "Visa dolda ({count})",
+  "exercises.hideHidden": "Dölj dolda övningar",
+  "library.planUpcoming": "Kommande",
+  "library.planPerWeek": {
+    one: "{count} pass i veckan",
+    other: "{count} pass i veckan",
+  },
+  "library.planPerWeekRange": "{min}–{max} pass i veckan",
+  "library.planDeloadWeek": "deload v. {week}",
+  "library.planFulfilled": "{done} av {weeks} veckor fullföljda",
+  "library.plansNote":
+    "Ett schema lägger rutiner på veckodagar under en period, med deload och mål. Bara ett schema är aktivt åt gången.",
+  "discover.level.beginner": "Nybörjare",
+  "discover.level.experienced": "Van",
+  "discover.level.beginnerToExperienced": "Nybörjare–van",
+  "discover.days.ab": "3 dagar, A B A och sedan B A B",
+  "discover.days.ou": "4 dagar: mån, tis, tor, fre",
+  "discover.days.tdb": "6 dagar, eller 3 dagar med halva volymen",
+  "discover.program.hk.why":
+    "Hela kroppen två gånger i veckan; de flesta huvudmuskler får 5–13 hårda set i veckan, nog de första månaderna. Flerledsövningar först, 1–3 reps kvar i tanken, dubbel progression.",
+  "discover.program.ou.why":
+    "Varje muskel två gånger i veckan och de flesta huvudmuskler 10–18 hårda set, tunga flerled (5–8 reps) först och lättare isolering (10–20) sist.",
+  "discover.program.tdb.why":
+    "Tryck, drag och ben två varv i veckan: 10–16 hårda set per huvudmuskel. Kör ett varv (3 dagar) om tiden inte räcker; då halveras volymen.",
+  "discover.program.gs.why":
+    "Knäböj, bänkpress, axelpress och marklyft i 3–5 reps med längre vila (3–5 min). Fokus är styrka; mindre muskler får avsiktligt lite volym.",
+  "discover.program.hm.why":
+    "Bara hantlar och kroppsvikt, utan vader. Hela kroppen två gånger i veckan; reps upp till 15–20 när hantlarna blir för lätta.",
+  "discover.programs": "Färdiga program från Gain Train",
+  "discover.programKinds": "Typ av program",
+  "discover.chip.all": "Alla",
+  "discover.chip.full": "Helkropp",
+  "discover.chip.upperLower": "Över/under",
+  "discover.chip.ppl": "Tryck/drag/ben",
+  "discover.chip.strength": "Styrka",
+  "discover.chip.home": "Hemma",
+  "discover.programMeta": "{level} · {days} · {routines}",
+  "discover.programAdd": "Lägg till {title} i Mina rutiner",
+  "discover.programOpen": "Visa {title}",
+  "discover.programAdded": {
+    one: "{count} rutin från {title} tillagd i Mina",
+    other: "{count} rutiner från {title} tillagda i Mina",
+  },
+  "discover.programRemoved": "{title} borttaget från Mina",
+  "discover.programKept": {
+    one: "{count} rutin du ändrat ligger kvar.",
+    other: "{count} rutiner du ändrat ligger kvar.",
+  },
+  "discover.programFailed": "Kunde inte ändra {title}. Försök igen.",
+  "discover.programNote":
+    "Byggda på forskningen om volym (10–20 hårda set per muskel och vecka för den som är van), frekvens (varje muskel två gånger i veckan) och 1–3 reps kvar i tanken.",
+  "discover.programSub": "{level} · {days} · ~{minutes} min",
+  "discover.programSets": "Hårda set per huvudmuskel i veckan",
+  "discover.programRange": "{min}–{max} · riktmärke 10–20",
+  "discover.programLine": "{sets} × {min}–{max}",
+  "discover.programAddAll": {
+    one: "Lägg till {count} rutin",
+    other: "Lägg till {count} rutiner",
+  },
+  "discover.programRemoveAll": "Ta bort från Mina",
+  "discover.programMakePlan": "Gör det till ett schema",
+  "discover.others": "Rutiner från andra lyftare",
+  "discover.othersSignIn": "Logga in för att se delade rutiner",
+  "discover.signIn": "Logga in",
+  "discover.othersInfoLabel": "Om delade rutiner",
+  "discover.othersInfo":
+    "Med ett konto ser du rutiner som andra lyftare delat och kan dela dina egna. De färdiga programmen och dina pass fungerar utan konto.",
+  "editor.namePlaceholder": "t.ex. Knästående pallofpress",
+  "editor.equipment": "Utrustning",
+  "editor.equipmentNote":
+    "Styr filtret, viktsteget och ikonen. Hantel är förval.",
+  "editor.catalogueTwin": "Det finns redan {name} i biblioteket.",
+  "editor.openTwin": "Öppna den",
+  "editor.useTwin": "Använd dess muskler",
+  "editor.usedTwin": "Musklerna och utrustningen från {name} är inlagda.",
+  "editor.derivedMain": "Visas under {group}",
+  "editor.derivedAlso": " · även {groups}",
+  "editor.derivedNone":
+    "Välj muskler. Övningen visas under den grupp som har flest huvudmuskler.",
+  "editor.noteOptional": "Anteckning (valfritt)",
+  "editor.notePlaceholder": "Grepp, inställning, utförande",
+  "muscles.sideLabel": "Visa figuren",
+  "muscles.front": "Fram",
+  "muscles.back": "Bak",
+  "muscles.tapHint": "Tryck på en muskel som genväg.",
+  "routines.closeSaves": "Stänger du bladet sparas ett utkast.",
 
   // ---- v6 P5 Inställningar ----
   "settings.groupAppearance": "Utseende",

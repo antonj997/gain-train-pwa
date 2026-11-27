@@ -1,16 +1,59 @@
+import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import Sheet from "@/components/ui/Sheet";
-import { categories } from "@/data/catalogue";
-import type { CustomExercise } from "@/data/model";
-import { sameNamedExercise } from "@/lib/exercise-search";
-import { t } from "@/i18n";
-import { categoryLabel } from "@/lib/catalogue-labels";
 import Reveal from "@/components/motion/Reveal";
 import MusclePicker from "@/components/library/MusclePicker";
+import EquipmentIcon from "@/components/muscles/EquipmentIcon";
+import MuscleIcon from "@/components/muscles/MuscleIcon";
+import {
+  customIconOf,
+  customMuscles,
+  isCardioExercise,
+} from "@/data/exercise-muscles";
+import type { CustomExercise } from "@/data/model";
+import {
+  CUSTOM_EQUIPMENT,
+  catalogueTwin,
+  derivedCategories,
+  equipmentOf,
+  withCatalogueMuscles,
+  withDerivedCategory,
+  withEquipment,
+} from "@/lib/custom-exercise";
+import { sameNamedExercise } from "@/lib/exercise-search";
+import { exerciseDisplayName } from "@/lib/exercise-name";
+import { categoryTone } from "@/lib/exercise-icon";
+import { equipmentLabel } from "@/lib/catalogue-labels";
+import { notify } from "@/lib/message-store";
+import { exercisePath } from "@/lib/routes";
+import { t } from "@/i18n";
 
 export type ExerciseDraft = { id: string; data: CustomExercise };
 
-/** The custom exercise form: name, categories, muscles, icon and note, kept as a draft until saved. */
+/** "Hantel": an equipment name as a chip label. */
+const capital = (text: string) =>
+  text.charAt(0).toLocaleUpperCase() + text.slice(1);
+
+/** A message with one part in bold: "Det finns redan **Pallofpress** i biblioteket." */
+function withBold(text: string, bold: string) {
+  const [before, after = ""] = text.split("\u0000");
+  return (
+    <>
+      {before}
+      <b>{bold}</b>
+      {after}
+    </>
+  );
+}
+
+/**
+ * Your own exercise (v6 §E3): the icon preview beside the name (focused when
+ * new), a row under it when the name is a catalogue exercise ("Öppna den",
+ * "Använd dess muskler"), the equipment as one sideways chip row, the
+ * muscles (which also give the category), a note and "Spara övning". Kept
+ * as a draft until saved; ✕ closes and keeps it.
+ */
 export default function ExerciseEditorSheet({
   open,
   draft,
@@ -41,23 +84,28 @@ export default function ExerciseEditorSheet({
   /** Every exercise, built-in and custom, to warn about a name in use. */
   exercises?: readonly { id: string; name: string }[];
 }) {
+  const navigate = useNavigate();
   const set = (change: Partial<CustomExercise>) =>
     draft && onChange({ ...draft, data: { ...draft.data, ...change } });
-  // Other categories it trains; none leaves the field out. The main one is never among them.
-  const others = (draft?.data.categories ?? []).filter(
-    (c) => c !== draft?.data.category,
+  const name = draft?.data.name ?? "";
+  // A catalogue exercise of that name offers its page and its muscles;
+  // another of your own only gets a warning, since lists can't tell them apart.
+  const twin = useMemo(
+    () => (draft ? catalogueTwin(name, exercises) : undefined),
+    [draft, name, exercises],
   );
-  const setOthers = (next: string[], category = draft?.data.category) => {
-    if (!draft || category === undefined) return;
-    const { categories: _old, ...data } = draft.data;
-    const kept = next.filter((c) => c !== category);
-    onChange({
-      ...draft,
-      data: { ...data, category, ...(kept.length ? { categories: kept } : {}) },
-    });
-  };
-  // Two exercises can share a name; say so, since lists can't tell them apart.
-  const twin = draft && sameNamedExercise(draft.data.name, exercises, draft.id);
+  const ownTwin =
+    draft && !twin ? sameNamedExercise(name, exercises, draft.id) : undefined;
+  const data = draft?.data;
+  const equipment = data ? equipmentOf(data) : "dumbbell";
+  const icon = data ? customIconOf(data) : "dumbbell";
+  // A new exercise has nothing yet: the discard link waits for a change.
+  const changed =
+    !!data &&
+    (saved ||
+      !!data.name.trim() ||
+      !!data.note.trim() ||
+      data.muscles !== undefined);
   return (
     <Sheet
       size="full"
@@ -69,91 +117,135 @@ export default function ExerciseEditorSheet({
       // Only an edit can rename what finished workouts show.
       description={saved ? t("editor.description") : undefined}
     >
-      {draft && (
+      {draft && data && (
         <>
-          <label>
+          <label className="editor-name">
             {t("editor.name")}
-            <input
-              value={draft.data.name}
-              maxLength={100}
-              aria-describedby={twin ? "exercise-name-twin" : undefined}
-              onChange={(e) => set({ name: e.target.value })}
-            />
+            <span className="editor-name-row">
+              <span
+                className="ex-avatar"
+                data-tone={categoryTone(
+                  derivedCategories(customMuscles(data)).category,
+                )}
+                aria-hidden="true"
+              >
+                {icon === "body" ? (
+                  <MuscleIcon
+                    muscles={customMuscles(data)}
+                    cardio={isCardioExercise(data)}
+                    size={34}
+                  />
+                ) : (
+                  <EquipmentIcon kind={icon} size={24} />
+                )}
+              </span>
+              <input
+                value={data.name}
+                maxLength={100}
+                placeholder={t("editor.namePlaceholder")}
+                autoFocus={!saved}
+                autoComplete="off"
+                aria-describedby={
+                  twin || ownTwin ? "exercise-name-twin" : undefined
+                }
+                onChange={(e) => set({ name: e.target.value })}
+              />
+            </span>
           </label>
           <Reveal>
-            {twin && (
+            {twin ? (
+              <div
+                id="exercise-name-twin"
+                className="editor-twin"
+                role="status"
+              >
+                <p>
+                  {withBold(
+                    t("editor.catalogueTwin", { name: "\u0000" }),
+                    exerciseDisplayName(twin.id, twin.name),
+                  )}
+                </p>
+                <div className="editor-twin-links">
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      onClose();
+                      navigate(exercisePath(twin.id));
+                    }}
+                  >
+                    {t("editor.openTwin")}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => {
+                      onChange({
+                        ...draft,
+                        data: withCatalogueMuscles(data, twin.id),
+                      });
+                      notify.success(
+                        t("editor.usedTwin", {
+                          name: exerciseDisplayName(twin.id, twin.name),
+                        }),
+                      );
+                    }}
+                  >
+                    {t("editor.useTwin")}
+                  </button>
+                </div>
+              </div>
+            ) : ownTwin ? (
               <p
                 id="exercise-name-twin"
                 className="field-warning"
                 role="status"
               >
-                {t("editor.twin", { name: twin.name })}
+                {t("editor.twin", { name: ownTwin.name })}
               </p>
-            )}
+            ) : null}
           </Reveal>
-          <label>
-            {t("facet.category")}
-            <select
-              value={draft.data.category}
-              onChange={(e) => setOthers(others, e.target.value)}
-            >
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {categoryLabel(c)}
-                </option>
-              ))}
-            </select>
-          </label>
           <div className="plan-field">
-            <span className="group-title" id="exercise-also">
-              {t("editor.alsoTrains")}
+            <span className="group-title" id="exercise-equipment">
+              {t("editor.equipment")}
             </span>
             <div
-              className="filters"
+              className="facet-chips equipment-chips"
               role="group"
-              aria-labelledby="exercise-also"
+              aria-labelledby="exercise-equipment"
             >
-              {categories
-                .filter((c) => c !== draft.data.category && c !== "Other")
-                .map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    className="filter-chip"
-                    aria-pressed={others.includes(c)}
-                    onClick={() =>
-                      setOthers(
-                        others.includes(c)
-                          ? others.filter((x) => x !== c)
-                          : [...others, c],
-                      )
-                    }
-                  >
-                    {categoryLabel(c)}
-                  </button>
-                ))}
+              {CUSTOM_EQUIPMENT.map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  className="filter-chip equipment-chip"
+                  aria-pressed={equipment === kind}
+                  onClick={() =>
+                    onChange({ ...draft, data: withEquipment(data, kind) })
+                  }
+                >
+                  <EquipmentIcon kind={kind} size={20} />
+                  {capital(equipmentLabel(kind))}
+                </button>
+              ))}
             </div>
-            <p className="row-sub">{t("editor.alsoTrainsHint")}</p>
+            <p className="row-sub">{t("editor.equipmentNote")}</p>
           </div>
           <MusclePicker
-            data={draft.data}
-            onChange={(data) => onChange({ ...draft, data })}
+            data={data}
+            onChange={(next) =>
+              onChange({ ...draft, data: withDerivedCategory(next) })
+            }
           />
           <label>
-            {t("editor.note")}
+            {t("editor.noteOptional")}
             <textarea
-              value={draft.data.note}
+              value={data.note}
               maxLength={1000}
+              placeholder={t("editor.notePlaceholder")}
               onChange={(e) => set({ note: e.target.value })}
             />
           </label>
-          <button
-            className="btn-primary"
-            disabled={busy || !draft.data.name.trim()}
-            onClick={onSave}
-          >
-            {busy ? t("common.saving") : t("editor.save")}
-          </button>
           <Reveal>
             {error && (
               <p className="field-error" role="alert">
@@ -177,16 +269,25 @@ export default function ExerciseEditorSheet({
               {t("exercises.delete")}
             </button>
           )}
-          <div className="button-row">
-            <button className="btn-secondary" disabled={busy} onClick={onClose}>
-              {t("routines.closeKeep")}
-            </button>
+          {changed && (
             <button
-              className="text-button danger"
+              type="button"
+              className="text-button danger editor-discard"
               disabled={busy}
               onClick={onDiscard}
             >
               {t("routines.discardDraft")}
+            </button>
+          )}
+          {/* Last, so it can stick to the bottom edge of the long form. */}
+          <div className="sheet-footer">
+            <button
+              type="button"
+              className="btn-primary btn-block"
+              disabled={busy || !data.name.trim()}
+              onClick={onSave}
+            >
+              {busy ? t("common.saving") : t("editor.save")}
             </button>
           </div>
         </>

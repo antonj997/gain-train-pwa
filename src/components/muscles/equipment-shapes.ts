@@ -47,19 +47,25 @@ export const EQUIPMENT_SHAPES: Record<EquipmentIconKind, readonly Shape[]> = {
     "M7.2 20.5C5.9 19.2 5.2 17.4 5.2 15.5C5.2 11.9 8.2 9 12 9C15.8 9 18.8 11.9 18.8 15.5C18.8 17.4 18.1 19.2 16.8 20.5Z",
     "M8.6 9.8L8.2 7.2C8 5 9.7 3.5 12 3.5C14.3 3.5 16 5 15.8 7.2L15.4 9.8",
   ],
-  // A frame with the cable down to a weight stack.
+  // v6 (H4, the owner's E3): two rails and a stack of three plates with the
+  // cable over it; no lock pin.
   machine: [
-    "M5 21V3H19V21",
-    "M3 21H21",
-    "M12 3V11",
-    "M8.5 11H15.5V18H8.5Z",
-    "M8.5 14.5H15.5",
+    "M5 3V21",
+    "M19 3V21",
+    "M8 6H16V9H8Z",
+    "M8 11H16V14H8Z",
+    "M8 16H16V19H8Z",
+    "M12 3V6",
   ],
-  // A pulley, the cable and a stirrup handle.
+  // v6 (H4): a pulley hung from a beam, the cable over it to a weight on one
+  // side and a D-handle on the other, drawn for 22px.
   cable: [
-    head(12, 5, 2.5),
-    "M12 7.5V14",
-    "M12 14C10 15.5 8.5 17.5 8.5 19.5H15.5C15.5 17.5 14 15.5 12 14Z",
+    "M4 3H20",
+    "M8 3V5",
+    head(8, 8, 3),
+    "M5 8V20",
+    "M11 8L17.5 15.5",
+    "M15 18L19.5 13.5L21 15L16.5 19.5Z",
   ],
   // A loop band.
   band: [

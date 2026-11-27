@@ -1,206 +1,47 @@
 import { useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Pause, Play, Plus } from "lucide-react";
-import { notify } from "@/lib/message-store";
+import { ChevronDown, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import GroupEditor from "@/components/plan/GroupEditor";
-import PlanEditor, { PLANS_SCOPE } from "@/components/plan/PlanEditor";
-import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
-import { useWithUndo } from "@/hooks/useMessages";
 import ListRow from "@/components/ui/ListRow";
 import { libraryOf } from "@/data/exercises";
-import { type RoutineGroup, today as todayDate } from "@/data/model";
-import {
-  type PlanItem,
-  activePlans,
-  dayTypeLabel,
-  dayTypes,
-  findOverlap,
-  groupsOf,
-  overlapMessage,
-  withPaused,
-} from "@/data/plans";
+import type { RoutineGroup } from "@/data/model";
+import { groupsOf } from "@/data/plans";
 import { routines as routineRecords } from "@/data/selectors";
-import {
-  phaseSegments,
-  phaseWeek,
-  phaseWeeks,
-  weekKindsOf,
-} from "@/data/phase";
-import PhaseBar from "@/components/items/PhaseBar";
-import { localizedDate } from "@/lib/dates";
 import { countLabel } from "@/lib/labels";
 import { t } from "@/i18n";
 import { categoryLabel } from "@/lib/catalogue-labels";
-import MotionList from "@/components/motion/MotionList";
 
-/** Which editor is open: a plan or a group, an existing one or "new". */
-type Editing =
-  | { kind: "plan"; plan: PlanItem | null }
-  | { kind: "group"; group: RoutineGroup | null }
-  | null;
-
-const short = (date: string) =>
-  localizedDate(date, { day: "numeric", month: "short" });
-
-/** Library → Plan: plans, groups and what day types suggest. Everything here is optional. */
+/**
+ * Library → Scheman's Advanced part: groups, for one plan day offering a
+ * choice of routines. Deload weeks and progression live in the plan itself,
+ * so groups sit here, folded away. The plans list is PlansTab.
+ */
 export default function PlanPanel() {
-  const { state, save, saveLibrary } = useData();
+  const { state, saveLibrary } = useData();
   const { account } = useAuth();
-  const today = todayDate();
-  const plans = useMemo(() => activePlans(state.records), [state.records]);
   const groups = useMemo(() => groupsOf(state.records), [state.records]);
   const routines = useMemo(
     () => routineRecords(state.records),
     [state.records],
   );
-  // A deleted plan's row keeps an Undo for a few seconds.
-  const planSlots = useWithUndo(PLANS_SCOPE, plans);
-  const [editing, setEditing] = useState<Editing>(null);
+  // An existing group, or null for a new one; undefined while closed.
+  const [editing, setEditing] = useState<RoutineGroup | null | undefined>();
   // A new key each time, so a reopened editor starts from the saved record.
   const [session, setSession] = useState(0);
-  const edit = (next: Editing) => {
+  const edit = (group: RoutineGroup | null) => {
     setSession((n) => n + 1);
-    setEditing(next);
+    setEditing(group);
   };
   // The editor keeps its content while the sheet slides out.
-  const shown = useRef(editing);
-  if (editing) shown.current = editing;
-  const current = shown.current;
+  const shown = useRef<RoutineGroup | null | undefined>(editing);
+  if (editing !== undefined) shown.current = editing;
 
   const saveGroups = (next: RoutineGroup[]) =>
     saveLibrary({ ...libraryOf(state.records, account), groups: next });
 
-  // The phase in a line: dates, "week 3 of 12" (or its length), the cycle and progressions.
-  const summary = (p: PlanItem) => {
-    const at = !p.paused ? phaseWeek(p, today) : null;
-    const deloads = weekKindsOf(p).filter((k) => k === "deload").length;
-    return [
-      `${short(p.startDate)} – ${short(p.endDate)}`,
-      at
-        ? t("plan.weekOf", { week: at.week, weeks: at.weeks })
-        : countLabel(phaseWeeks(p), "week"),
-      p.cycleWeeks === 1
-        ? t("plan.repeatsWeekly")
-        : deloads
-          ? t("plan.cycleDeload", {
-              normal: p.cycleWeeks - deloads,
-              deload: deloads,
-            })
-          : t("plan.cycle", { count: p.cycleWeeks }),
-      p.progression?.length
-        ? countLabel(p.progression.length, "progression")
-        : "",
-    ]
-      .filter(Boolean)
-      .join(" · ");
-  };
-  const status = (p: PlanItem) =>
-    p.paused
-      ? t("plan.paused")
-      : p.endDate < today
-        ? t("plan.ended")
-        : p.startDate > today
-          ? t("plan.starts", { date: short(p.startDate) })
-          : t("plan.active");
-
-  // Pausing frees the plan's dates; resuming is refused while another plan holds them.
-  const [pausing, setPausing] = useState<string | null>(null);
-  const togglePause = async (p: PlanItem) => {
-    if (pausing) return;
-    const { id, ...plan } = p;
-    const next = withPaused(plan, !p.paused);
-    const blocking = p.paused ? findOverlap(plans, next, id) : null;
-    if (blocking) {
-      notify.error(overlapMessage(blocking));
-      return;
-    }
-    setPausing(id);
-    try {
-      await save(id, "plan", next);
-      notify.success(t(p.paused ? "plan.resumedToast" : "plan.pausedToast"));
-    } catch {
-      notify.error(t("plan.saveFailed"));
-    } finally {
-      setPausing(null);
-    }
-  };
-
   return (
-    <div className="plan-panel">
-      <section aria-labelledby="plans-heading">
-        {/* The page title already says Plan; the heading is for screen readers. */}
-        <h2 className="sr-only" id="plans-heading">
-          {t("plan.plans")}
-        </h2>
-        {planSlots.length > 0 && (
-          <MotionList className="list">
-            {planSlots.map((slot) => {
-              if (slot.kind === "undo")
-                return (
-                  <UndoPlaceholder
-                    key={`u${slot.entry.id}`}
-                    entry={slot.entry}
-                    className="in-list"
-                  />
-                );
-              const p = slot.item;
-              return (
-                <div
-                  key={p.id}
-                  className={"plan-row" + (p.paused ? " is-paused" : "")}
-                >
-                  <button
-                    type="button"
-                    className="row plan-row-open"
-                    onClick={() => edit({ kind: "plan", plan: p })}
-                  >
-                    <span className="row-main">
-                      <span className="row-title">{p.name}</span>
-                      <span className="row-sub">{summary(p)}</span>
-                      <PhaseBar segments={phaseSegments(p, today)} />
-                    </span>
-                    <span className="row-value">{status(p)}</span>
-                    <ChevronRight
-                      className="chev"
-                      size={20}
-                      aria-hidden="true"
-                    />
-                  </button>
-                  <button
-                    type="button"
-                    className="icon-btn"
-                    aria-label={t(
-                      p.paused ? "plan.resumeNamed" : "plan.pauseNamed",
-                      {
-                        name: p.name,
-                      },
-                    )}
-                    disabled={pausing !== null}
-                    onClick={() => void togglePause(p)}
-                  >
-                    {p.paused ? (
-                      <Play size={20} aria-hidden="true" />
-                    ) : (
-                      <Pause size={20} aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-              );
-            })}
-          </MotionList>
-        )}
-        <button
-          type="button"
-          className="btn-dashed"
-          onClick={() => edit({ kind: "plan", plan: null })}
-        >
-          <Plus size={20} aria-hidden="true" />
-          {t("plan.new")}
-        </button>
-      </section>
-      {/* Groups are for one plan day offering a choice of routines; deload
-          weeks and progression live in the plan itself, so groups sit here. */}
+    <>
       <details className="plan-advanced">
         <summary>
           <span className="row-main">
@@ -232,7 +73,7 @@ export default function PlanPanel() {
                     .filter(Boolean)
                     .join(" · ")}
                   chevron
-                  onClick={() => edit({ kind: "group", group: g })}
+                  onClick={() => edit(g)}
                 />
               ))}
             </div>
@@ -240,26 +81,18 @@ export default function PlanPanel() {
           <button
             type="button"
             className="btn-dashed"
-            onClick={() => edit({ kind: "group", group: null })}
+            onClick={() => edit(null)}
           >
             <Plus size={20} aria-hidden="true" />
             {t("plan.newGroup")}
           </button>
         </section>
       </details>
-      {current?.kind === "plan" && (
-        <PlanEditor
-          key={session}
-          open={editing !== null}
-          plan={current.plan}
-          onClose={() => setEditing(null)}
-        />
-      )}
-      {current?.kind === "group" && (
+      {session > 0 && (
         <GroupEditor
           key={session}
-          open={editing !== null}
-          group={current.group}
+          open={editing !== undefined}
+          group={shown.current ?? null}
           routines={routines}
           onSave={(group) =>
             saveGroups(
@@ -269,9 +102,9 @@ export default function PlanPanel() {
             )
           }
           onDelete={(id) => saveGroups(groups.filter((g) => g.id !== id))}
-          onClose={() => setEditing(null)}
+          onClose={() => setEditing(undefined)}
         />
       )}
-    </div>
+    </>
   );
 }

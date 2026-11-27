@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { notify, offerUndo } from "@/lib/message-store";
@@ -14,42 +14,31 @@ import { useStableCallback } from "@/hooks/useStableCallback";
 import { useWeightUnits } from "@/hooks/useWeightUnits";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { errorMessage } from "@/lib/errors";
-import { categories, equipmentTypes } from "@/data/catalogue";
 import { favouriteChange } from "@/data/exercises";
 import { today } from "@/data/model";
 import { unpublishExercise } from "@/data/shared";
-import FacetChips from "@/components/FacetChips";
-import { CollapsibleFilters, FilterToggle } from "@/components/SearchFilters";
+import CategoryChips from "@/components/ui/CategoryChips";
+import type { CategoryChip } from "@/lib/category-filter";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ExerciseRow from "@/components/library/ExerciseRow";
 import ExerciseEditorSheet from "@/components/library/ExerciseEditorSheet";
 import LibraryExerciseMenu from "@/components/library/LibraryExerciseMenu";
 import { useExerciseMenu } from "@/components/gestures/ExerciseMenu";
-import {
-  filterExercises,
-  groupExercises,
-  libraryExercises,
-  type ExerciseFilter,
-  type LibraryExercise,
-} from "@/lib/library";
-import { t, type MessageKey } from "@/i18n";
-import { categoryLabel, equipmentLabel } from "@/lib/catalogue-labels";
+import { libraryExercises, type LibraryExercise } from "@/lib/library";
+import { hiddenCount, libraryListGroups } from "@/lib/library-list";
+import { t } from "@/i18n";
 import MotionList from "@/components/motion/MotionList";
 import { exerciseDisplayName } from "@/lib/exercise-name";
-
-// Exercises others shared live in Library → Upptäck.
-type Filter = ExerciseFilter;
-const filters = [
-  { value: "all", label: "exercises.filterAll" },
-  { value: "mine", label: "exercises.filterMine" },
-  { value: "recent", label: "exercises.filterRecent" },
-  { value: "hidden", label: "exercises.filterHidden" },
-] as const satisfies readonly { value: Filter; label: MessageKey }[];
 
 /** A tap on Library's header Search or +, numbered so each tap acts once. */
 export type PanelRequest = { kind: "new" | "search"; n: number } | null;
 
-/** Library → Exercises: search, filters, groups and the custom exercise editor. */
+/**
+ * Library → Övningar (v6 §E1): the search, the category chip row, "Mina
+ * övningar" first and then A–Ö by the shown name, hidden exercises behind
+ * "Visa dolda", and the custom exercise editor. Exercises others shared live
+ * in Library → Rutiner → Upptäck.
+ */
 export default function ExercisesPanel({
   request = null,
 }: {
@@ -64,12 +53,8 @@ export default function ExercisesPanel({
   const edit = draft.value;
   const setEdit = draft.replace;
   const [search, setSearch] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filtersId = useId();
-  const [filter, setFilter] = useState<Filter>("all");
-  const [category, setCategory] = useState("");
-  const [equipment, setEquipment] = useState("");
+  const [chip, setChip] = useState<CategoryChip>("all");
+  const [showHidden, setShowHidden] = useState(false);
   const { hidden, setHidden } = useHiddenExercises();
   const [menu, setMenu] = useState<LibraryExercise | null>(null);
   const [open, setOpen] = useState(false);
@@ -80,10 +65,6 @@ export default function ExercisesPanel({
   );
   const now = today();
   const { undos } = useMessageState();
-  // While searching the chip rows fold away; "Filter" brings them back.
-  const compact = (searchFocused || !!search.trim()) && !filtersOpen;
-  const activeFilters =
-    Number(filter !== "all") + Number(!!category) + Number(!!equipment);
   const shared = useSharedExercises({
     browsing: false,
     // An open draft of the exercise follows its shared id.
@@ -102,15 +83,10 @@ export default function ExercisesPanel({
     [state.records, hidden, unitFor],
   );
   const groups = useMemo(
-    () =>
-      groupExercises(
-        filterExercises(all, search, filter, { category, equipment }),
-        filter,
-        !!search.trim(),
-        category,
-      ),
-    [all, search, filter, category, equipment],
+    () => libraryListGroups(all, { query: search, chip, hidden: showHidden }),
+    [all, search, chip, showHidden],
   );
+  const hiddenHere = useMemo(() => hiddenCount(all, chip), [all, chip]);
   const customPayload = (id: string) => {
     const record = state.records[id];
     return record?.kind === "exercise" ? record.payload : null;
@@ -244,7 +220,14 @@ export default function ExercisesPanel({
     if (!edit)
       setEdit({
         id: crypto.randomUUID(),
-        data: { name: "", category: "Other", note: "", favourite: false },
+        data: {
+          name: "",
+          category: "Other",
+          note: "",
+          favourite: false,
+          equipment: "dumbbell",
+          icon: "dumbbell",
+        },
       });
     setOpen(true);
   };
@@ -262,72 +245,24 @@ export default function ExercisesPanel({
   const firstId = groups[0]?.items[0]?.id;
   return (
     <div className="col-12">
-      <div className="search-row">
-        <label className="search-field">
-          <Search size={20} aria-hidden="true" />
-          <input
-            ref={searchInput}
-            type="search"
-            placeholder={t("exercises.search")}
-            aria-label={t("exercises.search")}
-            value={search}
-            onFocus={() => {
-              setSearchFocused(true);
-              setFiltersOpen(false);
-            }}
-            onBlur={() => setSearchFocused(false)}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </label>
-        {compact && (
-          <FilterToggle
-            count={activeFilters}
-            controls={filtersId}
-            onClick={() => setFiltersOpen(true)}
-          />
-        )}
-      </div>
-      <CollapsibleFilters id={filtersId} collapsed={compact}>
-        <div
-          className="facet-chips"
-          role="group"
-          aria-label={t("exercises.show")}
-        >
-          {filters.map((f) => (
-            <button
-              key={f.value}
-              type="button"
-              className="filter-chip"
-              aria-pressed={filter === f.value}
-              onClick={() => setFilter(f.value)}
-            >
-              {t(f.label)}
-            </button>
-          ))}
-        </div>
-        <FacetChips
-          name={t("facet.category")}
-          allLabel={t("facet.allCategories")}
-          format={categoryLabel}
-          options={categories}
-          value={category}
-          onChange={setCategory}
+      <label className="search-field">
+        <Search size={20} aria-hidden="true" />
+        <input
+          ref={searchInput}
+          type="search"
+          placeholder={t("exercises.search")}
+          aria-label={t("exercises.search")}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
         />
-        <FacetChips
-          name={t("facet.equipment")}
-          allLabel={t("facet.allEquipment")}
-          format={equipmentLabel}
-          options={equipmentTypes}
-          value={equipment}
-          onChange={setEquipment}
-        />
-      </CollapsibleFilters>
+      </label>
+      <CategoryChips value={chip} onChange={setChip} />
       {groups.map((group) => (
         <section key={group.title} aria-label={group.title}>
           <h2 className="group-title">{group.title}</h2>
           <MotionList
             className="flat-list"
-            resetKey={`${filter}|${category}|${equipment}|${search.trim()}`}
+            resetKey={`${chip}|${showHidden}|${search.trim()}`}
           >
             {interleave(
               group.items,
@@ -343,7 +278,6 @@ export default function ExercisesPanel({
                 <ExerciseRow
                   key={slot.item.id}
                   exercise={slot.item}
-                  now={now}
                   onUnhide={unhide}
                   onMenu={setMenu}
                   onHold={hold}
@@ -366,14 +300,22 @@ export default function ExercisesPanel({
         ))}
       {!groups.length && (
         <p className="empty" role="status">
-          {filter === "recent" && !search.trim()
-            ? t("exercises.emptyRecent")
-            : filter === "mine" && !search.trim()
-              ? t("exercises.emptyMine")
-              : filter === "hidden" && !search.trim()
-                ? t("exercises.emptyHidden")
-                : t("exercises.noMatch")}
+          {chip === "mine" && !search.trim()
+            ? t("exercises.emptyMine")
+            : t("exercises.noMatch")}
         </p>
+      )}
+      {!search.trim() && (hiddenHere > 0 || showHidden) && (
+        <button
+          type="button"
+          className="btn-quiet btn-block"
+          aria-expanded={showHidden}
+          onClick={() => setShowHidden((on) => !on)}
+        >
+          {showHidden
+            ? t("exercises.hideHidden")
+            : t("exercises.showHidden", { count: hiddenHere })}
+        </button>
       )}
       {edit && !open && (
         <p className="draft-receipt">
