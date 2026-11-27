@@ -891,7 +891,7 @@ export const en = {
   "muscles.simple": "Simple",
   "muscles.advanced": "Advanced",
   "muscles.mixed": "Mixed",
-  "muscles.level.none": "–",
+  "muscles.level.none": "None",
   "muscles.level.noneSpoken": "None",
   "muscles.level.some": "Some",
   "muscles.level.much": "A lot",
@@ -2135,6 +2135,10 @@ export const en = {
     "Choose muscles. The exercise shows under the group with the most main muscles.",
   "editor.noteOptional": "Note (optional)",
   "editor.notePlaceholder": "Grip, setup, how to do it",
+  "muscles.sideLabel": "Show the figure",
+  "muscles.front": "Front",
+  "muscles.back": "Back",
+  "muscles.tapHint": "Tap a muscle as a shortcut.",
 
   // ---- v6 P5 Inställningar ----
 

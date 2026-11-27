@@ -899,7 +899,7 @@ export const sv = {
   "muscles.simple": "Enkel",
   "muscles.advanced": "Avancerad",
   "muscles.mixed": "Blandat",
-  "muscles.level.none": "–",
+  "muscles.level.none": "Ingen",
   "muscles.level.noneSpoken": "Ingen",
   "muscles.level.some": "Lite",
   "muscles.level.much": "Mycket",
@@ -2148,6 +2148,10 @@ export const sv = {
     "Välj muskler. Övningen visas under den grupp som har flest huvudmuskler.",
   "editor.noteOptional": "Anteckning (valfritt)",
   "editor.notePlaceholder": "Grepp, inställning, utförande",
+  "muscles.sideLabel": "Visa figuren",
+  "muscles.front": "Fram",
+  "muscles.back": "Bak",
+  "muscles.tapHint": "Tryck på en muskel som genväg.",
 
   // ---- v6 P5 Inställningar ----
 
