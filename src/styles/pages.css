@@ -1175,6 +1175,27 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 .list .rest-setting-sub {
   padding-left: var(--gt-space-5);
 }
+/* The theme fade on Settings, where it is switched (R9). The surfaces fade
+   with the page (index.css leaves divs out, so the lists jumped), and text
+   that only inherits its colour does not run a transition of its own: in
+   WebKit such a transition restarts every frame as the parent's colour
+   moves, so row titles lagged and vanished into the new ground. They now
+   follow their row's own fade. */
+@media (prefers-reduced-motion: no-preference) {
+  :root.theme-fading .settings-page :is(.list, .card, .segmented) {
+    transition:
+      background-color var(--gt-dur-theme) ease,
+      border-color var(--gt-dur-theme) ease,
+      color var(--gt-dur-theme) ease;
+  }
+  /* (0,5,1), past index.css's span rule (0,4,2). */
+  :root.theme-fading
+    .settings-page
+    .list
+    span:is(.row-main, .row-title, .switch-text, .switch-label) {
+    transition: none;
+  }
+}
 /* Tema: the whole row is the switch; the day/night switch is drawn in it. */
 .theme-row .theme-switch {
   display: block;
