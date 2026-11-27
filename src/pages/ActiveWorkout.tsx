@@ -18,23 +18,43 @@ import {
   validSet,
   isFromNewerApp,
 } from "@/data/model";
-import { doneSetCount, setCount } from "@/data/selectors";
-import { hasLoggedExercise } from "@/data/workouts";
+import { completedWorkouts, doneSetCount, setCount } from "@/data/selectors";
+import { hasLoggedExercise, priorWorkouts } from "@/data/workouts";
 import {
+  RECORD_KINDS,
   liveRankedRecords,
-  quietRecord,
-  rankedKindsLabel,
   recordSetKinds,
-  type RankedRecord,
 } from "@/data/record-rank";
+import { finishSummary, weekWorkoutNumber } from "@/lib/finish-summary";
 import { workoutTargets } from "@/data/targets";
+import {
+  fatigueNote,
+  fatigueTargetText,
+  lowerTarget,
+  lowerTargets,
+  restoreTargets,
+  type FatigueNote,
+} from "@/data/fatigue";
+import type { SetTarget } from "@/data/targets";
+import type { FatigueRowState } from "@/components/workout/FatigueRow";
+import {
+  draftKey,
+  parseFatigueDismissed,
+  readDraft,
+  writeDraft,
+} from "@/lib/drafts";
+import { local } from "@/lib/storage";
 import { summarize } from "@/data/summary";
 import { loadKeyOf } from "@/lib/load-keys";
-import { targetRowText, targetSource } from "@/lib/set-target";
+import { targetRowText, targetSource, targetValueText } from "@/lib/set-target";
+import { nextLine } from "@/lib/rest-dock";
 import { useWorkoutGoals } from "@/hooks/useWorkoutGoals";
 import { addExercises, type ExerciseTarget } from "@/lib/workout-editor";
-import { trainingHaptic } from "@/lib/preferences";
-import { historyPath } from "@/lib/routes";
+import { effectiveRest, trainingHaptic } from "@/lib/preferences";
+import { restTier } from "@/data/rest-tiers";
+import { catalogueById } from "@/data/catalogue";
+import { musclesLookup } from "@/data/exercise-muscles";
+import { historyPath, planStatusPath } from "@/lib/routes";
 import { usePreviousResults } from "@/hooks/usePreviousResults";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { useCardioFields } from "@/hooks/useCardioFields";
@@ -53,12 +73,16 @@ import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import { reorderByIds } from "@/lib/exercise-order";
 import { notify } from "@/lib/message-store";
 import EditSaveDialog from "@/components/workout/EditSaveDialog";
-import FinishSheet, {
-  type FinishRecord,
-} from "@/components/workout/FinishSheet";
+import FinishSheet from "@/components/workout/FinishSheet";
+import RewardSheet from "@/components/workout/RewardSheet";
 import NextSetChip from "@/components/workout/NextSetChip";
 import WorkoutDock from "@/components/workout/WorkoutDock";
 import { NumberPadContext } from "@/components/workout/number-pad-context";
+import {
+  WorkoutToastContext,
+  type WorkoutToastMessage,
+} from "@/components/workout/workout-toast";
+import WorkoutToast from "@/components/workout/WorkoutToast";
 import type { DockNext } from "@/components/workout/RestDock";
 import type { PadField, PadTarget } from "@/lib/number-pad";
 import { setBadge } from "@/data/drops";
@@ -69,6 +93,8 @@ import { useKeepScreenOn, useWakeLock } from "@/hooks/useWakeLock";
 import { wakeLockSupported } from "@/lib/keep-screen-on";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import { useWeightUnits } from "@/hooks/useWeightUnits";
+import { useExerciseSettings } from "@/hooks/useExerciseSettings";
+import { carryWeight } from "@/lib/set-editing";
 import type { WeightUnit } from "@/lib/units";
 import WorkoutBanners from "@/components/workout/WorkoutBanners";
 import WorkoutDetailsSheet from "@/components/workout/WorkoutDetailsSheet";
@@ -107,17 +133,6 @@ export default function ActiveWorkout() {
     />
   );
 }
-
-/** A record as the Finish sheet's pill reads it: "Bench Press 90 kg × 5". */
-const finishRecord = (
-  record: RankedRecord,
-  unitFor: (exerciseId: string) => WeightUnit,
-): FinishRecord => ({
-  id: record.set.id,
-  text: `${exerciseDisplayName(record.exerciseId, record.name)} ${labelSet(record.set, false, unitFor(record.exerciseId))}`,
-  label: rankedKindsLabel(record.kinds),
-  quiet: quietRecord(record.kinds),
-});
 
 /** A workout that cannot open here: the shared page header and a way back. */
 function WorkoutUnavailable({
@@ -184,14 +199,13 @@ function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [finish, setFinish] = useState(false);
-  const [routine, setRoutine] = useState(false);
   const [details, setDetails] = useState(() => !!startState?.details);
   const [choosing, setChoosing] = useState(() => !!startState?.choose);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
   const rest = useRestTimer(account, id);
-  const { busy, complete, abandon, discardEmpty } = useWorkoutActions(
+  const { busy, complete, abandon, saveRoutineAndEnd } = useWorkoutActions(
     id,
     autosave,
     rest,
@@ -229,10 +243,40 @@ function Editor({
     initial,
     w.date,
   );
-  const [{ askRir }] = useTrainingPreferences();
+  const [trainingPrefs] = useTrainingPreferences();
+  const { askRir } = trainingPrefs;
   // Each exercise's weight unit: its own, else the default from Settings.
   const weightUnits = useWeightUnits();
   const { unitFor } = weightUnits;
+  // v6 §D5: each exercise's note, weight step and rest time.
+  const exerciseSettings = useExerciseSettings();
+  const { stepFor } = exerciseSettings;
+  // v6 §D7: each exercise's rest: its own, else the timer's time or its tier.
+  const musclesKey = Object.values(state.records)
+    .filter((r) => r.kind === "exercise")
+    .map((r) => `${r.id}:${r.revision}:${r.localVersion}`)
+    .join("|");
+  const musclesOf = useMemo(
+    () => musclesLookup(state.records),
+    // musclesKey stands in for the custom exercises it summarises.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [musclesKey],
+  );
+  const restFor = useCallback(
+    (exerciseId: string) => {
+      const own = exerciseSettings.restFor(exerciseId);
+      const builtin = catalogueById.get(exerciseId);
+      const tier = restTier({
+        id: exerciseId,
+        name: builtin?.name ?? "",
+        equipment: exerciseSettings.equipmentFor(exerciseId),
+        muscles: musclesOf(exerciseId),
+        custom: !builtin,
+      });
+      return { own, tier, seconds: effectiveRest(trainingPrefs, own, tier) };
+    },
+    [exerciseSettings, musclesOf, trainingPrefs],
+  );
   // Each set's target (double progression, targets.ts), worked out again
   // only when the other finished workouts or the shape of this one change:
   // not on every typed value.
@@ -243,7 +287,7 @@ function Editor({
   const shape = w.exercises
     .map(
       (ex) =>
-        `${ex.exerciseId}:` +
+        `${ex.exerciseId}:${ex.repRange ? `${ex.repRange.min}-${ex.repRange.max}` : ""}:${ex.fatigue ?? ""}:` +
         ex.sets
           .map((s) =>
             [s.id, s.section, s.drop ? 1 : 0, loadKeyOf(s), s.measure].join(
@@ -261,29 +305,40 @@ function Editor({
         latestRecords.current,
         { id, payload: workout },
         unitFor,
+        stepFor,
       );
       const exerciseOf = new Map(
         workout.exercises.flatMap((ex) =>
-          ex.sets.map((s) => [s.id, ex.exerciseId]),
+          ex.sets.map((s) => [s.id, ex] as const),
         ),
       );
       return new Map(
-        [...found].map(([setId, { target, last }]) => [
-          setId,
-          {
-            text: targetRowText(
-              target,
-              last,
-              unitFor(exerciseOf.get(setId) ?? ""),
-            ),
-            source: targetSource(target, last),
-          },
-        ]),
+        [...found].map(([setId, { target, last }]) => {
+          const ex = exerciseOf.get(setId);
+          // v6 §D10: a target lowered for fatigue is a step lighter today.
+          const shown =
+            ex?.fatigue === "lowered"
+              ? lowerTarget(target, stepFor(ex.exerciseId))
+              : target;
+          return [
+            setId,
+            {
+              text: targetRowText(shown, last, unitFor(ex?.exerciseId ?? "")),
+              // "100 × 6", for the dock's line (v6 B1).
+              value: targetValueText(
+                shown,
+                last,
+                unitFor(ex?.exerciseId ?? ""),
+              ),
+              source: targetSource(shown, last),
+            },
+          ];
+        }),
       );
     },
     // shape, historyKey and planKey stand in for the records they summarise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [historyKey, shape, planKey, unitFor, w.date, id],
+    [historyKey, shape, planKey, unitFor, stepFor, w.date, id],
   );
   // Lift goals: a mark by the exercise's name, and a check-in or the goal's
   // own lift as a set's target.
@@ -352,16 +407,14 @@ function Editor({
   const requestRemove = useStableCallback((ex: Exercise) =>
     hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex),
   );
-  // The exercise of the set checked last: the dock names the next set's
-  // exercise only when it is another one.
-  const [lastChecked, setLastChecked] = useState<string | null>(null);
   const setDone = useStableCallback((exerciseId: string) => {
     if (editing) return;
     // The tap that checks a set lets the rest's tone play later.
     primeRestSound();
-    rest.start();
+    // v6 §D7: the checked exercise's own rest, its tier, or none.
+    const checked = w.exercises.find((ex) => ex.id === exerciseId);
+    rest.start(checked ? restFor(checked.exerciseId).seconds : 0);
     trainingHaptic(rest.preferences.haptics);
-    setLastChecked(exerciseId);
   });
   // Every set checked: no rest, the dock is Finish workout.
   const allChecked = total > 0 && completed === total;
@@ -374,6 +427,150 @@ function Editor({
   // the workout's details.
   const [keepScreenOn, setKeepScreenOn] = useKeepScreenOn();
   useWakeLock(!editing && keepScreenOn);
+  // v6 B2, B13: one toast at the workout's foot; a new one replaces it.
+  const [toast, setToast] = useState<
+    (WorkoutToastMessage & { id: number }) | null
+  >(null);
+  const toastId = useRef(0);
+  const showToast = useCallback(
+    (message: WorkoutToastMessage) =>
+      setToast({ ...message, id: ++toastId.current }),
+    [],
+  );
+
+  // v6 B13, §D10: a muscle already tired before an exercise. The answers
+  // ("Behåll målet", or a lowering undone) are kept with this workout's
+  // draft on the device.
+  const fatigueMode = trainingPrefs.fatigueMode;
+  const dismissKey = draftKey(account, "fatigue", id);
+  const [dismissed, setDismissed] = useState<string[]>(
+    () => readDraft(local, dismissKey, parseFatigueDismissed) ?? [],
+  );
+  const dismiss = (exerciseId: string, answered = true) =>
+    setDismissed((current) => {
+      const next = answered
+        ? [...new Set([...current, exerciseId])]
+        : current.filter((x) => x !== exerciseId);
+      writeDraft(local, dismissKey, next.length ? next : null);
+      return next;
+    });
+  // What each lowering changed, for Ångra; and the ones "Automatiskt" made.
+  const lowered = useRef(
+    new Map<string, { snapshot: Exercise; to: SetTarget }>(),
+  );
+  const [autoLowered, setAutoLowered] = useState<Record<string, SetTarget>>({});
+  // The last finished workout that holds each exercise.
+  const earlier = useMemo(
+    () =>
+      editing
+        ? []
+        : priorWorkouts(
+            Object.values(latestRecords.current),
+            {
+              id,
+              kind: "workout",
+              revision: 0,
+              deleted: false,
+              localVersion: 0,
+              dirty: false,
+              payload: latestWorkout.current,
+            },
+            w.date,
+          ),
+    // historyKey stands in for the records it summarises.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [historyKey, w.date, id, editing],
+  );
+  const fatigueNotes = new Map<string, FatigueNote>();
+  if (!editing && fatigueMode !== "off")
+    w.exercises.forEach((ex, index) => {
+      if (ex.fatigue === "lowered" || dismissed.includes(ex.id)) return;
+      const last = earlier.find((r) =>
+        r.payload.exercises.some((e) => e.exerciseId === ex.exerciseId),
+      );
+      const open = ex.sets.find(
+        (s) => s.section === "working" && !s.drop && !s.done,
+      );
+      const goal = open ? targets.get(open.id)?.source : undefined;
+      const note = fatigueNote(
+        w,
+        index,
+        last?.payload ?? null,
+        musclesOf,
+        stepFor(ex.exerciseId),
+        goal && goal.weight != null && goal.reps != null
+          ? { weight: goal.weight, reps: goal.reps }
+          : null,
+      );
+      if (note) fatigueNotes.set(ex.id, note);
+    });
+  // One object per row while it says the same, so memoised cards skip renders.
+  const fatigueCache = useRef(new Map<string, [string, FatigueRowState]>());
+  const fatigueFor = (ex: Exercise): FatigueRowState => {
+    const auto = autoLowered[ex.id];
+    const note = fatigueNotes.get(ex.id);
+    const state: FatigueRowState =
+      auto && ex.fatigue === "lowered"
+        ? { kind: "lowered", to: auto }
+        : fatigueMode === "suggest" && note
+          ? { kind: "suggest", note }
+          : null;
+    const key = JSON.stringify(state);
+    const cached = fatigueCache.current.get(ex.id);
+    if (cached && cached[0] === key) return cached[1];
+    fatigueCache.current.set(ex.id, [key, state]);
+    return state;
+  };
+  const lowerExercise = (ex: Exercise, to: SetTarget) => {
+    lowered.current.set(ex.id, { snapshot: ex, to });
+    update(lowerTargets(ex, to));
+  };
+  const restoreExercise = (exerciseId: string) => {
+    const saved = lowered.current.get(exerciseId);
+    if (!saved) return;
+    lowered.current.delete(exerciseId);
+    changeWith((current) => ({
+      ...current,
+      exercises: current.exercises.map((e) =>
+        e.id === exerciseId ? restoreTargets(e, saved.snapshot) : e,
+      ),
+    }));
+  };
+  // "Automatiskt": the target is lowered at once, and the row says so.
+  const autoKey = [...fatigueNotes.keys()].join("|");
+  useEffect(() => {
+    if (fatigueMode !== "auto") return;
+    for (const ex of latestWorkout.current.exercises) {
+      const note = fatigueNotes.get(ex.id);
+      if (!note || autoLowered[ex.id]) continue;
+      lowerExercise(ex, note.to);
+      setAutoLowered((current) => ({ ...current, [ex.id]: note.to }));
+    }
+    // autoKey stands in for the notes it lists.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoKey, fatigueMode]);
+  const onFatigue = useStableCallback(
+    (ex: Exercise, choice: "lower" | "keep" | "undo") => {
+      const current = w.exercises.find((e) => e.id === ex.id) ?? ex;
+      if (choice === "keep") return dismiss(ex.id);
+      if (choice === "undo") {
+        restoreExercise(ex.id);
+        dismiss(ex.id);
+        setAutoLowered(({ [ex.id]: _gone, ...rest }) => rest);
+        return;
+      }
+      const note = fatigueNotes.get(ex.id);
+      if (!note) return;
+      lowerExercise(current, note.to);
+      showToast({
+        text: t("workout.fatigueLowered", {
+          to: fatigueTargetText(note.to, unitFor(ex.exerciseId)),
+        }),
+        // Ångra puts back the weights, the targets and the row.
+        undo: () => restoreExercise(ex.id),
+      });
+    },
+  );
   // The number pad of a live workout (NumberPad.tsx).
   const [padTarget, setPadTarget] = useState<PadTarget | null>(null);
   const padApi = useMemo(
@@ -399,7 +596,11 @@ function Editor({
           ex.sets.some((s) => s.id === setId)
             ? {
                 ...ex,
-                sets: ex.sets.map((s) => (s.id === setId ? edit(s) : s)),
+                // A raised weight carries to the later open sets (R4-17).
+                sets: carryWeight(
+                  ex.sets,
+                  edit(ex.sets.find((s) => s.id === setId)!),
+                ),
               }
             : ex,
         ),
@@ -411,24 +612,63 @@ function Editor({
       const index = ex.sets.findIndex((s) => !s.done);
       if (index < 0) continue;
       const set = ex.sets[index];
-      const title = setBadge(ex.sets, index).name;
-      const what = validSet(set)
-        ? `${title} · ${labelSet(set, true, unitFor(ex.exerciseId))}`
-        : title;
+      const badge = setBadge(ex.sets, index);
+      const title = badge.name;
+      // v6 B1: "Nästa: Knäböj · set 2 · Mål 100 × 6 (5–7)", else what the
+      // set holds.
+      const goal = targets.get(set.id)?.value;
+      const value = validSet(set)
+        ? labelSet(set, true, unitFor(ex.exerciseId))
+        : null;
+      const label = nextLine(
+        exerciseDisplayName(ex.exerciseId, ex.name),
+        badge.tone === "working" ? Number(badge.text) : title,
+        goal ?? null,
+        goal ? ex.repRange : null,
+      );
       return {
         setId: set.id,
         title,
-        label:
-          lastChecked && lastChecked !== ex.id
-            ? `${exerciseDisplayName(ex.exerciseId, ex.name)} · ${what}`
-            : what,
+        label: goal || !value ? label : `${label} · ${value}`,
       };
     }
     return null;
-  }, [w.exercises, lastChecked, unitFor]);
-  // The Finish sheet's numbers, as it opens.
-  const finishVolume = useMemo(
-    () => (finish ? summarize([w], 1, w.date).volume : 0),
+  }, [w.exercises, unitFor, targets]);
+  // The Finish sheet's numbers, as it opens (v6 B9): the strongest record
+  // with last time's best, the sets and the volume.
+  const finishData = useMemo(
+    () => {
+      const ranked = [...liveRecords].sort(
+        (a, b) => RECORD_KINDS.indexOf(a.top) - RECORD_KINDS.indexOf(b.top),
+      );
+      const lines = ranked.map((record) => {
+        const unit = unitFor(record.exerciseId);
+        // The heaviest working set of the exercise before today.
+        let best: WorkoutSet | null = null;
+        for (const r of earlier)
+          for (const ex of r.payload.exercises) {
+            if (ex.exerciseId !== record.exerciseId) continue;
+            for (const s of ex.sets)
+              if (
+                s.done &&
+                s.section === "working" &&
+                !s.drop &&
+                validSet(s) &&
+                s.weight !== null &&
+                (!best ||
+                  s.weight > (best.weight ?? 0) ||
+                  (s.weight === best.weight &&
+                    (s.reps ?? 0) > (best.reps ?? 0)))
+              )
+                best = s;
+          }
+        return {
+          text: `${exerciseDisplayName(record.exerciseId, record.name)} ${labelSet(record.set, false, unit)}`,
+          previous: best ? labelSet(best, false, unit) : null,
+        };
+      });
+      return finishSummary(w, lines);
+    },
     // Read as the sheet opens; typing the note must not recount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [finish],
@@ -442,16 +682,50 @@ function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [finish],
   );
-  const finishRecords = useMemo(
-    () => liveRecords.map((record) => finishRecord(record, unitFor)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recordsKey, unitFor],
-  );
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
     else navigate(editing ? historyPath(id) : "/");
   };
-  const save = () => void complete(routine && !fromRoutine);
+  // v6 B9, B10: a finished workout shows the reward before Train.
+  const [reward, setReward] = useState<{
+    first: boolean;
+    records: number;
+    weekNumber: number;
+    done: number;
+    volumeKg: number;
+    minutes: number | null;
+    plan?: { id: string; name: string };
+  } | null>(null);
+  const save = () => {
+    if (editing) return void complete(false);
+    const others = completedWorkouts(state.records).filter((r) => r.id !== id);
+    const planRecord = w.plan ? state.records[w.plan.planId] : undefined;
+    const snapshot = {
+      first: others.length === 0,
+      records: liveRecords.length,
+      weekNumber: weekWorkoutNumber(
+        others.map((r) => r.payload.date),
+        w.date,
+      ),
+      done: finishData.done,
+      volumeKg: finishData.volumeKg,
+      minutes: finishMinutes,
+      plan:
+        planRecord?.kind === "plan" && !planRecord.deleted
+          ? { id: planRecord.id, name: planRecord.payload.name }
+          : undefined,
+    };
+    void complete(false, { stay: true }).then((saved) => {
+      if (!saved) return;
+      setFinish(false);
+      setReward(snapshot);
+    });
+  };
+  const rewardDone = () => {
+    setReward(null);
+    navigate("/");
+    notify.success(t("finish.savedInCalendar"));
+  };
 
   // Checked values are editable while editing, so say why Save is off.
   const saveStatus = editing
@@ -481,11 +755,8 @@ function Editor({
         }
         onLeave={leave}
         onDetails={() => setDetails(true)}
-        // A workout with nothing checked has nothing to save: it goes at
-        // once, like a deleted one, and Train says so.
-        onFinish={() =>
-          !editing && completed === 0 ? void discardEmpty() : setFinish(true)
-        }
+        // v6 B9: with nothing checked the sheet asks what to do.
+        onFinish={() => setFinish(true)}
       />
       <WorkoutBanners
         changedElsewhere={autosave.changedElsewhere}
@@ -496,52 +767,65 @@ function Editor({
         onKeepMine={autosave.keepMine}
         onRetry={() => change(w)}
       />
-      <NumberPadContext.Provider value={editing ? null : padApi}>
-        {w.exercises.map((ex) => (
-          <ExerciseCard
-            key={ex.id}
-            exercise={ex}
-            lastSession={previous.get(ex.exerciseId)}
-            bodyWeightKg={bodyWeightKg}
-            // Only the card holding the next set needs to know which it is.
-            nextSetId={
-              ex.sets.some((s) => s.id === nextSet?.id)
-                ? nextSet?.id
-                : undefined
-            }
-            unlockChecked={editing}
-            defaults={defaults.get(ex.exerciseId)}
-            // The Deload tag says it; a plain "Deload week" line would repeat it.
-            planNote={
-              deloadWeek && w.plan?.loads?.[ex.exerciseId] === undefined
-                ? undefined
-                : planNote(w.plan, ex.exerciseId, unitFor(ex.exerciseId))
-            }
-            deload={deloadWeek}
-            targets={editing ? undefined : workoutGoals.targets}
-            goalMark={
-              editing ? undefined : workoutGoals.marks.get(ex.exerciseId)
-            }
-            askRir={!editing && askRir}
-            onChange={update}
-            onReorderExercises={
-              w.exercises.length > 1 ? openReorder : undefined
-            }
-            onRemove={requestRemove}
-            onChangeExercise={setChanging}
-            onSetDone={setDone}
-            records={recordKinds}
-            restChip={!editing}
-            cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
-            onCardioFields={cardioFields.setFields}
-            repHold={repHold.holdFor(ex.exerciseId)}
-            onRepHold={repHold.setHold}
-            weightUnit={unitFor(ex.exerciseId)}
-            defaultWeightUnit={weightUnits.defaultUnit}
-            onWeightUnit={weightUnits.setUnit}
-          />
-        ))}
-      </NumberPadContext.Provider>
+      <WorkoutToastContext.Provider value={editing ? null : showToast}>
+        <NumberPadContext.Provider value={editing ? null : padApi}>
+          {w.exercises.map((ex) => (
+            <ExerciseCard
+              key={ex.id}
+              exercise={ex}
+              lastSession={previous.get(ex.exerciseId)}
+              bodyWeightKg={bodyWeightKg}
+              // Only the card holding the next set needs to know which it is.
+              nextSetId={
+                ex.sets.some((s) => s.id === nextSet?.id)
+                  ? nextSet?.id
+                  : undefined
+              }
+              unlockChecked={editing}
+              defaults={defaults.get(ex.exerciseId)}
+              // The Deload tag says it; a plain "Deload week" line would repeat it.
+              planNote={
+                deloadWeek && w.plan?.loads?.[ex.exerciseId] === undefined
+                  ? undefined
+                  : planNote(w.plan, ex.exerciseId, unitFor(ex.exerciseId))
+              }
+              deload={deloadWeek}
+              targets={editing ? undefined : workoutGoals.targets}
+              goalMark={
+                editing ? undefined : workoutGoals.marks.get(ex.exerciseId)
+              }
+              askRir={!editing && askRir}
+              onChange={update}
+              onReorderExercises={
+                w.exercises.length > 1 ? openReorder : undefined
+              }
+              onRemove={requestRemove}
+              onChangeExercise={setChanging}
+              onSetDone={setDone}
+              records={recordKinds}
+              restChip={!editing}
+              cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
+              onCardioFields={cardioFields.setFields}
+              repHold={repHold.holdFor(ex.exerciseId)}
+              onRepHold={repHold.setHold}
+              weightUnit={unitFor(ex.exerciseId)}
+              defaultWeightUnit={weightUnits.defaultUnit}
+              onWeightUnit={weightUnits.setUnit}
+              equipment={exerciseSettings.equipmentFor(ex.exerciseId)}
+              weightStep={exerciseSettings.stepFor(ex.exerciseId)}
+              note={exerciseSettings.noteFor(ex.exerciseId)}
+              onNote={exerciseSettings.setNote}
+              onWeightStep={exerciseSettings.setStep}
+              restSeconds={restFor(ex.exerciseId).seconds}
+              restOwn={restFor(ex.exerciseId).own}
+              restTier={restFor(ex.exerciseId).tier}
+              onRestOwn={exerciseSettings.setRest}
+              fatigue={editing ? null : fatigueFor(ex)}
+              onFatigue={onFatigue}
+            />
+          ))}
+        </NumberPadContext.Provider>
+      </WorkoutToastContext.Provider>
       <ReorderExercisesSheet
         open={reorderOpen}
         exercises={w.exercises}
@@ -577,7 +861,9 @@ function Editor({
         </button>
       )}
       <div className="float-stack">
-        {!padTarget && (
+        {/* v6 B2, B13: the toast at the workout's foot. */}
+        <WorkoutToast message={toast} onDone={() => setToast(null)} />
+        {!padTarget && !toast && (
           <NextSetChip setId={nextSet?.id} pad={editing ? null : padApi} />
         )}
       </div>
@@ -605,6 +891,8 @@ function Editor({
             unitFor,
             changeSet,
             targets: workoutGoals.targets,
+            stepFor: exerciseSettings.stepFor,
+            askRir,
           }}
         />
       )}
@@ -679,21 +967,38 @@ function Editor({
         <FinishSheet
           open={finish}
           onClose={() => setFinish(false)}
-          completed={completed}
-          unchecked={total - completed}
-          volumeKg={finishVolume}
+          name={workoutTitle(w.name)}
+          exercises={w.exercises.length}
+          summary={finishData}
           minutes={finishMinutes}
-          records={finishRecords}
-          loudRecords={liveRecords.some((record) => record.top !== "e1rm")}
           note={w.note ?? ""}
           onNote={(note) => change({ ...w, note })}
-          showRoutineSwitch={!fromRoutine}
-          saveRoutine={routine}
           busy={busy}
-          onSaveRoutine={setRoutine}
           onSave={save}
-          onKeepLogging={() => setFinish(false)}
+          onSaveRoutine={() => void saveRoutineAndEnd()}
           onAbandon={() => void abandon()}
+        />
+      )}
+      {reward && (
+        <RewardSheet
+          open
+          first={reward.first}
+          records={reward.records}
+          weekNumber={reward.weekNumber}
+          done={reward.done}
+          volumeKg={reward.volumeKg}
+          minutes={reward.minutes}
+          plan={reward.plan?.name}
+          onPlan={
+            reward.plan
+              ? () => {
+                  const planId = reward.plan!.id;
+                  setReward(null);
+                  navigate(planStatusPath(planId));
+                }
+              : undefined
+          }
+          onDone={rewardDone}
         />
       )}
     </div>

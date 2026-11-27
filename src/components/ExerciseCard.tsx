@@ -1,6 +1,13 @@
 import ExerciseAvatar from "@/components/items/ExerciseAvatar";
 import { memo, useCallback, useContext, useId, useRef, useState } from "react";
-import { ChevronDown, MoreHorizontal, Plus, Target, Timer } from "lucide-react";
+import {
+  ChevronDown,
+  MoreHorizontal,
+  Plus,
+  StickyNote,
+  Target,
+  Timer,
+} from "lucide-react";
 import {
   type Exercise,
   type WorkoutSet,
@@ -11,10 +18,10 @@ import {
   type ExerciseDefaults,
   type LastSession,
   previousResult,
-  workingSetChange,
 } from "@/data/workouts";
 import {
   addDrop,
+  addNextDrop,
   changeSection,
   dropGroup,
   isDrop,
@@ -51,10 +58,9 @@ import {
   shownPlannedSet,
 } from "@/lib/routine-targets";
 import { repRangeLabel } from "@/lib/routine-preview";
-import { withRir } from "@/lib/rir";
 import { exerciseDisplayName } from "@/lib/exercise-name";
-import { localizedDate } from "@/lib/dates";
-import { countLabel } from "@/lib/labels";
+import { headingMeta, headingRange, isPerLeg } from "@/lib/exercise-heading";
+import { carryWeight } from "@/lib/set-editing";
 import {
   type CardioFields,
   type CardioMetric,
@@ -83,8 +89,13 @@ import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 import CardioFieldsSheet from "@/components/workout/CardioFieldsSheet";
 import RepRangeSheet from "@/components/workout/RepRangeSheet";
+import WarmupSheet from "@/components/workout/WarmupSheet";
+import FatigueRow, {
+  type FatigueRowState,
+} from "@/components/workout/FatigueRow";
+import { warmupSets } from "@/lib/warmup";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
-import { RestSheet } from "@/components/settings/PreferenceSheets";
+import { RestSheet } from "@/components/settings/RestControl";
 import { restLabel } from "@/lib/preferences";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import type { WeightUnit } from "@/lib/units";
@@ -167,18 +178,40 @@ export type ExerciseCardProps = {
    * heading's sheet changes the default unit.
    */
   onWeightUnit?: (exerciseId: string, unit: WeightUnit) => void;
+  /** v6 B1: the exercise's equipment, for the heading's meta line. */
+  equipment?: string;
+  /** v6 §D5: the exercise's weight step in kg (weightStepOf). */
+  weightStep?: number;
+  /** v6 §D5: the exercise's note, shown under the heading. */
+  note?: string;
+  /** Saves the exercise's note (its ⋯, v6 B7). */
+  onNote?: (exerciseId: string, text: string) => void;
+  /** Saves the exercise's weight step in kg (its ⋯, v6 B7). */
+  onWeightStep?: (exerciseId: string, step: number) => void;
+  /** v6 §D7: the exercise's effective rest in seconds (0 = no timer). */
+  restSeconds?: number;
+  /** The exercise's own rest (0 = off), or undefined: it follows Settings. */
+  restOwn?: number;
+  /** The exercise's tier (rest-tiers.ts), for the sheet's first time. */
+  restTier?: number;
+  /** Sets the exercise's own rest, or clears it with null (v6 B8). */
+  onRestOwn?: (exerciseId: string, seconds: number | null) => void;
+  /** v6 B13: the fatigue row under the heading, or nothing. */
+  fatigue?: FatigueRowState;
+  /** "Sänk till …", "Behåll målet" and Ångra, with the card's exercise. */
+  onFatigue?: (exercise: Exercise, choice: "lower" | "keep" | "undo") => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
 type OpenSheet =
   | { kind: "set"; setId: string }
   | { kind: "unit" }
-  | { kind: "count" }
   | { kind: "menu" }
   | { kind: "reorder" }
   | { kind: "fields" }
   | { kind: "rest" }
   | { kind: "range" }
+  | { kind: "warmup" }
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
@@ -244,6 +277,17 @@ function ExerciseCard({
   weightUnit: ownUnit,
   defaultWeightUnit,
   onWeightUnit,
+  equipment,
+  weightStep = 2.5,
+  note,
+  onNote,
+  onWeightStep,
+  restSeconds = 0,
+  restOwn,
+  restTier = 120,
+  onRestOwn,
+  fatigue = null,
+  onFatigue,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
@@ -289,8 +333,13 @@ function ExerciseCard({
   const close = useCallback(() => setSheet(null), []);
   const changeSets = (next: WorkoutSet[]) => onChange({ ...ex, sets: next });
   // Stable for SetLine: they always act on this render's sets.
+  // A live workout's raised weight carries to the later open sets (R4-17).
   const updateSet = useStableCallback((next: WorkoutSet) =>
-    changeSets(sets.map((s) => (s.id === next.id ? next : s))),
+    changeSets(
+      mode === "log"
+        ? carryWeight(sets, next)
+        : sets.map((s) => (s.id === next.id ? next : s)),
+    ),
   );
   // A routine's row edits what it shows (shownPlannedSet): typed numbers
   // become the set's target, anything else keeps its stored values.
@@ -349,6 +398,13 @@ function ExerciseCard({
     setEntering(next.sets[next.sets.length - 1].id);
     onChange(next);
   };
+  // "+ Drop" (v6 B5): the next drop after the last, 20 % under it.
+  const addNextDropRow = () => {
+    const { sets: next, id } = addNextDrop(sets, weightStep);
+    if (!id) return;
+    setEntering(id);
+    changeSets(next);
+  };
   const latestSets = useRef(sets);
   latestSets.current = sets;
   const entered = useCallback(
@@ -356,7 +412,10 @@ function ExerciseCard({
       setEntering((current) => (current === setId ? null : current));
       const added = latestSets.current.find((s) => s.id === setId);
       const fields = added && mode === "log" ? padFields(added) : [];
-      if (pad && fields.length) pad.open(setId, fields[0]);
+      // A drop comes with its weight filled in: the pad opens on its reps.
+      const first =
+        added && isDrop(added) && fields.includes("reps") ? "reps" : fields[0];
+      if (pad && first) pad.open(setId, first);
       else
         document
           .querySelector(`[data-set-id="${CSS.escape(setId)}"]`)
@@ -384,7 +443,25 @@ function ExerciseCard({
     close();
     pad.open(hit.setId, hit.field);
   };
-  const setChange = mode === "log" ? workingSetChange(sets, lastSession) : null;
+  // v6 B1: "Hantlar ±2 · kg per hand · per ben" and "8–10 reps · 3 set".
+  const meta = headingMeta({
+    equipment,
+    step: weightStep,
+    perHand: equipment === "dumbbell",
+    perLeg: isPerLeg(ex.exerciseId),
+    unit: weightUnit,
+  });
+  // v6 B4: the warm-up row shows on the first working set only.
+  const firstWorkingIndex = sets.findIndex(
+    (s) => s.section === "working" && !isDrop(s),
+  );
+  const firstWorking =
+    firstWorkingIndex >= 0 ? sets[firstWorkingIndex] : undefined;
+  // v6 B12: "Fråga efter RIR" adds an RIR column after the count.
+  const rirColumn = askRir && mode === "log" && !cardio;
+  const workingSets = sets.filter(
+    (s) => s.section === "working" && !isDrop(s),
+  ).length;
   // "Reps + hold" changes the count to reps and is remembered for the exercise.
   const chooseCount = (choice: CountChoice) => {
     changeSets(
@@ -465,22 +542,29 @@ function ExerciseCard({
               </span>
             )}
           </div>
-          {mode === "log" && lastSession && (
+          {/* v6 B1: cardio has no Förra column, so last time's totals
+              stay under its name. */}
+          {mode === "log" && cardio && lastSession && (
             <p className="ex-last">
-              {t("exercise.last")}{" "}
-              {cardio
-                ? totalsLabel(
-                    cardioTotals(
-                      lastSession.sets.filter(
-                        (set) => isCardioSet(set) && set.done && validSet(set),
-                      ),
-                    ),
-                    unit,
-                  )
-                : localizedDate(lastSession.date, {
-                    day: "numeric",
-                    month: "short",
-                  })}
+              {t("exercise.colPrevious")}{" "}
+              {totalsLabel(
+                cardioTotals(
+                  lastSession.sets.filter(
+                    (set) => isCardioSet(set) && set.done && validSet(set),
+                  ),
+                ),
+                unit,
+              )}
+            </p>
+          )}
+          {/* v6 B1: the equipment and its step, then the rep range and the
+              working sets counted live. Last time stays under Förra. */}
+          {mode === "log" && !cardio && meta && (
+            <p className="ex-last ex-meta">{meta}</p>
+          )}
+          {mode === "log" && !cardio && (
+            <p className="ex-last ex-meta ex-range">
+              {headingRange(ex.repRange, workingSets)}
             </p>
           )}
           {mode === "plan" && ex.repRange && (
@@ -490,14 +574,6 @@ function ExerciseCard({
           )}
           {planNote && mode === "log" && (
             <p className="ex-last ex-plan-note">{planNote}</p>
-          )}
-          {setChange && (
-            <p className="ex-last ex-set-change">
-              {t("exercise.workingSetsNote", {
-                sets: countLabel(setChange.now, "working set"),
-                last: setChange.last,
-              })}
-            </p>
           )}
         </div>
         <button
@@ -510,6 +586,26 @@ function ExerciseCard({
           <MoreHorizontal size={23} aria-hidden="true" />
         </button>
       </div>
+      {/* v6 B1: the exercise's own note, in every workout. */}
+      {note && mode === "log" && (
+        <p className="ex-note">
+          <StickyNote size={15} aria-hidden="true" />
+          <span>
+            <span className="sr-only">{t("exercise.noteSr") + " "}</span>
+            {note}
+          </span>
+        </p>
+      )}
+      {/* v6 B13: a muscle already tired before this exercise. */}
+      {mode === "log" && (
+        <FatigueRow
+          state={fatigue}
+          unit={weightUnit}
+          onLower={() => onFatigue?.(planned, "lower")}
+          onKeep={() => onFatigue?.(planned, "keep")}
+          onUndo={() => onFatigue?.(planned, "undo")}
+        />
+      )}
       {cardio ? (
         <div className="set-columns" data-mode={mode} data-kind="cardio">
           <span>{t("exercise.colSet")}</span>
@@ -525,7 +621,7 @@ function ExerciseCard({
         </div>
       ) : (
         <div
-          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}${hold ? " has-hold" : ""}`}
+          className={`set-columns${prefixedLoad(defaultKey) ? " load-prefix" : ""}${hold ? " has-hold" : ""}${rirColumn ? " has-rir" : ""}`}
           data-mode={mode}
         >
           <span>{t("exercise.colSet")}</span>
@@ -551,11 +647,12 @@ function ExerciseCard({
             className="set-heading-btn"
             aria-haspopup="dialog"
             aria-label={`${countHeading(sets, hold)}, ${t("load.count")}`}
-            onClick={() => setSheet({ kind: "count" })}
+            onClick={() => setSheet({ kind: "range" })}
           >
             {countHeading(sets, hold)}
             <ChevronDown size={14} aria-hidden="true" />
           </button>
+          {rirColumn && <span>{t("exercise.colRir")}</span>}
           {mode === "log" && <span>{t("exercise.colDone")}</span>}
         </div>
       )}
@@ -599,7 +696,8 @@ function ExerciseCard({
                 : undefined
             }
             onFill={mode === "log" ? fillSet : undefined}
-            askRir={askRir && mode === "log"}
+            askRir={rirColumn}
+            weightStep={weightStep}
             marker={loadMarker(s, defaultKey)}
             bodyWeightKg={mode === "log" ? bodyWeightKg : null}
             weightUnit={weightUnit}
@@ -621,15 +719,27 @@ function ExerciseCard({
           <button
             type="button"
             className="rest-chip"
-            data-off={preferences.restSeconds > 0 ? undefined : ""}
+            data-off={restSeconds > 0 ? undefined : ""}
             aria-haspopup="dialog"
             aria-label={t("exercise.restChip", {
-              time: restLabel(preferences.restSeconds),
+              time: restSeconds > 0 ? restLabel(restSeconds) : t("rest.off"),
             })}
             onClick={() => setSheet({ kind: "rest" })}
           >
             <Timer size={16} aria-hidden="true" />
-            {restLabel(preferences.restSeconds)}
+            {restSeconds > 0 ? restLabel(restSeconds) : t("rest.off")}
+          </button>
+        )}
+        {/* v6 B5: once the exercise has a drop, one tap adds the next. */}
+        {mode === "log" && sets.some(isDrop) && (
+          <button
+            type="button"
+            className="ex-add-set ex-add-drop"
+            aria-label={t("exercise.addDropLabel")}
+            onClick={addNextDropRow}
+          >
+            <Plus size={18} aria-hidden="true" />
+            {t("exercise.addDrop")}
           </button>
         )}
         <button type="button" className="ex-add-set" onClick={addSet}>
@@ -661,11 +771,39 @@ function ExerciseCard({
             changeSets(changeSection(sets, shown.id, section))
           }
           onLoadKey={(key) => updateSet(withLoadKey(shown, key))}
-          onRir={
-            mode === "log" ? (rir) => updateSet(withRir(shown, rir)) : undefined
+          name={exerciseName}
+          tips={preferences.workoutTips}
+          // v6 B4: the RIR row opens the pad's RIR slider.
+          onOpenRir={
+            rirColumn && pad
+              ? () => {
+                  const id = shown.id;
+                  toPad.current = true;
+                  close();
+                  pad.open(id, "rir");
+                }
+              : undefined
+          }
+          onAddWarmup={
+            mode === "log" &&
+            preferences.workoutTips &&
+            !shown.done &&
+            shownIndex === firstWorkingIndex &&
+            (shown.weight ?? 0) > 0 &&
+            shown.load === "weight"
+              ? () => setSheet({ kind: "warmup" })
+              : undefined
           }
           onAddDrop={() => {
-            changeSets(addDrop(sets, shown.id));
+            // v6 B5: −20 % to the step; the row grows in and the pad opens
+            // on its reps.
+            const next = addDrop(sets, shown.id, weightStep);
+            const added = next.find((s) => !sets.includes(s));
+            if (added) {
+              toPad.current = true;
+              setEntering(added.id);
+            }
+            changeSets(next);
             close();
           }}
           onDelete={() => {
@@ -703,23 +841,6 @@ function ExerciseCard({
           }
         />
       )}
-      {!cardio && (
-        <ChoiceSheet<CountChoice>
-          open={sheet?.kind === "count"}
-          onClose={close}
-          title={t("load.count")}
-          value={countChoice(exerciseMeasure(sets), hold)}
-          options={[
-            { value: "reps", label: t("load.reps") },
-            ...(onRepHold
-              ? [{ value: "repsHold" as const, label: t("load.repsHold") }]
-              : []),
-            { value: "seconds", label: t("load.hold") },
-          ]}
-          hint={t("load.appliesUnchecked")}
-          onChoose={chooseCount}
-        />
-      )}
       <ExerciseMenuSheet
         open={sheet?.kind === "menu"}
         onClose={close}
@@ -732,15 +853,30 @@ function ExerciseCard({
             ? () => setSheet({ kind: "fields" })
             : undefined
         }
-        onRepRange={
-          mode === "plan" && !cardio
-            ? () => setSheet({ kind: "range" })
-            : undefined
-        }
+        onRepRange={!cardio ? () => setSheet({ kind: "range" }) : undefined}
         repRangeHint={repRangeLabel(
           ex.repRange,
           exerciseMeasure(sets) === "seconds",
         )}
+        // v6 B7: the note, the weight step and the rest time, in a workout.
+        note={note}
+        onNote={
+          mode === "log" && onNote
+            ? (text) => onNote(ex.exerciseId, text)
+            : undefined
+        }
+        weightStep={weightStep}
+        onWeightStep={
+          mode === "log" && !cardio && onWeightStep
+            ? (step) => onWeightStep(ex.exerciseId, step)
+            : undefined
+        }
+        restHint={restLabel(restSeconds)}
+        onRest={
+          restChip && mode === "log"
+            ? () => setSheet({ kind: "rest" })
+            : undefined
+        }
         onChangeExercise={() => {
           close();
           onChangeExercise(planned);
@@ -773,10 +909,15 @@ function ExerciseCard({
           open={sheet?.kind === "rest"}
           onClose={close}
           preferences={preferences}
-          onChange={setPreferences}
+          onPreferences={setPreferences}
+          name={exerciseName}
+          seconds={restSeconds}
+          own={restOwn}
+          tier={restTier}
+          onOwn={(seconds) => onRestOwn?.(ex.exerciseId, seconds)}
         />
       )}
-      {mode === "plan" && (
+      {!cardio && (
         <RepRangeSheet
           open={sheet?.kind === "range"}
           name={exerciseName}
@@ -786,6 +927,30 @@ function ExerciseCard({
             const { repRange: _old, ...rest } = ex;
             onChange(range ? { ...rest, repRange: range } : rest);
           }}
+          // "Reps ⌄" opens this sheet: what the count measures is here too.
+          count={{
+            value: countChoice(exerciseMeasure(sets), hold),
+            options: [
+              { value: "reps", label: t("load.reps") },
+              ...(onRepHold
+                ? [{ value: "repsHold" as const, label: t("load.repsHold") }]
+                : []),
+              { value: "seconds", label: t("load.hold") },
+            ],
+            onChange: chooseCount,
+          }}
+        />
+      )}
+      {mode === "log" && firstWorking && (firstWorking.weight ?? 0) > 0 && (
+        <WarmupSheet
+          open={sheet?.kind === "warmup"}
+          onClose={close}
+          name={exerciseName}
+          workKg={firstWorking.weight!}
+          workReps={firstWorking.reps}
+          step={weightStep}
+          barbell={equipment === "barbell" || equipment === "smith"}
+          onAdd={(rows) => changeSets(warmupSets(sets, rows))}
         />
       )}
       <ReorderSetsSheet

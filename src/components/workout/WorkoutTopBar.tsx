@@ -137,6 +137,9 @@ export default function WorkoutTopBar({
                 ? "btn-primary finish-ready"
                 : "btn-secondary finish-pending"
           }
+          // v6 B9: an outline while a set is open, the slow accent fill
+          // (finish-shift) once every set is checked.
+          data-ready={!editing && allChecked ? "" : undefined}
           disabled={finishDisabled}
           onClick={onFinish}
         >

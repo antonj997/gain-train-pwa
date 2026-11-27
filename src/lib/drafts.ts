@@ -27,6 +27,7 @@ export function staleDraftKeys(
   const prefixes = [
     [draftKey(account, "workout"), "draft"],
     [draftKey(account, "rest"), "draft"],
+    [draftKey(account, "fatigue"), "draft"],
     [draftKey(account, "edit"), "completed"],
   ] as const;
   return keys.filter((key) => {
@@ -143,6 +144,18 @@ export function readRestEnd(
   }
   return null;
 }
+/**
+ * The exercises (by workout-exercise id) whose fatigue row was answered in
+ * this workout (v6 §D10: "Behåll målet", or a lowering undone): kept on the
+ * device with the workout's draft, not synced. Anything malformed is none.
+ */
+export function parseFatigueDismissed(value: unknown): string[] | null {
+  return Array.isArray(value) &&
+    value.every((id) => typeof id === "string" && id.length <= 200)
+    ? value.slice(0, 200)
+    : null;
+}
+
 export function extendRestEnd(
   end: number | null,
   now: number,

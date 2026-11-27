@@ -1,11 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { draftKey, extendRestEnd, readRestEnd } from "@/lib/drafts";
 import { local, writeStored } from "@/lib/storage";
 import {
   readTrainingPreferences,
   TRAINING_PREFERENCES_EVENT,
 } from "@/lib/preferences";
-import { REST_DONE_MS, REST_EXTEND_SECONDS, restTotal } from "@/lib/rest-dock";
+import {
+  REST_DONE_MS,
+  REST_EXTEND_SECONDS,
+  restStart,
+  restTotal,
+} from "@/lib/rest-dock";
 import { motionMs } from "@/lib/slow-motion";
 
 /**
@@ -59,12 +64,18 @@ export function useRestTimer(account: string, workoutId: string) {
     const timeout = window.setTimeout(() => setDoneAt(null), Math.max(0, left));
     return () => window.clearTimeout(timeout);
   }, [doneAt]);
+  // Switching the timer off (Settings, or the rest sheet's "Alla övningar")
+  // ends a running rest. Times are per exercise now (v6 §D7), so only the
+  // switch going off counts, not a time of 0 (the tiers).
+  const wasOn = useRef(preferences.restOn);
   useEffect(() => {
-    if (preferences.restSeconds > 0) return;
+    const before = wasOn.current;
+    wasOn.current = preferences.restOn;
+    if (!before || preferences.restOn) return;
     setEnd(null);
     setDoneAt(null);
     local.removeItem(key);
-  }, [preferences.restSeconds, key]);
+  }, [preferences.restOn, key]);
   return {
     preferences,
     /** When the running rest ends (ms), or null. */
@@ -73,12 +84,13 @@ export function useRestTimer(account: string, workoutId: string) {
     total: end ? restTotal(known, end, Date.now(), preferences.restSeconds) : 0,
     /** When the last rest ran out (ms), while "Rest done" shows. */
     doneAt,
-    start: () => {
-      if (preferences.restSeconds > 0)
-        update(
-          Date.now() + preferences.restSeconds * 1000,
-          preferences.restSeconds,
-        );
+    /**
+     * Starts a rest of the checked exercise's effective rest (effectiveRest,
+     * v6 §D7); 0, its timer off, starts nothing.
+     */
+    start: (seconds: number) => {
+      const rest = restStart(Date.now(), seconds);
+      if (rest) update(rest.end, rest.total);
     },
     skip: () => update(null, null),
     /** A tap on the time: 15 s more. */

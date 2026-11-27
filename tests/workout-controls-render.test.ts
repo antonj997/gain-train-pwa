@@ -84,8 +84,19 @@ test("rows name their units and unfinished raw text remains visible", async () =
   const reps = await setLine({
     set: { ...model.newSet(), weight: 75, reps: 8, done: true },
   });
-  assert.match(reps, /aria-label="Bench Press set 1 kilograms"/);
-  assert.match(reps, /aria-label="Bench Press set 1 reps"/);
+  // v6 B2: a checked field says it is locked, and how to change it.
+  assert.match(
+    reps,
+    /aria-label="Bench Press set 1 kilograms, Locked – uncheck to change"/,
+  );
+  assert.match(
+    reps,
+    /aria-label="Bench Press set 1 reps, Locked – uncheck to change"/,
+  );
+  const open = await setLine({
+    set: { ...model.newSet(), weight: 75, reps: 8 },
+  });
+  assert.match(open, /aria-label="Bench Press set 1 kilograms"/);
   const timed = await setLine({
     set: {
       ...model.newSet(),
@@ -449,4 +460,329 @@ test("rows of the same kind get different names", async () => {
   assert.equal(badgeLabels[4], "Drop 2 after set 1. Change load or delete");
   // The bodyweight text of the second warm-up names its row too.
   assert.match(html[1], /Bench Press warm-up set 2: Bodyweight/);
+});
+
+// ---- v6 P1: the exercise card ----
+
+const workSet = (id: string, extra: Partial<model.WorkoutSet> = {}) => ({
+  ...model.newSet(),
+  id,
+  weight: 22,
+  reps: 8,
+  ...extra,
+});
+
+/** An exercise card in a live workout, rendered on the server. */
+async function exerciseCard(props: Record<string, unknown> = {}) {
+  const ExerciseCard = await loadComponent(
+    "../src/components/ExerciseCard.tsx",
+  );
+  const exercise: model.Exercise = {
+    id: "00000000-0000-4000-8000-000000000001",
+    exerciseId: "builtin:bulgarian-split-squat",
+    name: "Bulgarian Split Squat",
+    repRange: { min: 8, max: 10 },
+    sets: [workSet("s1"), workSet("s2"), workSet("s3")],
+    ...((props.exercise as object) ?? {}),
+  };
+  return renderToStaticMarkup(
+    createElement(ExerciseCard, {
+      onChange: () => {},
+      onRemove: () => {},
+      onChangeExercise: () => {},
+      lastSession: {
+        date: "2026-11-12",
+        sets: [workSet("p1", { weight: 20, reps: 10, done: true })],
+      },
+      equipment: "dumbbell",
+      weightStep: 2,
+      ...props,
+      exercise,
+    }),
+  );
+}
+
+test("the v6 heading: step and range, the note, no Last date or set-change line", async () => {
+  const html = await exerciseCard({ note: "Stånghöjd: hål 4" });
+  assert.doesNotMatch(html, /Last:|Senast:/);
+  assert.doesNotMatch(html, /ex-set-change|sets? · last time/);
+  assert.match(html, /Dumbbells ±2 · kg per hand · per leg/);
+  assert.match(html, /8–10 reps · 3 sets/);
+  assert.match(html, /class="ex-note"[\s\S]*Stånghöjd: hål 4/);
+  // The working sets are counted live.
+  const two = await exerciseCard({
+    exercise: { sets: [workSet("s1"), workSet("s2")] },
+  });
+  assert.match(two, /8–10 reps · 2 sets/);
+  // No note, no note line.
+  assert.doesNotMatch(await exerciseCard(), /class="ex-note"/);
+});
+
+test("the ↑ mark in a workout row is drawn in the accent", () => {
+  assert.match(
+    css("src/styles/workout.css"),
+    /\.set-line \.set-up \{\s*color: var\(--gt-accent\);/,
+  );
+});
+
+test("with RIR on, a set has an RIR box showing – and no check-time chooser", async () => {
+  const html = await setLine({
+    set: { ...model.newSet(), weight: 75, reps: 8 },
+    askRir: true,
+  });
+  assert.match(
+    html,
+    /<button[^>]*class="set-field set-rir-box is-empty"[^>]*data-pad-field="rir"[^>]*aria-label="Bench Press set 1 RIR: No RIR"/,
+  );
+  assert.match(html, /set-rir-box[^>]*>(<[^>]*>)*–/);
+  assert.doesNotMatch(html, /set-rir-ask/);
+  assert.match(html, /class="set-line has-rir/);
+  // A chosen RIR reads in the box, also on a checked set.
+  const checked = await setLine({
+    set: {
+      ...model.newSet(),
+      weight: 75,
+      reps: 8,
+      done: true,
+      rir: 3,
+      rirHigh: 5,
+    },
+    askRir: true,
+  });
+  assert.match(checked, /set-rir-box"[^>]*>(<[^>]*>)*5\+/);
+  // A drop has an empty cell instead.
+  const drop = await setLine({
+    set: { ...model.newSet(), weight: 60, reps: 8, drop: true },
+    askRir: true,
+  });
+  assert.doesNotMatch(drop, /set-rir-box/);
+});
+
+test("with RIR off there is no RIR field", async () => {
+  const html = await setLine({
+    set: { ...model.newSet(), weight: 75, reps: 8, rir: 2 },
+  });
+  assert.doesNotMatch(html, /set-rir-box|data-pad-field="rir"|set-rir-ask/);
+  assert.doesNotMatch(html, /has-rir/);
+});
+
+test("the card heads an RIR column only when RIR is on", async () => {
+  assert.match(
+    await exerciseCard({ askRir: true }),
+    /class="set-columns has-rir"[\s\S]*?<span>RIR<\/span><span>Done<\/span>/,
+  );
+  assert.doesNotMatch(await exerciseCard(), /<span>RIR<\/span>/);
+});
+
+test("the pad's RIR mode has the key grid's fixed height (decision 5)", () => {
+  const sheet = css("src/styles/workout.css");
+  assert.match(
+    sheet,
+    /--pad-body-h: calc\(4 \* var\(--pad-key-h\) \+ 3 \* var\(--pad-gap\)\);/,
+  );
+  assert.match(sheet, /\.number-pad-grid \{[^}]*height: var\(--pad-body-h\);/);
+  assert.match(sheet, /\.number-pad-rir \{[^}]*height: var\(--pad-body-h\);/);
+  // The thumb glides on the motion tokens, and not under reduced motion.
+  assert.match(
+    sheet,
+    /@media \(prefers-reduced-motion: no-preference\) \{\s*\.rir-carrier \{\s*transition: transform var\(--gt-dur-quick\) var\(--gt-ease-out\);/,
+  );
+});
+
+// ---- v6 B13: the fatigue row ----
+
+const B13_NOTE = {
+  muscle: "quads" as const,
+  today: 6,
+  before: 3,
+  from: { weight: 22, reps: 8 },
+  to: { weight: 20, reps: 8 },
+};
+
+async function fatigueRow(props: Record<string, unknown>) {
+  const i18n = await import("../src/i18n");
+  const { setCurrentLanguage } = i18n;
+  const FatigueRow = await loadComponent(
+    "../src/components/workout/FatigueRow.tsx",
+    { "@/i18n": i18n },
+  );
+  setCurrentLanguage("sv");
+  try {
+    return renderToStaticMarkup(createElement(FatigueRow, props));
+  } finally {
+    setCurrentLanguage("en");
+  }
+}
+
+test("fatigue, Föreslå: the quiet note with Sänk till 20 × 8 and Behåll målet", async () => {
+  const html = await fatigueRow({
+    state: { kind: "suggest", note: B13_NOTE },
+  });
+  assert.match(
+    html,
+    /Framsida lår har redan fått 6 hårda set i dag \(förra gången 3 före den här övningen\)\. Målet 22 × 8 kan bli tungt\./,
+  );
+  const buttons = (html.match(/<button[^>]*>[^<]*<\/button>/g) ?? []).map((b) =>
+    b.replace(/<[^>]+>/g, ""),
+  );
+  assert.deepEqual(buttons, ["Sänk till 20 × 8", "Behåll målet"]);
+  // No coloured box: the row is ink-2 text in the card.
+  assert.match(html, /class="fatigue-row"/);
+});
+
+test("fatigue, Av: nothing shows", async () => {
+  assert.equal(await fatigueRow({ state: null }), "");
+});
+
+test("fatigue, Automatiskt: the target already lowered, with Ångra", async () => {
+  const html = await fatigueRow({
+    state: { kind: "lowered", to: { weight: 20, reps: 8 } },
+  });
+  assert.match(
+    html,
+    /Målet sänkt till 20 × 8 för i dag\. Räknas inte som ett missat mål\./,
+  );
+  assert.match(html, /<button[^>]*>Ångra<\/button>/);
+});
+
+test("the fatigue row folds on row-out and the collapse curve", () => {
+  const source = readFileSync(
+    new URL("../src/components/workout/FatigueRow.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /duration: MOTION\.rowOut, easing: EASE\.collapse/);
+});
+
+// ---- v6 B9, B10: finishing ----
+
+/** A Sheet that renders in place, so the server renderer shows its content. */
+const InlineSheet = ({
+  open,
+  title,
+  description,
+  children,
+}: {
+  open: boolean;
+  title: unknown;
+  description?: unknown;
+  children: unknown;
+}) =>
+  open
+    ? createElement(
+        "section",
+        null,
+        createElement("h2", null, title as string),
+        description ? createElement("p", null, description as string) : null,
+        children as string,
+      )
+    : null;
+
+async function finishSheet(props: Record<string, unknown>) {
+  const FinishSheet = await loadComponent(
+    "../src/components/workout/FinishSheet.tsx",
+    { "@/components/ui/Sheet": { default: InlineSheet } },
+  );
+  // In English: the hooks translate with the module default.
+  return renderToStaticMarkup(
+    createElement(FinishSheet, {
+      open: true,
+      onClose: () => {},
+      name: "Benpass",
+      exercises: 3,
+      minutes: 18,
+      note: "",
+      onNote: () => {},
+      busy: false,
+      onSave: () => {},
+      onSaveRoutine: () => {},
+      onAbandon: () => {},
+      ...props,
+    }),
+  );
+}
+
+const buttonTexts = (html: string) =>
+  (html.match(/<button[^>]*>[\s\S]*?<\/button>/g) ?? []).map((b) =>
+    b.replace(/<[^>]+>/g, "").trim(),
+  );
+
+test("finishing with nothing checked asks what to do, in three buttons", async () => {
+  const html = await finishSheet({
+    summary: { done: 0, total: 9, unchecked: 9, volumeKg: 0, record: null },
+  });
+  assert.match(html, /<h2>No sets are checked<\/h2>/);
+  assert.match(html, /Benpass · 3 exercises · 0 of 9 sets/);
+  assert.match(html, /Check the sets you have done to save them\./);
+  assert.deepEqual(buttonTexts(html), [
+    "Continue the workout",
+    "Save as a routine and finish",
+    "Discard workout",
+  ]);
+});
+
+test("finishing with checked sets: the record, three numbers and what is left out", async () => {
+  const html = await finishSheet({
+    summary: {
+      done: 3,
+      total: 9,
+      unchecked: 6,
+      volumeKg: 6252,
+      record: {
+        text: "Knäböj 100 kg × 6",
+        previous: "97,5 kg × 6",
+        more: 0,
+      },
+    },
+  });
+  assert.match(html, /<h2>Finish Benpass\?<\/h2>/);
+  assert.match(html, /18 min · 3 of 9 sets done/);
+  assert.match(html, /New record · Knäböj 100 kg × 6/);
+  assert.match(html, /Previous best 97,5 kg × 6/);
+  assert.equal((html.match(/class="finish-stat"/g) ?? []).length, 3);
+  assert.match(html, /kg Volume/);
+  assert.match(html, /6 sets are not checked and are not saved\./);
+  assert.match(html, /Note \(optional\)/);
+  assert.match(html, /placeholder="How did it feel\?"/);
+  // No muscle lines, routine switch or "Fortsätt logga" any more.
+  assert.doesNotMatch(html, /role="switch"|Keep logging|muscle/);
+  assert.deepEqual(buttonTexts(html), ["Save workout", "Discard workout"]);
+});
+
+test("the top bar's Avsluta is ready (the slow fill) once every set is checked", async () => {
+  const TopBar = await loadComponent(
+    "../src/components/workout/WorkoutTopBar.tsx",
+    {
+      "@/components/messages/MessageSlot": { default: () => null },
+      "@/contexts/useData": { useData: () => ({ state: { records: {} } }) },
+    },
+  );
+  const bar = (completed: number) =>
+    renderToStaticMarkup(
+      createElement(TopBar, {
+        workout: {
+          name: "Benpass",
+          date: "2026-11-19",
+          duration: null,
+          startedAt: null,
+          status: "draft",
+          exercises: [],
+        },
+        editing: false,
+        busy: false,
+        completed,
+        total: 9,
+        saveStatus: "Sparat",
+        saveError: false,
+        finishDisabled: false,
+        onLeave: () => {},
+        onDetails: () => {},
+        onFinish: () => {},
+      }),
+    );
+  const finish = (html: string) =>
+    html.match(/<button[^>]*class="btn-[^"]*finish-[^"]*"[^>]*>/)![0];
+  assert.match(finish(bar(9)), /finish-ready/);
+  assert.match(finish(bar(9)), /data-ready=""/);
+  assert.match(finish(bar(3)), /finish-pending/);
+  assert.doesNotMatch(finish(bar(3)), /data-ready/);
 });

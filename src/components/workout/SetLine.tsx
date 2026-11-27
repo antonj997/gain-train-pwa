@@ -6,25 +6,27 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { X } from "lucide-react";
 import { type WorkoutSet, validSet } from "@/data/model";
 import { isDrop, type SetBadgeInfo } from "@/data/drops";
 import { getSetIssues } from "@/lib/workout-editor";
 import { bodyWeightForSet } from "@/lib/set-editing";
 import { hasExtraWeight } from "@/lib/set-load";
-import { padFields, stepPadValue, type PadField } from "@/lib/number-pad";
 import {
-  RIR_VALUES,
-  rirLabel,
-  rirOf,
-  rirSetText,
-  rirValueText,
-  withRir,
-} from "@/lib/rir";
-import { motionMs } from "@/lib/slow-motion";
-import { EASE, MOTION, play, settled } from "@/lib/motion";
+  padFields,
+  rirField,
+  stepPadValue,
+  type PadField,
+} from "@/lib/number-pad";
+import { rirSetText } from "@/lib/rir";
 import type { LockedAttempt, SetInputGestures } from "@/lib/set-input";
-import { lockedTap, type LockedTaps } from "@/lib/locked-tap";
+import {
+  lockedTap,
+  lockedFieldName,
+  lockedTapMessage,
+  type LockedTaps,
+} from "@/lib/locked-tap";
+import { MOTION, play } from "@/lib/motion";
+import { WorkoutToastContext } from "@/components/workout/workout-toast";
 import {
   formatWeightValue,
   fromUnit,
@@ -179,7 +181,10 @@ export default function SetLine({
   onToggleDone,
   onFocus,
   placeholders,
+  weightStep,
 }: {
+  /** The exercise's weight step in kg (v6 §D5): a drag on the load steps it. */
+  weightStep?: number;
   set: WorkoutSet;
   mode: "log" | "plan";
   /**
@@ -207,7 +212,10 @@ export default function SetLine({
    * Previous. Called with this set's id.
    */
   onFill?: (setId: string) => void;
-  /** After the set is checked, offer its reps in reserve for 4 s (Settings). */
+  /**
+   * "Fråga efter RIR" (Settings, v6 B12): the row has an RIR box after the
+   * count, which opens the pad's RIR slider.
+   */
   askRir?: boolean;
   /** How this set's load differs from the exercise's default load. */
   marker: LoadMarker;
@@ -254,10 +262,29 @@ export default function SetLine({
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
   const locked = set.done && !unlocked;
+  const toast = useContext(WorkoutToastContext);
   if (lockedAttempt && !locked) setLockedAttempt(false);
   if (lockedTaps && !locked) setLockedTaps(null);
   /** A try at changing the locked row: a keyboard is told at once, a tap the second time. */
   const lockedTry = (kind: LockedAttempt = "keyboard") => {
+    // v6 B2: in a live workout the first try shakes the row and says why in
+    // the toast at the workout's foot, so no row moves under the finger.
+    if (toast) {
+      toast({ text: lockedTapMessage() });
+      play(
+        row.current,
+        [
+          { transform: "translateX(0)" },
+          { transform: "translateX(-4px)" },
+          { transform: "translateX(4px)" },
+          { transform: "translateX(-4px)" },
+          { transform: "translateX(0)" },
+        ],
+        { duration: MOTION.pop, easing: "ease-out" },
+      );
+      setLockedAttempt(true);
+      return;
+    }
     if (kind === "keyboard") {
       setLockedAttempt(true);
       return;
@@ -272,18 +299,10 @@ export default function SetLine({
   // The check's motion plays when the set changes state, not on first show.
   const was = useRef({ done: set.done, next });
   const press = useRef<Animation | null>(null);
-  // Ask for RIR after a check (Settings): a compact chooser under the row,
-  // once the check's motion is done, for 4 s. It never blocks: everything
-  // else still works, and letting it go (or Skip) leaves RIR empty.
-  const [asking, setAsking] = useState(false);
-  const askTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => window.clearTimeout(askTimer.current), []);
-  const canAsk =
-    askRir &&
-    mode === "log" &&
-    !isDrop(set) &&
-    set.measure !== "seconds" &&
-    set.measure !== "cardio";
+  // v6 B12: with RIR on the row has its own RIR box (the check-time chooser
+  // is gone); a drop keeps an empty cell so the columns line up.
+  const rirColumn = askRir && mode === "log" && set.measure !== "cardio";
+  const rirBox = rirColumn && rirField(set);
   useLayoutEffect(() => {
     const before = was.current;
     was.current = { done: set.done, next };
@@ -294,16 +313,8 @@ export default function SetLine({
       press.current = null;
       if (set.done) playCheck(el, before.next);
       else playUncheck(el);
-      window.clearTimeout(askTimer.current);
-      if (!set.done) setAsking(false);
-      else if (canAsk && rirOf(set) === null)
-        askTimer.current = window.setTimeout(
-          () => setAsking(true),
-          motionMs(ASK_AFTER_MS),
-        );
     } else if (next && !before.next && !set.done) playNext(el);
     // Only a change of state plays; the set's other values do not.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [set.done, next, mode]);
   const pressDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
     if (!event.isPrimary || event.button !== 0) return;
@@ -341,6 +352,8 @@ export default function SetLine({
   const drop = isDrop(set);
   // Unique within the exercise: "Bench Press set 2", "Bench Press drop 1 after set 2".
   const label = `${name} ${badge.name}`;
+  // v6 B2: a checked field of a live workout says it is locked, and why.
+  const lockedSuffix = locked && mode === "log" ? `, ${lockedFieldName()}` : "";
   const timed = set.measure === "seconds";
   const cardio = set.measure === "cardio";
   const holdField = hold && !timed && !cardio;
@@ -409,7 +422,7 @@ export default function SetLine({
     unfinishedText?: string,
   ) => {
     if (locked) {
-      setLockedAttempt(true);
+      lockedTry("keyboard");
       return;
     }
     onChange(changeSetNumber(set, field, value, unfinishedText, unlocked));
@@ -441,6 +454,7 @@ export default function SetLine({
           total,
           field,
           unit,
+          weightStep,
         );
         if (field === "weight") {
           const kg = value === null ? null : fromUnit(value, unit);
@@ -475,6 +489,7 @@ export default function SetLine({
     !plainBodyweight && marker === "kg" && "load-suffix",
     cardio && "is-cardio",
     hold && !cardio && "has-hold",
+    rirColumn && "has-rir",
     set.done && "is-done",
     locked && "is-locked",
     drop && "is-drop",
@@ -485,11 +500,24 @@ export default function SetLine({
   ]
     .filter(Boolean)
     .join(" ");
-  const rir = rirOf(set);
-  const countField = (
-    <div
-      className={`set-field set-count${timed ? " is-timed" : ""}${rir !== null ? " has-rir" : ""}`}
+  const rirText = rirSetText(set);
+  const rirCell = !rirColumn ? null : rirBox ? (
+    <button
+      type="button"
+      className={`set-field set-rir-box${rirText ? "" : " is-empty"}`}
+      data-pad-field="rir"
+      aria-label={`${t("set.rirFieldLabel", { label })}: ${rirText || t("set.rirNone")}`}
+      // The pad keeps its place: a tap here moves it to this RIR.
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={() => (pad ? pad.open(set.id, "rir") : onOpenSheet(set.id))}
     >
+      <span aria-hidden="true">{rirText || "–"}</span>
+    </button>
+  ) : (
+    <span className="set-line-spacer" aria-hidden="true" />
+  );
+  const countField = (
+    <div className={`set-field set-count${timed ? " is-timed" : ""}`}>
       {/* A checked row reads like the result: "60 × 8", "BW × 10", "45 s". */}
       {set.done && !timed && (
         <span className="set-times" aria-hidden="true">
@@ -497,7 +525,7 @@ export default function SetLine({
         </span>
       )}
       <SetNumberInput
-        aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}`}
+        aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}${lockedSuffix}`}
         aria-invalid={
           !!issues.reps &&
           (set.reps !== null || getSetInputText(set, "reps") !== undefined)
@@ -524,15 +552,9 @@ export default function SetLine({
           s
         </span>
       )}
-      {rir !== null && (
-        // Chosen in the Set sheet or after the check: small and muted, under
-        // the result.
-        <span className="set-rir">
-          <span aria-hidden="true">{rirLabel(set)}</span>
-          <span className="sr-only">
-            {t("set.rirSr", { value: rirSetText(set) })}
-          </span>
-        </span>
+      {/* With RIR off a chosen RIR is still read out with the count. */}
+      {!rirColumn && rirText && (
+        <span className="sr-only">{t("set.rirSr", { value: rirText })}</span>
       )}
     </div>
   );
@@ -545,7 +567,7 @@ export default function SetLine({
         </span>
       )}
       <SetNumberInput
-        aria-label={`${label} ${t("set.fieldHold")}`}
+        aria-label={`${label} ${t("set.fieldHold")}${lockedSuffix}`}
         aria-invalid={
           !!issues.holdSec &&
           ((set.holdSec ?? null) !== null ||
@@ -671,7 +693,7 @@ export default function SetLine({
                 }
               >
                 <SetNumberInput
-                  aria-label={`${label} ${props.name}`}
+                  aria-label={`${label} ${props.name}${lockedSuffix}`}
                   aria-invalid={
                     !!issues[field] &&
                     ((set[field] ?? null) !== null ||
@@ -737,7 +759,7 @@ export default function SetLine({
                 </span>
               )}
               <SetNumberInput
-                aria-label={`${label} ${loadName}`}
+                aria-label={`${label} ${loadName}${lockedSuffix}`}
                 aria-invalid={
                   !!issues.weight &&
                   (set.weight !== null ||
@@ -785,6 +807,7 @@ export default function SetLine({
           ) : (
             countField
           )}
+          {rirCell}
         </>
       )}
       {mode === "log" && !drop ? (
@@ -844,14 +867,6 @@ export default function SetLine({
       ) : mode === "log" ? (
         <span className="set-line-spacer" aria-hidden="true" />
       ) : null}
-      {asking && (
-        <RirAsk
-          label={label}
-          value={rir}
-          onChoose={(value) => onChange(withRir(set, value))}
-          onDone={() => setAsking(false)}
-        />
-      )}
       {!!visibleIssues.length && (
         <p id={errorId} className="set-errors field-error">
           {visibleIssues.join(" ")}
@@ -862,19 +877,20 @@ export default function SetLine({
           {checkHint}
         </p>
       )}
-      {showLock && (
-        <p id={lockId} className="set-errors field-error" role="status">
-          {t("set.uncheckToEdit")}
-        </p>
-      )}
+      {showLock &&
+        (toast ? (
+          // The toast says it; the row keeps its height (v6 B2).
+          <span id={lockId} className="sr-only">
+            {lockedTapMessage()}
+          </span>
+        ) : (
+          <p id={lockId} className="set-errors field-error" role="status">
+            {t("set.uncheckToEdit")}
+          </p>
+        ))}
     </div>
   );
 }
-
-/** How long after a check the RIR chooser comes: once the check's motion is done. */
-const ASK_AFTER_MS = 320;
-/** How long the RIR chooser stays when nothing is chosen. */
-const ASK_FOR_MS = 4000;
 
 /**
  * The Previous column: last time's result and, on the next set, its target
@@ -932,98 +948,5 @@ function PreviousCell({
         {". " + (target ? t("set.fillTarget") : t("set.fillPrevious"))}
       </span>
     </button>
-  );
-}
-
-/**
- * The compact RIR chooser under a just-checked row: 0, 1, 2, 3+ and Skip.
- * It grows in below the row (the rows under it move down; nothing is
- * covered) and folds away after 4 s, on a choice, or on Skip.
- */
-function RirAsk({
-  label,
-  value,
-  onChoose,
-  onDone,
-}: {
-  label: string;
-  value: number | null;
-  onChoose: (value: number) => void;
-  onDone: () => void;
-}) {
-  const box = useRef<HTMLDivElement>(null);
-  const leaving = useRef(false);
-  const done = useRef(onDone);
-  done.current = onDone;
-  const leave = () => {
-    if (leaving.current) return;
-    leaving.current = true;
-    const el = box.current;
-    const out = play(
-      el,
-      [
-        { height: `${el?.offsetHeight ?? 0}px`, opacity: 1 },
-        { height: "0px", opacity: 0 },
-      ],
-      { duration: MOTION.slot, easing: EASE.in, fill: "forwards" },
-    );
-    void settled(out).then(() => done.current());
-  };
-  const leaveRef = useRef(leave);
-  leaveRef.current = leave;
-  useLayoutEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    play(
-      el,
-      [
-        { height: "0px", opacity: 0 },
-        { height: `${el.offsetHeight}px`, opacity: 1 },
-      ],
-      { duration: MOTION.slot, easing: EASE.out },
-    );
-    const timer = window.setTimeout(
-      () => leaveRef.current(),
-      motionMs(ASK_FOR_MS),
-    );
-    return () => window.clearTimeout(timer);
-  }, []);
-  return (
-    <div
-      ref={box}
-      className="set-rir-ask"
-      role="group"
-      aria-label={t("set.rirAskLabel", { label })}
-      data-pad-keep=""
-      // Taps here leave focus (and the number pad) where they were.
-      onMouseDown={(event) => event.preventDefault()}
-    >
-      <span className="set-rir-ask-title" aria-hidden="true">
-        {t("set.rirAsk")}
-      </span>
-      {RIR_VALUES.map((rir) => (
-        <button
-          key={rir}
-          type="button"
-          className="set-rir-choice"
-          aria-pressed={value === rir}
-          onClick={() => {
-            onChoose(rir);
-            leave();
-          }}
-        >
-          {rirValueText(rir)}
-        </button>
-      ))}
-      <button
-        type="button"
-        className="set-rir-skip"
-        aria-label={t("set.rirSkip")}
-        title={t("set.rirSkip")}
-        onClick={leave}
-      >
-        <X size={20} aria-hidden="true" />
-      </button>
-    </div>
   );
 }
