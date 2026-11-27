@@ -234,6 +234,75 @@ test("a paused plan stops counting after its last workout", () => {
   );
 });
 
+/** Every planned day of weeks 1–3 (Mon, Wed, Fri from 26 Oct) done. */
+const FULL_WEEKS = [
+  "2026-10-26",
+  "2026-10-28",
+  "2026-10-30",
+  "2026-11-02",
+  "2026-11-04",
+  "2026-11-06",
+  "2026-11-09",
+  "2026-11-11",
+  "2026-11-13",
+];
+const THURSDAY_W4 = "2026-11-19";
+
+test("adherence by week: 3 finished weeks all fulfilled are 3 of 3, status on", () => {
+  const a = planAdherence(
+    plan(),
+    new Set([...FULL_WEEKS, "2026-11-16"]),
+    THURSDAY_W4,
+  );
+  assert.equal(a.weeksFinished, 3);
+  assert.equal(a.weeksFulfilled, 3);
+  assert.equal(a.status, "on");
+  assert.equal(a.extras, 0);
+  assert.equal(a.total, 10);
+  // This week: Monday done; Wednesday (yesterday) missed, Friday ahead.
+  assert.deepEqual(a.thisWeek, { matched: 1, planned: 3 });
+});
+
+test("adherence by week: one week short is behind", () => {
+  const short = FULL_WEEKS.filter((d) => d !== "2026-11-04");
+  const a = planAdherence(plan(), new Set(short), THURSDAY_W4);
+  assert.equal(a.weeksFinished, 3);
+  assert.equal(a.weeksFulfilled, 2);
+  assert.equal(a.status, "behind");
+});
+
+test("adherence by week: this week ahead of the plan is ahead; extras count apart", () => {
+  const workouts = [
+    ...FULL_WEEKS.map((date, i) => ({ id: "w" + i, date })),
+    // An extra Saturday in week 2.
+    { id: "x", date: "2026-11-07" },
+    { id: "m", date: "2026-11-16", routineId: PUSH },
+    { id: "w", date: "2026-11-18", routineId: LEGS },
+    // Friday's pull done a day early.
+    { id: "t", date: THURSDAY_W4, routineId: PULL },
+  ];
+  const a = planAdherence(
+    plan(),
+    new Set(workouts.map((w) => w.date)),
+    THURSDAY_W4,
+    {
+      workouts,
+    },
+  );
+  assert.equal(a.weeksFulfilled, 3);
+  assert.equal(a.extras, 1);
+  assert.equal(a.total, 13);
+  assert.deepEqual(a.thisWeek, { matched: 3, planned: 3 });
+  assert.equal(a.status, "ahead");
+});
+
+test("adherence by week: the first week has none finished and is on", () => {
+  const a = planAdherence(plan(), new Set(["2026-10-26"]), "2026-10-27");
+  assert.equal(a.weeksFinished, 0);
+  assert.equal(a.weeksFulfilled, 0);
+  assert.equal(a.status, "on");
+});
+
 test("the next planned day skips today once it is done, and a paused plan has none", () => {
   const p = plan({ overrides: { [TODAY]: LEGS } });
   assert.equal(nextPlannedDay(p, TODAY, false), TODAY);
@@ -570,4 +639,80 @@ test("the next planned workouts: the next N from today, in order", () => {
   assert.deepEqual(nextPlannedDays(plan(), TODAY, false, 0), []);
   // The single next day agrees.
   assert.equal(nextPlannedDay(plan(), TODAY, false), "2026-11-13");
+});
+
+// ---- v6 F2: the status page's top card (Task 2.10)
+
+test("the top card reads 3 av 3 veckor fullföljda, I fas and the line under it", async () => {
+  const React = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { loadModule } = await import("./helpers/render");
+  const { translate } = await import("../src/i18n");
+  const sv = {
+    useT: () => ({
+      language: "sv",
+      locale: "sv-SE",
+      t: (key: never, params?: never) => translate("sv", key, params),
+    }),
+  };
+  const { default: PlanPeriodCard } = await loadModule<{
+    default: React.FC<Record<string, unknown>>;
+  }>("@/components/plan/PlanPeriodCard.tsx", { "@/i18n/useT": sv });
+  const { NextWorkoutCard } = await loadModule<{
+    NextWorkoutCard: React.FC<Record<string, unknown>>;
+  }>("@/components/plan/PlanStatusCards.tsx", { "@/i18n/useT": sv });
+  // 26 Oct is Monday; today Thursday 19 Nov is in week 4.
+  const today = "2026-11-19";
+  const p = plan({ weekKinds: undefined, template: [week, week, week, week] });
+  const workouts = [
+    ...FULL_WEEKS.map((date, i) => ({ id: "w" + i, date })),
+    { id: "x1", date: "2026-10-31" },
+    { id: "x2", date: "2026-11-07" },
+    { id: "x3", date: "2026-11-14" },
+    { id: "m", date: "2026-11-16", routineId: PUSH },
+  ];
+  const doneDates = new Set(workouts.map((w) => w.date));
+  const adherence = planAdherence(p, doneDates, today, { workouts });
+  assert.equal(adherence.total, 13);
+  const html = renderToStaticMarkup(
+    React.createElement(
+      React.Fragment,
+      null,
+      React.createElement(PlanPeriodCard, {
+        plan: p,
+        today,
+        phase: phaseStatus(p, today),
+        adherence,
+        doneDates,
+        isWorkout: (cell: string | null | undefined) => !!cell && cell !== REST,
+      }),
+      React.createElement(NextWorkoutCard, {
+        date: today,
+        today,
+        tomorrow: "2026-11-20",
+        title: "Benpass",
+        sub: "3 övningar · ~48 min",
+        starting: false,
+        onStart: () => {},
+      }),
+    ),
+  );
+  const text = html.replace(/<[^>]+>/g, "|");
+  assert.match(text, /Vecka 4 av 12 · byggfas/);
+  assert.match(text, /3 av 3 veckor fullföljda/);
+  assert.match(text, /I fas/);
+  assert.match(text, /3 extrapass · 13 pass totalt · den här veckan 1 av 3/);
+  assert.match(text, /Nästa pass · i dag/);
+  // ⓘ opens the definition.
+  assert.match(
+    html,
+    /aria-label="Vad betyder fullföljd\?"[^>]*aria-haspopup="dialog"|aria-haspopup="dialog"[^>]*aria-label="Vad betyder fullföljd\?"/,
+  );
+  assert.equal(translate("sv", "planStatus.infoTitle"), "Fullföljd vecka");
+  // The period calendar replaces the phase bar and the week grid.
+  assert.match(html, /class="heatmap period-calendar"/);
+  assert.doesNotMatch(html, /phase-bar|adherence-weeks/);
+  // The labels follow the module language (tested in period-calendar).
+  assert.match(text, /v\. 1|wk 1/);
+  assert.match(text, /\|nu\||\|now\|/);
 });

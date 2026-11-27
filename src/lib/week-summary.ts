@@ -1,6 +1,55 @@
-import { shiftDate, weekStart, weekdayIndex, weekdayNames } from "@/lib/dates";
+import {
+  localizedDate,
+  shiftDate,
+  weekStart,
+  weekdayIndex,
+  weekdayNames,
+} from "@/lib/dates";
 import { doneSetCount } from "@/data/selectors";
 import type { Workout } from "@/data/model";
+import type { DayMatch } from "@/data/week-match";
+import { t } from "@/i18n";
+
+/**
+ * The week card's head (v6 A2), one week reference: "Den här veckan · 1 av 3
+ * pass" against the plan's planned days, or the weekly goal without a plan,
+ * or just the count.
+ */
+export function weekHeading({
+  match,
+  goal,
+  workouts,
+}: {
+  match: { matched: number; planned: number } | null;
+  goal: number | null;
+  workouts: number;
+}) {
+  if (match && match.planned > 0)
+    return t("week.thisWeekOf", {
+      done: match.matched,
+      planned: match.planned,
+      count: match.planned,
+    });
+  if (goal !== null)
+    return t("week.thisWeekOf", { done: workouts, planned: goal, count: goal });
+  return t("week.thisWeekCount", { count: workouts });
+}
+
+/** A date's short weekday, "mån" / "Mon". */
+export const shortWeekday = (date: string) =>
+  localizedDate(date, { weekday: "short" }).replace(".", "");
+
+/**
+ * What the legend under the strip adds (A2): "moved" is the short weekday a
+ * workout of the week was moved from ("mån" for "Flyttat hit från mån"),
+ * when one was.
+ */
+export function weekLegend(days: readonly Pick<DayMatch, "movedFrom">[]): {
+  moved?: string;
+} {
+  const from = days.find((d) => d.movedFrom)?.movedFrom;
+  return from ? { moved: shortWeekday(from) } : {};
+}
 
 type Logged = Pick<Workout, "date" | "duration" | "exercises">;
 

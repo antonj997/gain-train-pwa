@@ -9,6 +9,9 @@ import ResumeCards from "@/components/home/ResumeCards";
 import RoutinesSection from "@/components/home/RoutinesSection";
 import TodayCard from "@/components/home/TodayCard";
 import TodayDoneCard from "@/components/home/TodayDoneCard";
+import { FirstStartCard, GetStarted } from "@/components/home/GetStarted";
+import { useProfile } from "@/contexts/useProfile";
+import { hasUserData } from "@/i18n";
 import WeekCard from "@/components/home/WeekCard";
 import type { RoutineRecord } from "@/data/model";
 import {
@@ -40,6 +43,9 @@ const capitalize = (text: string) =>
  */
 export default function Home() {
   const { state } = useData();
+  const { bodyWeightKg } = useProfile();
+  // First start (v6 A1): nothing logged, planned or saved yet.
+  const firstStart = !hasUserData(state.records, { bodyWeightKg });
   const {
     start: requestStart,
     busy: starting,
@@ -125,7 +131,14 @@ export default function Home() {
         otherRunning={otherRunning}
         drafts={drafts}
       />
-      <WeekCard completed={completed} goal={goal} day={day} planned={planned} />
+      {!firstStart && (
+        <WeekCard
+          completed={completed}
+          goal={goal}
+          day={day}
+          planned={planned}
+        />
+      )}
       {!running && todayDone && (
         <TodayDoneCard
           status={todayDone}
@@ -134,13 +147,26 @@ export default function Home() {
           day={day}
           starting={starting}
           onLog={() =>
-            void requestStart(newWorkout(Object.values(state.records)), undefined, {
-              choose: true,
-            })
+            void requestStart(
+              newWorkout(Object.values(state.records)),
+              undefined,
+              {
+                choose: true,
+              },
+            )
           }
         />
       )}
-      {!running && !todayDone && (
+      {firstStart && (
+        <>
+          <FirstStartCard
+            starting={starting}
+            onStartEmpty={() => void start()}
+          />
+          <GetStarted />
+        </>
+      )}
+      {!firstStart && !running && !todayDone && (
         <TodayCard
           pick={pick}
           phase={todayPhase}
@@ -154,26 +180,31 @@ export default function Home() {
           onLogPast={() => void start(true)}
         />
       )}
-      <RoutinesSection
-        completed={completed}
-        day={day}
-        exclude={
-          !running && !todayDone && pick.kind === "planned"
-            ? pick.routineId
-            : null
-        }
-        starting={starting}
-        onStart={(routine) => void start(false, routine)}
-      />
-      <button
-        type="button"
-        className="btn-dashed"
-        disabled={starting}
-        onClick={() => void start()}
-      >
-        <Plus size={20} aria-hidden="true" />
-        {starting ? t("home.starting") : t("home.emptyWorkout")}
-      </button>
+      {/* On first start the card above is the one way to an empty workout. */}
+      {!firstStart && (
+        <>
+          <RoutinesSection
+            completed={completed}
+            day={day}
+            exclude={
+              !running && !todayDone && pick.kind === "planned"
+                ? pick.routineId
+                : null
+            }
+            starting={starting}
+            onStart={(routine) => void start(false, routine)}
+          />
+          <button
+            type="button"
+            className="btn-dashed"
+            disabled={starting}
+            onClick={() => void start()}
+          >
+            <Plus size={20} aria-hidden="true" />
+            {starting ? t("home.starting") : t("home.emptyWorkout")}
+          </button>
+        </>
+      )}
       {/* While a workout runs the Today card and its ⋯ step aside; logging an
           earlier workout stays one tap away. */}
       {running && (
