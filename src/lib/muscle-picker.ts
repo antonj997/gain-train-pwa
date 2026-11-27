@@ -16,7 +16,7 @@ import {
 } from "../data/muscles";
 import type { MuscleGroup } from "../data/muscle-sets";
 
-/** The three-way control's choices: – (none), Lite (helping), Mycket (main). */
+/** The three-way control's choices: Ingen (none), Lite (helping), Mycket (main). */
 export type LevelChoice = "none" | "some" | "much";
 export const LEVEL_CHOICES: readonly LevelChoice[] = ["none", "some", "much"];
 
@@ -90,3 +90,54 @@ export const withMuscleChoice = (
     data,
     withMuscleLevel(customMuscles(data), muscle, LEVEL_OF[choice]),
   );
+
+/**
+ * A tap on the map (v6 §E3, a shortcut): Ingen → Mycket → Lite → Ingen.
+ * Levels are `undefined` (none), 1 (main) and 0.5 (helping).
+ */
+export function cycleLevel(
+  level: MuscleLevel | undefined,
+): MuscleLevel | undefined {
+  return level === undefined ? 1 : level === 1 ? 0.5 : undefined;
+}
+
+/** The same cycle on the control's choices; a mixed group starts at Ingen. */
+export function cycleChoice(choice: LevelChoice | "mixed"): LevelChoice {
+  const next = cycleLevel(
+    choice === "much" ? 1 : choice === "some" ? 0.5 : undefined,
+  );
+  if (choice === "mixed") return "none";
+  return next === 1 ? "much" : next === 0.5 ? "some" : "none";
+}
+
+/**
+ * Each muscle's Latin name, the subtitle in the advanced picker (v6 §D1).
+ * Latin reads the same in both languages. P3's muscleLatin (i18n) holds the
+ * same names; this stands in until it lands.
+ */
+export const MUSCLE_LATIN: Readonly<Record<string, string>> = {
+  chest: "pectoralis major",
+  upperChest: "pectoralis major, pars clavicularis",
+  frontDelts: "deltoideus, pars anterior",
+  sideDelts: "deltoideus, pars lateralis",
+  rearDelts: "deltoideus, pars posterior",
+  biceps: "biceps brachii",
+  brachialis: "brachialis",
+  triceps: "triceps brachii",
+  forearms: "flexores antebrachii",
+  abs: "rectus abdominis",
+  obliques: "obliquus externus et internus",
+  traps: "trapezius, pars descendens",
+  upperBack: "rhomboidei, trapezius pars transversa",
+  lats: "latissimus dorsi",
+  lowerBack: "erector spinae",
+  glutes: "gluteus maximus",
+  abductors: "gluteus medius",
+  quads: "quadriceps femoris",
+  hamstrings: "biceps femoris m.fl.",
+  adductors: "adductores",
+  calves: "gastrocnemius",
+  soleus: "soleus",
+  tibialis: "tibialis anterior",
+  hipFlexors: "iliopsoas",
+};

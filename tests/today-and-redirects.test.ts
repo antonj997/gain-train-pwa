@@ -7,6 +7,13 @@ import {
 } from "../src/data/today.ts";
 import type { PlannedDay } from "../src/data/plans.ts";
 import { legacyRedirect } from "../src/lib/legacy-routes.ts";
+import {
+  LIBRARY_TABS,
+  ROUTINE_VIEWS,
+  libraryTabOf,
+  routinesViewOf,
+} from "../src/lib/library-tabs.ts";
+import { setCurrentLanguage, t } from "../src/i18n/index.ts";
 
 const done = (entries: Record<string, string>) =>
   new Map(Object.entries(entries));
@@ -121,23 +128,23 @@ test("old tab links redirect to the subscreens", () => {
   assert.equal(legacyRedirect("/progress", "?tab=goals"), "/progress/goals");
   assert.equal(legacyRedirect("/progress/", "?tab=goals"), "/progress/goals");
   assert.equal(legacyRedirect("/progress", "?tab=stats"), "/progress");
-  assert.equal(legacyRedirect("/library", "?tab=plan"), "/library/plan");
+  assert.equal(legacyRedirect("/library", "?tab=plan"), "/library?tab=plans");
   assert.equal(
     legacyRedirect("/library", "?view=shared"),
-    "/library?tab=discover",
+    "/library?view=discover",
   );
   assert.equal(
     legacyRedirect("/library", "?tab=shared"),
-    "/library?tab=discover",
+    "/library?view=discover",
   );
-  assert.equal(legacyRedirect("/library/shared", ""), "/library?tab=discover");
+  assert.equal(legacyRedirect("/library/shared", ""), "/library?view=discover");
   assert.equal(
     legacyRedirect("/library/shared/", "?shared=abc"),
-    "/library?shared=abc&tab=discover",
+    "/library?shared=abc&view=discover",
   );
   assert.equal(
     legacyRedirect("/library", "?tab=routines&view=shared"),
-    "/library?tab=discover",
+    "/library?view=discover",
   );
   assert.equal(legacyRedirect("/library", "?tab=routines"), "/library");
   assert.equal(legacyRedirect("/routines", ""), "/library");
@@ -168,9 +175,11 @@ test("current URLs are left alone", () => {
     ["/library", "?tab=exercises&edit=x"],
     ["/library", "?edit=abc"],
     ["/library", "?tab=exercises&view=shared"],
-    ["/library/plan", ""],
-    ["/library", "?tab=discover"],
-    ["/library", "?tab=discover&shared=abc"],
+    ["/library/plan/p1", ""],
+    ["/library", "?tab=plans"],
+    ["/library", "?tab=plans&new=plan&program=hk"],
+    ["/library", "?view=discover"],
+    ["/library", "?view=discover&shared=abc"],
     ["/settings", ""],
     ["/exercise/builtin%3Asquat", "?tab=history"],
   ])
@@ -345,4 +354,41 @@ test("the running-workout dialog names the workout and offers three choices in o
   assert.equal(discardTap(null, 1000), "arm");
   assert.equal(discardTap(1000, 2500), "confirm");
   assert.equal(discardTap(1000, 4500), "arm");
+});
+
+test("v6: Upptäck lives inside Rutiner, and Plan is the Scheman tab", () => {
+  assert.equal(
+    legacyRedirect("/library", "?tab=discover"),
+    "/library?view=discover",
+  );
+  assert.equal(
+    legacyRedirect("/library", "?tab=discover&shared=abc"),
+    "/library?shared=abc&view=discover",
+  );
+  assert.equal(legacyRedirect("/library/plan", ""), "/library?tab=plans");
+  assert.equal(legacyRedirect("/library/plan/", ""), "/library?tab=plans");
+  // The plan status page stays.
+  assert.equal(legacyRedirect("/library/plan/abc", ""), null);
+});
+
+test("v6: the Library tabs are Rutiner, Övningar and Scheman", () => {
+  setCurrentLanguage("sv");
+  try {
+    assert.deepEqual(
+      LIBRARY_TABS.map((tab) => t(tab.label)),
+      ["Rutiner", "Övningar", "Scheman"],
+    );
+    assert.deepEqual(
+      ROUTINE_VIEWS.map((view) => t(view.label)),
+      ["Mina", "Upptäck"],
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
+  assert.equal(libraryTabOf("plans"), "plans");
+  assert.equal(libraryTabOf("exercises"), "exercises");
+  assert.equal(libraryTabOf("discover"), "routines");
+  assert.equal(libraryTabOf(null), "routines");
+  assert.equal(routinesViewOf("discover"), "discover");
+  assert.equal(routinesViewOf(null), "mine");
 });

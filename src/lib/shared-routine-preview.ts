@@ -5,6 +5,7 @@ import { t, type MessageKey } from "../i18n";
 import { categoryLabel } from "./catalogue-labels";
 import { countLabel } from "./labels";
 import { workoutCategories } from "./workout-name";
+import { exerciseDisplayName } from "./exercise-name";
 import {
   matchingCustom,
   parseSharedPayload,
@@ -120,7 +121,8 @@ export function sharedRoutinePreview(row: SharedRoutineRow, records: Records) {
     if (ex.custom) custom.set(`shared:${index}`, ex.custom.category);
     return {
       key: `${index}`,
-      name: ex.name,
+      // The name as shown: a built-in's Swedish name in Swedish (v6 §D2).
+      name: ex.builtin ? exerciseDisplayName(ex.builtin, ex.name) : ex.name,
       isNew: !!ex.custom && !matchingCustom(ex.custom, own),
       ...sharedSetsSummary(planned),
     };
