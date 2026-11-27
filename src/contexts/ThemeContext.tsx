@@ -16,6 +16,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(
     () => savedTheme() ?? systemTheme(),
   );
+  const [chosen, setChosen] = useState(() => savedTheme() !== null);
+  // The theme a change is heading for, so two quick taps alternate.
+  const target = useRef(theme);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -31,36 +34,63 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const query = globalThis.matchMedia?.(lightQuery);
     if (!query) return;
     const follow = () => {
-      if (!savedTheme()) setTheme(systemTheme());
+      if (savedTheme()) return;
+      target.current = systemTheme();
+      setTheme(target.current);
     };
     query.addEventListener("change", follow);
     return () => query.removeEventListener("change", follow);
   }, []);
 
   const fadeTimer = useRef<ReturnType<typeof setTimeout>>();
+  const fadeFrame = useRef(0);
   useEffect(
     () => () => {
       clearTimeout(fadeTimer.current);
+      cancelAnimationFrame(fadeFrame.current);
       document.documentElement.classList.remove("theme-fading");
     },
     [],
   );
-  const toggleTheme = () => {
+  /**
+   * Fades to a theme over --gt-dur-theme (650 ms). The transition class goes
+   * on a frame before the theme class (R9): WebKit then has every row's
+   * transition in place when the colours change, so text and surface fade
+   * together instead of the text jumping or vanishing.
+   */
+  const fadeTo = (next: Theme) => {
+    target.current = next;
     clearTimeout(fadeTimer.current);
-    document.documentElement.classList.add("theme-fading");
-    // Commit transition styles before React applies the next theme's colors.
-    void document.documentElement.offsetWidth;
-    fadeTimer.current = setTimeout(
-      () => document.documentElement.classList.remove("theme-fading"),
-      motionMs(700),
-    );
-    const next = theme === "light" ? "dark" : "light";
+    cancelAnimationFrame(fadeFrame.current);
+    const root = document.documentElement;
+    root.classList.add("theme-fading");
+    // Commit the transition styles now, then change the theme a frame later.
+    void root.offsetWidth;
+    fadeFrame.current = requestAnimationFrame(() => {
+      fadeFrame.current = requestAnimationFrame(() => {
+        setTheme(next);
+        fadeTimer.current = setTimeout(
+          () => root.classList.remove("theme-fading"),
+          motionMs(700),
+        );
+      });
+    });
+  };
+  const toggleTheme = () => {
+    const next = target.current === "light" ? "dark" : "light";
     writeStored(storageKeys.theme, next);
-    setTheme(next);
+    setChosen(true);
+    fadeTo(next);
+  };
+  const followPhone = () => {
+    writeStored(storageKeys.theme, null);
+    setChosen(false);
+    const next = systemTheme();
+    if (next !== target.current) fadeTo(next);
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, chosen, followPhone }}>
       {children}
     </ThemeContext.Provider>
   );
