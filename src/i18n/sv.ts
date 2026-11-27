@@ -2119,6 +2119,12 @@ export const sv = {
   "history.plannedTodayWeek": "I dag · vecka {week}",
   "history.plannedWeek": "Vecka {week}",
   "history.nothingPlanned": "Inget planerat de närmaste två veckorna.",
+  "plan.periodWeekOne": "v. 1",
+  "plan.periodNow": "nu",
+  "plan.periodDeload": "deload",
+  "plan.legendDone": "Gjort",
+  "plan.legendToday": "I dag",
+  "plan.legendDeload": "Deload",
 
   // ---- v6 P3 Muskler ----
 

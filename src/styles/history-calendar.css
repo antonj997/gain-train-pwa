@@ -832,3 +832,45 @@
   flex-direction: column;
   gap: var(--gt-space-3);
 }
+
+/* A plan's period in the compact calendar's squares (§D12): the same grid,
+   weekday letters and months; labels ("v. 1", "nu", "deload") under it.
+   `.is-tight` is the new plan's 2 px between rows (R8-14). */
+.period-calendar {
+  --hm-size: 12px;
+  --hm-gap: var(--cell-gap, 3px);
+  --hm-label: 16px;
+}
+.period-calendar.is-tight {
+  --hm-row-gap: 2px;
+}
+.period-calendar.is-tight .heatmap-grid,
+.period-calendar.is-tight .heatmap-weekdays {
+  row-gap: var(--hm-row-gap);
+}
+.period-calendar.is-tight .heatmap-inner {
+  gap: var(--hm-row-gap);
+}
+.period-calendar.is-tight .heatmap-weekdays {
+  padding-top: calc(var(--hm-label) + var(--hm-row-gap) + 2px);
+}
+.period-calendar .heatmap-day.is-deload {
+  background-color: var(--gt-deload);
+  box-shadow: none;
+}
+.period-calendar .heatmap-day.is-deload-week {
+  background-color: color-mix(
+    in srgb,
+    var(--gt-deload) 45%,
+    var(--gt-surface-2)
+  );
+}
+.period-calendar .heatmap-day.is-outside {
+  opacity: 0.4;
+}
+.period-legend {
+  margin: 4px 0 0;
+}
+.legend-mark.is-deload {
+  background-color: var(--gt-deload);
+}

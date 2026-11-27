@@ -2112,6 +2112,13 @@ export const en = {
   "history.plannedTodayWeek": "Today · week {week}",
   "history.plannedWeek": "Week {week}",
   "history.nothingPlanned": "Nothing planned in the next two weeks.",
+  /** §D12: the plan's period in the compact calendar's squares. */
+  "plan.periodWeekOne": "wk 1",
+  "plan.periodNow": "now",
+  "plan.periodDeload": "deload",
+  "plan.legendDone": "Done",
+  "plan.legendToday": "Today",
+  "plan.legendDeload": "Deload",
 
   // ---- v6 P3 Muskler ----
 
