@@ -239,6 +239,14 @@ export const planSchema = z
      * normal; see weekKindsOf() in phase.ts.
      */
     weekKinds: z.array(z.string().max(20)).max(6).optional(),
+    /**
+     * v6 F1: the phase's deload weeks by number (1 = its first week), set by
+     * a length-based preset such as "7 + 1" for 8 weeks, which a cycle of at
+     * most six weeks cannot hold. When present it decides the deload weeks
+     * and weekKinds is ignored. Unchecked by the server trigger, like
+     * weekKinds, so no migration.
+     */
+    deloadWeeks: z.array(z.number().int().min(1).max(60)).max(30).optional(),
     /** How a deload week lightens routines: load cut and share of working sets kept. */
     deload: z
       .object({

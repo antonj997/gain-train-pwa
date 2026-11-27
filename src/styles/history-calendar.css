@@ -143,10 +143,21 @@
   row-gap: var(--hm-gap);
   padding-top: calc(var(--hm-label) + var(--hm-gap) + 2px);
   color: var(--gt-ink-2);
-  font-size: 10px;
+  font-size: var(--gt-fs-1);
   font-weight: 600;
   line-height: var(--hm-size);
   text-align: center;
+}
+/* The grid is one tab stop (C1: no square is a button); the keyboard's
+   cursor is an accent outline on its square. */
+.heatmap-grid:focus-visible {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.heatmap-day.is-cursor {
+  outline: 2px solid var(--gt-accent);
+  outline-offset: 1px;
 }
 /* The only part that scrolls sideways, so the page never does. */
 .heatmap-scroll {
@@ -491,10 +502,39 @@
   background-color: var(--gt-done);
 }
 .legend-mark.is-planned {
-  box-shadow: inset 0 0 0 2px var(--gt-done);
+  box-shadow: inset 0 0 0 2px var(--gt-line-control);
 }
 .legend-mark.is-today {
   box-shadow: inset 0 0 0 2px var(--gt-accent);
+}
+/* Today in the compact grid: a 4 px dot in the middle of the square (R8-8). */
+.legend-mark.is-today-dot {
+  position: relative;
+  background-color: var(--gt-surface-2);
+}
+.legend-mark.is-today-dot::after {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  content: "";
+}
+/* C1: the hint while nothing is chosen, and the plan's line. */
+.history-hint,
+.history-plan-line {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.history-title-count {
+  margin-left: var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
 }
 .history-caption-line {
   display: flex;
@@ -659,7 +699,7 @@
   min-width: 0;
   margin: 0;
   font-size: var(--gt-fs-5);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.01em;
   overflow-wrap: anywhere;
 }
@@ -743,4 +783,94 @@
 }
 .plan-card.is-empty .plan-card-link {
   margin: 0 0 calc(-1 * var(--gt-space-2));
+}
+
+/* C1: the lists under the calendar. A week's head reads "Den här veckan"
+   with "1 pass · 16 set · 1 rekord" at its right; older weeks fold under
+   a 44 px "Äldre veckor" row. */
+.history-week-title {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px var(--gt-space-2);
+}
+.history-week-sum {
+  font-weight: 400;
+}
+.history-search-line {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+.history-older {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--gt-space-1);
+  border: 0;
+  border-top: 1px solid var(--gt-line);
+  background: transparent;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.history-older:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.history-older-chev {
+  transition: transform var(--gt-dur-step) var(--gt-ease-out);
+}
+.history-older-chev.is-open {
+  transform: rotate(180deg);
+}
+.history-older-weeks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-3);
+}
+
+/* A plan's period in the compact calendar's squares (§D12): the same grid,
+   weekday letters and months; labels ("v. 1", "nu", "deload") under it.
+   `.is-tight` is the new plan's 2 px between rows (R8-14). */
+.period-calendar {
+  --hm-size: 12px;
+  --hm-gap: var(--cell-gap, 3px);
+  --hm-label: 16px;
+}
+.period-calendar.is-tight {
+  --hm-row-gap: 2px;
+}
+.period-calendar.is-tight .heatmap-grid,
+.period-calendar.is-tight .heatmap-weekdays {
+  row-gap: var(--hm-row-gap);
+}
+.period-calendar.is-tight .heatmap-inner {
+  gap: var(--hm-row-gap);
+}
+.period-calendar.is-tight .heatmap-weekdays {
+  padding-top: calc(var(--hm-label) + var(--hm-row-gap) + 2px);
+}
+.period-calendar .heatmap-day.is-deload {
+  background-color: var(--gt-deload);
+  box-shadow: none;
+}
+.period-calendar .heatmap-day.is-deload-week {
+  background-color: color-mix(
+    in srgb,
+    var(--gt-deload) 45%,
+    var(--gt-surface-2)
+  );
+}
+.period-calendar .heatmap-day.is-outside {
+  opacity: 0.4;
+}
+.period-legend {
+  margin: 4px 0 0;
+}
+.legend-mark.is-deload {
+  background-color: var(--gt-deload);
 }

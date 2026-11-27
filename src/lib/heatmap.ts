@@ -1,9 +1,12 @@
 import { shiftDate, weekdayIndex } from "./dates";
 
-/** The heatmap always shows this many Monday-first week columns, ending with the current week. */
-export const HEATMAP_WEEKS = 53;
+/**
+ * The compact grid always shows this many Monday-first week columns, ending
+ * with the current week: the last half year (v6 C1, "Senaste halvåret").
+ */
+export const HEATMAP_WEEKS = 26;
 
-/** The dates the heatmap covers: the Monday 52 weeks before this week's, through `end`. */
+/** The dates the grid covers: the Monday 25 weeks before this week's, through `end`. */
 export function heatmapWindow(end: string) {
   return {
     start: shiftDate(end, -weekdayIndex(end) - (HEATMAP_WEEKS - 1) * 7),
@@ -51,6 +54,18 @@ export function heatmapMonthLabels(
 /** 0 or 1: alternates by calendar month so neighbouring months read apart. */
 export function monthTone(date: string) {
   return (Number(date.slice(0, 4)) * 12 + Number(date.slice(5, 7))) % 2;
+}
+
+/** The workouts the compact grid shows: "Senaste halvåret · 17 pass". */
+export function workoutsInWindow(
+  counts: ReadonlyMap<string, number>,
+  now: string,
+) {
+  const { start } = heatmapWindow(now);
+  let total = 0;
+  for (const [date, count] of counts)
+    if (date >= start && date <= now) total += count;
+  return total;
 }
 
 /** The most recent day with a workout on or before `now`, or null. */

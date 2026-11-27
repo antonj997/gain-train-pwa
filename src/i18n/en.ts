@@ -121,7 +121,7 @@ export const en = {
   "home.resume": "Resume",
   "home.abandoning": "Abandoning…",
   "home.abandon": "Abandon",
-  "home.inProgress": "In progress · {duration}",
+  "home.inProgress": "Workout running · {duration}",
   "home.resumeWorkout": "Resume workout",
   "home.setsOf": "{done} of {total} sets",
   "home.next": "next: {set}",
@@ -539,7 +539,7 @@ export const en = {
   "history.chooseMonthYear": "Choose month and year",
   "history.previousYear": "Previous year",
   "history.nextYear": "Next year",
-  "history.clearToYear": "Clear the selection and show the whole year",
+  "history.clearToYear": "Clear the selection and show the last six months",
   "history.clearToMonth": "Clear the selection and show {month}",
   "history.calendar": "Workout calendar",
   "history.lastYear": "Last year",
@@ -558,7 +558,7 @@ export const en = {
   "history.monthInstructions":
     "Use arrow keys to move between days, Home and End to move within a week, and Shift with an arrow key to select a range. With a pointer, press and hold a day, then drag to select a range. Date ranges include both dates.",
   "history.heatmapInstructions":
-    "Select a day to filter workouts. Use arrow keys to move between days, Home and End to move within a week, and Shift with an arrow key to select a period. With a pointer, press and hold a day, then drag to select a week, a weekday across weeks, or a period.",
+    "Use arrow keys to move between days, Home and End to move within a week, and Shift with an arrow key to select a period. With a pointer, press and hold a day, then drag to select a week, a weekday across weeks, or a period.",
   "history.chooseStart": "Choose a start date",
   "history.chooseEndOf": "{date} · choose the end date",
   "history.chooseStartOf": "{date} · choose the start date",
@@ -1138,7 +1138,7 @@ export const en = {
   "plan.saveFailed": "Could not save the plan. Try again.",
   "plan.edit": "Edit plan",
   "plan.name": "Name",
-  "plan.namePlaceholder": "Autumn block",
+  "plan.namePlaceholder": "e.g. Winter block",
   "plan.repeatsEvery": "Repeats every (weeks)",
   "plan.weeksInCycle": "Weeks in the cycle",
   "plan.delete": "Delete plan",
@@ -1862,7 +1862,7 @@ export const en = {
   "history.zoomIn": "Zoom in to the month",
   "history.zoomOut": "Zoom out to the overview",
   "history.viewMonth": "Month view, {month}",
-  "history.viewYear": "Overview of the last year",
+  "history.viewYear": "Overview of the last six months",
   "history.plannedDay": "{date}, planned: {title}. Move or skip it",
   "calendarPlan.label": "Plan",
   "calendarPlan.doneOf": "{done} of {planned} workouts done",
@@ -2180,6 +2180,118 @@ export const en = {
   "picker.recentGroup": "Recently used",
 
   // ---- v6 P2 Kalender ----
+  /** The week card's head (A2): one week reference, no ISO week number. */
+  "week.thisWeekOf": {
+    one: "This week · {done} of {planned} workout",
+    other: "This week · {done} of {planned} workouts",
+  },
+  "week.thisWeekCount": {
+    one: "This week · {count} workout",
+    other: "This week · {count} workouts",
+  },
+  "week.legendDone": "Done",
+  "week.legendPlanned": "Planned",
+  "week.legendToday": "Today",
+  "week.legendMoved": "Moved here from {day}",
+  "home.dayMissed": ", missed",
+  "home.dayMovedFrom": ", moved from {day}",
+  "home.dayMovedTo": ", moved to {day}",
+  /** The Today card's label inside a plan: "Today · Strength block, week 3 of 12". */
+  "home.todayPlan": "Today · {plan}, week {week} of {weeks}",
+  /** First start (A1): nothing logged yet. */
+  "home.firstLabel": "Today · nothing planned",
+  "home.firstTitle": "Run your first workout",
+  "home.firstText":
+    "Add exercises as you train. Everything is saved on your phone, even without an account.",
+  "home.firstStart": "Start an empty workout",
+  "home.getStarted": "Get started",
+  "home.getRoutine": "Pick a ready-made routine",
+  "home.getRoutineSub": "Library → Discover",
+  "home.getBuild": "Build your own routine",
+  "home.getBuildSub": "Exercises and sets you do often",
+  "home.getPlan": "Set up a plan",
+  "home.getPlanSub": "Weeks, deload and goals",
+  /** A3: starting while another workout runs. */
+  "start.runningTitle": "You have a workout running",
+  "start.runningText":
+    "Starting a new empty workout throws away {name} and its exercises.",
+  "start.continueNamed": "Continue {name}",
+  "start.saveRoutineAndEnd": "Save as a routine and finish",
+  "start.discardAndStart": "Discard and start a new one",
+  "start.discardAgain": "Tap again to discard",
+  /** C1: the compact calendar. */
+  "history.halfYear": "Last six months",
+  "history.dragHint":
+    "Press and hold, then drag to choose a period, a week or a weekday across weeks.",
+  "history.planSince": "{plan}: {workouts} since {date}",
+  /** C1: the lists under the calendar. */
+  "history.listLabel": "Workouts",
+  "history.done": "Done",
+  "history.plannedTab": "Planned · {count}",
+  "history.olderWeeks": "Older weeks",
+  "history.beforePlan": "before the plan",
+  "history.recordCount": {
+    one: "{count} record",
+    other: "{count} records",
+  },
+  "history.search": "Search workouts",
+  "history.searchPlaceholder": "Search workouts, exercises or dates",
+  "history.searchMatches": {
+    one: "{count} workout matches “{query}”",
+    other: "{count} workouts match “{query}”",
+  },
+  "history.searchNone": "No workouts match “{query}”",
+  "history.plannedTodayWeek": "Today · week {week}",
+  "history.plannedWeek": "Week {week}",
+  "history.nothingPlanned": "Nothing planned in the next two weeks.",
+  /** §D12: the plan's period in the compact calendar's squares. */
+  "plan.periodWeekOne": "wk 1",
+  "plan.periodNow": "now",
+  "plan.periodDeload": "deload",
+  "plan.legendDone": "Done",
+  "plan.legendToday": "Today",
+  "plan.legendDeload": "Deload",
+  /** F1: the new plan. */
+  "plan.periodLabel": "Period",
+  "plan.periodRow": "{weeks} · {from} – {to}",
+  "plan.periodAfter": "Starts the day after {plan} ends.",
+  "plan.deloadLabel": "Deload",
+  "plan.deloadNone": "None",
+  "plan.deloadOnce": "{normal} + 1",
+  "plan.deloadTwice": "{normal} + 1 twice",
+  "plan.deloadDefaultNote":
+    "Set by the length: 6 weeks 5 + 1, 8 weeks 7 + 1 (deload in the last week), 12 weeks 5 + 1 twice. Lighter weights and half the sets.",
+  "plan.repeatLabel": "Repeats every",
+  "plan.repeatWeek": "Week",
+  "plan.repeatWeeks": "{count} weeks",
+  "plan.wholePeriod": "The whole period",
+  "plan.periodLine": "{range} · {workouts}",
+  "plan.periodLineDeload":
+    "{range} · {workouts} and {light} lighter in the deload week",
+  "plan.periodLineDeloads":
+    "{range} · {workouts} and {light} lighter in the deload weeks",
+  "plan.periodCalendar": "{name}: {period}",
+  /** F2: the plan status page's top card. */
+  "planStatus.weekPhase": "Week {week} of {weeks} · {phase}",
+  "planStatus.buildPhase": "build phase",
+  "planStatus.deloadPhase": "deload",
+  "planStatus.deloadEnds": "Deload week {week} · ends {date}",
+  "planStatus.ends": "Ends {date}",
+  "planStatus.weeksFulfilled": {
+    one: "{done} of {count} week fulfilled",
+    other: "{done} of {count} weeks fulfilled",
+  },
+  "planStatus.noWeekYet": "No full week yet",
+  "planStatus.statusOn": "On track",
+  "planStatus.statusBehind": "Behind the plan",
+  "planStatus.statusAhead": "Ahead of the plan",
+  "planStatus.adherenceLine":
+    "{extras} extra · {total} in all · this week {matched} of {planned}",
+  "planStatus.infoLabel": "What does fulfilled mean?",
+  "planStatus.infoTitle": "A fulfilled week",
+  "planStatus.infoText":
+    "A week is fulfilled when the week's planned routines were done on some day that same week. Extra workouts count on their own and do not raise the adherence.",
+  "planStatus.nextWhen": "Next workout · {when}",
 
   // ---- v6 P3 Muskler ----
 

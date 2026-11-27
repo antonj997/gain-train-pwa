@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { goalStreak, weekStrip, weekTotals } from "../src/lib/week-summary.ts";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import {
+  goalStreak,
+  weekHeading,
+  weekLegend,
+  weekStrip,
+  weekTotals,
+} from "../src/lib/week-summary.ts";
+import { setCurrentLanguage, t } from "../src/i18n/index.ts";
+import { loadComponent } from "./helpers/render";
 import {
   normalizeTrainingPreferences,
   parseWeeklyGoal,
@@ -101,4 +111,61 @@ test("time trained reads in minutes and hours", () => {
   assert.equal(durationLabel(45), "45 min");
   assert.equal(durationLabel(113), "1 h 53 min");
   assert.equal(durationLabel(120), "2 h");
+});
+
+test("the week card's head is one week reference: Den här veckan · 1 av 3 pass", () => {
+  setCurrentLanguage("sv");
+  try {
+    assert.equal(
+      weekHeading({ match: { matched: 1, planned: 3 }, goal: 3, workouts: 2 }),
+      "Den här veckan · 1 av 3 pass",
+    );
+    // No plan: the weekly goal, then just the count.
+    assert.equal(
+      weekHeading({ match: null, goal: 4, workouts: 2 }),
+      "Den här veckan · 2 av 4 pass",
+    );
+    assert.equal(
+      weekHeading({ match: null, goal: null, workouts: 1 }),
+      "Den här veckan · 1 pass",
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
+  assert.equal(
+    weekHeading({ match: { matched: 1, planned: 3 }, goal: null, workouts: 1 }),
+    "This week · 1 of 3 workouts",
+  );
+});
+
+test("the legend says where a moved workout came from: Flyttat hit från mån", () => {
+  setCurrentLanguage("sv");
+  try {
+    const legend = weekLegend([{}, { movedFrom: "2026-11-16" }, {}]);
+    assert.equal(legend.moved, "mån");
+    assert.equal(
+      t("week.legendMoved", { day: legend.moved! }),
+      "Flyttat hit från mån",
+    );
+    assert.deepEqual(weekLegend([{}, {}]), {});
+  } finally {
+    setCurrentLanguage("en");
+  }
+});
+
+test("the routine badge renders no number", async () => {
+  const RoutineBadge = await loadComponent(
+    "@/components/items/RoutineBadge.tsx",
+  );
+  const html = renderToStaticMarkup(
+    createElement(RoutineBadge, {
+      exercises: [
+        { exerciseId: "builtin:squat" },
+        { exerciseId: "builtin:lunge" },
+      ],
+    }),
+  );
+  assert.match(html, /class="routine-badge"/);
+  assert.doesNotMatch(html, /routine-badge-count/);
+  assert.doesNotMatch(html, />2</);
 });

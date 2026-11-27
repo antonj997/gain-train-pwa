@@ -1,23 +1,22 @@
 import { useMemo, useRef, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { Pencil } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
 import PlanEditor from "@/components/plan/PlanEditor";
 import {
-  AdherenceCard,
   GoalsCard,
   MuscleCard,
   NextWorkoutCard,
-  PhaseCard,
   ProgressionCard,
 } from "@/components/plan/PlanStatusCards";
+import PlanPeriodCard from "@/components/plan/PlanPeriodCard";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
 import { useGoalEditor } from "@/hooks/useGoalEditor";
 import { useGoals } from "@/hooks/useGoals";
-import { usePageBack } from "@/hooks/usePageTransitions";
+import { navigateWithTransition } from "@/lib/view-transition";
 import { today as todayDate } from "@/data/model";
 import {
   activePlans,
@@ -50,7 +49,7 @@ import { newWorkout } from "@/data/start";
 import { lastDoneByRoutine, todayPick } from "@/data/today";
 import { categoryLabel } from "@/lib/catalogue-labels";
 import { localizedDate, shiftDate } from "@/lib/dates";
-import { PLANS_PATH } from "@/lib/routes";
+import { plansTabPath } from "@/lib/routes";
 import { routineAverageMinutes, routineMeta } from "@/lib/routine-preview";
 import { autoWorkoutName } from "@/lib/workout-name";
 import { useT } from "@/i18n/useT";
@@ -74,7 +73,7 @@ export default function PlanStatus() {
     [state.records, id],
   );
   // A deleted plan (or an unknown id) goes to the list, where its Undo waits.
-  if (!plan) return <Navigate to={PLANS_PATH} replace />;
+  if (!plan) return <Navigate to={plansTabPath()} replace />;
   return <PlanStatusView plan={plan} />;
 }
 
@@ -82,7 +81,10 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
   const { t } = useT();
   const { state } = useData();
   const { bodyWeightKg } = useProfile();
-  const back = usePageBack("/history");
+  // Back goes to Bibliotek → Scheman (v6 E1), wherever the page was opened from.
+  const navigate = useNavigate();
+  const back = () =>
+    navigateWithTransition("pop", () => navigate(plansTabPath()));
   const today = todayDate();
   const tomorrow = shiftDate(today, 1);
   const records = useMemo(() => Object.values(state.records), [state.records]);
@@ -117,8 +119,14 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
       planAdherence(plan, doneDates, today, {
         isWorkout,
         countUntil: pausedCountUntil(plan, doneDates, today),
+        // Week matching by routine (§D9).
+        workouts: completedWorkouts(records).map((r) => ({
+          id: r.id,
+          date: r.payload.date,
+          routineId: r.payload.routineId ?? null,
+        })),
       }),
-    [plan, doneDates, today, isWorkout],
+    [plan, doneDates, today, isWorkout, records],
   );
   const equipmentOf = useMemo(() => equipmentLookup(records), [records]);
   const lifts = useMemo(
@@ -230,10 +238,29 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
         }
       />
       <p className="row-sub plan-status-sub">{subline}</p>
-      <PhaseCard plan={plan} status={phase} today={today} />
-      {started && hasWorkoutDays && (
-        <AdherenceCard adherence={adherence} paused={!!plan.paused} />
+      {/* F2: the period, where the phase is and how well it is followed. */}
+      <PlanPeriodCard
+        plan={plan}
+        today={today}
+        phase={phase}
+        adherence={started && hasWorkoutDays ? adherence : null}
+        doneDates={doneDates}
+        isWorkout={isWorkout}
+      />
+      {/* "Nästa pass", higher up than before (F2). */}
+      {nextDate && nextDay && (
+        <NextWorkoutCard
+          date={nextDate}
+          today={today}
+          tomorrow={tomorrow}
+          title={nextTitle}
+          sub={nextSub}
+          exercises={nextRoutine?.payload.exercises}
+          starting={starting}
+          onStart={startNext}
+        />
       )}
+      {/* P3: plan gaps warning */}
       {started && lifts.length + others.length > 0 && (
         <ProgressionCard
           lifts={lifts}
@@ -245,17 +272,6 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
       {goals.length > 0 && (
         <GoalsCard goals={goals} today={today} onOpen={goalEditor.edit} />
       )}
-      {nextDate && nextDay && (
-        <NextWorkoutCard
-          date={nextDate}
-          today={today}
-          tomorrow={tomorrow}
-          title={nextTitle}
-          sub={nextSub}
-          starting={starting}
-          onStart={startNext}
-        />
-      )}
       <div className="plan-status-actions">
         <button
           type="button"
@@ -265,7 +281,7 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
           <Pencil size={18} aria-hidden="true" />
           {t("plan.edit")}
         </button>
-        <Link className="btn-quiet btn-block" to={PLANS_PATH}>
+        <Link className="btn-quiet btn-block" to={plansTabPath()}>
           {t("planStatus.allPlans")}
         </Link>
       </div>

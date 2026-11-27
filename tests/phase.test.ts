@@ -11,8 +11,12 @@ import {
 import {
   applyPlanStart,
   cyclePreset,
+  defaultDeload,
   deloadOf,
+  deloadPresets,
   deloadWeeks,
+  periodSummary,
+  periodText,
   endsOnWeek,
   isDeloadWeek,
   keepWorkingSets,
@@ -28,6 +32,7 @@ import {
   withWeekKind,
   withWeekOneCopied,
 } from "../src/data/phase";
+import { setCurrentLanguage } from "../src/i18n";
 
 const ROUTINE = "6f1d2c3e-0000-4000-8000-000000000002";
 const PLAN_ID = "6f1d2c3e-0000-4000-8000-000000000009";
@@ -110,35 +115,110 @@ test("week kinds are lenient: unknown values, short or long lists read as normal
   });
 });
 
-test("presets set the cycle, copy week 1 into new weeks and mark the last week deload", () => {
+test("presets mark the phase's deload weeks and leave the cycle alone (v6 F1)", () => {
+  // 12 weeks from 4 Nov, repeating every week.
   const one = plan({
     cycleWeeks: 1,
     template: [row(ROUTINE)],
     weekKinds: undefined,
   });
   const p31 = withCyclePreset(one, "3+1");
-  assert.equal(p31.cycleWeeks, 4);
-  assert.deepEqual(p31.template, [
-    row(ROUTINE),
-    row(ROUTINE),
-    row(ROUTINE),
-    row(ROUTINE),
-  ]);
-  assert.deepEqual(p31.weekKinds, ["normal", "normal", "normal", "deload"]);
-  assert.equal(cyclePreset(p31), "3+1");
-  const p51 = withCyclePreset(p31, "5+1");
-  assert.equal(p51.cycleWeeks, 6);
-  assert.equal(p51.template.length, 6);
-  assert.equal(cyclePreset(p51), "5+1");
+  assert.equal(p31.cycleWeeks, 1);
+  assert.deepEqual(p31.template, [row(ROUTINE)]);
+  assert.deepEqual(p31.deloadWeeks, [4, 8, 12]);
+  assert.deepEqual(deloadWeeks(p31), [4, 8, 12]);
+  assert.equal(cyclePreset(p31), null); // not one of 12 weeks' presets
+  const p51 = withCyclePreset(p31, "5+1x2");
+  assert.deepEqual(p51.deloadWeeks, [6, 12]);
+  assert.equal(cyclePreset(p51), "5+1x2");
   const none = withCyclePreset(p51, "none");
-  assert.equal(none.cycleWeeks, 6);
+  assert.equal("deloadWeeks" in none, false);
   assert.equal("weekKinds" in none, false);
   assert.equal(cyclePreset(none), "none");
-  assert.equal(cyclePreset(withWeekKind(p31, 1, "deload")), null);
+  // A cycle week marked by hand goes back to the cycle's kinds.
+  const byHand = withWeekKind(
+    { ...p51, cycleWeeks: 4, template: [row(), row(), row(), row()] },
+    3,
+    "deload",
+  );
+  assert.equal("deloadWeeks" in byHand, false);
+  assert.equal(isDeloadWeek(byHand, 4), true);
   // Marking the only deload week normal drops the field.
-  assert.equal("weekKinds" in withWeekKind(p31, 3, "normal"), false);
-  // The schema checks the cycle still holds.
-  assert.equal(planSchema.safeParse(p51).success, true);
+  assert.equal("weekKinds" in withWeekKind(byHand, 3, "normal"), false);
+  // The schema keeps the new field.
+  assert.deepEqual(planSchema.parse(p51).deloadWeeks, [6, 12]);
+});
+
+test("deload presets follow the length: 8 weeks offers Ingen, 7 + 1 and 3 + 1 två gånger", () => {
+  setCurrentLanguage("sv");
+  try {
+    assert.deepEqual(deloadPresets(8), [
+      { id: "none", label: "Ingen" },
+      { id: "7+1", label: "7 + 1" },
+      { id: "3+1x2", label: "3 + 1 två gånger" },
+    ]);
+    assert.deepEqual(
+      deloadPresets(7).map((p) => p.id),
+      ["none", "6+1"],
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
+});
+
+test("the default deload follows the length: 6 → 5 + 1, 8 → 7 + 1, 12 → 5 + 1 twice", () => {
+  assert.equal(defaultDeload(4), "none");
+  assert.equal(defaultDeload(6), "5+1");
+  assert.equal(defaultDeload(8), "7+1");
+  assert.equal(defaultDeload(12), "5+1x2");
+  const eight = plan({
+    startDate: "2026-12-21",
+    endDate: phaseEnd("2026-12-21", 8),
+    cycleWeeks: 1,
+    template: [row(ROUTINE)],
+    weekKinds: undefined,
+  });
+  const p = withCyclePreset(eight, defaultDeload(8));
+  // The plan's last week is the deload.
+  assert.equal(isDeloadWeek(p, 8), true);
+  assert.equal(isDeloadWeek(p, 7), false);
+  assert.equal(phaseWeek(p, "2027-02-14")?.deload, true);
+  assert.equal(cyclePreset(p), "7+1");
+  const twelve = withCyclePreset(
+    plan({ weekKinds: undefined }),
+    defaultDeload(12),
+  );
+  assert.deepEqual(deloadWeeks(twelve), [6, 12]);
+});
+
+test("the period row and the whole period's line read in Swedish", () => {
+  setCurrentLanguage("sv");
+  try {
+    assert.equal(
+      periodText("2026-12-21", "2027-02-14"),
+      "8 veckor · 21 dec – 14 feb",
+    );
+    const winter = withCyclePreset(
+      plan({
+        startDate: "2026-12-21",
+        endDate: "2027-02-14",
+        cycleWeeks: 1,
+        template: [row(ROUTINE, null, null, ROUTINE, null, ROUTINE)],
+        weekKinds: undefined,
+      }),
+      "7+1",
+    );
+    assert.equal(
+      periodSummary(winter),
+      "21 dec – 14 feb · 21 pass och 3 lättare i deloadveckan",
+    );
+    assert.equal(
+      periodSummary(withCyclePreset(winter, "none")),
+      "21 dec – 14 feb · 24 pass",
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
 });
 
 test("week 1 copies to the other weeks; a new cycle length keeps kinds in step", () => {

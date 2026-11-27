@@ -13,14 +13,22 @@ import { ChevronLeft, ChevronRight, Moon } from "lucide-react";
 import type { WorkoutRecord } from "@/data/model";
 import { plannedFor, REST, type PlannedDay } from "@/data/plans";
 import { canEditDay, canMoveTo, isWorkoutCell } from "@/data/plan-moves";
+import { matchWeek, type DayMatch } from "@/data/week-match";
 import { isoWeek, localizedDate } from "@/lib/dates";
 import { countLabel, durationLabel } from "@/lib/labels";
 import { motionMs } from "@/lib/slow-motion";
 import { springValues } from "@/lib/spring";
 import { capturePointer, releasePointer } from "@/lib/pointer-capture";
-import { goalStreak, weekStrip, weekTotals } from "@/lib/week-summary";
+import {
+  goalStreak,
+  shortWeekday,
+  weekHeading,
+  weekLegend,
+  weekStrip,
+  weekTotals,
+} from "@/lib/week-summary";
 import { useT } from "@/i18n/useT";
-import DayCell from "@/components/items/DayCell";
+import DayCell, { MovedBadge } from "@/components/items/DayCell";
 import UndoPlaceholder from "@/components/messages/UndoPlaceholder";
 import { usePlanDaySheet } from "@/hooks/usePlanDaySheet";
 import { reducedMotion, useUndoEntries } from "@/hooks/useMessages";
@@ -150,14 +158,35 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
   const week = useMemo(() => {
     const dates = completed.map((r) => r.payload.date);
     const days = weekStrip(dates, day, shown);
+    // Week matching (v6 §D9): done, missed and moved against the plan that
+    // covers the week.
+    const first = days[0].date;
+    const last = days[6].date;
+    const plan = plans.find(
+      (p) => !p.paused && p.startDate <= last && first <= p.endDate,
+    );
+    const match = plan
+      ? matchWeek(
+          plan,
+          completed.map((r) => ({
+            id: r.id,
+            date: r.payload.date,
+            routineId: r.payload.routineId ?? null,
+          })),
+          first,
+          day,
+        )
+      : null;
     return {
+      match,
       // The plan is resolved once per day here, not on every render.
-      days: days.map((d) => {
+      days: days.map((d, i) => {
         const found = plannedFor(plans, d.date);
         return {
           ...d,
           entry: planned(d.date),
           skipped: !!found?.override && found.cell === REST,
+          match: (match?.days[i] ?? null) as DayMatch | null,
         };
       }),
       totals: weekTotals(
@@ -169,21 +198,27 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
     // The weekday letters follow the language.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completed, goal, day, planned, plans, language, shown]);
-  const { totals } = week;
-  // Another week's head counts what is planned there; this week's, the goal.
-  const goalMet = shown === 0 && goal !== null && totals.workouts >= goal;
-  const summary = [
-    t("home.weekLabel", { week: isoWeek(dateInWeek(day, shown, 0)) }),
-    shown > 0
-      ? t("week.planned", {
-          count: week.days.filter(
-            (d) => !d.done && d.entry && d.entry.kind !== "rest",
-          ).length,
-        })
-      : goal !== null
-        ? t("home.goalProgress", { done: totals.workouts, goal })
-        : countLabel(totals.workouts, "workout"),
-  ].join(" · ");
+  const { totals, match } = week;
+  // This week's head is "Den här veckan · 1 av 3 pass" against the plan (the
+  // weekly goal without one); another week's counts what is planned there.
+  const planCount = match && match.planned > 0 ? match : null;
+  const goalMet =
+    shown === 0 &&
+    (planCount
+      ? planCount.matched >= planCount.planned
+      : goal !== null && totals.workouts >= goal);
+  const summary =
+    shown === 0
+      ? weekHeading({ match: planCount, goal, workouts: totals.workouts })
+      : [
+          t("home.weekLabel", { week: isoWeek(dateInWeek(day, shown, 0)) }),
+          t("week.planned", {
+            count: week.days.filter(
+              (d) => !d.done && d.entry && d.entry.kind !== "rest",
+            ).length,
+          }),
+        ].join(" · ");
+  const legend = weekLegend(week.days.map((d) => d.match ?? {}));
   // Another week has no totals yet: its line under the strip is its dates.
   const rangeLine = (() => {
     const start = dateInWeek(day, shown, 0);
@@ -760,11 +795,20 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
           <span className="sr-only">
             {days
               .map(
-                ({ entry, ...d }) =>
+                ({ entry, match: m, ...d }) =>
                   localizedDate(d.date, { weekday: "long", day: "numeric" }) +
                   (d.done ? t("home.dayDone") : "") +
                   (d.today ? t("home.dayToday") : "") +
-                  (entry ? t("home.dayPlanned", { title: entry.title }) : ""),
+                  (entry ? t("home.dayPlanned", { title: entry.title }) : "") +
+                  (m?.state === "missed" ? t("home.dayMissed") : "") +
+                  (m?.movedFrom
+                    ? t("home.dayMovedFrom", {
+                        day: shortWeekday(m.movedFrom),
+                      })
+                    : "") +
+                  (m?.movedTo
+                    ? t("home.dayMovedTo", { day: shortWeekday(m.movedTo) })
+                    : ""),
               )
               .join("; ")}
             . {shown === 0 ? totalsLine : rangeLine}. {t("home.weekOpen")}
@@ -813,8 +857,16 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
           ))}
         </span>
         <span className="week week-days" ref={daysRef}>
-          {days.map(({ entry, skipped, ...d }) => {
-            const isPlanned = entry !== null && entry.kind !== "rest";
+          {days.map(({ entry, skipped, match: m, ...d }) => {
+            // Without a plan's match, the entry alone says what is planned.
+            const isPlanned = m
+              ? m.state === "planned" || m.state === "plannedToday"
+              : entry !== null && entry.kind !== "rest" && !d.done;
+            const moved = m?.movedFrom
+              ? m.movedFrom < d.date
+                ? ("left" as const)
+                : ("right" as const)
+              : undefined;
             const movable =
               isPlanned && !d.done && canEditDay(plans, d.date, day);
             const classes = [
@@ -849,6 +901,9 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
                     trained={d.done}
                     today={d.today}
                     planned={isPlanned}
+                    missed={m?.state === "missed"}
+                    plannedToday={m?.state === "plannedToday"}
+                    moved={moved}
                     count={d.count}
                     className={classes || undefined}
                   >
@@ -863,6 +918,8 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
                   size="week"
                   today={d.today}
                   planned
+                  plannedToday={d.today}
+                  moved={moved}
                   count={d.count}
                   className={"week-move" + (classes ? " " + classes : "")}
                   aria-label={t("week.dayLabel", {
@@ -907,6 +964,27 @@ export default function WeekCard({ completed, goal, day, planned }: Props) {
           </span>
         ))}
       </div>
+      {/* The legend (A2): the day states, and where a moved workout came from. */}
+      <p className="week-legend" aria-hidden="true">
+        <span>
+          <i className="legend-mark is-trained" />
+          {t("week.legendDone")}
+        </span>
+        <span>
+          <i className="legend-mark is-planned" />
+          {t("week.legendPlanned")}
+        </span>
+        <span>
+          <i className="legend-mark is-today" />
+          {t("week.legendToday")}
+        </span>
+        {legend.moved && (
+          <span>
+            <MovedBadge side="left" inline />
+            {t("week.legendMoved", { day: legend.moved })}
+          </span>
+        )}
+      </p>
       <p className="sr-only" id={hintId}>
         {t("week.dayHint")}
       </p>

@@ -11,6 +11,7 @@ import {
 } from "./model";
 import { REST, planDay } from "./plans";
 import { isWorkoutCell } from "./plan-moves";
+import { matchWeek, routineCell, type DoneWorkout } from "./week-match";
 import { isDeloadWeek, phaseWeek, phaseWeeks, progressionWeeks } from "./phase";
 import { exerciseSessions } from "./exercise-records";
 import { exerciseOverview, signedLoad } from "./exercise-overview";
@@ -127,7 +128,24 @@ export type Adherence = {
   /** Template workouts that an override made a rest day. */
   skipped: number;
   weeks: WeekColumn[];
+  /** Finished plan weeks (before the one holding today) whose planned days were all matched (§D9). */
+  weeksFulfilled: number;
+  /** Plan weeks before the one holding today. */
+  weeksFinished: number;
+  /** Finished workouts up to today that matched no planned day. */
+  extras: number;
+  /** Finished workouts in the period up to today. */
+  total: number;
+  /** The week holding today: planned days filled and planned days in all; null outside the period. */
+  thisWeek: { matched: number; planned: number } | null;
+  /**
+   * "on" when every finished week is fulfilled, "ahead" when also this week
+   * has more filled than planned days up to today, else "behind".
+   */
+  status: AdherenceStatus;
 };
+
+export type AdherenceStatus = "on" | "behind" | "ahead";
 
 /** ≥ 85 % follows the plan, 65–84 % is a little behind, under 65 % is not followed. */
 export const ADHERENCE_BANDS = { good: 85, behind: 65 } as const;
@@ -159,7 +177,16 @@ export function planAdherence(
   {
     isWorkout = isWorkoutCell,
     countUntil,
-  }: { isWorkout?: IsWorkout; countUntil?: string } = {},
+    workouts,
+    resolve = routineCell,
+  }: {
+    isWorkout?: IsWorkout;
+    countUntil?: string;
+    /** The finished workouts with their routines, for week matching; else one per done date. */
+    workouts?: readonly DoneWorkout[];
+    /** A cell's routine id, for week matching. */
+    resolve?: (cell: string | null) => string | null;
+  } = {},
 ): Adherence {
   const weeks: WeekColumn[] = [];
   const thisWeek = weekStart(today);
@@ -197,7 +224,45 @@ export function planAdherence(
     else if (cell === REST && isWorkout(template)) skipped++;
   }
   const percent = planned ? Math.round((done / planned) * 100) : null;
+
+  // Week matching (§D9) over the plan's weeks up to the one holding today.
+  const finished =
+    workouts ?? [...doneDates].map((date) => ({ id: date, date }));
+  let weeksFinished = 0;
+  let weeksFulfilled = 0;
+  let extras = 0;
+  let current: Adherence["thisWeek"] = null;
+  let plannedToToday = 0;
+  for (let week = 1; week <= total; week++) {
+    const first = weekFirstDay(plan, week);
+    if (first > today) break;
+    if (countUntil !== undefined && first > countUntil) break;
+    const match = matchWeek(plan, finished, first, last, resolve, isWorkout);
+    extras += match.extras;
+    if (first === thisWeek) {
+      current = { matched: match.matched, planned: match.planned };
+      plannedToToday = match.days.filter(
+        (d) => d.planned && d.date <= today,
+      ).length;
+    } else {
+      weeksFinished++;
+      if (match.fulfilled) weeksFulfilled++;
+    }
+  }
+  const status: AdherenceStatus =
+    weeksFulfilled < weeksFinished
+      ? "behind"
+      : current && current.matched > plannedToToday
+        ? "ahead"
+        : "on";
   return {
+    weeksFulfilled,
+    weeksFinished,
+    extras,
+    total: finished.filter((w) => w.date >= plan.startDate && w.date <= last)
+      .length,
+    thisWeek: current,
+    status,
     planned,
     done,
     missed: planned - done,

@@ -38,6 +38,7 @@ import { DayCount } from "@/components/items/DayCell";
 import { dayCellClass } from "@/components/items/day-cell";
 import { historyCaption } from "@/lib/history-caption";
 import { countLabel } from "@/lib/labels";
+import { workoutsInWindow } from "@/lib/heatmap";
 import { EASE, MOTION, play } from "@/lib/motion";
 import {
   ZOOM_PARTS,
@@ -88,6 +89,7 @@ export default function HistoryCalendar({
   picking,
   onPicking,
   periodShown = false,
+  planLine,
 }: {
   value: HistoryCalendarState;
   now: string;
@@ -107,6 +109,8 @@ export default function HistoryCalendar({
    * footer then leaves out its caption and Clear.
    */
   periodShown?: boolean;
+  /** Under the compact grid: "Styrkeblock: 13 pass sedan 19 okt". */
+  planLine?: string | null;
 }) {
   const { month, mode, display, selectedDate, from, to, activeBound } = value;
   const cells = sixWeekCells(month);
@@ -425,6 +429,9 @@ export default function HistoryCalendar({
             })
       }
       onReset={() => change({ type: "reset" })}
+      compact={heat}
+      hint={heat && !canReset && !periodShown}
+      planLine={planLine}
     />
   );
 
@@ -441,7 +448,12 @@ export default function HistoryCalendar({
           aria-live={heat ? undefined : "polite"}
         >
           {heat ? (
-            t("history.lastYear")
+            <>
+              {t("history.halfYear")}
+              <span className="history-title-count">
+                {countLabel(workoutsInWindow(counts, now), "workout")}
+              </span>
+            </>
           ) : (
             <button
               type="button"

@@ -9,15 +9,15 @@ import {
   monthTone,
 } from "../src/lib/heatmap";
 
-test("the window starts on the Monday 52 weeks before this week's and ends today", () => {
+test("the window starts on the Monday 25 weeks before this week's and ends today (the last half year)", () => {
   // 28 Oct 2026 is a Wednesday, so this week's Monday is 26 Oct.
   assert.deepEqual(heatmapWindow("2026-10-28"), {
-    start: "2025-10-27",
+    start: "2026-05-04",
     end: "2026-10-28",
   });
 });
 
-test("there are 53 Monday-first week columns and days after today are empty", () => {
+test("there are 26 Monday-first week columns and days after today are empty", () => {
   const { weeks, start, end } = heatmapWeeks("2026-10-28");
   assert.equal(weeks.length, HEATMAP_WEEKS);
   assert.ok(weeks.every((week) => week.days.length === 7));
@@ -39,7 +39,7 @@ test("there are 53 Monday-first week columns and days after today are empty", ()
 test("a Sunday today fills the last column", () => {
   const { weeks } = heatmapWeeks("2026-11-01");
   assert.equal(weeks.at(-1)!.days.at(-1), "2026-11-01");
-  assert.equal(weeks[0].days[0], "2025-10-27");
+  assert.equal(weeks[0].days[0], "2026-05-04");
 });
 
 test("month labels sit on the column holding the 1st", () => {
@@ -52,9 +52,9 @@ test("month labels sit on the column holding the 1st", () => {
 });
 
 test("a first-column label is dropped when the next month is too close", () => {
-  // Starts Mon 27 Oct 2025, so November's 1st is in column 0 and is the first label.
-  const labels = heatmapMonthLabels(heatmapWeeks("2026-10-26").weeks);
-  assert.deepEqual(labels[0], { column: 0, month: "2025-11" });
+  // Starts Mon 20 Apr 2026, so 1 May is in column 1: no label for April.
+  const labels = heatmapMonthLabels(heatmapWeeks("2026-10-12").weeks);
+  assert.deepEqual(labels[0], { column: 1, month: "2026-05" });
 });
 
 test("the month tint alternates between neighbouring months, across years too", () => {

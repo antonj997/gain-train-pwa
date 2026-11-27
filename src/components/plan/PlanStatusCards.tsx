@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { ChevronRight, Play } from "lucide-react";
 import GoalRing from "@/components/items/GoalRing";
-import PhaseBar from "@/components/items/PhaseBar";
+import RoutineBadge from "@/components/items/RoutineBadge";
 import { statusChip } from "@/components/goals/goal-status";
 import { goalLiftText, goalTitle, type GoalItem } from "@/data/goals";
 import type { Plan } from "@/data/model";
@@ -56,188 +56,8 @@ const listText = (items: string[]) =>
     type: "conjunction",
   }).format(items);
 
-// ---------------------------------------------------------------- Phase
-
-export function PhaseCard({
-  plan,
-  status,
-  today,
-}: {
-  plan: Plan;
-  status: PhaseStatus;
-  today: string;
-}) {
-  const { t } = useT();
-  const { loadPct, setsPct } = deloadOf(plan);
-  const rule = t("planStatus.deloadRule", {
-    load: loadPct
-      ? t("planStatus.deloadLoad", { pct: loadPct })
-      : t("planStatus.deloadSameLoad"),
-    sets:
-      setsPct === 50
-        ? t("planStatus.deloadHalfSets")
-        : setsPct >= 100
-          ? t("planStatus.deloadAllSets")
-          : t("planStatus.deloadSetsKept", { pct: setsPct }),
-  });
-  const heading =
-    status.kind === "running"
-      ? t("plan.weekOf", { week: status.week, weeks: status.weeks })
-      : status.kind === "upcoming"
-        ? t("planStatus.startsIn", { count: status.daysUntil })
-        : t("plan.ended");
-  const aside =
-    status.kind === "running"
-      ? status.daysLeft > 0
-        ? t("planStatus.daysLeft", { count: status.daysLeft })
-        : t("planStatus.lastDay")
-      : countLabel(status.weeks, "week");
-  let deload = "";
-  if (status.kind === "running" && !plan.paused) {
-    if (status.deloadNow) deload = t("planStatus.deloadNow", { rule });
-    else if (status.nextDeload)
-      deload = t("planStatus.deloadNext", {
-        week: status.nextDeload.week,
-        days: countLabel(status.nextDeload.inDays, "day"),
-        rule,
-      });
-  }
-  return (
-    <section className="card status-card" aria-labelledby="status-phase">
-      <div className="status-head">
-        <h2 id="status-phase">{heading}</h2>
-        {plan.paused ? (
-          <span className="stat-chip muted">{t("plan.paused")}</span>
-        ) : (
-          <span className="row-sub">{aside}</span>
-        )}
-      </div>
-      <PhaseBar segments={phaseSegments(plan, today)} tall />
-      {plan.paused && (
-        <p className="status-note">{t("planStatus.pausedNote")}</p>
-      )}
-      {deload && <p className="status-note">{deload}</p>}
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------- Adherence
-
-const BAND: Record<
-  NonNullable<Adherence["band"]>,
-  { key: MessageKey; tone: string }
-> = {
-  good: { key: "planStatus.adherenceGood", tone: " done" },
-  behind: { key: "planStatus.adherenceBehind", tone: " warm" },
-  off: { key: "planStatus.adherenceOff", tone: " warm" },
-};
-const SR_STATE: Record<DayState, MessageKey> = {
-  done: "planStatus.srDone",
-  missed: "planStatus.srMissed",
-  upcoming: "planStatus.srUpcoming",
-  future: "planStatus.srFuture",
-  paused: "planStatus.srPaused",
-};
-const STATE_ORDER: DayState[] = [
-  "done",
-  "missed",
-  "upcoming",
-  "future",
-  "paused",
-];
-
-export function AdherenceCard({
-  adherence: a,
-  paused,
-}: {
-  adherence: Adherence;
-  paused: boolean;
-}) {
-  const { t } = useT();
-  const band = a.band ? BAND[a.band] : null;
-  const changes = [
-    a.moved > 0 && t("planStatus.moved", { count: a.moved }),
-    a.skipped > 0 && t("planStatus.skipped", { count: a.skipped }),
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  const weekText = (days: Adherence["weeks"][number]["days"]) => {
-    if (!days.length) return t("plan.nothingPlanned");
-    return STATE_ORDER.flatMap((state) => {
-      const count = days.filter((d) => d.state === state).length;
-      return count ? [t(SR_STATE[state], { count })] : [];
-    }).join(", ");
-  };
-  return (
-    <section className="card status-card" aria-labelledby="status-adherence">
-      <div className="status-head">
-        <h2 id="status-adherence">{t("planStatus.adherence")}</h2>
-        {band && !paused && (
-          <span className={"stat-chip" + band.tone}>{t(band.key)}</span>
-        )}
-        {paused && <span className="stat-chip muted">{t("plan.paused")}</span>}
-      </div>
-      {a.percent === null ? (
-        <p className="row-sub">{t("planStatus.nothingYet")}</p>
-      ) : (
-        <p className="status-big">
-          <strong>{t("planStatus.percent", { pct: a.percent })}</strong>
-          <span>
-            {t("planStatus.doneOf", { done: a.done, planned: a.planned })}
-          </span>
-        </p>
-      )}
-      <div
-        className="adherence-weeks"
-        style={{
-          gridTemplateColumns: `repeat(${a.weeks.length}, minmax(0, 1fr))`,
-        }}
-        aria-hidden="true"
-      >
-        {a.weeks.map((w) => (
-          <span key={w.week} className="adherence-week">
-            {w.days.map((d) => (
-              <span
-                key={d.date}
-                className="adherence-day"
-                data-state={d.state}
-              />
-            ))}
-          </span>
-        ))}
-      </div>
-      <ul className="sr-only" aria-label={t("planStatus.weeksLabel")}>
-        {a.weeks.map((w) => (
-          <li key={w.week}>
-            {t("planStatus.weekSr", { week: w.week, text: weekText(w.days) })}
-          </li>
-        ))}
-      </ul>
-      <ul className="adherence-legend" aria-hidden="true">
-        <li>
-          <span className="adherence-day" data-state="done" />
-          {t("planStatus.legendDone")}
-        </li>
-        <li>
-          <span className="adherence-day" data-state="missed" />
-          {t("planStatus.legendMissed")}
-        </li>
-        <li>
-          <span className="adherence-day" data-state="upcoming" />
-          {t("planStatus.legendUpcoming")}
-        </li>
-      </ul>
-      {changes && (
-        <p className="status-note">{t("planStatus.notMissed", { changes })}</p>
-      )}
-      {a.band === "off" && !paused && (
-        <p className="status-note">{t("planStatus.adherenceOffTip")}</p>
-      )}
-      {paused && <p className="status-note">{t("planStatus.pausedCount")}</p>}
-    </section>
-  );
-}
-
+// The phase and adherence now live in PlanPeriodCard (v6 F2): the period
+// calendar replaced the phase bar and the week grid.
 // ---------------------------------------------------------------- Progression
 
 const LIFT_CHIP: Record<LiftStatus, { key: MessageKey; tone: string }> = {
@@ -622,34 +442,38 @@ export function NextWorkoutCard({
   sub,
   starting,
   onStart,
+  exercises,
 }: {
   date: string;
   today: string;
   tomorrow: string;
   title: string;
   sub: string;
+  /** The routine's exercises, for its badge. */
+  exercises?: readonly { exerciseId: string }[];
   starting: boolean;
   onStart: () => void;
 }) {
   const { t } = useT();
-  const day = localizedDate(date, {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
+  // "Nästa pass · i dag", "· i morgon" or "· lördag" (v6 F2).
   const when =
     date === today
-      ? t("planStatus.when", { when: t("planStatus.today"), date: day })
+      ? t("planStatus.today")
       : date === tomorrow
-        ? t("planStatus.when", { when: t("planStatus.tomorrow"), date: day })
-        : day;
+        ? t("planStatus.tomorrow")
+        : localizedDate(date, { weekday: "long" });
   return (
-    <section className="card status-card" aria-labelledby="status-next">
-      <div className="status-head">
-        <h2 id="status-next">{t("planStatus.next")}</h2>
-        <span className="row-sub">{when}</span>
-      </div>
+    <section
+      className="card status-card status-next-card"
+      aria-labelledby="status-next"
+    >
+      <h2 id="status-next" className="status-next-when">
+        {t("planStatus.nextWhen", { when })}
+      </h2>
       <div className="status-next">
+        {exercises && exercises.length > 0 && (
+          <RoutineBadge exercises={exercises} />
+        )}
         <span className="status-lift-text">
           <strong className="row-title">{title}</strong>
           {sub && <span className="row-sub">{sub}</span>}

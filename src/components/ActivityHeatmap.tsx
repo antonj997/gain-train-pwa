@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -31,11 +30,46 @@ import { dayCellClass } from "@/components/items/day-cell";
 import { t } from "@/i18n";
 
 /**
- * A GitHub-style activity grid for the last year: columns are Monday-first
- * weeks, rows are weekdays, and a square's shade is that day's workout count
- * (days with two or more also print it). The squares are deliberately smaller
- * than 44px, so they are buttons in one tab stop with arrow-key movement. The
- * grid scrolls inside the card, starting at the latest week.
+ * The weekday letters on the left and the month names on top of a compact
+ * calendar (12 px squares, one Monday-first column per week). Shared by
+ * Calendar's half-year grid and the plan's period calendar
+ * (PlanPeriodCalendar).
+ */
+export function CompactWeekdays() {
+  return (
+    <div className="heatmap-weekdays" aria-hidden="true">
+      {weekdayNames("narrow").map((letter, row) => (
+        <span key={row}>{letter}</span>
+      ))}
+    </div>
+  );
+}
+
+export function CompactMonths({
+  labels,
+}: {
+  labels: readonly { column: number; month: string }[];
+}) {
+  return (
+    <div className="heatmap-months" aria-hidden="true">
+      {labels.map(({ column, month }) => (
+        <span key={month} style={{ gridColumn: column + 1 }}>
+          {localizedDate(month + "-01", { month: "short" }).replace(/\./g, "")}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Calendar's compact grid of the last half year (v6 C1): columns are
+ * Monday-first weeks, rows are weekdays, and a square is filled on a day with
+ * a workout (two or more also print the count). Today is a dot in the middle.
+ * A tap on a single square does nothing (they are too small to aim at): hold
+ * one and drag to choose a week (one column), a weekday across weeks (one
+ * row) or a period. With a keyboard the grid is one tab stop: arrows move a
+ * cursor, Shift with an arrow chooses a period. The grid scrolls inside the
+ * card, starting at the latest week.
  */
 export default function ActivityHeatmap({
   value,
@@ -78,13 +112,14 @@ export default function ActivityHeatmap({
       dayLabels,
     };
   }, [now]);
-  const [focused, setFocused] = useState(selectedDate ?? now);
-  const buttons = useRef(new Map<string, HTMLButtonElement>());
-  const pendingFocus = useRef<string | null>(null);
+  // The keyboard's cursor, shown while the grid has the focus.
+  const [cursor, setCursor] = useState(selectedDate ?? now);
+  const [focused, setFocused] = useState(false);
+  const [heard, setHeard] = useState("");
   const scroller = useRef<HTMLDivElement>(null);
-  const focusable = focused >= start && focused <= now ? focused : now;
   const container = useRef<HTMLDivElement>(null);
   const anchor = useRef<string | null>(null);
+  const at = cursor >= start && cursor <= now ? cursor : now;
 
   const apply = (selection: DragSelection) => {
     anchor.current = null;
@@ -128,15 +163,13 @@ export default function ActivityHeatmap({
     if (node) node.scrollLeft = node.scrollWidth;
   }, []);
 
-  useEffect(() => {
-    if (pendingFocus.current && buttons.current.has(pendingFocus.current)) {
-      buttons.current.get(pendingFocus.current)?.focus();
-      pendingFocus.current = null;
-    }
-  });
-
+  const say = (date: string) =>
+    setHeard(
+      `${dayLabels.get(date)}, ${countLabel(counts.get(date) ?? 0, "workout")}`,
+    );
   // Weeks run left to right and days top to bottom, so the arrows follow.
-  const onKey = (event: KeyboardEvent<HTMLButtonElement>, date: string) => {
+  const onKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const date = at;
     const weekday = weekdayIndex(date);
     const offsets: Record<string, number> = {
       ArrowUp: -1,
@@ -151,7 +184,7 @@ export default function ActivityHeatmap({
     const target = shiftDate(date, offsets[event.key]);
     if (target < start || target > now) return;
     if (event.shiftKey) {
-      // Shift+Arrow grows a range from the selected day.
+      // Shift+Arrow grows a range from where the cursor was.
       anchor.current ??=
         selectedDate ?? (mode === "range" ? from : null) ?? date;
       const a = anchor.current;
@@ -161,8 +194,12 @@ export default function ActivityHeatmap({
         to: a <= target ? target : a,
       });
     } else anchor.current = null;
-    pendingFocus.current = target;
-    setFocused(target);
+    setCursor(target);
+    say(target);
+    // Keep the cursor in view.
+    container.current
+      ?.querySelector(`[data-date="${target}"]`)
+      ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   };
 
   return (
@@ -175,27 +212,25 @@ export default function ActivityHeatmap({
         ref={container}
         {...handlers}
       >
-        <div className="heatmap-weekdays" aria-hidden="true">
-          {weekdayNames("narrow").map((letter, row) => (
-            <span key={row}>{letter}</span>
-          ))}
-        </div>
+        <CompactWeekdays />
         <div className="heatmap-scroll" ref={scroller}>
           <div
             className="heatmap-inner"
             style={{ "--hm-cols": weeks.length } as CSSProperties}
           >
-            <div className="heatmap-months" aria-hidden="true">
-              {monthLabels.map(({ column, month }) => (
-                <span key={month} style={{ gridColumn: column + 1 }}>
-                  {localizedDate(month + "-01", { month: "short" })}
-                </span>
-              ))}
-            </div>
+            <CompactMonths labels={monthLabels} />
             <div
               className="heatmap-grid"
               role="group"
               aria-labelledby={headingId}
+              aria-describedby={instructionsId}
+              tabIndex={0}
+              onKeyDown={onKey}
+              onFocus={() => {
+                setFocused(true);
+                say(at);
+              }}
+              onBlur={() => setFocused(false)}
             >
               {weeks.flatMap((week, column) =>
                 week.days.map((date, row) => {
@@ -221,33 +256,22 @@ export default function ActivityHeatmap({
                         ? chosen.has(date)
                         : selectedDate === date);
                   return (
-                    <button
-                      type="button"
+                    <span
                       key={date}
-                      ref={(node) => {
-                        if (node) buttons.current.set(date, node);
-                        else buttons.current.delete(date);
-                      }}
                       className={`heatmap-day ${dayCellClass(
-                        { trained: count > 0, today: date === now },
+                        {
+                          trained: count > 0,
+                          today: date === now,
+                          todayDot: true,
+                        },
                         "grid",
-                      )} tone-${monthTone(date)}${selected ? " is-selected" : ""}${inPreview ? " is-preview" : ""}${(selected || inPreview) && edges.includes(date) ? " is-edge" : ""}`}
+                      )} tone-${monthTone(date)}${selected ? " is-selected" : ""}${inPreview ? " is-preview" : ""}${(selected || inPreview) && edges.includes(date) ? " is-edge" : ""}${focused && date === at ? " is-cursor" : ""}`}
                       data-date={date}
                       style={{ gridColumn: column + 1, gridRow: row + 1 }}
-                      tabIndex={date === focusable ? 0 : -1}
-                      aria-current={date === now ? "date" : undefined}
-                      aria-pressed={selected || inPreview}
-                      aria-describedby={instructionsId}
-                      aria-label={`${dayLabels.get(date)}, ${countLabel(count, "workout")}`}
-                      onFocus={() => setFocused(date)}
-                      onKeyDown={(event) => onKey(event, date)}
-                      onClick={() => {
-                        anchor.current = null;
-                        change({ type: "day", date, toggle: true });
-                      }}
+                      aria-hidden="true"
                     >
                       <DayCount count={count} />
-                    </button>
+                    </span>
                   );
                 }),
               )}
@@ -255,6 +279,9 @@ export default function ActivityHeatmap({
           </div>
         </div>
       </div>
+      <p className="sr-only" aria-live="polite">
+        {heard}
+      </p>
     </>
   );
 }
