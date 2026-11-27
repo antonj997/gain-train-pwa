@@ -56,7 +56,7 @@ export function GetStarted() {
   const { t, language, followsPhone } = useT();
   const [sheet, setSheet] = useState(false);
   const languageValue = followsPhone
-    ? t("home.languageFollows", { language: LANGUAGE_NAMES[language] })
+    ? t("settings.languagePhone", { language: LANGUAGE_NAMES[language] })
     : LANGUAGE_NAMES[language];
   const glyph = (Icon: typeof Plus) => (
     <span className="get-started-glyph" aria-hidden="true">
@@ -101,7 +101,7 @@ export function GetStarted() {
           className="language-row"
           onClick={() => setSheet(true)}
           leading={glyph(Globe)}
-          title={t("home.languageRow")}
+          title={t("settings.languageRow")}
           sub={languageValue}
           chevron
         />

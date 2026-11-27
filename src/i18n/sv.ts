@@ -2087,8 +2087,6 @@ export const sv = {
   "home.getBuildSub": "Övningar och set du kör ofta",
   "home.getPlan": "Lägg upp ett schema",
   "home.getPlanSub": "Veckor, deload och mål",
-  "home.languageRow": "Språk · Language",
-  "home.languageFollows": "{language}, som telefonen",
   "start.runningTitle": "Du har ett pass igång",
   "start.runningText":
     "Startar du ett nytt tomt pass slängs {name} med sina övningar.",

@@ -2077,8 +2077,6 @@ export const en = {
   "home.getBuildSub": "Exercises and sets you do often",
   "home.getPlan": "Set up a plan",
   "home.getPlanSub": "Weeks, deload and goals",
-  "home.languageRow": "Språk · Language",
-  "home.languageFollows": "{language}, like the phone",
   /** A3: starting while another workout runs. */
   "start.runningTitle": "You have a workout running",
   "start.runningText":
