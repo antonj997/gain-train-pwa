@@ -2125,6 +2125,25 @@ export const sv = {
   "plan.legendDone": "Gjort",
   "plan.legendToday": "I dag",
   "plan.legendDeload": "Deload",
+  "plan.periodLabel": "Period",
+  "plan.periodRow": "{weeks} · {from} – {to}",
+  "plan.periodAfter": "Börjar dagen efter att {plan} slutar.",
+  "plan.deloadLabel": "Deload",
+  "plan.deloadNone": "Ingen",
+  "plan.deloadOnce": "{normal} + 1",
+  "plan.deloadTwice": "{normal} + 1 två gånger",
+  "plan.deloadDefaultNote":
+    "Förval efter längden: 6 veckor 5 + 1, 8 veckor 7 + 1 (deload sista veckan), 12 veckor 5 + 1 två gånger. Lättare vikt och halva seten.",
+  "plan.repeatLabel": "Upprepas var",
+  "plan.repeatWeek": "Vecka",
+  "plan.repeatWeeks": "{count} veckor",
+  "plan.wholePeriod": "Hela perioden",
+  "plan.periodLine": "{range} · {workouts}",
+  "plan.periodLineDeload":
+    "{range} · {workouts} och {light} lättare i deloadveckan",
+  "plan.periodLineDeloads":
+    "{range} · {workouts} och {light} lättare i deloadveckorna",
+  "plan.periodCalendar": "{name}: {period}",
 
   // ---- v6 P3 Muskler ----
 

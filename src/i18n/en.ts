@@ -2119,6 +2119,26 @@ export const en = {
   "plan.legendDone": "Done",
   "plan.legendToday": "Today",
   "plan.legendDeload": "Deload",
+  /** F1: the new plan. */
+  "plan.periodLabel": "Period",
+  "plan.periodRow": "{weeks} · {from} – {to}",
+  "plan.periodAfter": "Starts the day after {plan} ends.",
+  "plan.deloadLabel": "Deload",
+  "plan.deloadNone": "None",
+  "plan.deloadOnce": "{normal} + 1",
+  "plan.deloadTwice": "{normal} + 1 twice",
+  "plan.deloadDefaultNote":
+    "Set by the length: 6 weeks 5 + 1, 8 weeks 7 + 1 (deload in the last week), 12 weeks 5 + 1 twice. Lighter weights and half the sets.",
+  "plan.repeatLabel": "Repeats every",
+  "plan.repeatWeek": "Week",
+  "plan.repeatWeeks": "{count} weeks",
+  "plan.wholePeriod": "The whole period",
+  "plan.periodLine": "{range} · {workouts}",
+  "plan.periodLineDeload":
+    "{range} · {workouts} and {light} lighter in the deload week",
+  "plan.periodLineDeloads":
+    "{range} · {workouts} and {light} lighter in the deload weeks",
+  "plan.periodCalendar": "{name}: {period}",
 
   // ---- v6 P3 Muskler ----
 

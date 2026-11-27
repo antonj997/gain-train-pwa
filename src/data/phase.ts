@@ -7,7 +7,8 @@ import type {
 } from "./model";
 import { isDrop } from "./drops";
 import { isCardioSet } from "../lib/cardio";
-import { daysBetween, shiftDate, weekStart } from "../lib/dates";
+import { daysBetween, localizedDate, shiftDate, weekStart } from "../lib/dates";
+import { t } from "../i18n";
 import { hasExtraWeight } from "../lib/set-load";
 import { loadIncrement, plannedWeeks, roundToStep } from "../lib/progression";
 
@@ -51,11 +52,16 @@ export const DEFAULT_DELOAD = { loadPct: 10, setsPct: 50 } as const;
 export const deloadOf = (plan: Pick<Plan, "deload">) =>
   plan.deload ?? DEFAULT_DELOAD;
 
-/** True when the phase's week `week` (1-based) falls on a deload cycle week. */
+/**
+ * True when the phase's week `week` (1-based) is a deload week: one of the
+ * plan's `deloadWeeks` when it has them (a length-based preset, v6 F1), else
+ * a deload cycle week.
+ */
 export function isDeloadWeek(
-  plan: Pick<Plan, "cycleWeeks" | "weekKinds">,
+  plan: Pick<Plan, "cycleWeeks" | "weekKinds" | "deloadWeeks">,
   week: number,
 ) {
+  if (plan.deloadWeeks) return plan.deloadWeeks.includes(week);
   const kinds = weekKindsOf(plan);
   return (
     kinds[(((week - 1) % kinds.length) + kinds.length) % kinds.length] ===
@@ -65,7 +71,10 @@ export function isDeloadWeek(
 
 /** The phase's deload week numbers, 1-based. */
 export function deloadWeeks(
-  plan: Pick<Plan, "cycleWeeks" | "weekKinds" | "startDate" | "endDate">,
+  plan: Pick<
+    Plan,
+    "cycleWeeks" | "weekKinds" | "deloadWeeks" | "startDate" | "endDate"
+  >,
 ) {
   return Array.from({ length: phaseWeeks(plan) }, (_, i) => i + 1).filter((w) =>
     isDeloadWeek(plan, w),
@@ -103,52 +112,155 @@ export function phaseSegments(plan: Plan, date: string): PhaseSegment[] {
 
 const emptyWeek = (): (string | null)[] => Array(7).fill(null);
 
-/** The cycle presets: "3 + 1 deload", "5 + 1 deload", or every week normal. */
-export type CyclePreset = "3+1" | "5+1" | "none";
+/**
+ * The deload presets (v6 F1): "none", or a deload after every k normal weeks,
+ * "7+1" or "3+1x2" ("3 + 1 två gånger"). They mark the phase's weeks, not the
+ * cycle's, so "7 + 1" fits an 8-week phase that repeats every week.
+ */
+export type CyclePreset = "none" | `${number}+1` | `${number}+1x2`;
+
+/** The normal weeks before each deload in a preset, or null for "none". */
+const presetStep = (preset: CyclePreset) => {
+  const match = /^(\d+)\+1(x2)?$/.exec(preset);
+  return match ? Number(match[1]) : null;
+};
+
+/** The phase weeks (1-based) a preset makes deload in a phase `weeks` long. */
+export function presetDeloadWeeks(preset: CyclePreset, weeks: number) {
+  const step = presetStep(preset);
+  if (!step) return [];
+  const out: number[] = [];
+  for (let week = step + 1; week <= weeks; week += step + 1) out.push(week);
+  return out;
+}
+
+/** The deload presets a phase of `weeks` offers: Ingen, "{n-1} + 1" and, for an even length, "{n/2-1} + 1 två gånger". */
+export function deloadPresets(
+  weeks: number,
+): { id: CyclePreset; label: string }[] {
+  const out: { id: CyclePreset; label: string }[] = [
+    { id: "none", label: t("plan.deloadNone") },
+  ];
+  if (weeks >= 2)
+    out.push({
+      id: `${weeks - 1}+1`,
+      label: t("plan.deloadOnce", { normal: weeks - 1 }),
+    });
+  if (weeks >= 4 && weeks % 2 === 0)
+    out.push({
+      id: `${weeks / 2 - 1}+1x2`,
+      label: t("plan.deloadTwice", { normal: weeks / 2 - 1 }),
+    });
+  return out;
+}
 
 /**
- * The plan with a preset cycle. New weeks copy week 1, since a deload week
- * trains the same routines lighter. "none" keeps the cycle's length.
+ * The preset a new phase gets from its length (R-Coach 3, E-C6): none under
+ * 6 weeks, one deload in the last week up to 9 (6 → 5 + 1, 8 → 7 + 1), and
+ * two from 10 when the length splits in half (12 → 5 + 1 twice).
+ */
+export function defaultDeload(weeks: number): CyclePreset {
+  if (weeks < 6) return "none";
+  if (weeks >= 10 && weeks % 2 === 0) return `${weeks / 2 - 1}+1x2`;
+  return `${weeks - 1}+1`;
+}
+
+/**
+ * The plan with a deload preset: its phase weeks are marked (`deloadWeeks`)
+ * and the cycle's own kinds are dropped; "none" drops both. The cycle and
+ * the template stay as they are.
  */
 export function withCyclePreset(plan: Plan, preset: CyclePreset): Plan {
-  if (preset === "none") {
-    const next = { ...plan };
-    delete next.weekKinds;
-    return next;
-  }
-  const normal = preset === "3+1" ? 3 : 5;
-  const weeks = normal + 1;
-  const first = plan.template[0] ?? emptyWeek();
-  return {
-    ...plan,
-    cycleWeeks: weeks,
-    template: Array.from({ length: weeks }, (_, i) => [
-      ...(plan.template[i] ?? first),
-    ]),
-    weekKinds: Array.from({ length: weeks }, (_, i) =>
-      i === weeks - 1 ? "deload" : "normal",
-    ),
-  };
+  const next = { ...plan };
+  delete next.weekKinds;
+  delete next.deloadWeeks;
+  if (preset === "none") return next;
+  return { ...next, deloadWeeks: presetDeloadWeeks(preset, phaseWeeks(plan)) };
 }
 
-/** Which preset the cycle matches, if any. */
+/** Which of its length's presets the plan's deload weeks match, if any. */
 export function cyclePreset(
-  plan: Pick<Plan, "cycleWeeks" | "weekKinds">,
+  plan: Pick<
+    Plan,
+    "cycleWeeks" | "weekKinds" | "deloadWeeks" | "startDate" | "endDate"
+  >,
 ): CyclePreset | null {
-  const kinds = weekKindsOf(plan);
-  const deloads = kinds.filter((k) => k === "deload").length;
-  if (!deloads) return "none";
-  if (deloads === 1 && kinds[kinds.length - 1] === "deload")
-    return plan.cycleWeeks === 4 ? "3+1" : plan.cycleWeeks === 6 ? "5+1" : null;
-  return null;
+  const weeks = phaseWeeks(plan);
+  const marked = deloadWeeks(plan).join(",");
+  if (!marked) return "none";
+  return (
+    deloadPresets(weeks).find(
+      (p) => presetDeloadWeeks(p.id, weeks).join(",") === marked,
+    )?.id ?? null
+  );
 }
 
-/** The plan with one cycle week marked normal or deload; all normal drops the field. */
+/**
+ * The plan with one cycle week marked normal or deload; all normal drops the
+ * field. Marking by hand goes back to the cycle's kinds, so a preset's
+ * phase weeks are dropped.
+ */
 export function withWeekKind(plan: Plan, week: number, kind: WeekKind): Plan {
   const kinds = weekKindsOf(plan).map((k, i) => (i === week ? kind : k));
   const next = { ...plan, weekKinds: kinds };
+  delete (next as Partial<Plan>).deloadWeeks;
   if (!kinds.includes("deload")) delete (next as Partial<Plan>).weekKinds;
   return next;
+}
+
+/** "21 dec", without the full stop of a Swedish month abbreviation. */
+const shortDay = (date: string) =>
+  localizedDate(date, { day: "numeric", month: "short" }).replace(/\./g, "");
+
+/** The new plan's period row (F1): "8 veckor · 21 dec – 14 feb". */
+export function periodText(startDate: string, endDate: string) {
+  return t("plan.periodRow", {
+    weeks: t("count.week", {
+      count: phaseWeeks({ startDate, endDate }),
+    }),
+    from: shortDay(startDate),
+    to: shortDay(endDate),
+  });
+}
+
+/**
+ * The line under the whole period (F1): "21 dec – 14 feb · 21 pass och 3
+ * lättare i deloadveckan", counting the planned workout days in normal
+ * weeks and in deload weeks.
+ */
+export function periodSummary(
+  plan: Plan,
+  isWorkout: (cell: string | null | undefined) => boolean = (cell) =>
+    !!cell && cell !== "rest",
+) {
+  let normal = 0;
+  let light = 0;
+  const deloads = new Set<number>();
+  for (
+    let date = plan.startDate;
+    date <= plan.endDate;
+    date = shiftDate(date, 1)
+  ) {
+    const weeks = Math.floor(
+      daysBetween(weekStart(plan.startDate), weekStart(date)) / 7,
+    );
+    const row = plan.template[weeks % plan.cycleWeeks];
+    const index = daysBetween(weekStart(date), date);
+    const cell =
+      date in plan.overrides ? plan.overrides[date] : (row?.[index] ?? null);
+    if (!isWorkout(cell)) continue;
+    if (isDeloadWeek(plan, weeks + 1)) {
+      light++;
+      deloads.add(weeks + 1);
+    } else normal++;
+  }
+  const range = `${shortDay(plan.startDate)} – ${shortDay(plan.endDate)}`;
+  const workouts = t("count.workout", { count: normal });
+  if (!light) return t("plan.periodLine", { range, workouts });
+  return t(
+    deloads.size > 1 ? "plan.periodLineDeloads" : "plan.periodLineDeload",
+    { range, workouts, light },
+  );
 }
 
 /** The plan with week 1's days copied into the other cycle weeks. */
