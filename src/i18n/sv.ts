@@ -104,7 +104,7 @@ export const sv = {
   "settings.perWeekUnit": { one: "pass i veckan", other: "pass i veckan" },
   "settings.restTime": "Vilotid",
   "settings.restSound": "Ljud när vilan är slut",
-  "settings.vibrate": "Vibrera när ett set är klart",
+  "settings.vibrate": "Vibrera",
   "settings.lightAppearance": "Ljust utseende",
 
   // Train
@@ -1689,7 +1689,7 @@ export const sv = {
   "tips.calendarDay": "Håll in och dra för att välja en period",
   "tips.swipeSet": "Svep vänster för att ta bort",
   "settings.mapFigure": "Muskelkarta",
-  "settings.mapFigureNote": "Figuren på övningens och planens karta.",
+  "settings.mapFigureNote": "Figuren på övningens och schemats karta",
   "mapFigure.m": "Man",
   "mapFigure.f": "Kvinna",
   "settings.showTips": "Visa tips igen",
@@ -1769,7 +1769,7 @@ export const sv = {
   "workout.noteLabel": "Anteckning",
   "finish.recordsLabel": "Rekord i passet",
   "settings.askRir": "Fråga efter RIR",
-  "settings.askRirNote": "Reps kvar i tanken, efter varje ikryssat set.",
+  "settings.askRirNote": "Plattan får ett RIR-läge efter reps",
   // Schemats statussida (/library/plan/:id)
   "planStatus.edit": "Redigera",
   "planStatus.editLabel": "Redigera {name}",
@@ -2150,6 +2150,29 @@ export const sv = {
   // ---- v6 P4 Bibliotek ----
 
   // ---- v6 P5 Inställningar ----
+  "settings.groupAppearance": "Utseende",
+  "settings.groupLogging": "Loggning",
+  "settings.groupCoach": "Coach",
+  "settings.groupGeneral": "Allmänt",
+  "settings.restTimerNote":
+    "Av från start. Slå på här eller per övning i passet. Förval: flerled med stång 2:30 · annan flerled 2:00 · isolering 1:30",
+  "settings.weightUnitNote": "Standard för alla övningar",
+  "settings.workoutTips": "Tips i passet",
+  "settings.workoutTipsNote": "Uppvärmning och drop i setbladet",
+  "settings.fatigue": "Trött muskel sent i passet",
+  "settings.fatigueNote":
+    "En rad under övningen, aldrig en ändring av sig själv",
+  "settings.fatigueOff": "Av",
+  "settings.fatigueSuggest": "Föreslå",
+  "settings.fatigueAuto": "Automatiskt",
+  "settings.themeSwitch": "Tema: ljust utseende",
+  "settings.themeFollowsLight": "Följer telefonen (ljust nu)",
+  "settings.themeFollowsDark": "Följer telefonen (mörkt nu)",
+  "settings.themeChosen": "Valt för hand.",
+  "settings.themeFollowAgain": "Följ telefonen igen",
+  "settings.languageRow": "Språk · Language",
+  "settings.languagePhone": "{language}, som telefonen",
+  "settings.languageFollowsNote": "Följer telefonen tills du väljer.",
 
   // ---- v6 P6 Sport ----
 } satisfies Messages;
