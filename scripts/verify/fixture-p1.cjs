@@ -64,11 +64,11 @@ module.exports = (fixture) => {
 
   records[P1.benB] = workout(P1.benB, {
     name: "Ben B",
-    date: "2026-11-12",
+    date: "2026-11-11",
     duration: 40,
     startedAt: null,
-    createdAt: at("2026-11-12", "07"),
-    completedAt: at("2026-11-12", "07") + 40 * 60000,
+    createdAt: at("2026-11-11", "07"),
+    completedAt: at("2026-11-11", "07") + 40 * 60000,
     status: "completed",
     exercises: [
       exercise("builtin:squat", "Squat", sets(3, 90, 5), { min: 5, max: 7 }),

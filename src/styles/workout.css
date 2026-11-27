@@ -1881,7 +1881,7 @@
 .set-line .set-previous.is-fill::before {
   content: "";
   position: absolute;
-  inset: 0 -4px;
+  inset: 0 -14px 0 -4px;
 }
 /* The pad's handle: a 44px target around the 24px strip. */
 .number-pad-grab {
