@@ -2095,6 +2095,45 @@ export const sv = {
     "Knäböj, bänkpress, axelpress och marklyft i 3–5 reps med längre vila (3–5 min). Fokus är styrka; mindre muskler får avsiktligt lite volym.",
   "discover.program.hm.why":
     "Bara hantlar och kroppsvikt, utan vader. Hela kroppen två gånger i veckan; reps upp till 15–20 när hantlarna blir för lätta.",
+  "discover.programs": "Färdiga program från Gain Train",
+  "discover.programKinds": "Typ av program",
+  "discover.chip.all": "Alla",
+  "discover.chip.full": "Helkropp",
+  "discover.chip.upperLower": "Över/under",
+  "discover.chip.ppl": "Tryck/drag/ben",
+  "discover.chip.strength": "Styrka",
+  "discover.chip.home": "Hemma",
+  "discover.programMeta": "{level} · {days} · {routines}",
+  "discover.programAdd": "Lägg till {title} i Mina rutiner",
+  "discover.programOpen": "Visa {title}",
+  "discover.programAdded": {
+    one: "{count} rutin från {title} tillagd i Mina",
+    other: "{count} rutiner från {title} tillagda i Mina",
+  },
+  "discover.programRemoved": "{title} borttaget från Mina",
+  "discover.programKept": {
+    one: "{count} rutin du ändrat ligger kvar.",
+    other: "{count} rutiner du ändrat ligger kvar.",
+  },
+  "discover.programFailed": "Kunde inte ändra {title}. Försök igen.",
+  "discover.programNote":
+    "Byggda på forskningen om volym (10–20 hårda set per muskel och vecka för den som är van), frekvens (varje muskel två gånger i veckan) och 1–3 reps kvar i tanken.",
+  "discover.programSub": "{level} · {days} · ~{minutes} min",
+  "discover.programSets": "Hårda set per huvudmuskel i veckan",
+  "discover.programRange": "{min}–{max} · riktmärke 10–20",
+  "discover.programLine": "{sets} × {min}–{max}",
+  "discover.programAddAll": {
+    one: "Lägg till {count} rutin",
+    other: "Lägg till {count} rutiner",
+  },
+  "discover.programRemoveAll": "Ta bort från Mina",
+  "discover.programMakePlan": "Gör det till ett schema",
+  "discover.others": "Rutiner från andra lyftare",
+  "discover.othersSignIn": "Logga in för att se delade rutiner",
+  "discover.signIn": "Logga in",
+  "discover.othersInfoLabel": "Om delade rutiner",
+  "discover.othersInfo":
+    "Med ett konto ser du rutiner som andra lyftare delat och kan dela dina egna. De färdiga programmen och dina pass fungerar utan konto.",
 
   // ---- v6 P5 Inställningar ----
 

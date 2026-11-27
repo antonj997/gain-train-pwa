@@ -2082,6 +2082,45 @@ export const en = {
     "Squat, bench press, overhead press and deadlift for 3–5 reps with longer rests (3–5 min). The focus is strength; smaller muscles get little volume on purpose.",
   "discover.program.hm.why":
     "Only dumbbells and bodyweight, no calves. The whole body twice a week; reps up to 15–20 when the dumbbells get too light.",
+  "discover.programs": "Ready-made programmes from Gain Train",
+  "discover.programKinds": "Kind of programme",
+  "discover.chip.all": "All",
+  "discover.chip.full": "Full body",
+  "discover.chip.upperLower": "Upper/lower",
+  "discover.chip.ppl": "Push/pull/legs",
+  "discover.chip.strength": "Strength",
+  "discover.chip.home": "At home",
+  "discover.programMeta": "{level} · {days} · {routines}",
+  "discover.programAdd": "Add {title} to My routines",
+  "discover.programOpen": "Show {title}",
+  "discover.programAdded": {
+    one: "{count} routine from {title} added to Mine",
+    other: "{count} routines from {title} added to Mine",
+  },
+  "discover.programRemoved": "{title} removed from Mine",
+  "discover.programKept": {
+    one: "{count} routine you changed stays.",
+    other: "{count} routines you changed stay.",
+  },
+  "discover.programFailed": "Couldn't change {title}. Try again.",
+  "discover.programNote":
+    "Built on the research on volume (10–20 hard sets per muscle a week for the experienced), frequency (each muscle twice a week) and 1–3 reps in reserve.",
+  "discover.programSub": "{level} · {days} · ~{minutes} min",
+  "discover.programSets": "Hard sets per main muscle a week",
+  "discover.programRange": "{min}–{max} · guide 10–20",
+  "discover.programLine": "{sets} × {min}–{max}",
+  "discover.programAddAll": {
+    one: "Add {count} routine",
+    other: "Add {count} routines",
+  },
+  "discover.programRemoveAll": "Remove from Mine",
+  "discover.programMakePlan": "Make it a plan",
+  "discover.others": "Routines from other lifters",
+  "discover.othersSignIn": "Sign in to see shared routines",
+  "discover.signIn": "Sign in",
+  "discover.othersInfoLabel": "About shared routines",
+  "discover.othersInfo":
+    "With an account you see routines other lifters have shared and can share your own. The ready-made programmes and your workouts work without an account.",
 
   // ---- v6 P5 Inställningar ----
 
