@@ -4,7 +4,7 @@ import Sheet from "@/components/ui/Sheet";
 import PlanPeriodCalendar from "@/components/plan/PlanPeriodCalendar";
 import type { Plan } from "@/data/model";
 import { planDay } from "@/data/plans";
-import { phaseWeek } from "@/data/phase";
+import { deloadWeeks, phaseWeek } from "@/data/phase";
 import type {
   Adherence,
   AdherenceStatus,
@@ -107,7 +107,11 @@ export default function PlanPeriodCard({
             };
           }}
           labels={periodLabels(plan, today)}
-          legend={["done", "planned", "today", "deload"]}
+          legend={
+            deloadWeeks(plan).length
+              ? ["done", "planned", "today", "deload"]
+              : ["done", "planned", "today"]
+          }
         />
       </div>
       {plan.paused && (

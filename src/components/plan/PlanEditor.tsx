@@ -18,6 +18,7 @@ import {
   MAX_PHASE_WEEKS,
   cyclePreset,
   defaultDeload,
+  deloadWeeks,
   periodSummary,
   periodText,
   phaseWeek,
@@ -397,7 +398,11 @@ export default function PlanEditor({
                   };
                 }}
                 labels={periodLabels(draft, today)}
-                legend={["planned", "deload"]}
+                legend={
+                  deloadWeeks(draft).length
+                    ? ["planned", "deload"]
+                    : ["planned"]
+                }
                 rowGap={2}
               />
               <p className="row-sub plan-period-line">

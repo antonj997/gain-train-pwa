@@ -9,7 +9,15 @@
 // otherwise. The owner removes its entries when it fixes them; a FAIL then
 // shows any offender that is left.
 module.exports = [
-  // Kalender (P2: C1, the compact calendar, the plan card and the date tile).
+  // Plan status (P3: the muscle card, planStatus.muscle*), seen after P2's
+  // checks end on the plan status page.
+  {
+    check: "type",
+    page: "/library/plan/00000000-0000-4000-8000-000000000001",
+    match: "muscle-value",
+    owner: "P3",
+    why: "the plan's muscle card values are 15/900 and 12/500 (F3 replaces the card)",
+  },
   // Framsteg (P3).
   {
     check: "type",

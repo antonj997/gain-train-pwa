@@ -3057,6 +3057,10 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   flex-direction: column;
   gap: var(--gt-space-3);
 }
+/* Row titles in the status cards stay on the type scale (15/600). */
+.status-card .row-title {
+  font-size: var(--gt-fs-3);
+}
 .status-head {
   display: flex;
   flex-wrap: wrap;
