@@ -1873,16 +1873,24 @@
   color: color-mix(in srgb, var(--gt-warm-fg) 80%, var(--gt-ink-2));
 }
 
-/* The Set sheet's quiet way to RIR until it is used. */
-.set-sheet-add-rir {
-  align-self: flex-start;
-  min-height: 44px;
-  padding: 0 var(--gt-space-1);
-  border: 0;
-  background: none;
-  color: var(--gt-accent);
-  font-size: var(--gt-fs-3);
-  font-weight: 600;
+/* With the RIR column the Previous column can be narrower than 44px: its
+   tap target reaches into the gaps beside it. */
+.set-line .set-previous.is-fill {
+  position: relative;
+}
+.set-line .set-previous.is-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0 -4px;
+}
+/* The pad's handle: a 44px target around the 24px strip. */
+.number-pad-grab {
+  position: relative;
+}
+.number-pad-grab::before {
+  content: "";
+  position: absolute;
+  inset: -6px 0 -14px;
 }
 
 /* The number pad's Target key, under Previous in its head. */
