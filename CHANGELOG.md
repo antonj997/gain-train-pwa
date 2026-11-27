@@ -1,5 +1,17 @@
 # Changelog
 
+## 27 November 2026 — v6 settings
+
+Settings grouped as the owner decided (plan `docs/superpowers/plans/2026-11-26-v6-implementation.md`, phase P5; spec §G1). No server or Supabase change.
+
+- **Groups.** Utseende, Vilotimer, Loggning, Coach, Träning and Allmänt, between the account row and Data, Hjälp and Konto. Every switch is a full row.
+- **Vilotimer.** One switch, off for a new phone, with the tiers in its note (flerled med stång 2:30 · annan flerled 2:00 · isolering 1:30). “Ljud när vilan är slut” and “Vibrera” show under it only while it is on. There is no time here any more: times are per exercise. A phone that saved a rest time before v6 reads as on and keeps it. Switching off puts the time aside, and switching on brings it back, or sets none, so a new user follows the tiers (`src/lib/rest-timer-switch.ts`). The workout's rest chip sheet keeps its time control until the v6 workout screen replaces it.
+- **Loggning.** Viktenhet (“Standard för alla övningar”) and Fråga efter RIR (“Plattan får ett RIR-läge efter reps”), still off by default.
+- **Coach.** Tips i passet (on) and “Trött muskel sent i passet”: Av | Föreslå | Automatiskt, Föreslå by default (`gt-fatigue-mode`).
+- **Tema in the row.** The day/night switch sits in the Tema row, and a tap anywhere on the row switches the theme. The row says “Följer telefonen (ljust nu)” until you choose, and after a choice “Följ telefonen igen” clears it (`ThemeContext`'s `chosen` and `followPhone`). The theme sheet is gone. The transition class now lands two frames before the theme class. On Settings, the lists fade with the page, and row titles in WebKit fade with their surface instead of vanishing into the new ground (R9).
+- **Språk · Language** reads “Svenska, som telefonen” while the language follows the phone.
+- **Verify.** `node scripts/verify/run.cjs --phase p5` checks the groups, full-row switches with the rest timer off and on, Ljud and Vibrera, the fatigue mode, “Följ telefonen igen”, and a tap on the Tema row's text. With motion on, it samples text and surface colours at 0, 325 and 650 ms from the frame the theme class lands, in Chromium and WebKit.
+
 ## 26 November 2026 — v6 foundation
 
 The shared ground the v6 phases build on (plan `docs/superpowers/plans/2026-11-26-v6-implementation.md`, phase P0). No server or Supabase change.

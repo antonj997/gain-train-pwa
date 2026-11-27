@@ -1,14 +1,20 @@
+import { useId } from "react";
 import { Minus, Moon, Plus, Sun } from "lucide-react";
+import Reveal from "@/components/motion/Reveal";
 import { useTheme } from "@/contexts/useTheme";
 import { LANGUAGES, LANGUAGE_NAMES } from "@/i18n";
 import { useT } from "@/i18n/useT";
-import { RestSettings } from "@/components/settings/RestControl";
+import { RestControl } from "@/components/settings/RestControl";
 import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import Switch from "@/components/ui/Switch";
 import type { MapFigure } from "@/components/muscles/detailed-geometry";
 import { useMapFigure } from "@/hooks/useMapFigure";
-import { canVibrate, type TrainingPreferences } from "@/lib/preferences";
+import {
+  saveRestTimerOn,
+  type FatigueMode,
+  type TrainingPreferences,
+} from "@/lib/preferences";
 
 type Preferences = TrainingPreferences;
 type SheetProps = {
@@ -70,6 +76,12 @@ export function GoalSheet({
   );
 }
 
+/**
+ * The workout's rest chip sheet as it was before v6: On, the time and the
+ * sound. Settings no longer uses it (RestSettings has no time); it stays
+ * until the workout's own rest sheet (v6 P1, RestControl.tsx) replaces it,
+ * and can then be deleted.
+ */
 export function RestSheet({
   open,
   onClose,
@@ -77,13 +89,39 @@ export function RestSheet({
   onChange,
 }: SheetProps) {
   const { t } = useT();
+  const on = preferences.restSeconds > 0;
   return (
     <Sheet open={open} onClose={onClose} title={t("settings.restTimer")}>
-      <RestSettings
-        preferences={preferences}
-        onChange={onChange}
-        switchLabel={t("common.on")}
-      />
+      <div className="rest-setting">
+        <Switch
+          label={t("common.on")}
+          checked={on}
+          onChange={(next) => {
+            saveRestTimerOn(next);
+            onChange({});
+          }}
+        />
+      </div>
+      {on && (
+        <div className="rest-setting rest-setting-time">
+          <span className="rest-setting-label" aria-hidden="true">
+            {t("settings.restTime")}
+          </span>
+          <RestControl
+            seconds={preferences.restSeconds}
+            onChange={(restSeconds) => onChange({ restSeconds })}
+          />
+        </div>
+      )}
+      {on && (
+        <div className="rest-setting rest-setting-sound">
+          <Switch
+            label={t("settings.restSound")}
+            checked={preferences.restSound}
+            onChange={(restSound) => onChange({ restSound })}
+          />
+        </div>
+      )}
       <button type="button" className="btn-primary" onClick={onClose}>
         {t("common.done")}
       </button>
@@ -91,21 +129,44 @@ export function RestSheet({
   );
 }
 
-/** Vibrate on a checked set; iPhone Safari has no vibration, so it is hidden there. */
-export function VibrateSetting({
+/**
+ * Settings → Coach (v6 §G1): "Tips i passet" (the warm-up and drop rows in
+ * the Set sheet, on by default) and "Trött muskel sent i passet" (decision
+ * 2: Av | Föreslå | Automatiskt, Föreslå by default; the workout's fatigue
+ * row reads it).
+ */
+export function CoachSettings({
   preferences,
   onChange,
 }: Pick<SheetProps, "preferences" | "onChange">) {
   const { t } = useT();
-  if (!canVibrate()) return null;
   return (
-    <div className="rest-setting">
-      <Switch
-        label={t("settings.vibrate")}
-        checked={preferences.haptics}
-        onChange={(haptics) => onChange({ haptics })}
-      />
-    </div>
+    <>
+      <div className="rest-setting">
+        <Switch
+          label={t("settings.workoutTips")}
+          hint={t("settings.workoutTipsNote")}
+          checked={preferences.workoutTips}
+          onChange={(workoutTips) => onChange({ workoutTips })}
+        />
+      </div>
+      <div className="rest-setting coach-fatigue">
+        <span className="row-main">
+          <span className="rest-setting-label">{t("settings.fatigue")}</span>
+          <span className="row-sub">{t("settings.fatigueNote")}</span>
+        </span>
+        <Segmented<FatigueMode>
+          label={t("settings.fatigue")}
+          value={preferences.fatigueMode}
+          options={[
+            { value: "off", label: t("settings.fatigueOff") },
+            { value: "suggest", label: t("settings.fatigueSuggest") },
+            { value: "auto", label: t("settings.fatigueAuto") },
+          ]}
+          onChange={(fatigueMode) => onChange({ fatigueMode })}
+        />
+      </div>
+    </>
   );
 }
 
@@ -150,37 +211,62 @@ export function MapFigureSetting() {
   );
 }
 
-export function ThemeSheet({
-  open,
-  onClose,
-}: Pick<SheetProps, "open" | "onClose">) {
-  const { theme, toggleTheme } = useTheme();
+/**
+ * Settings → Utseende → Tema (v6 §G1): the whole row is the switch, with the
+ * day/night switch drawn inside it. A tap toggles day and night (650 ms);
+ * the value says whether it follows the phone. After a choice by hand a row
+ * under it offers "Följ telefonen igen".
+ */
+export function ThemeSetting() {
+  const { theme, toggleTheme, chosen, followPhone } = useTheme();
   const { t } = useT();
+  const valueId = useId();
+  const light = theme === "light";
+  const value = chosen
+    ? t(light ? "settings.light" : "settings.dark")
+    : t(light ? "settings.themeFollowsLight" : "settings.themeFollowsDark");
   return (
-    <Sheet open={open} onClose={onClose} title={t("settings.theme")}>
-      <div className="theme-setting">
-        <p>{theme === "dark" ? t("settings.dark") : t("settings.light")}</p>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={theme === "light"}
-          aria-label={t("settings.lightAppearance")}
-          className={
-            "theme-switch " + (theme === "light" ? "is-day" : "is-night")
-          }
-          onClick={toggleTheme}
-        >
-          <span className="theme-stars" aria-hidden="true">
-            ✦ · ✧
+    <>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={light}
+        aria-label={t("settings.themeSwitch")}
+        aria-describedby={valueId}
+        className="row theme-row"
+        onClick={toggleTheme}
+      >
+        <span className="row-main">
+          <span className="row-title">{t("settings.theme")}</span>
+          <span className="row-sub" id={valueId}>
+            {value}
           </span>
-          <span className="theme-orb" aria-hidden="true">
+        </span>
+        <span
+          className={"theme-switch " + (light ? "is-day" : "is-night")}
+          aria-hidden="true"
+        >
+          <span className="theme-stars">✦ · ✧</span>
+          <span className="theme-orb">
             <Moon className="theme-moon" size={22} />
             <Sun className="theme-sun" size={24} />
           </span>
-          <span className="theme-horizon" aria-hidden="true" />
-        </button>
-      </div>
-    </Sheet>
+          <span className="theme-horizon" />
+        </span>
+      </button>
+      <Reveal>
+        {chosen && (
+          <div className="row theme-follow">
+            <span className="row-main row-sub">
+              {t("settings.themeChosen")}
+            </span>
+            <button type="button" className="text-link" onClick={followPhone}>
+              {t("settings.themeFollowAgain")}
+            </button>
+          </div>
+        )}
+      </Reveal>
+    </>
   );
 }
 
@@ -216,15 +302,18 @@ export function LanguageSheet({
   open,
   onClose,
 }: Pick<SheetProps, "open" | "onClose">) {
-  const { t, setLanguage } = useT();
+  const { t, setLanguage, followsPhone } = useT();
   return (
-    <Sheet open={open} onClose={onClose} title={t("language.title")}>
+    <Sheet open={open} onClose={onClose} title={t("settings.languageRow")}>
       <LanguageChoices
         onChoose={(language) => {
           setLanguage(language);
           onClose();
         }}
       />
+      {followsPhone && (
+        <p className="row-sub">{t("settings.languageFollowsNote")}</p>
+      )}
     </Sheet>
   );
 }
