@@ -275,13 +275,35 @@ label.row {
   padding: 14px var(--gt-space-4);
   border-radius: var(--gt-radius-lg);
 }
+/* "Pass pågår · 4 min" is a status, so accent (v6 H1: green is done only). */
 .home-page .resume-card small {
-  color: var(--gt-done);
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
-}
-.home-page .resume-card:not(.is-running) small {
   color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+}
+/* The start dialog while a workout runs (A3): the text, then three buttons;
+   the last is danger text and asks for a second tap. */
+.start-running-text {
+  margin: 0 0 var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-3);
+}
+.btn-quiet.start-discard {
+  color: var(--gt-danger-fg);
+}
+.btn-quiet.start-discard.is-armed {
+  background-color: var(--gt-danger-bg);
+}
+/* The running card's "Fortsätt passet" (A3): drawn as the primary button;
+   the whole card is the link. */
+.home-page .resume-card span.resume-go {
+  display: flex;
+  flex-direction: row;
+  gap: var(--gt-space-2);
+  margin-top: 4px;
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
 }
 .home-page .resume-card strong {
   font-size: var(--gt-fs-4);

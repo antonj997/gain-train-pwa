@@ -11,7 +11,7 @@ import { doneSetCount, nextSetLabel, setCount } from "@/data/selectors";
 import { useNow } from "@/hooks/useNow";
 import { localizedDate } from "@/lib/dates";
 import { errorMessage } from "@/lib/errors";
-import { durationLabel } from "@/lib/labels";
+import { countLabel, durationLabel } from "@/lib/labels";
 import { workoutPath } from "@/lib/routes";
 import { useT } from "@/i18n/useT";
 import { workoutTitle } from "@/lib/workout-name";
@@ -227,10 +227,17 @@ function ResumeCard({
             <strong className="resume-title">
               {workoutTitle(r.payload.name)}
             </strong>
+            {/* v6 A3: "2 övningar · 0 av 3 set", the same as the start dialog. */}
             <span className="resume-meta">
               {!running && `${localizedDate(r.payload.date)} · `}
+              {countLabel(r.payload.exercises.length, "exercise")}
+              {" · "}
               {t("home.setsOf", { done, total })}
-              {next && ` · ${t("home.next", { set: next })}`}
+              {next && (
+                <span className="sr-only">
+                  {` · ${t("home.next", { set: next })}`}
+                </span>
+              )}
             </span>
           </span>
         </span>
@@ -239,8 +246,17 @@ function ResumeCard({
             <i style={{ width: `${Math.round((done / total) * 100)}%` }} />
           </span>
         )}
+        {/* The card is the link; this reads as its button. */}
+        {primary && (
+          <span className="btn-primary btn-block resume-go" aria-hidden="true">
+            <Play size={18} fill="currentColor" stroke="none" />
+            {t("home.resumeWorkout")}
+          </span>
+        )}
       </span>
-      <Play className="resume-play" fill="currentColor" stroke="none" />
+      {!primary && (
+        <Play className="resume-play" fill="currentColor" stroke="none" />
+      )}
     </Link>
   );
 }

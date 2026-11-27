@@ -121,7 +121,7 @@ export const en = {
   "home.resume": "Resume",
   "home.abandoning": "Abandoning…",
   "home.abandon": "Abandon",
-  "home.inProgress": "In progress · {duration}",
+  "home.inProgress": "Workout running · {duration}",
   "home.resumeWorkout": "Resume workout",
   "home.setsOf": "{done} of {total} sets",
   "home.next": "next: {set}",
@@ -2079,6 +2079,14 @@ export const en = {
   "home.getPlanSub": "Weeks, deload and goals",
   "home.languageRow": "Språk · Language",
   "home.languageFollows": "{language}, like the phone",
+  /** A3: starting while another workout runs. */
+  "start.runningTitle": "You have a workout running",
+  "start.runningText":
+    "Starting a new empty workout throws away {name} and its exercises.",
+  "start.continueNamed": "Continue {name}",
+  "start.saveRoutineAndEnd": "Save as a routine and finish",
+  "start.discardAndStart": "Discard and start a new one",
+  "start.discardAgain": "Tap again to discard",
 
   // ---- v6 P3 Muskler ----
 

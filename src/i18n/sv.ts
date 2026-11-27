@@ -119,7 +119,7 @@ export const sv = {
   "home.resume": "Fortsätt",
   "home.abandoning": "Avbryter…",
   "home.abandon": "Avbryt pass",
-  "home.inProgress": "Pågår · {duration}",
+  "home.inProgress": "Pass pågår · {duration}",
   "home.resumeWorkout": "Fortsätt passet",
   "home.setsOf": "{done} av {total} set",
   "home.next": "nästa: {set}",
@@ -2089,6 +2089,13 @@ export const sv = {
   "home.getPlanSub": "Veckor, deload och mål",
   "home.languageRow": "Språk · Language",
   "home.languageFollows": "{language}, som telefonen",
+  "start.runningTitle": "Du har ett pass igång",
+  "start.runningText":
+    "Startar du ett nytt tomt pass slängs {name} med sina övningar.",
+  "start.continueNamed": "Fortsätt {name}",
+  "start.saveRoutineAndEnd": "Spara som rutin och avsluta",
+  "start.discardAndStart": "Släng och starta nytt",
+  "start.discardAgain": "Tryck igen för att slänga",
 
   // ---- v6 P3 Muskler ----
 

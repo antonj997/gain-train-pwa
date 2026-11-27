@@ -265,3 +265,84 @@ test("a chosen language reads without the phone note", async () => {
   assert.match(html, />Svenska</);
   assert.doesNotMatch(html, /som telefonen/);
 });
+
+// ---- v6 A3: a workout is already running (Task 2.5)
+
+test("the running-workout dialog names the workout and offers three choices in order", async () => {
+  const { default: React } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { loadModule } = await import("./helpers/render");
+  const { translate } = await import("../src/i18n");
+  const sv = await swedish();
+  type Choices = React.FC<{
+    name: string;
+    text: string;
+    armed: boolean;
+    busy: boolean;
+    onContinue: () => void;
+    onSaveRoutine: () => void;
+    onDiscard: () => void;
+  }>;
+  const { default: RunningWorkoutChoices } = await loadModule<{
+    default: Choices;
+  }>("@/components/home/RunningWorkoutChoices.tsx", { "@/i18n/useT": sv });
+  const { runningDialogText, discardTap } =
+    await import("../src/lib/running-workout.ts");
+  const svT = (key: never, params?: never) => translate("sv", key, params);
+  const set = (done: boolean) => ({
+    id: crypto.randomUUID(),
+    reps: 8,
+    weight: 40,
+    load: "weight",
+    section: "working",
+    done,
+  });
+  const running = {
+    name: "Bröst & Ben",
+    exercises: [
+      { id: "a", exerciseId: "x", name: "X", sets: [set(false), set(false)] },
+      { id: "b", exerciseId: "y", name: "Y", sets: [set(false)] },
+    ],
+  };
+  const { setCurrentLanguage } = await import("../src/i18n");
+  setCurrentLanguage("sv");
+  let text;
+  try {
+    text = runningDialogText(running, svT);
+  } finally {
+    setCurrentLanguage("en");
+  }
+  assert.equal(text.title, "Du har ett pass igång");
+  assert.equal(text.sub, "Bröst & Ben · 2 övningar · 0 av 3 set");
+  assert.equal(
+    text.text,
+    "Startar du ett nytt tomt pass slängs Bröst & Ben med sina övningar.",
+  );
+  const render = (armed: boolean) =>
+    renderToStaticMarkup(
+      React.createElement(RunningWorkoutChoices, {
+        name: text.name,
+        text: text.text,
+        armed,
+        busy: false,
+        onContinue: () => {},
+        onSaveRoutine: () => {},
+        onDiscard: () => {},
+      }),
+    );
+  const buttons = [...render(false).matchAll(/<button[^>]*>([^<]*)</g)].map(
+    (m) => m[1],
+  );
+  assert.deepEqual(buttons, [
+    "Fortsätt Bröst &amp; Ben",
+    "Spara som rutin och avsluta",
+    "Släng och starta nytt",
+  ]);
+  assert.match(render(false), /class="btn-primary btn-block"/);
+  assert.match(render(false), /class="btn-secondary btn-block"/);
+  assert.match(render(true), />Tryck igen för att slänga</);
+  // Släng needs two taps: the first arms, a second within 3 s discards.
+  assert.equal(discardTap(null, 1000), "arm");
+  assert.equal(discardTap(1000, 2500), "confirm");
+  assert.equal(discardTap(1000, 4500), "arm");
+});
