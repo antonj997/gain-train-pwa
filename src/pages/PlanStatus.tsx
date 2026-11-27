@@ -5,13 +5,12 @@ import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
 import PlanEditor from "@/components/plan/PlanEditor";
 import {
-  AdherenceCard,
   GoalsCard,
   MuscleCard,
   NextWorkoutCard,
-  PhaseCard,
   ProgressionCard,
 } from "@/components/plan/PlanStatusCards";
+import PlanPeriodCard from "@/components/plan/PlanPeriodCard";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
 import { useStartWorkout } from "@/hooks/useStartWorkout";
@@ -117,8 +116,14 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
       planAdherence(plan, doneDates, today, {
         isWorkout,
         countUntil: pausedCountUntil(plan, doneDates, today),
+        // Week matching by routine (§D9).
+        workouts: completedWorkouts(records).map((r) => ({
+          id: r.id,
+          date: r.payload.date,
+          routineId: r.payload.routineId ?? null,
+        })),
       }),
-    [plan, doneDates, today, isWorkout],
+    [plan, doneDates, today, isWorkout, records],
   );
   const equipmentOf = useMemo(() => equipmentLookup(records), [records]);
   const lifts = useMemo(
@@ -230,10 +235,29 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
         }
       />
       <p className="row-sub plan-status-sub">{subline}</p>
-      <PhaseCard plan={plan} status={phase} today={today} />
-      {started && hasWorkoutDays && (
-        <AdherenceCard adherence={adherence} paused={!!plan.paused} />
+      {/* F2: the period, where the phase is and how well it is followed. */}
+      <PlanPeriodCard
+        plan={plan}
+        today={today}
+        phase={phase}
+        adherence={started && hasWorkoutDays ? adherence : null}
+        doneDates={doneDates}
+        isWorkout={isWorkout}
+      />
+      {/* "Nästa pass", higher up than before (F2). */}
+      {nextDate && nextDay && (
+        <NextWorkoutCard
+          date={nextDate}
+          today={today}
+          tomorrow={tomorrow}
+          title={nextTitle}
+          sub={nextSub}
+          exercises={nextRoutine?.payload.exercises}
+          starting={starting}
+          onStart={startNext}
+        />
       )}
+      {/* P3: plan gaps warning */}
       {started && lifts.length + others.length > 0 && (
         <ProgressionCard
           lifts={lifts}
@@ -244,17 +268,6 @@ function PlanStatusView({ plan }: { plan: PlanItem }) {
       {muscle && <MuscleCard muscle={muscle} map={muscleMap} />}
       {goals.length > 0 && (
         <GoalsCard goals={goals} today={today} onOpen={goalEditor.edit} />
-      )}
-      {nextDate && nextDay && (
-        <NextWorkoutCard
-          date={nextDate}
-          today={today}
-          tomorrow={tomorrow}
-          title={nextTitle}
-          sub={nextSub}
-          starting={starting}
-          onStart={startNext}
-        />
       )}
       <div className="plan-status-actions">
         <button

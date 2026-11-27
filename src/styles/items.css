@@ -401,7 +401,7 @@ button.ex-row-main {
 .goal-ring-text {
   position: relative;
   font-size: var(--gt-fs-2);
-  font-weight: 800;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -579,7 +579,7 @@ button.ex-row-main {
   border-radius: 999px;
   background-color: var(--gt-ink);
   color: var(--gt-surface);
-  font-size: 10px;
+  font-size: var(--gt-fs-1);
   font-weight: 700;
   line-height: 1;
   pointer-events: none;

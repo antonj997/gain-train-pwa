@@ -10,13 +10,6 @@
 // shows any offender that is left.
 module.exports = [
   // Kalender (P2: C1, the compact calendar, the plan card and the date tile).
-  {
-    check: "type",
-    page: "Kalender",
-    match: "h2.plan-card-name",
-    owner: "P2",
-    why: "the plan card's name is 20/800 (F2's top card)",
-  },
   // Framsteg (P3).
   {
     check: "type",

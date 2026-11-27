@@ -2137,6 +2137,27 @@ export const en = {
   "plan.periodLineDeloads":
     "{range} · {workouts} and {light} lighter in the deload weeks",
   "plan.periodCalendar": "{name}: {period}",
+  /** F2: the plan status page's top card. */
+  "planStatus.weekPhase": "Week {week} of {weeks} · {phase}",
+  "planStatus.buildPhase": "build phase",
+  "planStatus.deloadPhase": "deload",
+  "planStatus.deloadEnds": "Deload week {week} · ends {date}",
+  "planStatus.ends": "Ends {date}",
+  "planStatus.weeksFulfilled": {
+    one: "{done} of {count} week fulfilled",
+    other: "{done} of {count} weeks fulfilled",
+  },
+  "planStatus.noWeekYet": "No full week yet",
+  "planStatus.statusOn": "On track",
+  "planStatus.statusBehind": "Behind the plan",
+  "planStatus.statusAhead": "Ahead of the plan",
+  "planStatus.adherenceLine":
+    "{extras} extra · {total} in all · this week {matched} of {planned}",
+  "planStatus.infoLabel": "What does fulfilled mean?",
+  "planStatus.infoTitle": "A fulfilled week",
+  "planStatus.infoText":
+    "A week is fulfilled when the week's planned routines were done on some day that same week. Extra workouts count on their own and do not raise the adherence.",
+  "planStatus.nextWhen": "Next workout · {when}",
 
   // ---- v6 P3 Muskler ----
 

@@ -2142,6 +2142,26 @@ export const sv = {
   "plan.periodLineDeloads":
     "{range} · {workouts} och {light} lättare i deloadveckorna",
   "plan.periodCalendar": "{name}: {period}",
+  "planStatus.weekPhase": "Vecka {week} av {weeks} · {phase}",
+  "planStatus.buildPhase": "byggfas",
+  "planStatus.deloadPhase": "deload",
+  "planStatus.deloadEnds": "Deload vecka {week} · slutar {date}",
+  "planStatus.ends": "Slutar {date}",
+  "planStatus.weeksFulfilled": {
+    one: "{done} av {count} vecka fullföljd",
+    other: "{done} av {count} veckor fullföljda",
+  },
+  "planStatus.noWeekYet": "Ingen hel vecka än",
+  "planStatus.statusOn": "I fas",
+  "planStatus.statusBehind": "Efter schemat",
+  "planStatus.statusAhead": "Före schemat",
+  "planStatus.adherenceLine":
+    "{extras} extrapass · {total} totalt · den här veckan {matched} av {planned}",
+  "planStatus.infoLabel": "Vad betyder fullföljd?",
+  "planStatus.infoTitle": "Fullföljd vecka",
+  "planStatus.infoText":
+    "En vecka är fullföljd när veckans planerade rutiner körts någon dag samma vecka. Extrapass räknas för sig och gör inte följsamheten högre.",
+  "planStatus.nextWhen": "Nästa pass · {when}",
 
   // ---- v6 P3 Muskler ----
 
