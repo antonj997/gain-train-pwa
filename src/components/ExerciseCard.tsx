@@ -57,7 +57,6 @@ import {
   shownPlannedSet,
 } from "@/lib/routine-targets";
 import { repRangeLabel } from "@/lib/routine-preview";
-import { withRir } from "@/lib/rir";
 import { exerciseDisplayName } from "@/lib/exercise-name";
 import { headingMeta, headingRange, isPerLeg } from "@/lib/exercise-heading";
 import { carryWeight } from "@/lib/set-editing";
@@ -89,6 +88,8 @@ import ExerciseMenuSheet from "@/components/workout/ExerciseMenuSheet";
 import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 import CardioFieldsSheet from "@/components/workout/CardioFieldsSheet";
 import RepRangeSheet from "@/components/workout/RepRangeSheet";
+import WarmupSheet from "@/components/workout/WarmupSheet";
+import { warmupSets } from "@/lib/warmup";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { RestSheet } from "@/components/settings/PreferenceSheets";
 import { restLabel } from "@/lib/preferences";
@@ -191,6 +192,7 @@ type OpenSheet =
   | { kind: "fields" }
   | { kind: "rest" }
   | { kind: "range" }
+  | { kind: "warmup" }
   | null;
 
 /** One exercise in the workout editor: its sets, one line each, and its sheets. */
@@ -412,6 +414,12 @@ function ExerciseCard({
     perLeg: isPerLeg(ex.exerciseId),
     unit: weightUnit,
   });
+  // v6 B4: the warm-up row shows on the first working set only.
+  const firstWorkingIndex = sets.findIndex(
+    (s) => s.section === "working" && !isDrop(s),
+  );
+  const firstWorking =
+    firstWorkingIndex >= 0 ? sets[firstWorkingIndex] : undefined;
   // v6 B12: "Fråga efter RIR" adds an RIR column after the count.
   const rirColumn = askRir && mode === "log" && !cardio;
   const workingSets = sets.filter(
@@ -704,8 +712,28 @@ function ExerciseCard({
             changeSets(changeSection(sets, shown.id, section))
           }
           onLoadKey={(key) => updateSet(withLoadKey(shown, key))}
-          onRir={
-            mode === "log" ? (rir) => updateSet(withRir(shown, rir)) : undefined
+          name={exerciseName}
+          tips={preferences.workoutTips}
+          // v6 B4: the RIR row opens the pad's RIR slider.
+          onOpenRir={
+            rirColumn && pad
+              ? () => {
+                  const id = shown.id;
+                  toPad.current = true;
+                  close();
+                  pad.open(id, "rir");
+                }
+              : undefined
+          }
+          onAddWarmup={
+            mode === "log" &&
+            preferences.workoutTips &&
+            !shown.done &&
+            shownIndex === firstWorkingIndex &&
+            (shown.weight ?? 0) > 0 &&
+            shown.load === "weight"
+              ? () => setSheet({ kind: "warmup" })
+              : undefined
           }
           onAddDrop={() => {
             changeSets(addDrop(sets, shown.id));
@@ -829,6 +857,18 @@ function ExerciseCard({
             const { repRange: _old, ...rest } = ex;
             onChange(range ? { ...rest, repRange: range } : rest);
           }}
+        />
+      )}
+      {mode === "log" && firstWorking && (firstWorking.weight ?? 0) > 0 && (
+        <WarmupSheet
+          open={sheet?.kind === "warmup"}
+          onClose={close}
+          name={exerciseName}
+          workKg={firstWorking.weight!}
+          workReps={firstWorking.reps}
+          step={weightStep}
+          barbell={equipment === "barbell" || equipment === "smith"}
+          onAdd={(rows) => changeSets(warmupSets(sets, rows))}
         />
       )}
       <ReorderSetsSheet

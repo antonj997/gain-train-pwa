@@ -1961,3 +1961,69 @@
 .log-choice-text .row-sub {
   font-weight: 400;
 }
+
+/* ---- v6 P1: the Set sheet's groups and the warm-up ladder (B4, B6) ---- */
+
+/* The Set sheet in groups: add, the set's rows, Delete set apart. */
+.set-sheet-group + .set-sheet-group,
+.set-sheet-group + .sheet-hint,
+.sheet-hint + .set-sheet-group {
+  margin-top: var(--gt-space-3);
+}
+.set-sheet-group .row svg:not(.chev) {
+  flex: none;
+}
+.set-sheet-group .row-accent svg:not(.chev) {
+  color: var(--gt-accent);
+}
+.set-sheet-group .row-danger svg:not(.chev) {
+  color: var(--gt-danger-fg);
+}
+/* Type and Load open their choice in place, under the row. */
+.set-sheet-choice {
+  padding: var(--gt-space-2) var(--gt-space-4) var(--gt-space-3);
+  border-bottom: 1px solid var(--gt-line);
+}
+.set-sheet-choice:last-child {
+  border-bottom: 0;
+}
+.set-sheet-note {
+  margin: 0;
+  padding: var(--gt-space-3) var(--gt-space-4);
+  border-bottom: 1px solid var(--gt-line);
+}
+/* v6 B4: the set the sheet shows has a thin neutral line and no blue. */
+.set-line.is-editing {
+  background-color: transparent;
+  outline: 1.5px solid var(--gt-line-control);
+  outline-offset: -1.5px;
+}
+.set-badge.is-editing .set-badge-chip {
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+}
+
+/* The warm-up ladder: a U badge, the load and the plates per side. */
+.warmup-list {
+  margin: var(--gt-space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+.warmup-row {
+  min-height: 56px;
+}
+.warmup-badge {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+}
+.warmup-plates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-1);
+  margin-bottom: var(--gt-space-3);
+}
