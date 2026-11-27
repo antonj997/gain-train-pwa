@@ -2177,6 +2177,7 @@ export const en = {
   "finish.done": "Done",
   "finish.savedInCalendar": "Workout saved in Calendar",
   "finish.routineFailed": "The routine could not be saved. The workout is still here.",
+  "picker.recentGroup": "Recently used",
 
   // ---- v6 P2 Kalender ----
 

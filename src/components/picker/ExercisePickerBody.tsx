@@ -11,13 +11,13 @@ import {
 import { Search, Plus, X } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useData } from "@/contexts/useData";
-import { catalogue, categories, equipmentTypes } from "@/data/catalogue";
-import FacetChips from "@/components/FacetChips";
+import { catalogue, categories } from "@/data/catalogue";
+import CategoryChips from "@/components/ui/CategoryChips";
+import { matchesChip, type CategoryChip } from "@/lib/category-filter";
 import { CollapsibleFilters, FilterToggle } from "@/components/SearchFilters";
 import { useHiddenExercises } from "@/hooks/useHiddenExercises";
 import {
   inCategory,
-  matchesFacets,
   sameNamedExercise,
   searchExercises,
 } from "@/lib/exercise-search";
@@ -25,11 +25,7 @@ import { type CustomExercise } from "@/data/model";
 import type { ExerciseDefaults } from "@/data/workouts";
 import { workouts } from "@/data/selectors";
 import { favouriteIds, ownExercises, visibleExercises } from "@/data/exercises";
-import {
-  categoryGroups,
-  favouriteGroups,
-  type ExerciseGroup,
-} from "@/lib/library";
+import type { ExerciseGroup } from "@/lib/library";
 import FavouriteStar from "@/components/ui/FavouriteStar";
 import {
   selectionItem,
@@ -40,13 +36,9 @@ import { useAuth } from "@/contexts/useAuth";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
 import { draftKey, parseCustomDraft } from "@/lib/drafts";
 import { coarsePointer } from "@/lib/touch";
-import { t, type MessageKey } from "@/i18n";
-import {
-  categoryLabel,
-  categoryText,
-  equipmentLabel,
-} from "@/lib/catalogue-labels";
-import { exerciseDisplayName } from "@/lib/exercise-name";
+import { t } from "@/i18n";
+import { categoryLabel } from "@/lib/catalogue-labels";
+import { exerciseDisplayName, exerciseSubtitle } from "@/lib/exercise-name";
 
 /** A chosen exercise; a custom one carries the defaults it was saved with. */
 export type PickedExercise = { id: string; name: string } & ExerciseDefaults;
@@ -64,13 +56,31 @@ export type PickerOptions = {
   excludeId?: string;
 };
 
-// The picker's own filters; the other chips are categories.
-const FILTER_LABELS: Record<string, MessageKey> = {
-  Suggested: "picker.suggested",
-  All: "picker.all",
-  Recent: "picker.recent",
-  Favourites: "picker.favourites",
-};
+const byName = (a: { name: string }, b: { name: string }) =>
+  a.name.localeCompare(b.name);
+
+/**
+ * v6 B11: "Senast använda" first (most recent first), then favourites, then
+ * A–Ö; groups with nothing in them are left out.
+ */
+function pickerGroups<
+  T extends { id: string; name: string; favourite: boolean },
+>(items: readonly T[], recent: readonly string[]): ExerciseGroup<T>[] {
+  const used = recent.flatMap((id) => items.filter((item) => item.id === id));
+  const shown = new Set(used);
+  const favourites = items
+    .filter((item) => item.favourite && !shown.has(item))
+    .sort(byName);
+  for (const item of favourites) shown.add(item);
+  return [
+    { title: t("picker.recentGroup"), items: used },
+    { title: t("exercises.groupFavourites"), items: favourites },
+    {
+      title: t("exercises.groupAz"),
+      items: items.filter((item) => !shown.has(item)).sort(byName),
+    },
+  ].filter((group) => group.items.length);
+}
 
 /** The picker's content: search, filters, the list and "New exercise". Mounted only while open. */
 export default function ExercisePickerBody({
@@ -85,7 +95,6 @@ export default function ExercisePickerBody({
   /** Tells the dialog not to close while a new exercise saves. */
   busyRef: MutableRefObject<boolean>;
 }) {
-  const initialFilter = suggested?.length ? "Suggested" : "All";
   const { state, save } = useData();
   const { hidden } = useHiddenExercises();
   const { account } = useAuth();
@@ -115,8 +124,10 @@ export default function ExercisePickerBody({
   const listRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState(""),
     [selected, setSelected] = useState<string[]>([]),
-    [filter, setFilter] = useState(initialFilter),
-    [equipment, setEquipment] = useState(""),
+    // v6 B11: one row of category chips; a planned day type's suggestion
+    // narrows the list too until it is switched off.
+    [chip, setChip] = useState<CategoryChip>("all"),
+    [suggestedOnly, setSuggestedOnly] = useState(!!suggested?.length),
     [creating, setCreating] = useState(false);
   const [busy, setBusyState] = useState(false);
   const setBusy = (value: boolean) => {
@@ -133,30 +144,27 @@ export default function ExercisePickerBody({
         favourite: favourites.has(e.id),
       })),
       own: new Set(own.map((e) => e.id)),
-      recent: new Set(
-        workouts(state.records)
-          .slice(0, 5)
-          .flatMap((r) => r.payload.exercises.map((e) => e.exerciseId)),
-      ),
+      // Most recent first, each once.
+      recent: [
+        ...new Set(
+          workouts(state.records)
+            .slice(0, 5)
+            .flatMap((r) => r.payload.exercises.map((e) => e.exerciseId)),
+        ),
+      ],
     };
   }, [state.records]);
   const twin = creating ? sameNamedExercise(name, all) : undefined;
-  const categoryFilter = categories.includes(filter) ? filter : "";
-  // Searching lists the best matches in one untitled group, favourites first
-  // among equals. Otherwise favourites lead: with a category, see
-  // categoryGroups; with All or Suggested, favourites, recent, then A–Z.
+  // Searching lists the best matches in one untitled group: exact names
+  // first, then names that start with it (exercise-search.ts), favourites
+  // first among equals. Otherwise "Senast använda", favourites, then A–Ö.
+  // The chips and the search filter together.
   const groups = useMemo((): ExerciseGroup<(typeof all)[number]>[] => {
     const shown = visibleExercises(all, hidden).filter(
       (e) =>
         e.id !== excludeId &&
-        matchesFacets(e, { category: categoryFilter, equipment }) &&
-        (filter === "Suggested"
-          ? !!suggested?.some((c) => inCategory(e, c))
-          : filter === "Recent"
-            ? recent.has(e.id)
-            : filter === "Favourites"
-              ? e.favourite
-              : true),
+        matchesChip({ ...e, custom: own.has(e.id) }, chip) &&
+        (!suggestedOnly || !!suggested?.some((c) => inCategory(e, c))),
     );
     if (search.trim())
       return [
@@ -165,30 +173,22 @@ export default function ExercisePickerBody({
           items: searchExercises(
             shown.sort(
               (a, b) =>
-                Number(recent.has(b.id)) - Number(recent.has(a.id)) ||
-                a.name.localeCompare(b.name),
+                Number(recent.includes(b.id)) - Number(recent.includes(a.id)) ||
+                byName(a, b),
             ),
             search,
             (e) => e.favourite,
           ),
         },
       ].filter((group) => group.items.length);
-    if (categoryFilter) return categoryGroups(shown, categoryFilter);
-    if (filter === "Recent" || filter === "Favourites")
-      return favouriteGroups(shown).map((group) => ({ ...group, title: "" }));
-    return favouriteGroups(
-      shown,
-      shown
-        .filter((e) => recent.has(e.id))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    );
+    return pickerGroups(shown, recent);
   }, [
     all,
+    own,
     hidden,
     excludeId,
-    filter,
-    categoryFilter,
-    equipment,
+    chip,
+    suggestedOnly,
     suggested,
     recent,
     search,
@@ -197,7 +197,7 @@ export default function ExercisePickerBody({
   // A new query or filter shows its results from the top.
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = 0;
-  }, [search, filter, equipment]);
+  }, [search, chip, suggestedOnly]);
   // Closing unmounts this body, which resets the search, filters and choices.
   const close = () => {
     if (busy) return;
@@ -260,7 +260,7 @@ export default function ExercisePickerBody({
   // While searching, the results get the room: the title, the chip rows and
   // an empty footer fold away until "Filter" brings the chips back.
   const compact = searching && !filtersOpen;
-  const activeFilters = Number(filter !== initialFilter) + Number(!!equipment);
+  const activeFilters = Number(chip !== "all") + Number(suggestedOnly);
   const startCreating = () => {
     if (!pending) updateDraft({ name: search.trim() });
     setCreating(true);
@@ -390,37 +390,24 @@ export default function ExercisePickerBody({
             )}
           </div>
           <CollapsibleFilters id={filtersId} collapsed={compact}>
-            <div
-              className="facet-chips"
-              role="group"
-              aria-label={t("picker.show")}
-            >
-              {[
-                ...(suggested?.length ? ["Suggested"] : []),
-                "All",
-                "Recent",
-                "Favourites",
-                ...categories,
-              ].map((c) => (
+            {/* A planned day type's suggestion, on until switched off. */}
+            {!!suggested?.length && (
+              <div
+                className="facet-chips"
+                role="group"
+                aria-label={t("picker.show")}
+              >
                 <button
-                  key={c}
                   type="button"
                   className="filter-chip"
-                  aria-pressed={filter === c}
-                  onClick={() => setFilter(c)}
+                  aria-pressed={suggestedOnly}
+                  onClick={() => setSuggestedOnly((on) => !on)}
                 >
-                  {FILTER_LABELS[c] ? t(FILTER_LABELS[c]) : categoryLabel(c)}
+                  {t("picker.suggested")}
                 </button>
-              ))}
-            </div>
-            <FacetChips
-              name={t("facet.equipment")}
-              allLabel={t("facet.allEquipment")}
-              format={equipmentLabel}
-              options={equipmentTypes}
-              value={equipment}
-              onChange={setEquipment}
-            />
+              </div>
+            )}
+            <CategoryChips value={chip} onChange={setChip} />
           </CollapsibleFilters>
           <div
             ref={listRef}
@@ -453,20 +440,14 @@ export default function ExercisePickerBody({
                         )}
                       </>
                     }
-                    meta={
-                      <>
-                        {categoryText(e.category, e.categories)}
-                        {"equipment" in e && e.equipment
-                          ? ` · ${equipmentLabel(e.equipment)}`
-                          : ""}
-                        {/* Not in the recent group or filter, which say it already. */}
-                        {recent.has(e.id) &&
-                        filter !== "Recent" &&
-                        group.title !== t("exercises.filterRecent")
-                          ? ` · ${t("picker.recent")}`
-                          : ""}
-                      </>
-                    }
+                    // v6 §D2: "skivstång · Bench Press", "kabel · Bål · egen".
+                    meta={exerciseSubtitle({
+                      id: e.id,
+                      equipment: "equipment" in e ? e.equipment : undefined,
+                      category: e.category,
+                      custom: own.has(e.id),
+                      englishName: e.name,
+                    })}
                     end={
                       single ? undefined : selected.includes(e.id) ? (
                         // Its place in the order it will be added.

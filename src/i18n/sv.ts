@@ -2190,6 +2190,7 @@ export const sv = {
   "finish.done": "Klar",
   "finish.savedInCalendar": "Passet sparat i Kalender",
   "finish.routineFailed": "Rutinen kunde inte sparas. Passet finns kvar.",
+  "picker.recentGroup": "Senast använda",
 
   // ---- v6 P2 Kalender ----
 
