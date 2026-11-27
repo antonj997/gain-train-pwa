@@ -2121,6 +2121,20 @@ export const en = {
   "discover.othersInfoLabel": "About shared routines",
   "discover.othersInfo":
     "With an account you see routines other lifters have shared and can share your own. The ready-made programmes and your workouts work without an account.",
+  "editor.namePlaceholder": "e.g. Kneeling Pallof Press",
+  "editor.equipment": "Equipment",
+  "editor.equipmentNote":
+    "Sets the filter, the weight step and the icon. Dumbbell is the default.",
+  "editor.catalogueTwin": "There's already {name} in the library.",
+  "editor.openTwin": "Open it",
+  "editor.useTwin": "Use its muscles",
+  "editor.usedTwin": "The muscles and equipment of {name} are in.",
+  "editor.derivedMain": "Shows under {group}",
+  "editor.derivedAlso": " · also {groups}",
+  "editor.derivedNone":
+    "Choose muscles. The exercise shows under the group with the most main muscles.",
+  "editor.noteOptional": "Note (optional)",
+  "editor.notePlaceholder": "Grip, setup, how to do it",
 
   // ---- v6 P5 Inställningar ----
 

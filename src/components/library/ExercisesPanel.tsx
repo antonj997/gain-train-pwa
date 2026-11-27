@@ -220,7 +220,14 @@ export default function ExercisesPanel({
     if (!edit)
       setEdit({
         id: crypto.randomUUID(),
-        data: { name: "", category: "Other", note: "", favourite: false },
+        data: {
+          name: "",
+          category: "Other",
+          note: "",
+          favourite: false,
+          equipment: "dumbbell",
+          icon: "dumbbell",
+        },
       });
     setOpen(true);
   };

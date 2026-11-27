@@ -1,26 +1,15 @@
 import { useState } from "react";
-import EquipmentIcon from "@/components/muscles/EquipmentIcon";
-import MuscleIcon from "@/components/muscles/MuscleIcon";
+import { Info } from "lucide-react";
 import MuscleMap from "@/components/muscles/MuscleMap";
 import Reveal from "@/components/motion/Reveal";
 import Segmented from "@/components/ui/Segmented";
-import {
-  CUSTOM_ICONS,
-  customIconOf,
-  groupMuscles,
-  isCardioExercise,
-  type CustomIcon,
-} from "@/data/exercise-muscles";
+import { customMuscles, groupMuscles } from "@/data/exercise-muscles";
 import type { CustomExercise } from "@/data/model";
 import type { Muscle } from "@/data/muscles";
 import type { MuscleGroup } from "@/data/muscle-sets";
 import { useMapFigure } from "@/hooks/useMapFigure";
-import {
-  categoryLabel,
-  equipmentLabel,
-  muscleLabel,
-} from "@/lib/catalogue-labels";
-import { categoryTone } from "@/lib/exercise-icon";
+import { categoryLabel, muscleLabel } from "@/lib/catalogue-labels";
+import { derivedCategories } from "@/lib/custom-exercise";
 import { exerciseMapFills } from "@/lib/muscle-figure";
 import {
   LEVEL_CHOICES,
@@ -80,8 +69,43 @@ function LevelRow({
   );
 }
 
-const iconLabel = (icon: CustomIcon) =>
-  icon === "body" ? t("muscles.iconBody") : equipmentLabel(icon);
+/**
+ * The line under Muskler (v6 §D6): "Visas under **Bål** · även Säte", or,
+ * before anything is chosen, how the group is picked.
+ */
+function DerivedLine({ data }: { data: CustomExercise }) {
+  const { category, categories } = derivedCategories(customMuscles(data));
+  return (
+    <p className="editor-derived" role="status">
+      <Info size={16} aria-hidden="true" />
+      <span>
+        {category === "Other"
+          ? t("editor.derivedNone")
+          : withBold(
+              t("editor.derivedMain", { group: "\u0000" }),
+              categoryLabel(category),
+            )}
+        {category !== "Other" &&
+          categories.length > 0 &&
+          t("editor.derivedAlso", {
+            groups: categories.map(categoryLabel).join(", "),
+          })}
+      </span>
+    </p>
+  );
+}
+
+/** A message with one part in bold. */
+function withBold(text: string, bold: string) {
+  const [before, after = ""] = text.split("\u0000");
+  return (
+    <>
+      {before}
+      <b>{bold}</b>
+      {after}
+    </>
+  );
+}
 
 /**
  * The custom-exercise editor's Muscles and Icon sections: a small live map of
@@ -98,11 +122,8 @@ export default function MusclePicker({
 }) {
   const [mode, setMode] = useState<Mode>("simple");
   const [figure] = useMapFigure();
-  const { muscles, chosen } = pickerMuscles(data);
+  const { muscles } = pickerMuscles(data);
   const { fills, rank } = exerciseMapFills(muscles);
-  const icon = customIconOf(data);
-  const tone = categoryTone(data.category);
-  const cardio = isCardioExercise(data);
   return (
     <>
       <div className="plan-field muscle-picker">
@@ -112,9 +133,7 @@ export default function MusclePicker({
         <div className="muscle-map muscle-map-preview">
           <MuscleMap fills={fills} rank={rank} figure={figure} />
         </div>
-        <Reveal>
-          {!chosen && <p className="row-sub">{t("muscles.fromCategories")}</p>}
-        </Reveal>
+        <DerivedLine data={data} />
         <Segmented<Mode>
           label={t("muscles.title")}
           value={mode}
@@ -175,39 +194,6 @@ export default function MusclePicker({
             </div>
           )}
         </Reveal>
-      </div>
-      <div className="plan-field">
-        <span className="group-title" id="exercise-icon-title">
-          {t("muscles.icon")}
-        </span>
-        <div
-          className="icon-choices"
-          role="group"
-          aria-labelledby="exercise-icon-title"
-        >
-          {CUSTOM_ICONS.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              className="icon-choice"
-              aria-pressed={icon === kind}
-              onClick={() => onChange({ ...data, icon: kind })}
-            >
-              <span
-                className="icon-choice-tile"
-                data-tone={tone}
-                aria-hidden="true"
-              >
-                {kind === "body" ? (
-                  <MuscleIcon muscles={muscles} cardio={cardio} size={36} />
-                ) : (
-                  <EquipmentIcon kind={kind} size={24} />
-                )}
-              </span>
-              <span className="icon-choice-label">{iconLabel(kind)}</span>
-            </button>
-          ))}
-        </div>
       </div>
     </>
   );

@@ -1501,6 +1501,72 @@ span.sparkline {
   line-height: 1.4;
 }
 
+/* v6 P4 (§E3): your own exercise's editor. The icon preview sits left of
+   the name; a catalogue twin gets a message row with two 44px links; the
+   equipment is one sideways chip row with its glyph in each chip. */
+.editor-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-3);
+}
+.editor-name-row input {
+  flex: 1;
+  min-width: 0;
+}
+.editor-twin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--gt-space-2) var(--gt-space-3) 0;
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-2);
+}
+.editor-twin p {
+  margin: 0;
+  line-height: 1.4;
+}
+.editor-twin-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--gt-space-4);
+}
+.editor-twin-links .text-button {
+  min-height: 44px;
+  padding: 0;
+  font-weight: 600;
+}
+.equipment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.equipment-chip svg {
+  flex: none;
+}
+.editor-derived {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.editor-derived svg {
+  flex: none;
+  margin-top: 1px;
+}
+.editor-derived b {
+  color: var(--gt-ink);
+  font-weight: 600;
+}
+.editor-discard {
+  align-self: center;
+  min-height: 44px;
+}
+
 /* v6 P4 (§E6, E6b): Upptäck's standard programmes. A row opens the
    programme; its round 44px + adds the routines and reads ✓ (the selected
    look) once they are in Mina. */

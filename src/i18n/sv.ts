@@ -2134,6 +2134,20 @@ export const sv = {
   "discover.othersInfoLabel": "Om delade rutiner",
   "discover.othersInfo":
     "Med ett konto ser du rutiner som andra lyftare delat och kan dela dina egna. De färdiga programmen och dina pass fungerar utan konto.",
+  "editor.namePlaceholder": "t.ex. Knästående pallofpress",
+  "editor.equipment": "Utrustning",
+  "editor.equipmentNote":
+    "Styr filtret, viktsteget och ikonen. Hantel är förval.",
+  "editor.catalogueTwin": "Det finns redan {name} i biblioteket.",
+  "editor.openTwin": "Öppna den",
+  "editor.useTwin": "Använd dess muskler",
+  "editor.usedTwin": "Musklerna och utrustningen från {name} är inlagda.",
+  "editor.derivedMain": "Visas under {group}",
+  "editor.derivedAlso": " · även {groups}",
+  "editor.derivedNone":
+    "Välj muskler. Övningen visas under den grupp som har flest huvudmuskler.",
+  "editor.noteOptional": "Anteckning (valfritt)",
+  "editor.notePlaceholder": "Grepp, inställning, utförande",
 
   // ---- v6 P5 Inställningar ----
 

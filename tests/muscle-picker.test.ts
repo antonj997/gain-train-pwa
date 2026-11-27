@@ -88,27 +88,20 @@ const picker = (data: CustomExercise) =>
     createElement(MusclePicker, { data, onChange: () => {} }),
   );
 
-test("the picker: a map, the seven groups and the icon tiles", () => {
+test("the picker: a map, the seven groups and the line on the category", () => {
   const html = picker(exercise({ categories: ["Chest"] }));
   assert.match(html, /class="muscle-map muscle-map-preview"/);
   assert.equal(html.split('class="level-row"').length - 1, 7);
-  // Eight icons; none chosen shows the dumbbell as chosen.
-  assert.equal(html.split('class="icon-choice"').length - 1, 8);
-  assert.equal(html.split('aria-pressed="true"').length - 1, 1);
-  assert.match(
-    html,
-    /aria-pressed="true"><span class="icon-choice-tile" data-tone="shoulders" aria-hidden="true"><svg[^>]*data-equipment="dumbbell"/,
-  );
-  // – is spoken as a word.
-  assert.match(html, /aria-label="(None|Ingen)"/);
+  // v6: no icon tiles; the equipment sets the icon (the editor's chips).
+  assert.doesNotMatch(html, /icon-choice/);
+  // The category the muscles give.
+  assert.match(html, /class="editor-derived"/);
+  assert.match(html, /<b>(Shoulders|Axlar)<\/b>/);
 });
 
-test("the body icon draws the chosen muscles; a mixed group says so", () => {
+test("with no muscles chosen the line says how the group is picked; a mixed group says so", () => {
+  const empty = picker(exercise({ category: "Other" }));
+  assert.match(empty, /(Choose muscles|Välj muskler)\. /);
   const data = withMuscleChoice(exercise(), "sideDelts", "some");
-  const html = picker({ ...data, icon: "body" });
-  assert.match(
-    html,
-    /aria-pressed="true"><span class="icon-choice-tile" data-tone="shoulders" aria-hidden="true"><svg class="muscle-icon"/,
-  );
-  assert.match(html, /class="level-row-mixed"/);
+  assert.match(picker(data), /class="level-row-mixed"/);
 });
