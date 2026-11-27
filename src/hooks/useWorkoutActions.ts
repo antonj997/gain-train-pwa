@@ -28,25 +28,38 @@ export function useWorkoutActions(
   const { workout: w, editing, setError } = autosave;
   const [busy, setBusy] = useState(false);
   const actionLocked = useRef(false);
-  const runLocked = async (action: () => Promise<void>, failure: string) => {
+  /** Runs the action with the editor locked; true when it went through. */
+  const runLocked = async (
+    action: () => Promise<void>,
+    failure: string,
+  ): Promise<boolean> => {
     // A ref, not `busy`: a double tap arrives before the re-render disables buttons.
-    if (actionLocked.current) return;
+    if (actionLocked.current) return false;
     actionLocked.current = true;
     autosave.lock();
     setBusy(true);
     try {
       await action();
+      return true;
     } catch (cause) {
       setError(errorMessage(cause, t("actions.saveFailed")));
       notify.error(failure);
+      return false;
     } finally {
       actionLocked.current = false;
       autosave.unlock();
       setBusy(false);
     }
   };
-  /** Finishes the workout, or saves an edit, and optionally keeps it as a routine. */
-  const complete = (saveAsRoutine: boolean) =>
+  /**
+   * Finishes the workout, or saves an edit, and optionally keeps it as a
+   * routine. With `stay` (v6 B9: the reward comes first) it neither says
+   * so nor leaves; the workout screen shows the reward.
+   */
+  const complete = (
+    saveAsRoutine: boolean,
+    { stay = false }: { stay?: boolean } = {},
+  ) =>
     runLocked(
       async () => {
         const next = finishWorkout(
@@ -69,6 +82,7 @@ export function useWorkoutActions(
             notify.error(t("actions.routineFailed"));
           }
         }
+        if (stay) return;
         notify.success(
           editing ? t("actions.changesSaved") : t("actions.workoutSaved"),
         );
@@ -89,11 +103,12 @@ export function useWorkoutActions(
         return;
       }
       rest.skip();
-      // Train's resume card was its place: the Undo waits there.
+      // Train's resume card was its place: the Undo waits there (v6 B9:
+      // "Passet slängt").
       offerUndo({
         scope: RESUME_SCOPE,
         index: 0,
-        text: t("start.abandonedNamed", { name: workoutTitle(w.name) }),
+        text: t("finish.discarded"),
         undo: () => restoreWorkout(id),
         failed: t("home.restoreFailed"),
       });
@@ -116,5 +131,40 @@ export function useWorkoutActions(
       rest.skip();
       notify(t("workout.emptyDiscarded"), { key: "empty-discarded" });
     }, t("actions.abandonRetry"));
-  return { busy, complete, abandon, discardEmpty };
+  /**
+   * v6 B9, nothing checked: "Spara som rutin och avsluta". The exercises
+   * become a routine (no weights, routineFromWorkout), the workout goes, and
+   * Train says so with Ångra, which brings the workout back and removes the
+   * routine.
+   */
+  const saveRoutineAndEnd = () =>
+    runLocked(async () => {
+      await autosave.flush();
+      const routineId = crypto.randomUUID();
+      const routine = routineFromWorkout(w);
+      try {
+        await save(routineId, "routine", routine);
+      } catch {
+        notify.error(t("finish.routineFailed"));
+        throw new Error(t("finish.routineFailed"));
+      }
+      navigate("/", { replace: true });
+      try {
+        await deleteRecord(id);
+      } catch (cause) {
+        notify.error(errorMessage(cause, t("actions.abandonFailed")));
+        return;
+      }
+      rest.skip();
+      notify.success(t("finish.routineSaved", { name: routine.name }), {
+        undo: {
+          run: async () => {
+            await restoreWorkout(id);
+            await deleteRecord(routineId);
+          },
+          failed: t("home.restoreFailed"),
+        },
+      });
+    }, t("finish.routineFailed"));
+  return { busy, complete, abandon, discardEmpty, saveRoutineAndEnd };
 }

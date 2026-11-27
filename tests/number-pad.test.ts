@@ -287,3 +287,73 @@ test("pad keys press as a finger lands, once per pointer; a click only from a ke
     false,
   );
 });
+
+// ---- v6 P1: steps, hints, drops and RIR in the field order ----
+
+test("with RIR on, a set's fields end with RIR; a drop never has one", async () => {
+  const { padFields: fields } = await import("../src/lib/number-pad");
+  assert.deepEqual(fields(set({}), true), ["weight", "reps", "rir"]);
+  assert.deepEqual(fields(set({}), false), ["weight", "reps"]);
+  assert.deepEqual(fields(set({ drop: true }), true), ["weight", "reps"]);
+  assert.deepEqual(fields(set({ measure: "cardio" }), true), []);
+});
+
+test("Next goes kg → reps → drops → RIR → check with RIR on", () => {
+  const ex = [bench];
+  assert.deepEqual(padNext(ex, { setId: "s1", field: "reps" }, true), {
+    kind: "field",
+    target: { setId: "d1", field: "weight" },
+  });
+  assert.deepEqual(padNext(ex, { setId: "d1", field: "reps" }, true), {
+    kind: "field",
+    target: { setId: "s1", field: "rir" },
+  });
+  assert.deepEqual(padNext(ex, { setId: "s1", field: "rir" }, true), {
+    kind: "check",
+    setId: "s1",
+  });
+  assert.deepEqual(padNext(ex, { setId: "s2", field: "reps" }, true), {
+    kind: "field",
+    target: { setId: "s2", field: "rir" },
+  });
+});
+
+test("the ± keys step by the exercise's step on kg and 1 on reps", async () => {
+  const { stepValue } = await import("../src/lib/number-pad");
+  assert.equal(stepValue("weight", 60, 1, 5), 65);
+  assert.equal(stepValue("weight", 22, -1, 2), 20);
+  assert.equal(stepValue("reps", 8, 1, 5), 9);
+  assert.equal(stepValue("weight", 1, -1, 2), 0);
+  assert.equal(stepPadValue(60, 1, "weight", "kg", 5), 65);
+  // Pounds keep 5 lb whatever the kg step.
+  assert.equal(stepPadValue(100, 1, "weight", "lb", 2), 105);
+  assert.equal(padStepLabel("weight", "kg", -1, ",", 2), "−2");
+  assert.equal(padStepLabel("weight", "kg", 1, ",", 1.25), "+1,25");
+});
+
+test("a key that cannot change the value says why", async () => {
+  const { padHint } = await import("../src/lib/number-pad");
+  const { setCurrentLanguage } = await import("../src/i18n");
+  setCurrentLanguage("sv");
+  try {
+    assert.equal(padHint("decimal", "reps", "8"), "Reps är hela tal");
+    assert.equal(padHint("backspace", "weight", ""), "Fältet är redan tomt");
+    assert.equal(padHint("7", "weight", "12345"), "Högst fem siffror");
+    assert.equal(padHint("7", "weight", "123"), null);
+    assert.equal(padHint("backspace", "weight", "12"), null);
+    assert.equal(padHint("decimal", "weight", "12"), null);
+  } finally {
+    setCurrentLanguage("en");
+  }
+});
+
+test("a drop starts 20 % lighter, rounded to the exercise's step", async () => {
+  const { dropMinus20 } = await import("../src/lib/number-pad");
+  assert.equal(dropMinus20(60, 5), 50);
+  assert.equal(dropMinus20(50, 5, 50), 40);
+  assert.equal(dropMinus20(52.5, 2.5), 42.5);
+  // Rounding back to the weight it came from goes a step lower.
+  assert.equal(dropMinus20(10, 5), 10);
+  assert.equal(dropMinus20(10, 5, 10), 5);
+  assert.equal(dropMinus20(2, 2, 2), 0);
+});

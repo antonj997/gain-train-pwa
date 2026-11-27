@@ -518,3 +518,32 @@ test("set counts treat a set and its drops as one", () => {
   assert.equal(setCount(open), 2);
   assert.equal(doneSetCount(open), 1);
 });
+
+test("v6 B5: a drop is −20 % to the exercise's step", () => {
+  const parent = set({ weight: 60 });
+  assert.equal(addDrop([parent], parent.id, 5)[1].weight, 50);
+  const bar = set({ weight: 52.5 });
+  assert.equal(addDrop([bar], bar.id, 2.5)[1].weight, 42.5);
+});
+
+test("v6 B5: + Drop adds the next drop after the last one, 20 % under it", async () => {
+  const { addNextDrop } = await import("../src/data/drops");
+  const parent = set({ weight: 60 });
+  const first = set({ weight: 50, drop: true });
+  const after = set({ weight: 60 });
+  const { sets, id } = addNextDrop([parent, first, after], 5);
+  assert.equal(sets.length, 4);
+  assert.equal(sets[2].id, id);
+  assert.equal(sets[2].weight, 40);
+  assert.equal(sets[2].drop, true);
+  assert.equal(sets[3], after);
+  // Rounding back to the last drop goes one step lower.
+  const small = set({ weight: 12 });
+  const ten = set({ weight: 10, drop: true });
+  assert.equal(addNextDrop([small, ten], 5).sets[2].weight, 5);
+  // No drop yet: unchanged.
+  const plain = [set({ weight: 60 }), set({ weight: 60 })];
+  const none = addNextDrop(plain, 5);
+  assert.equal(none.sets, plain);
+  assert.equal(none.id, null);
+});

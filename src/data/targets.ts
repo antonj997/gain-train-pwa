@@ -44,6 +44,11 @@ export type TargetSettings = {
   lastTarget?: SetTarget | null;
   /** Set when this workout falls in a plan's deload week: the load cut, in percent. */
   deload?: { loadPct: number } | null;
+  /**
+   * The exercise's weight step in kg (v6 §D5, weightStepOf): used instead of
+   * LOAD_STEP.kg when the unit is kg. Pounds keep 5 lb.
+   */
+  step?: number;
 };
 
 /** The smallest load step in each unit: 2.5 kg, or 5 lb. */
@@ -72,16 +77,25 @@ const carriesLoad = (set: WorkoutSet) =>
   set.load === "weight" || set.load === "assisted" || hasExtraWeight(set);
 
 /** `kg` moved by `steps` load steps in the unit, kept on that unit's grid. */
-function stepWeight(kg: number, steps: number, unit: WeightUnit) {
-  const step = LOAD_STEP[unit];
+function stepWeight(
+  kg: number,
+  steps: number,
+  unit: WeightUnit,
+  kgStep?: number,
+) {
+  const step = loadStep(unit, kgStep);
   return round3(fromUnit(Math.max(0, toUnit(kg, unit) + steps * step), unit));
 }
 
 /** `kg` rounded to the nearest load step in the unit. */
-function roundWeight(kg: number, unit: WeightUnit) {
-  const step = LOAD_STEP[unit];
+function roundWeight(kg: number, unit: WeightUnit, kgStep?: number) {
+  const step = loadStep(unit, kgStep);
   return round3(fromUnit(Math.round(toUnit(kg, unit) / step) * step, unit));
 }
+
+/** The step in the unit: the exercise's own in kg, else LOAD_STEP. */
+const loadStep = (unit: WeightUnit, kgStep?: number) =>
+  unit === "kg" && kgStep && kgStep > 0 ? kgStep : LOAD_STEP[unit];
 
 const validRange = (range: RepRange | null | undefined) =>
   range &&
@@ -127,10 +141,11 @@ export function suggestTarget(
     const share = Math.min(Math.max(pct, 0), 100) / 100;
     let lighter =
       last.load === "assisted"
-        ? roundWeight(weight * (1 + share), unit)
-        : roundWeight(weight * (1 - share), unit);
+        ? roundWeight(weight * (1 + share), unit, settings.step)
+        : roundWeight(weight * (1 - share), unit, settings.step);
     // Added weight on bodyweight must stay above zero.
-    if (hasExtraWeight(last) && lighter <= 0) lighter = stepWeight(0, 1, unit);
+    if (hasExtraWeight(last) && lighter <= 0)
+      lighter = stepWeight(0, 1, unit, settings.step);
     return { weight: lighter, reps };
   }
 
@@ -143,7 +158,7 @@ export function suggestTarget(
         ? settings.lastTarget
         : suggestTarget(
             previous.slice(1, TARGET_LOOKBACK),
-            { repRange: null },
+            { repRange: null, step: settings.step },
             unit,
           );
     hit = !!lastTarget && reached(last, lastTarget);
@@ -153,7 +168,12 @@ export function suggestTarget(
   const canStep =
     weight !== null && (last.load !== "assisted" || weight > EPSILON);
   if (hit && canStep) {
-    const next = stepWeight(weight, last.load === "assisted" ? -1 : 1, unit);
+    const next = stepWeight(
+      weight,
+      last.load === "assisted" ? -1 : 1,
+      unit,
+      settings.step,
+    );
     return { weight: next, reps: range ? range.min : reps };
   }
   const nextReps = reps + more;
@@ -222,9 +242,13 @@ function historyIn(
   for (const record of earlier) {
     if (found.length >= limit) break;
     if (record.payload.plan?.deload) continue;
-    const prior = record.payload.exercises
-      .filter((ex) => ex.exerciseId === exercise.exerciseId)
-      .flatMap((ex) => ex.sets);
+    const same = record.payload.exercises.filter(
+      (ex) => ex.exerciseId === exercise.exerciseId,
+    );
+    // v6 §D4: a target lowered for fatigue says nothing about progress, so
+    // the session before it is the basis (it still shows under Förra).
+    if (same.some((ex) => ex.fatigue === "lowered")) continue;
+    const prior = same.flatMap((ex) => ex.sets);
     if (!prior.length) continue;
     const match = previousResult(prior, exercise.sets, setIndex);
     if (match) found.push(match);
@@ -289,6 +313,8 @@ export function workoutTargets(
   current: { id: string; payload: Workout },
   /** The unit, or each exercise's unit by exercise id (useWeightUnits). */
   unit: WeightUnit | ((exerciseId: string) => WeightUnit),
+  /** Each exercise's weight step in kg (v6 §D5); 2.5 when left out. */
+  stepFor?: (exerciseId: string) => number,
 ): Map<string, WorkoutSetTarget> {
   const deload = deloadFor(records, current.payload);
   const targets = new Map<string, WorkoutSetTarget>();
@@ -305,7 +331,16 @@ export function workoutTargets(
         exerciseIndex,
         setIndex,
       );
-      const target = suggestTarget(history, { deload }, exerciseUnit);
+      // v6 B7: the exercise's rep range (double progression) and its step.
+      const target = suggestTarget(
+        history,
+        {
+          deload,
+          repRange: exercise.repRange ?? null,
+          step: stepFor?.(exercise.exerciseId),
+        },
+        exerciseUnit,
+      );
       if (target) targets.set(set.id, { target, last: history[0] });
     });
   });

@@ -4,17 +4,12 @@ import Reveal from "@/components/motion/Reveal";
 import { useTheme } from "@/contexts/useTheme";
 import { LANGUAGES, LANGUAGE_NAMES } from "@/i18n";
 import { useT } from "@/i18n/useT";
-import { RestControl } from "@/components/settings/RestControl";
 import Sheet from "@/components/ui/Sheet";
 import Segmented from "@/components/ui/Segmented";
 import Switch from "@/components/ui/Switch";
 import type { MapFigure } from "@/components/muscles/detailed-geometry";
 import { useMapFigure } from "@/hooks/useMapFigure";
-import {
-  saveRestTimerOn,
-  type FatigueMode,
-  type TrainingPreferences,
-} from "@/lib/preferences";
+import { type FatigueMode, type TrainingPreferences } from "@/lib/preferences";
 
 type Preferences = TrainingPreferences;
 type SheetProps = {
@@ -70,59 +65,6 @@ export function GoalSheet({
         </div>
       )}
       <button className="btn-primary" onClick={onClose}>
-        {t("common.done")}
-      </button>
-    </Sheet>
-  );
-}
-
-/**
- * The workout's rest chip sheet as it was before v6: On, the time and the
- * sound. Settings no longer uses it (RestSettings has no time); it stays
- * until the workout's own rest sheet (v6 P1, RestControl.tsx) replaces it,
- * and can then be deleted.
- */
-export function RestSheet({
-  open,
-  onClose,
-  preferences,
-  onChange,
-}: SheetProps) {
-  const { t } = useT();
-  const on = preferences.restSeconds > 0;
-  return (
-    <Sheet open={open} onClose={onClose} title={t("settings.restTimer")}>
-      <div className="rest-setting">
-        <Switch
-          label={t("common.on")}
-          checked={on}
-          onChange={(next) => {
-            saveRestTimerOn(next);
-            onChange({});
-          }}
-        />
-      </div>
-      {on && (
-        <div className="rest-setting rest-setting-time">
-          <span className="rest-setting-label" aria-hidden="true">
-            {t("settings.restTime")}
-          </span>
-          <RestControl
-            seconds={preferences.restSeconds}
-            onChange={(restSeconds) => onChange({ restSeconds })}
-          />
-        </div>
-      )}
-      {on && (
-        <div className="rest-setting rest-setting-sound">
-          <Switch
-            label={t("settings.restSound")}
-            checked={preferences.restSound}
-            onChange={(restSound) => onChange({ restSound })}
-          />
-        </div>
-      )}
-      <button type="button" className="btn-primary" onClick={onClose}>
         {t("common.done")}
       </button>
     </Sheet>

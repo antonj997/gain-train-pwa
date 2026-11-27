@@ -813,6 +813,44 @@
   font-weight: 600;
   box-shadow: var(--gt-shadow-chip);
 }
+/* v6 B2, B13: the toast at the workout's foot, in the next-set chip's place
+   (its shadow), so no row moves under the finger. */
+.workout-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  width: min(100% - 2 * var(--gt-space-4), 480px);
+  min-height: 44px;
+  padding: var(--gt-space-1) var(--gt-space-2) var(--gt-space-1)
+    var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-ink);
+  color: var(--gt-ground);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: var(--gt-shadow-chip);
+}
+.workout-toast svg {
+  flex: none;
+}
+.workout-toast-text {
+  flex: 1;
+  min-width: 0;
+}
+.workout-toast-undo {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 /* Sheet content: the Set, Load and count, exercise menu and Reorder sheets. */
 .sheet-title-line {
   display: flex;
@@ -1059,6 +1097,31 @@
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
 }
+/* v6 B1: the equipment and step, then the range and working sets. */
+.ex-meta {
+  font-variant-numeric: tabular-nums;
+}
+/* v6 B1: the exercise's note under its heading, with a note glyph. */
+.ex-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: var(--gt-space-1) 0 0;
+  padding-inline: var(--gt-space-1);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.ex-note svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--gt-ink-3);
+}
+/* v6 B1: ↑ (a set beat last time's Epley e1RM) is in the accent. */
+.set-line .set-up {
+  color: var(--gt-accent);
+}
 .set-columns {
   padding: 0 var(--gt-space-1);
   color: var(--gt-ink-2);
@@ -1110,6 +1173,13 @@
   color: var(--gt-accent);
   font-size: var(--gt-fs-3);
   font-weight: 600;
+}
+/* v6 B5: "+ Drop" sits just before Add set, both on the right. */
+.ex-add-drop {
+  padding: 0 12px 0 8px;
+}
+.ex-add-drop + .ex-add-set {
+  margin-left: 0;
 }
 .rest-chip {
   position: relative;
@@ -1257,10 +1327,15 @@
 .rest-dock[data-phase="finish"] {
   padding-top: var(--gt-space-3);
 }
+/* v6 B1 (R6-9): the time left is a 3px bar along the dock's top edge, not a
+   fill behind the text, so no edge runs through it. */
 .rest-dock-fill {
   position: absolute;
-  inset: 0;
-  background-color: var(--gt-accent-soft);
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background-color: var(--gt-accent);
   transform-origin: left center;
   pointer-events: none;
 }
@@ -1302,7 +1377,8 @@
 }
 .rest-dock-value {
   display: inline-block;
-  font-size: 30px;
+  /* On the type scale (v6 H2). */
+  font-size: var(--gt-fs-6);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   letter-spacing: -0.5px;
@@ -1311,7 +1387,7 @@
 }
 .rest-dock[data-phase="done"] .rest-dock-value {
   color: var(--gt-done);
-  font-size: 24px;
+  font-size: var(--gt-fs-5);
 }
 .rest-dock-plus {
   display: flex;
@@ -1407,8 +1483,9 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  font-size: var(--gt-fs-4);
-  font-weight: 700;
+  /* v6 B1: the exercise name at 20/600. */
+  font-size: var(--gt-fs-5);
+  font-weight: 600;
   line-height: 1.25;
   overflow-wrap: anywhere;
   -webkit-box-orient: vertical;
@@ -1420,29 +1497,50 @@
   color: var(--gt-ink-2);
   font-size: var(--gt-fs-2);
 }
+/* A key that changed nothing says why for a moment (v6 B1). */
+.number-pad-meta.is-hint {
+  color: var(--gt-ink);
+  font-weight: 600;
+}
 .number-pad-head .segmented {
   flex: none;
   width: 132px;
 }
-/* The keys take every touch as a press: no pan, no zoom. */
+/* kg | Reps | RIR (v6 B12). */
+.number-pad-head[data-fields="3"] .segmented {
+  width: 180px;
+}
+/*
+ * The keys take every touch as a press: no pan, no zoom. v6 decision 5: the
+ * body is one fixed height, the key grid's four rows, in every mode, so RIR
+ * mode (the slider) is exactly as tall and nothing jumps when the field
+ * changes.
+ */
+.number-pad {
+  --pad-key-h: 54px;
+  --pad-gap: 6px;
+  --pad-body-h: calc(4 * var(--pad-key-h) + 3 * var(--pad-gap));
+}
 .number-pad-grid {
   touch-action: none;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1.3fr;
-  gap: 6px;
+  grid-template-rows: repeat(4, var(--pad-key-h));
+  gap: var(--pad-gap);
+  height: var(--pad-body-h);
 }
 .number-pad-key {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 54px;
+  height: var(--pad-key-h);
   padding: 0;
   border: 0;
   border-radius: var(--gt-radius-md);
   background-color: var(--gt-surface);
   color: var(--gt-ink);
-  font-size: 22px;
+  font-size: var(--gt-fs-5);
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   touch-action: manipulation;
@@ -1464,7 +1562,8 @@
 .number-pad-key.is-go.is-check {
   background-color: var(--gt-done);
 }
-.number-pad-key:disabled {
+.number-pad-key:disabled,
+.number-pad-key.is-muted {
   opacity: 0.4;
 }
 /* Pressed as the finger lands (is-pressed, set on pointerdown) until it
@@ -1483,6 +1582,129 @@
   .number-pad-key.is-pressed:not(:disabled) {
     transform: scale(0.94);
   }
+}
+
+/*
+ * v6 B12: the pad's RIR mode. Its body is --pad-body-h, the key grid's four
+ * rows, exactly (decision 5): the slider block above, the two keys (each two
+ * columns wide) in the grid's last row.
+ */
+.number-pad-rir {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--pad-gap);
+  height: var(--pad-body-h);
+}
+.number-pad-rir-keys {
+  display: grid;
+  flex: none;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--pad-gap);
+}
+.rir-slider {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  padding-inline: var(--gt-space-1);
+}
+.rir-track {
+  position: relative;
+  height: 44px;
+  border-radius: 22px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+.rir-track:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 3px;
+}
+/* The rail runs between the thumb's centre at 0 and at 5+. */
+.rir-rail {
+  position: absolute;
+  top: 50%;
+  right: 22px;
+  left: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--gt-line-strong);
+  transform: translateY(-50%);
+}
+.rir-tick {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--tick) * 100%);
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  background-color: var(--gt-ink-3);
+  transform: translate(-50%, -50%);
+}
+/* Carries the thumb: as wide as its travel, so a translate of the carrier's
+   own width times the value lands it on the tick. */
+.rir-carrier {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% - 44px);
+  height: 44px;
+  transform: translateX(calc(var(--rir-pos) * 100%));
+  pointer-events: none;
+}
+.rir-thumb {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--gt-accent);
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-4);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.rir-track[data-unset] .rir-thumb {
+  background-color: var(--gt-surface);
+  box-shadow: inset 0 0 0 1.5px var(--gt-line-strong);
+  color: var(--gt-ink-2);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rir-carrier {
+    transition: transform var(--gt-dur-quick) var(--gt-ease-out);
+  }
+}
+.rir-labels {
+  position: relative;
+  height: 18px;
+  margin: 2px 22px 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  font-weight: 600;
+}
+.rir-labels > span {
+  position: absolute;
+  top: 0;
+  left: calc(var(--tick) * 100%);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.rir-labels > span:first-child {
+  transform: translateX(-22px);
+}
+.rir-labels > span:last-child {
+  transform: translateX(calc(-100% + 22px));
+}
+.rir-help {
+  min-height: 2.6em;
+  margin: var(--gt-space-1) 0 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.3;
+  text-align: center;
 }
 
 /* The top bar's "3 of 9 sets": the numbers roll (RollingNumber). */
@@ -1587,20 +1809,59 @@
   font-size: var(--gt-fs-4);
 }
 
-/* The set's RIR, small and muted under its result. */
-.set-rir {
-  position: absolute;
-  right: 0;
-  bottom: 1px;
-  left: 0;
-  z-index: 1;
-  color: var(--gt-ink-3);
-  font-size: 10px;
+/*
+ * v6 B12: with "Fråga efter RIR" on, a set row has a fourth box, RIR, after
+ * the count: like kg and reps, a 44px field ("–" until filled) that opens the
+ * pad in RIR mode. A checked set's RIR stays changeable (it is picked after
+ * the set). A drop has an empty cell in its place.
+ */
+:is(.set-line, .set-columns).has-rir {
+  --set-rir-w: 44px;
+  grid-template-columns:
+    44px minmax(0, 1fr) var(--set-slot-w) var(--set-load-w)
+    var(--set-count-w) var(--set-rir-w) var(--set-check-w);
+}
+@media (max-width: 379px) {
+  :is(.set-line, .set-columns).has-rir {
+    --set-slot-w: 16px;
+    --set-check-w: 44px;
+  }
+}
+@media (max-width: 359px) {
+  :is(.set-line, .set-columns).has-rir {
+    grid-template-columns:
+      44px var(--set-slot-w) minmax(0, 1fr) minmax(0, 1fr)
+      var(--set-rir-w) var(--set-check-w);
+  }
+}
+.set-rir-box {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
-  line-height: 1;
-  text-align: center;
-  white-space: nowrap;
-  pointer-events: none;
+  touch-action: manipulation;
+}
+.set-rir-box.is-empty {
+  color: var(--gt-ink-3);
+}
+/* The pad's ring, as on a kg or reps field it types. */
+.set-rir-box[data-pad-target] {
+  border-color: var(--gt-accent);
+  outline: 2px solid var(--gt-accent);
+  outline-offset: -2px;
+}
+/* A checked row reads as text, but its RIR can still be picked. */
+.set-line.is-done .set-rir-box {
+  background-color: transparent;
 }
 
 /* A rep record or an estimated 1RM: a quieter mark than the heaviest weight's
@@ -1612,63 +1873,25 @@
   color: color-mix(in srgb, var(--gt-warm-fg) 80%, var(--gt-ink-2));
 }
 
-/* Ask for RIR after a check: a compact line under the row for 4 s. It grows
-   in below the row, so it covers nothing. */
-.set-rir-ask {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  overflow: hidden;
-  padding: 0 var(--gt-space-1);
+/* With the RIR column the Previous column can be narrower than 44px: its
+   tap target reaches over the gap and the mark slot (only the ↑ or record
+   mark, never a control) up to the load field. */
+.set-line .set-previous.is-fill {
+  position: relative;
 }
-.set-rir-ask-title {
-  flex: none;
-  margin-right: var(--gt-space-1);
-  color: var(--gt-ink-2);
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
+.set-line .set-previous.is-fill::before {
+  content: "";
+  position: absolute;
+  inset: 0 -20px 0 -4px;
 }
-.set-rir-choice,
-.set-rir-skip {
-  flex: none;
-  min-width: 44px;
-  height: 40px;
-  padding: 0 var(--gt-space-2);
-  border: 1px solid var(--gt-line-strong);
-  border-radius: var(--gt-radius-sm);
-  background-color: var(--gt-surface);
-  color: var(--gt-ink);
-  font-size: var(--gt-fs-3);
-  font-weight: 600;
-  touch-action: manipulation;
+/* The pad's handle: a 44px target around the 24px strip. */
+.number-pad-grab {
+  position: relative;
 }
-.set-rir-choice[aria-pressed="true"] {
-  border-color: var(--gt-accent);
-  background-color: var(--gt-accent);
-  color: var(--gt-on-accent);
-}
-.set-rir-skip {
-  display: grid;
-  place-items: center;
-  margin-left: auto;
-  padding: 0;
-  border-color: transparent;
-  background: none;
-  color: var(--gt-ink-2);
-}
-
-/* The Set sheet's quiet way to RIR until it is used. */
-.set-sheet-add-rir {
-  align-self: flex-start;
-  min-height: 44px;
-  padding: 0 var(--gt-space-1);
-  border: 0;
-  background: none;
-  color: var(--gt-accent);
-  font-size: var(--gt-fs-3);
-  font-weight: 600;
+.number-pad-grab::before {
+  content: "";
+  position: absolute;
+  inset: -6px 0 -14px;
 }
 
 /* The number pad's Target key, under Previous in its head. */
@@ -1797,4 +2020,273 @@
 }
 .log-choice-text .row-sub {
   font-weight: 400;
+}
+
+/* ---- v6 P1: the Set sheet's groups and the warm-up ladder (B4, B6) ---- */
+
+/* The Set sheet in groups: add, the set's rows, Delete set apart. */
+.set-sheet-group + .set-sheet-group,
+.set-sheet-group + .sheet-hint,
+.sheet-hint + .set-sheet-group {
+  margin-top: var(--gt-space-3);
+}
+.set-sheet-group .row svg:not(.chev) {
+  flex: none;
+}
+.set-sheet-group .row-accent svg:not(.chev) {
+  color: var(--gt-accent);
+}
+.set-sheet-group .row-danger svg:not(.chev) {
+  color: var(--gt-danger-fg);
+}
+/* Type and Load open their choice in place, under the row. */
+.set-sheet-choice {
+  padding: var(--gt-space-2) var(--gt-space-4) var(--gt-space-3);
+  border-bottom: 1px solid var(--gt-line);
+}
+.set-sheet-choice:last-child {
+  border-bottom: 0;
+}
+.set-sheet-note {
+  margin: 0;
+  padding: var(--gt-space-3) var(--gt-space-4);
+  border-bottom: 1px solid var(--gt-line);
+}
+/* v6 B4: the set the sheet shows has a thin neutral line and no blue. */
+.set-line.is-editing {
+  background-color: transparent;
+  outline: 1.5px solid var(--gt-line-control);
+  outline-offset: -1.5px;
+}
+.set-badge.is-editing .set-badge-chip {
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink);
+}
+
+/* The warm-up ladder: a U badge, the load and the plates per side. */
+.warmup-list {
+  margin: var(--gt-space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+.warmup-row {
+  min-height: 56px;
+}
+.warmup-badge {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+}
+.warmup-plates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gt-space-1);
+  margin-bottom: var(--gt-space-3);
+}
+
+/* ---- v6 P1: the exercise menu and the rest sheet (B7, B8) ---- */
+
+.exercise-note-input {
+  width: 100%;
+  min-height: 64px;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border: 1px solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-ground);
+  color: var(--gt-ink);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  resize: vertical;
+}
+.sheet-menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+.sheet-menu-sub {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
+}
+.rest-sheet-group {
+  margin-bottom: var(--gt-space-3);
+}
+.rest-sheet-group .rest-setting {
+  padding-inline: var(--gt-space-4);
+}
+.rest-sheet-group .chev.is-open {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rest-sheet-group .chev {
+    transition: transform var(--gt-dur-quick) var(--gt-ease-out);
+  }
+}
+
+/* v6 B13: the quiet fatigue row under the heading: ink-2, an info glyph, no
+   coloured box, and two 44px links. It folds away on row-out. */
+.fatigue-row {
+  overflow: hidden;
+  margin-top: var(--gt-space-1);
+  padding-inline: var(--gt-space-1);
+}
+.fatigue-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.fatigue-text svg {
+  flex: none;
+  margin-top: 2px;
+}
+.fatigue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--gt-space-3);
+  padding-left: 21px;
+}
+.fatigue-link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
+
+/* ---- v6 P1: finishing and the reward (B9, B10) ---- */
+
+.finish-empty-text {
+  margin: 0 0 var(--gt-space-4);
+}
+.finish-record {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gt-space-3);
+  margin-bottom: var(--gt-space-3);
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.finish-record-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--gt-surface);
+}
+.finish-record-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--gt-fs-3);
+  line-height: 1.35;
+}
+.finish-record-text strong {
+  font-weight: 700;
+}
+.finish-record-text span {
+  font-size: var(--gt-fs-2);
+}
+.finish-stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gt-space-2);
+  margin-bottom: var(--gt-space-3);
+  overflow: hidden;
+}
+.finish-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+}
+.finish-stat strong {
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-5);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.finish-stat strong span {
+  font-size: inherit;
+  font-weight: inherit;
+}
+.finish-stat > span {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+/* The reward's one light sweep across the numbers. */
+.finish-stats-sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 25%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    var(--gt-sheen),
+    transparent
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.finish-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 var(--gt-space-3);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.finish-info svg {
+  flex: none;
+  margin-top: 1px;
+}
+.finish-note-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  margin-bottom: var(--gt-space-3);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.reward-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--gt-space-4);
+  border-radius: 50%;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.reward-icon.is-first {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.reward-sheet .btn-block + .btn-block {
+  margin-top: var(--gt-space-2);
 }

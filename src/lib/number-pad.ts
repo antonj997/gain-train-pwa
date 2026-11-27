@@ -9,10 +9,16 @@ import type { WorkoutSet } from "../data/model";
 import { dropGroup, isDrop } from "../data/drops";
 import { hasWeightField } from "./set-load";
 import type { WeightUnit } from "./units";
+import { t } from "../i18n";
 export { DRAG_SLOP, DRAG_STEP_PX, dragIntent, dragSteps } from "./drag-step";
 
-/** The two fields the pad types: the load and the reps. */
-export type PadField = "weight" | "reps";
+/**
+ * The fields the pad types: the load and the reps, and with "Fråga efter
+ * RIR" on (v6 B12) the reps in reserve, which its slider sets.
+ */
+export type PadField = "weight" | "reps" | "rir";
+/** A field the pad's keys type (RIR takes the slider instead). */
+export type PadKeyField = Exclude<PadField, "rir">;
 export type PadKey =
   | "0"
   | "1"
@@ -106,9 +112,18 @@ export function pressPadKey(
   return { text: text + key, fresh: false };
 }
 
-/** One step of a field: 2.5 kg, 5 lb or 1 rep. */
-export const padStep = (field: PadField, unit: WeightUnit) =>
-  field === "reps" ? 1 : unit === "lb" ? 5 : 2.5;
+/** The default kg step: the barbell's (exercise-settings.ts). */
+export const DEFAULT_KG_STEP = 2.5;
+
+/**
+ * One step of a field: the exercise's weight step in kg (v6 §D5; 2.5 when
+ * not given), 5 lb in pounds, or 1 rep.
+ */
+export const padStep = (
+  field: PadField,
+  unit: WeightUnit,
+  kgStep = DEFAULT_KG_STEP,
+) => (field !== "weight" ? 1 : unit === "lb" ? 5 : kgStep);
 
 /**
  * A value `steps` steps on (negative steps back). A load never goes under 0
@@ -120,12 +135,21 @@ export function stepPadValue(
   steps: number,
   field: PadField,
   unit: WeightUnit,
+  kgStep = DEFAULT_KG_STEP,
 ): number | null {
   if (!steps) return value;
   if (value === null && steps < 0) return null;
-  const next = round((value ?? 0) + steps * padStep(field, unit));
-  return field === "reps" ? Math.max(1, Math.round(next)) : Math.max(0, next);
+  const next = round((value ?? 0) + steps * padStep(field, unit, kgStep));
+  return field !== "weight" ? Math.max(1, Math.round(next)) : Math.max(0, next);
 }
+
+/** One ± key in kg: `step` kg on a load, 1 on reps (v6 B1). */
+export const stepValue = (
+  field: PadField,
+  value: number | null,
+  direction: 1 | -1,
+  step: number,
+) => stepPadValue(value, direction, field, "kg", step);
 
 /** The label of a step key: "+2,5", "−5", "+1". */
 export function padStepLabel(
@@ -133,22 +157,52 @@ export function padStepLabel(
   unit: WeightUnit,
   direction: 1 | -1,
   mark = ".",
+  kgStep = DEFAULT_KG_STEP,
 ) {
-  return `${direction > 0 ? "+" : "−"}${padText(padStep(field, unit), mark)}`;
+  return `${direction > 0 ? "+" : "−"}${padText(padStep(field, unit, kgStep), mark)}`;
 }
+
+/**
+ * Why a key changed nothing (v6 B1), shown for a moment in place of the
+ * pad's subline: a decimal on reps, backspace on an empty field, or a digit
+ * past the field's length. Null when the key does something.
+ */
+export function padHint(
+  key: PadKey,
+  field: PadField,
+  text: string,
+  format: PadFormat = padFormat(field, "kg", text.includes(",") ? "," : "."),
+): string | null {
+  if (key === "decimal")
+    return format.decimals === 0 ? t("pad.hintWhole") : null;
+  if (key === "backspace") return text ? null : t("pad.hintEmpty");
+  const digits = text.replace(format.mark, "").length;
+  if (digits >= format.digits)
+    return format.digits === 5 ? t("pad.hintFive") : t("pad.hintThree");
+  return null;
+}
+
+// The drop's −20 % lives with the drops (data/drops.ts).
+export { dropMinus20 } from "../data/drops";
 
 /**
  * The fields of a set the pad types, in Next's order. A plain bodyweight set
  * and a set with no load have no load to type, a timed set counts seconds
- * (its own field) and cardio keeps its own inputs.
+ * (its own field) and cardio keeps its own inputs. With `askRir` (v6 B12) a
+ * set of reps ends with its RIR; a drop takes its set's.
  */
-export function padFields(set: WorkoutSet): PadField[] {
+export function padFields(set: WorkoutSet, askRir = false): PadField[] {
   if (set.measure === "cardio") return [];
   const fields: PadField[] = [];
   if (hasWeightField(set)) fields.push("weight");
   if (set.measure !== "seconds") fields.push("reps");
+  if (askRir && rirField(set)) fields.push("rir");
   return fields;
 }
+
+/** Whether a set takes an RIR: a set of reps that is not a drop. */
+export const rirField = (set: WorkoutSet) =>
+  !isDrop(set) && set.measure !== "cardio" && set.measure !== "seconds";
 
 export type PadTarget = { setId: string; field: PadField };
 type PadExercise = { sets: WorkoutSet[] };
@@ -171,10 +225,21 @@ function locate(exercises: PadExercise[], setId: string) {
  * Where Next goes from a field: the set's reps after its load, then each of
  * its drops in turn, then a check of the set (drops are checked with it).
  */
-export function padNext(exercises: PadExercise[], current: PadTarget): PadNext {
+export function padNext(
+  exercises: PadExercise[],
+  current: PadTarget,
+  askRir = false,
+): PadNext {
   const found = locate(exercises, current.setId);
   if (!found) return { kind: "close" };
   const { sets, index } = found;
+  const { start, end } = dropGroup(sets, index);
+  // A drop with no set above it (older app versions) has no check.
+  const check: PadNext = isDrop(sets[start])
+    ? { kind: "close" }
+    : { kind: "check", setId: sets[start].id };
+  // RIR comes last, once the set and its drops are typed (v6 B12).
+  if (current.field === "rir") return check;
   const fields = padFields(sets[index]);
   const at = fields.indexOf(current.field);
   if (at >= 0 && at < fields.length - 1)
@@ -182,15 +247,14 @@ export function padNext(exercises: PadExercise[], current: PadTarget): PadNext {
       kind: "field",
       target: { setId: current.setId, field: fields[at + 1] },
     };
-  const { start, end } = dropGroup(sets, index);
   for (let i = index + 1; i < end; i++) {
     const next = padFields(sets[i]);
     if (next.length)
       return { kind: "field", target: { setId: sets[i].id, field: next[0] } };
   }
-  // A drop with no set above it (older app versions) has no check.
-  if (isDrop(sets[start])) return { kind: "close" };
-  return { kind: "check", setId: sets[start].id };
+  if (askRir && !isDrop(sets[start]) && rirField(sets[start]))
+    return { kind: "field", target: { setId: sets[start].id, field: "rir" } };
+  return check;
 }
 
 /**

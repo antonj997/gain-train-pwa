@@ -153,3 +153,52 @@ test("v6: the Swedish display name is searchable, and the English one still is",
   );
   setCurrentLanguage("en");
 });
+
+// ---- v6 B11: exact matches first, then the start of a name ----
+
+test("knäböj: Knäböj first, before Knäböj med kroppsvikt and Bulgarisk utfallsböj", async () => {
+  const { setCurrentLanguage } = await import("../src/i18n");
+  setCurrentLanguage("sv");
+  try {
+    const ids = searchExercises(catalogue, "knäböj").map((e) => e.id);
+    assert.equal(ids[0], "builtin:squat");
+    const bodyweight = ids.indexOf("builtin:bodyweight-squat");
+    assert.ok(bodyweight > 0, "Knäböj med kroppsvikt is found");
+    const split = ids.indexOf("builtin:bulgarian-split-squat");
+    if (split >= 0) assert.ok(split > bodyweight);
+  } finally {
+    setCurrentLanguage("en");
+  }
+});
+
+test("bänk: names that start with it come before the rest", async () => {
+  const { setCurrentLanguage } = await import("../src/i18n");
+  const { swedishName } = await import("../src/lib/exercise-name");
+  setCurrentLanguage("sv");
+  try {
+    const hits = searchExercises(catalogue, "bänk");
+    const shown = hits.map((e) => normalize(swedishName(e.id) ?? e.name));
+    const firstOther = shown.findIndex((name) => !name.startsWith("bank"));
+    const lastPrefix = shown.findLastIndex((name) => name.startsWith("bank"));
+    assert.ok(lastPrefix >= 0);
+    assert.ok(firstOther < 0 || lastPrefix < firstOther, shown.join(", "));
+    assert.equal(hits[0].id, "builtin:bench-press");
+  } finally {
+    setCurrentLanguage("en");
+  }
+});
+
+test("the Legs chip and the query press filter together: leg presses first", async () => {
+  const { matchesChip } = await import("../src/lib/category-filter");
+  const hits = searchExercises(
+    catalogue.filter((e) => matchesChip(e, "Legs")),
+    "press",
+  );
+  // Every hit trains legs (as its main group or another, matchesChip), so
+  // no bench or shoulder-only press; the leg presses lead.
+  assert.ok(hits.every((e) => matchesChip(e, "Legs")));
+  assert.ok(!hits.some((e) => e.id === "builtin:bench-press"));
+  assert.ok(!hits.some((e) => e.id === "builtin:overhead-press"));
+  const legPress = hits.findIndex((e) => e.id === "builtin:leg-press");
+  assert.ok(legPress >= 0 && legPress <= 1, hits.map((e) => e.name).join());
+});

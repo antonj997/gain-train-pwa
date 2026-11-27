@@ -349,7 +349,8 @@ export default function RestDock({
             </div>
             {nextShown && (
               <p className="rest-dock-next">
-                {t("workout.restNext")} <b>{nextShown.label}</b>
+                {/* v6 B1: "Nästa: Knäböj · set 2 · Mål 100 × 6 (5–7)". */}
+                {nextShown.label}
               </p>
             )}
           </>

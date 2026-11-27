@@ -63,15 +63,33 @@ export function normalizeDrops(sets: WorkoutSet[]): WorkoutSet[] {
   return changed ? result : sets;
 }
 
-// A drop starts at 80% of the weight above it, to the nearest 2.5 kg.
-const dropWeight = (weight: number | null) =>
-  weight === null ? null : Math.round((weight * 0.8) / 2.5) * 2.5;
+const round3 = (value: number) => Math.round(value * 1000) / 1000;
+
+/**
+ * A drop's weight (v6 B5): 20 % under `kg`, rounded to the exercise's step
+ * (60 → 50 on a 5 kg step, 52.5 → 42.5 on 2.5), never under 0. With `from`,
+ * the last drop's weight ("+ Drop"), a value that rounds back to it goes one
+ * step lower (10 → 5 on a 5 kg step).
+ */
+export function dropMinus20(kg: number, step: number, from?: number): number {
+  const size = step > 0 ? step : 2.5;
+  let next = round3(Math.round((kg * 0.8) / size) * size);
+  if (from !== undefined && next >= from) next = round3(from - size);
+  return Math.max(0, next);
+}
 
 /**
  * Adds a blank drop after the set's existing drops. It continues the last row
- * of the group: same load, and 80% of that row's weight.
+ * of the group: same load, and 20 % under that row's weight, rounded to the
+ * exercise's step (2.5 kg when not given). `next` ("+ Drop") steps one lower
+ * when that rounds back to the row it follows.
  */
-export function addDrop(sets: WorkoutSet[], setId: string): WorkoutSet[] {
+export function addDrop(
+  sets: WorkoutSet[],
+  setId: string,
+  step = 2.5,
+  next = false,
+): WorkoutSet[] {
   const index = sets.findIndex((set) => set.id === setId);
   const target = sets[index];
   if (!target || target.done || target.section !== "working") return sets;
@@ -79,7 +97,9 @@ export function addDrop(sets: WorkoutSet[], setId: string): WorkoutSet[] {
   const above = sets[end - 1];
   const extra = hasExtraWeight(above);
   const weight =
-    above.load === "weight" || extra ? dropWeight(above.weight) : null;
+    (above.load === "weight" || extra) && above.weight !== null
+      ? dropMinus20(above.weight, step, next ? above.weight : undefined)
+      : null;
   // Added weight that rounds down to 0 kg is plain bodyweight.
   const plain = extra && weight === 0;
   const added: WorkoutSet = {
@@ -96,6 +116,24 @@ export function addDrop(sets: WorkoutSet[], setId: string): WorkoutSet[] {
     drop: true,
   };
   return [...sets.slice(0, end), added, ...sets.slice(end)];
+}
+
+/**
+ * "+ Drop" (v6 B5): the next drop after the last drop of the last set that
+ * has one, 20 % under it to the step. The sets come back unchanged, with no
+ * id, when the exercise has no drop (or that set is checked).
+ */
+export function addNextDrop(
+  sets: WorkoutSet[],
+  step = 2.5,
+): { sets: WorkoutSet[]; id: string | null } {
+  let last = sets.length - 1;
+  while (last >= 0 && !isDrop(sets[last])) last--;
+  if (last < 0) return { sets, id: null };
+  const { start, end } = dropGroup(sets, last);
+  if (isDrop(sets[start])) return { sets, id: null };
+  const next = addDrop(sets, sets[start].id, step, true);
+  return next === sets ? { sets, id: null } : { sets: next, id: next[end].id };
 }
 
 /** A set goes with its drops; a drop goes alone. */
