@@ -2129,6 +2129,8 @@ export const sv = {
   "set.deleteRow": "Radera set",
   "exercise.addDrop": "Drop",
   "exercise.addDropLabel": "Lägg till en drop till",
+  "set.lockedToast": "Setet är klart. Kryssa ur ✓ för att ändra värdena.",
+  "set.lockedField": "Låst – kryssa ur för att ändra",
 
   // ---- v6 P2 Kalender ----
 

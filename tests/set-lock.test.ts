@@ -18,8 +18,11 @@ function nodes(value: unknown): Node[] {
 async function host(
   initial: model.WorkoutSet,
   props: Record<string, unknown> = {},
+  /** A live workout's toast slot (v6 B2); none by default. */
+  toast?: (message: { text: string }) => void,
 ) {
   let index = 0;
+  const toastContext = { toast: true };
   const states: unknown[] = [];
   const hooks = {
     useState(initial: unknown) {
@@ -35,8 +38,10 @@ async function host(
     useRef: (current: unknown) => ({ current }),
     useEffect() {},
     useLayoutEffect() {},
-    // No number pad: a routine's sets or a finished workout.
-    useContext: () => null,
+    // No number pad: a routine's sets or a finished workout. The toast slot
+    // only when the test gives one.
+    useContext: (context: unknown) =>
+      context === toastContext ? (toast ?? null) : null,
   };
   const jsx = (type: unknown, props: Record<string, unknown>) => ({
     type,
@@ -48,6 +53,9 @@ async function host(
       react: hooks,
       "react/jsx-runtime": { jsx, jsxs: jsx },
       "@/components/SetNumberInput": { default: "number-field" },
+      "@/components/workout/workout-toast": {
+        WorkoutToastContext: toastContext,
+      },
     },
   )) as (props: Record<string, unknown>) => Node;
   const state = {
@@ -292,4 +300,48 @@ test("editing a finished workout keeps checked rows open", async () => {
   assert.equal(badge.props.locked, false);
   (badge.props.onClick as (keyboard: boolean) => void)(false);
   assert.equal(state.sheets, 1);
+});
+
+test("v6 B2: the first tap on a checked set shows the toast, and no notice moves the rows", async () => {
+  const shown: string[] = [];
+  const { render } = await host(
+    { ...model.newSet(), weight: 75, reps: 8, done: true },
+    {},
+    (toast) => shown.push(toast.text),
+  );
+  let tree = render();
+  const [load] = fields(tree);
+  (load.props.onLockedAttempt as (kind: string) => void)("tap");
+  tree = render();
+  assert.deepEqual(shown, ["The set is done. Uncheck ✓ to change its values."]);
+  // No visible notice under the row: the toast says it.
+  assert.equal(message(tree), undefined);
+  assert.ok(
+    !tree.some(
+      (node) =>
+        node.type === "p" &&
+        String(node.props.className ?? "").includes("set-errors"),
+    ),
+  );
+  // The ✓ is highlighted so the way out is clear.
+  const check = tree.find(
+    (node) => node.props["aria-label"] === "Uncheck Bench set 1",
+  )!;
+  assert.match(String(check.props.className), /unlock-highlight/);
+});
+
+test("v6 B2: the toast's words, in Swedish", async () => {
+  const { lockedTapMessage, lockedFieldName } =
+    await import("../src/lib/locked-tap");
+  const { setCurrentLanguage } = await import("../src/i18n");
+  setCurrentLanguage("sv");
+  try {
+    assert.equal(
+      lockedTapMessage(),
+      "Setet är klart. Kryssa ur ✓ för att ändra värdena.",
+    );
+    assert.equal(lockedFieldName(), "Låst – kryssa ur för att ändra");
+  } finally {
+    setCurrentLanguage("en");
+  }
 });

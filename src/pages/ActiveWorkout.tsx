@@ -59,6 +59,11 @@ import FinishSheet, {
 import NextSetChip from "@/components/workout/NextSetChip";
 import WorkoutDock from "@/components/workout/WorkoutDock";
 import { NumberPadContext } from "@/components/workout/number-pad-context";
+import {
+  WorkoutToastContext,
+  type WorkoutToastMessage,
+} from "@/components/workout/workout-toast";
+import WorkoutToast from "@/components/workout/WorkoutToast";
 import type { DockNext } from "@/components/workout/RestDock";
 import type { PadField, PadTarget } from "@/lib/number-pad";
 import { setBadge } from "@/data/drops";
@@ -378,6 +383,16 @@ function Editor({
   // the workout's details.
   const [keepScreenOn, setKeepScreenOn] = useKeepScreenOn();
   useWakeLock(!editing && keepScreenOn);
+  // v6 B2, B13: one toast at the workout's foot; a new one replaces it.
+  const [toast, setToast] = useState<
+    (WorkoutToastMessage & { id: number }) | null
+  >(null);
+  const toastId = useRef(0);
+  const showToast = useCallback(
+    (message: WorkoutToastMessage) =>
+      setToast({ ...message, id: ++toastId.current }),
+    [],
+  );
   // The number pad of a live workout (NumberPad.tsx).
   const [padTarget, setPadTarget] = useState<PadTarget | null>(null);
   const padApi = useMemo(
@@ -504,55 +519,57 @@ function Editor({
         onKeepMine={autosave.keepMine}
         onRetry={() => change(w)}
       />
-      <NumberPadContext.Provider value={editing ? null : padApi}>
-        {w.exercises.map((ex) => (
-          <ExerciseCard
-            key={ex.id}
-            exercise={ex}
-            lastSession={previous.get(ex.exerciseId)}
-            bodyWeightKg={bodyWeightKg}
-            // Only the card holding the next set needs to know which it is.
-            nextSetId={
-              ex.sets.some((s) => s.id === nextSet?.id)
-                ? nextSet?.id
-                : undefined
-            }
-            unlockChecked={editing}
-            defaults={defaults.get(ex.exerciseId)}
-            // The Deload tag says it; a plain "Deload week" line would repeat it.
-            planNote={
-              deloadWeek && w.plan?.loads?.[ex.exerciseId] === undefined
-                ? undefined
-                : planNote(w.plan, ex.exerciseId, unitFor(ex.exerciseId))
-            }
-            deload={deloadWeek}
-            targets={editing ? undefined : workoutGoals.targets}
-            goalMark={
-              editing ? undefined : workoutGoals.marks.get(ex.exerciseId)
-            }
-            askRir={!editing && askRir}
-            onChange={update}
-            onReorderExercises={
-              w.exercises.length > 1 ? openReorder : undefined
-            }
-            onRemove={requestRemove}
-            onChangeExercise={setChanging}
-            onSetDone={setDone}
-            records={recordKinds}
-            restChip={!editing}
-            cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
-            onCardioFields={cardioFields.setFields}
-            repHold={repHold.holdFor(ex.exerciseId)}
-            onRepHold={repHold.setHold}
-            weightUnit={unitFor(ex.exerciseId)}
-            defaultWeightUnit={weightUnits.defaultUnit}
-            onWeightUnit={weightUnits.setUnit}
-            equipment={exerciseSettings.equipmentFor(ex.exerciseId)}
-            weightStep={exerciseSettings.stepFor(ex.exerciseId)}
-            note={exerciseSettings.noteFor(ex.exerciseId)}
-          />
-        ))}
-      </NumberPadContext.Provider>
+      <WorkoutToastContext.Provider value={editing ? null : showToast}>
+        <NumberPadContext.Provider value={editing ? null : padApi}>
+          {w.exercises.map((ex) => (
+            <ExerciseCard
+              key={ex.id}
+              exercise={ex}
+              lastSession={previous.get(ex.exerciseId)}
+              bodyWeightKg={bodyWeightKg}
+              // Only the card holding the next set needs to know which it is.
+              nextSetId={
+                ex.sets.some((s) => s.id === nextSet?.id)
+                  ? nextSet?.id
+                  : undefined
+              }
+              unlockChecked={editing}
+              defaults={defaults.get(ex.exerciseId)}
+              // The Deload tag says it; a plain "Deload week" line would repeat it.
+              planNote={
+                deloadWeek && w.plan?.loads?.[ex.exerciseId] === undefined
+                  ? undefined
+                  : planNote(w.plan, ex.exerciseId, unitFor(ex.exerciseId))
+              }
+              deload={deloadWeek}
+              targets={editing ? undefined : workoutGoals.targets}
+              goalMark={
+                editing ? undefined : workoutGoals.marks.get(ex.exerciseId)
+              }
+              askRir={!editing && askRir}
+              onChange={update}
+              onReorderExercises={
+                w.exercises.length > 1 ? openReorder : undefined
+              }
+              onRemove={requestRemove}
+              onChangeExercise={setChanging}
+              onSetDone={setDone}
+              records={recordKinds}
+              restChip={!editing}
+              cardioFields={cardioFields.fieldsFor(ex.exerciseId)}
+              onCardioFields={cardioFields.setFields}
+              repHold={repHold.holdFor(ex.exerciseId)}
+              onRepHold={repHold.setHold}
+              weightUnit={unitFor(ex.exerciseId)}
+              defaultWeightUnit={weightUnits.defaultUnit}
+              onWeightUnit={weightUnits.setUnit}
+              equipment={exerciseSettings.equipmentFor(ex.exerciseId)}
+              weightStep={exerciseSettings.stepFor(ex.exerciseId)}
+              note={exerciseSettings.noteFor(ex.exerciseId)}
+            />
+          ))}
+        </NumberPadContext.Provider>
+      </WorkoutToastContext.Provider>
       <ReorderExercisesSheet
         open={reorderOpen}
         exercises={w.exercises}
@@ -588,7 +605,9 @@ function Editor({
         </button>
       )}
       <div className="float-stack">
-        {!padTarget && (
+        {/* v6 B2, B13: the toast at the workout's foot. */}
+        <WorkoutToast message={toast} onDone={() => setToast(null)} />
+        {!padTarget && !toast && (
           <NextSetChip setId={nextSet?.id} pad={editing ? null : padApi} />
         )}
       </div>

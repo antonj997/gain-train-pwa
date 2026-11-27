@@ -1,10 +1,19 @@
 /**
- * Taps on a checked (locked) row's fields in a live workout. One tap is
- * ignored without a word: it is usually a stray touch, or a finger on its way
- * to scroll. A second tap on the same row within LOCKED_TAP_MS shows the
- * notice ("Uncheck this set to edit its values."). Pure, so it is tested; the
- * row is components/workout/SetLine.tsx.
+ * Taps on a checked (locked) row's fields. In a live workout (v6 B2) the
+ * first tap already shakes the row and shows the toast at the workout's foot
+ * (lockedTapMessage), so nothing moves under the finger. Where there is no
+ * toast slot, one tap is ignored without a word and a second tap on the same
+ * row within LOCKED_TAP_MS shows the notice under it ("Uncheck this set to
+ * edit its values."). Pure, so it is tested; the row is
+ * components/workout/SetLine.tsx.
  */
+import { t } from "../i18n";
+
+/** The toast a first tap on a checked set shows (v6 B2). */
+export const lockedTapMessage = () => t("set.lockedToast");
+
+/** A checked field's accessible name (v6 B2). */
+export const lockedFieldName = () => t("set.lockedField");
 
 /** How close together two taps must be to count as trying again. */
 export const LOCKED_TAP_MS = 2000;

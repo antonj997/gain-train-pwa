@@ -813,6 +813,44 @@
   font-weight: 600;
   box-shadow: var(--gt-shadow-chip);
 }
+/* v6 B2, B13: the toast at the workout's foot, in the next-set chip's place
+   (its shadow), so no row moves under the finger. */
+.workout-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--gt-space-2);
+  width: min(100% - 2 * var(--gt-space-4), 480px);
+  min-height: 44px;
+  padding: var(--gt-space-1) var(--gt-space-2) var(--gt-space-1)
+    var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-ink);
+  color: var(--gt-ground);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+  line-height: 1.35;
+  box-shadow: var(--gt-shadow-chip);
+}
+.workout-toast svg {
+  flex: none;
+}
+.workout-toast-text {
+  flex: 1;
+  min-width: 0;
+}
+.workout-toast-undo {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--gt-space-2);
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
 /* Sheet content: the Set, Load and count, exercise menu and Reorder sheets. */
 .sheet-title-line {
   display: flex;

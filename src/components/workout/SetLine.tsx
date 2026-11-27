@@ -19,7 +19,14 @@ import {
 } from "@/lib/number-pad";
 import { rirSetText } from "@/lib/rir";
 import type { LockedAttempt, SetInputGestures } from "@/lib/set-input";
-import { lockedTap, type LockedTaps } from "@/lib/locked-tap";
+import {
+  lockedTap,
+  lockedFieldName,
+  lockedTapMessage,
+  type LockedTaps,
+} from "@/lib/locked-tap";
+import { MOTION, play } from "@/lib/motion";
+import { WorkoutToastContext } from "@/components/workout/workout-toast";
 import {
   formatWeightValue,
   fromUnit,
@@ -255,10 +262,29 @@ export default function SetLine({
   // A drop is unchecked from the set above, so the row cannot clear its own
   // notice: forget it as soon as the row is open again.
   const locked = set.done && !unlocked;
+  const toast = useContext(WorkoutToastContext);
   if (lockedAttempt && !locked) setLockedAttempt(false);
   if (lockedTaps && !locked) setLockedTaps(null);
   /** A try at changing the locked row: a keyboard is told at once, a tap the second time. */
   const lockedTry = (kind: LockedAttempt = "keyboard") => {
+    // v6 B2: in a live workout the first try shakes the row and says why in
+    // the toast at the workout's foot, so no row moves under the finger.
+    if (toast) {
+      toast({ text: lockedTapMessage() });
+      play(
+        row.current,
+        [
+          { transform: "translateX(0)" },
+          { transform: "translateX(-4px)" },
+          { transform: "translateX(4px)" },
+          { transform: "translateX(-4px)" },
+          { transform: "translateX(0)" },
+        ],
+        { duration: MOTION.pop, easing: "ease-out" },
+      );
+      setLockedAttempt(true);
+      return;
+    }
     if (kind === "keyboard") {
       setLockedAttempt(true);
       return;
@@ -326,6 +352,8 @@ export default function SetLine({
   const drop = isDrop(set);
   // Unique within the exercise: "Bench Press set 2", "Bench Press drop 1 after set 2".
   const label = `${name} ${badge.name}`;
+  // v6 B2: a checked field of a live workout says it is locked, and why.
+  const lockedSuffix = locked && mode === "log" ? `, ${lockedFieldName()}` : "";
   const timed = set.measure === "seconds";
   const cardio = set.measure === "cardio";
   const holdField = hold && !timed && !cardio;
@@ -394,7 +422,7 @@ export default function SetLine({
     unfinishedText?: string,
   ) => {
     if (locked) {
-      setLockedAttempt(true);
+      lockedTry("keyboard");
       return;
     }
     onChange(changeSetNumber(set, field, value, unfinishedText, unlocked));
@@ -497,7 +525,7 @@ export default function SetLine({
         </span>
       )}
       <SetNumberInput
-        aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}`}
+        aria-label={`${label} ${timed ? t("set.fieldSeconds") : t("set.fieldReps")}${lockedSuffix}`}
         aria-invalid={
           !!issues.reps &&
           (set.reps !== null || getSetInputText(set, "reps") !== undefined)
@@ -539,7 +567,7 @@ export default function SetLine({
         </span>
       )}
       <SetNumberInput
-        aria-label={`${label} ${t("set.fieldHold")}`}
+        aria-label={`${label} ${t("set.fieldHold")}${lockedSuffix}`}
         aria-invalid={
           !!issues.holdSec &&
           ((set.holdSec ?? null) !== null ||
@@ -665,7 +693,7 @@ export default function SetLine({
                 }
               >
                 <SetNumberInput
-                  aria-label={`${label} ${props.name}`}
+                  aria-label={`${label} ${props.name}${lockedSuffix}`}
                   aria-invalid={
                     !!issues[field] &&
                     ((set[field] ?? null) !== null ||
@@ -731,7 +759,7 @@ export default function SetLine({
                 </span>
               )}
               <SetNumberInput
-                aria-label={`${label} ${loadName}`}
+                aria-label={`${label} ${loadName}${lockedSuffix}`}
                 aria-invalid={
                   !!issues.weight &&
                   (set.weight !== null ||
@@ -849,11 +877,17 @@ export default function SetLine({
           {checkHint}
         </p>
       )}
-      {showLock && (
-        <p id={lockId} className="set-errors field-error" role="status">
-          {t("set.uncheckToEdit")}
-        </p>
-      )}
+      {showLock &&
+        (toast ? (
+          // The toast says it; the row keeps its height (v6 B2).
+          <span id={lockId} className="sr-only">
+            {lockedTapMessage()}
+          </span>
+        ) : (
+          <p id={lockId} className="set-errors field-error" role="status">
+            {t("set.uncheckToEdit")}
+          </p>
+        ))}
     </div>
   );
 }

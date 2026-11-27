@@ -147,3 +147,21 @@ test("a fling deletes a set short of the threshold, but only outwards and once i
   // A routine card's commit still has to be meant: no fling.
   assert.deepEqual(settle(60, 2, card), { action: "close" });
 });
+
+test("v6 B2: a set swipe deletes at once, with no undo slot", async () => {
+  const { readFileSync } = await import("node:fs");
+  const source = (path: string) =>
+    readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
+  for (const file of [
+    "src/components/gestures/SetSwipeRow.tsx",
+    "src/components/ExerciseCard.tsx",
+    "src/pages/ActiveWorkout.tsx",
+  ])
+    assert.doesNotMatch(source(file), /UndoPlaceholder|undo-placeholder/, file);
+  // The row goes out on the ease-in, then folds on the collapse curve.
+  const row = source("src/components/gestures/SetSwipeRow.tsx");
+  assert.match(row, /slide: MOTION\.binSlide/);
+  assert.match(row, /collapse: MOTION\.rowOut/);
+  assert.match(row, /easing: EASE\.in\b/);
+  assert.match(row, /easing: EASE\.collapse/);
+});

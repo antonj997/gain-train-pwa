@@ -84,8 +84,19 @@ test("rows name their units and unfinished raw text remains visible", async () =
   const reps = await setLine({
     set: { ...model.newSet(), weight: 75, reps: 8, done: true },
   });
-  assert.match(reps, /aria-label="Bench Press set 1 kilograms"/);
-  assert.match(reps, /aria-label="Bench Press set 1 reps"/);
+  // v6 B2: a checked field says it is locked, and how to change it.
+  assert.match(
+    reps,
+    /aria-label="Bench Press set 1 kilograms, Locked – uncheck to change"/,
+  );
+  assert.match(
+    reps,
+    /aria-label="Bench Press set 1 reps, Locked – uncheck to change"/,
+  );
+  const open = await setLine({
+    set: { ...model.newSet(), weight: 75, reps: 8 },
+  });
+  assert.match(open, /aria-label="Bench Press set 1 kilograms"/);
   const timed = await setLine({
     set: {
       ...model.newSet(),

@@ -2116,6 +2116,8 @@ export const en = {
   "set.deleteRow": "Delete set",
   "exercise.addDrop": "Drop",
   "exercise.addDropLabel": "Add one more drop",
+  "set.lockedToast": "The set is done. Uncheck ✓ to change its values.",
+  "set.lockedField": "Locked – uncheck to change",
 
   // ---- v6 P2 Kalender ----
 
