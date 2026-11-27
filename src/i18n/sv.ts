@@ -2159,6 +2159,11 @@ export const sv = {
   "rest.sound": "Ljud när vilan är slut",
   "rest.vibrate": "Vibrera",
   "rest.done": "Klar",
+  "workout.fatigueNote": "{muscle} har redan fått {today} hårda set i dag (förra gången {before} före den här övningen). Målet {from} kan bli tungt.",
+  "workout.fatigueLower": "Sänk till {to}",
+  "workout.fatigueKeep": "Behåll målet",
+  "workout.fatigueLowered": "Målet sänkt till {to} för i dag. Räknas inte som missat.",
+  "workout.fatigueAuto": "Målet sänkt till {to} för i dag. Räknas inte som ett missat mål.",
 
   // ---- v6 P2 Kalender ----
 

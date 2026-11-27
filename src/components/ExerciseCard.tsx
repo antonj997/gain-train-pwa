@@ -90,6 +90,9 @@ import ReorderSetsSheet from "@/components/workout/ReorderSetsSheet";
 import CardioFieldsSheet from "@/components/workout/CardioFieldsSheet";
 import RepRangeSheet from "@/components/workout/RepRangeSheet";
 import WarmupSheet from "@/components/workout/WarmupSheet";
+import FatigueRow, {
+  type FatigueRowState,
+} from "@/components/workout/FatigueRow";
 import { warmupSets } from "@/lib/warmup";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
 import { RestSheet } from "@/components/settings/RestControl";
@@ -193,6 +196,10 @@ export type ExerciseCardProps = {
   restTier?: number;
   /** Sets the exercise's own rest, or clears it with null (v6 B8). */
   onRestOwn?: (exerciseId: string, seconds: number | null) => void;
+  /** v6 B13: the fatigue row under the heading, or nothing. */
+  fatigue?: FatigueRowState;
+  /** "Sänk till …", "Behåll målet" and Ångra, with the card's exercise. */
+  onFatigue?: (exercise: Exercise, choice: "lower" | "keep" | "undo") => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
@@ -279,6 +286,8 @@ function ExerciseCard({
   restOwn,
   restTier = 120,
   onRestOwn,
+  fatigue = null,
+  onFatigue,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
@@ -586,6 +595,16 @@ function ExerciseCard({
             {note}
           </span>
         </p>
+      )}
+      {/* v6 B13: a muscle already tired before this exercise. */}
+      {mode === "log" && (
+        <FatigueRow
+          state={fatigue}
+          unit={weightUnit}
+          onLower={() => onFatigue?.(planned, "lower")}
+          onKeep={() => onFatigue?.(planned, "keep")}
+          onUndo={() => onFatigue?.(planned, "undo")}
+        />
       )}
       {cardio ? (
         <div className="set-columns" data-mode={mode} data-kind="cardio">

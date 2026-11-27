@@ -19,7 +19,7 @@ import {
   isFromNewerApp,
 } from "@/data/model";
 import { doneSetCount, setCount } from "@/data/selectors";
-import { hasLoggedExercise } from "@/data/workouts";
+import { hasLoggedExercise, priorWorkouts } from "@/data/workouts";
 import {
   liveRankedRecords,
   quietRecord,
@@ -28,7 +28,23 @@ import {
   type RankedRecord,
 } from "@/data/record-rank";
 import { workoutTargets } from "@/data/targets";
-import { lowerTarget } from "@/data/fatigue";
+import {
+  fatigueNote,
+  fatigueTargetText,
+  lowerTarget,
+  lowerTargets,
+  restoreTargets,
+  type FatigueNote,
+} from "@/data/fatigue";
+import type { SetTarget } from "@/data/targets";
+import type { FatigueRowState } from "@/components/workout/FatigueRow";
+import {
+  draftKey,
+  parseFatigueDismissed,
+  readDraft,
+  writeDraft,
+} from "@/lib/drafts";
+import { local } from "@/lib/storage";
 import { summarize } from "@/data/summary";
 import { loadKeyOf } from "@/lib/load-keys";
 import { targetRowText, targetSource, targetValueText } from "@/lib/set-target";
@@ -435,6 +451,140 @@ function Editor({
       setToast({ ...message, id: ++toastId.current }),
     [],
   );
+
+  // v6 B13, §D10: a muscle already tired before an exercise. The answers
+  // ("Behåll målet", or a lowering undone) are kept with this workout's
+  // draft on the device.
+  const fatigueMode = trainingPrefs.fatigueMode;
+  const dismissKey = draftKey(account, "fatigue", id);
+  const [dismissed, setDismissed] = useState<string[]>(
+    () => readDraft(local, dismissKey, parseFatigueDismissed) ?? [],
+  );
+  const dismiss = (exerciseId: string, answered = true) =>
+    setDismissed((current) => {
+      const next = answered
+        ? [...new Set([...current, exerciseId])]
+        : current.filter((x) => x !== exerciseId);
+      writeDraft(local, dismissKey, next.length ? next : null);
+      return next;
+    });
+  // What each lowering changed, for Ångra; and the ones "Automatiskt" made.
+  const lowered = useRef(
+    new Map<string, { snapshot: Exercise; to: SetTarget }>(),
+  );
+  const [autoLowered, setAutoLowered] = useState<Record<string, SetTarget>>({});
+  // The last finished workout that holds each exercise.
+  const earlier = useMemo(
+    () =>
+      editing
+        ? []
+        : priorWorkouts(
+            Object.values(latestRecords.current),
+            {
+              id,
+              kind: "workout",
+              revision: 0,
+              deleted: false,
+              localVersion: 0,
+              dirty: false,
+              payload: latestWorkout.current,
+            },
+            w.date,
+          ),
+    // historyKey stands in for the records it summarises.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [historyKey, w.date, id, editing],
+  );
+  const fatigueNotes = new Map<string, FatigueNote>();
+  if (!editing && fatigueMode !== "off")
+    w.exercises.forEach((ex, index) => {
+      if (ex.fatigue === "lowered" || dismissed.includes(ex.id)) return;
+      const last = earlier.find((r) =>
+        r.payload.exercises.some((e) => e.exerciseId === ex.exerciseId),
+      );
+      const open = ex.sets.find(
+        (s) => s.section === "working" && !s.drop && !s.done,
+      );
+      const goal = open ? targets.get(open.id)?.source : undefined;
+      const note = fatigueNote(
+        w,
+        index,
+        last?.payload ?? null,
+        musclesOf,
+        stepFor(ex.exerciseId),
+        goal && goal.weight != null && goal.reps != null
+          ? { weight: goal.weight, reps: goal.reps }
+          : null,
+      );
+      if (note) fatigueNotes.set(ex.id, note);
+    });
+  // One object per row while it says the same, so memoised cards skip renders.
+  const fatigueCache = useRef(new Map<string, [string, FatigueRowState]>());
+  const fatigueFor = (ex: Exercise): FatigueRowState => {
+    const auto = autoLowered[ex.id];
+    const note = fatigueNotes.get(ex.id);
+    const state: FatigueRowState =
+      auto && ex.fatigue === "lowered"
+        ? { kind: "lowered", to: auto }
+        : fatigueMode === "suggest" && note
+          ? { kind: "suggest", note }
+          : null;
+    const key = JSON.stringify(state);
+    const cached = fatigueCache.current.get(ex.id);
+    if (cached && cached[0] === key) return cached[1];
+    fatigueCache.current.set(ex.id, [key, state]);
+    return state;
+  };
+  const lowerExercise = (ex: Exercise, to: SetTarget) => {
+    lowered.current.set(ex.id, { snapshot: ex, to });
+    update(lowerTargets(ex, to));
+  };
+  const restoreExercise = (exerciseId: string) => {
+    const saved = lowered.current.get(exerciseId);
+    if (!saved) return;
+    lowered.current.delete(exerciseId);
+    changeWith((current) => ({
+      ...current,
+      exercises: current.exercises.map((e) =>
+        e.id === exerciseId ? restoreTargets(e, saved.snapshot) : e,
+      ),
+    }));
+  };
+  // "Automatiskt": the target is lowered at once, and the row says so.
+  const autoKey = [...fatigueNotes.keys()].join("|");
+  useEffect(() => {
+    if (fatigueMode !== "auto") return;
+    for (const ex of latestWorkout.current.exercises) {
+      const note = fatigueNotes.get(ex.id);
+      if (!note || autoLowered[ex.id]) continue;
+      lowerExercise(ex, note.to);
+      setAutoLowered((current) => ({ ...current, [ex.id]: note.to }));
+    }
+    // autoKey stands in for the notes it lists.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoKey, fatigueMode]);
+  const onFatigue = useStableCallback(
+    (ex: Exercise, choice: "lower" | "keep" | "undo") => {
+      const current = w.exercises.find((e) => e.id === ex.id) ?? ex;
+      if (choice === "keep") return dismiss(ex.id);
+      if (choice === "undo") {
+        restoreExercise(ex.id);
+        dismiss(ex.id);
+        setAutoLowered(({ [ex.id]: _gone, ...rest }) => rest);
+        return;
+      }
+      const note = fatigueNotes.get(ex.id);
+      if (!note) return;
+      lowerExercise(current, note.to);
+      showToast({
+        text: t("workout.fatigueLowered", {
+          to: fatigueTargetText(note.to, unitFor(ex.exerciseId)),
+        }),
+        // Ångra puts back the weights, the targets and the row.
+        undo: () => restoreExercise(ex.id),
+      });
+    },
+  );
   // The number pad of a live workout (NumberPad.tsx).
   const [padTarget, setPadTarget] = useState<PadTarget | null>(null);
   const padApi = useMemo(
@@ -621,6 +771,8 @@ function Editor({
               restOwn={restFor(ex.exerciseId).own}
               restTier={restFor(ex.exerciseId).tier}
               onRestOwn={exerciseSettings.setRest}
+              fatigue={editing ? null : fatigueFor(ex)}
+              onFatigue={onFatigue}
             />
           ))}
         </NumberPadContext.Provider>

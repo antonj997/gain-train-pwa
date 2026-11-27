@@ -9,6 +9,13 @@ import { MUSCLES, type Muscle } from "./muscles";
 import type { MusclesOf } from "./exercise-muscles";
 import type { SetTarget } from "./targets";
 import { hasExtraWeight } from "../lib/set-load";
+import { formatWeightValue, type WeightUnit } from "../lib/units";
+
+/** "20 × 8": a target as the fatigue row and its toast say it. */
+export const fatigueTargetText = (target: SetTarget, unit: WeightUnit) =>
+  target.weight === null
+    ? `${target.reps}`
+    : `${formatWeightValue(target.weight, unit)} × ${target.reps}`;
 
 /** What the row says: the muscle, its hard sets today and last time, and the target. */
 export type FatigueNote = {

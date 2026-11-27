@@ -588,3 +588,67 @@ test("the pad's RIR mode has the key grid's fixed height (decision 5)", () => {
     /@media \(prefers-reduced-motion: no-preference\) \{\s*\.rir-carrier \{\s*transition: transform var\(--gt-dur-quick\) var\(--gt-ease-out\);/,
   );
 });
+
+// ---- v6 B13: the fatigue row ----
+
+const B13_NOTE = {
+  muscle: "quads" as const,
+  today: 6,
+  before: 3,
+  from: { weight: 22, reps: 8 },
+  to: { weight: 20, reps: 8 },
+};
+
+async function fatigueRow(props: Record<string, unknown>) {
+  const i18n = await import("../src/i18n");
+  const { setCurrentLanguage } = i18n;
+  const FatigueRow = await loadComponent(
+    "../src/components/workout/FatigueRow.tsx",
+    { "@/i18n": i18n },
+  );
+  setCurrentLanguage("sv");
+  try {
+    return renderToStaticMarkup(createElement(FatigueRow, props));
+  } finally {
+    setCurrentLanguage("en");
+  }
+}
+
+test("fatigue, Föreslå: the quiet note with Sänk till 20 × 8 and Behåll målet", async () => {
+  const html = await fatigueRow({
+    state: { kind: "suggest", note: B13_NOTE },
+  });
+  assert.match(
+    html,
+    /Framsida lår har redan fått 6 hårda set i dag \(förra gången 3 före den här övningen\)\. Målet 22 × 8 kan bli tungt\./,
+  );
+  const buttons = (html.match(/<button[^>]*>[^<]*<\/button>/g) ?? []).map((b) =>
+    b.replace(/<[^>]+>/g, ""),
+  );
+  assert.deepEqual(buttons, ["Sänk till 20 × 8", "Behåll målet"]);
+  // No coloured box: the row is ink-2 text in the card.
+  assert.match(html, /class="fatigue-row"/);
+});
+
+test("fatigue, Av: nothing shows", async () => {
+  assert.equal(await fatigueRow({ state: null }), "");
+});
+
+test("fatigue, Automatiskt: the target already lowered, with Ångra", async () => {
+  const html = await fatigueRow({
+    state: { kind: "lowered", to: { weight: 20, reps: 8 } },
+  });
+  assert.match(
+    html,
+    /Målet sänkt till 20 × 8 för i dag\. Räknas inte som ett missat mål\./,
+  );
+  assert.match(html, /<button[^>]*>Ångra<\/button>/);
+});
+
+test("the fatigue row folds on row-out and the collapse curve", () => {
+  const source = readFileSync(
+    new URL("../src/components/workout/FatigueRow.tsx", import.meta.url),
+    "utf8",
+  );
+  assert.match(source, /duration: MOTION\.rowOut, easing: EASE\.collapse/);
+});

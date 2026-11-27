@@ -2146,6 +2146,11 @@ export const en = {
   "rest.sound": "Sound when the rest ends",
   "rest.vibrate": "Vibrate",
   "rest.done": "Done",
+  "workout.fatigueNote": "{muscle} has already had {today} hard sets today ({before} before this exercise last time). The target {from} may feel heavy.",
+  "workout.fatigueLower": "Lower to {to}",
+  "workout.fatigueKeep": "Keep the target",
+  "workout.fatigueLowered": "Target lowered to {to} for today. Does not count as missed.",
+  "workout.fatigueAuto": "Target lowered to {to} for today. Does not count as a missed target.",
 
   // ---- v6 P2 Kalender ----
 

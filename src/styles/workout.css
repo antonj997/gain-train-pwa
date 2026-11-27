@@ -2120,3 +2120,39 @@
     transition: transform var(--gt-dur-quick) var(--gt-ease-out);
   }
 }
+
+/* v6 B13: the quiet fatigue row under the heading: ink-2, an info glyph, no
+   coloured box, and two 44px links. It folds away on row-out. */
+.fatigue-row {
+  overflow: hidden;
+  margin-top: var(--gt-space-1);
+  padding-inline: var(--gt-space-1);
+}
+.fatigue-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.fatigue-text svg {
+  flex: none;
+  margin-top: 2px;
+}
+.fatigue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--gt-space-3);
+  padding-left: 21px;
+}
+.fatigue-link {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
+}
