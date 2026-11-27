@@ -2,11 +2,10 @@
 // so it is tested (tests/plans.test.ts).
 import type { Plan } from "../data/model";
 import { deloadWeeks, phaseWeek, phaseWeeks } from "../data/phase";
-import { planDay } from "../data/plans";
-import { isWorkoutCell } from "../data/plan-moves";
-import { workoutsPerWeek } from "../data/plan-status";
+import { planAdherence, workoutsPerWeek } from "../data/plan-status";
+import type { DoneWorkout } from "../data/week-match";
 import { t } from "../i18n";
-import { localizedDate, shiftDate, weekStart } from "./dates";
+import { localizedDate } from "./dates";
 import { countLabel } from "./labels";
 
 /** Whole weeks of the plan that have ended, and how many of them were fulfilled. */
@@ -117,32 +116,23 @@ export function planRowStatus(
 
 /**
  * The plan's whole weeks that have ended by `today` (Monday to Sunday,
- * inside its period), and those in which every planned workout day has a
- * finished workout on its date. A week with nothing planned is fulfilled.
- * Week matching (v6 §D9, which also counts a workout moved within its week)
- * can replace this once it is in.
+ * inside its period), and those fulfilled by week matching (v6 §D9,
+ * `planAdherence`): every planned day matched by a finished workout that
+ * week, also one done on another day. A week with nothing planned is
+ * fulfilled. `workouts` adds the routines, so a routine done on another day
+ * matches its own planned day first.
  */
 export function weeksFulfilledOf(
   plan: Plan,
   doneDates: ReadonlySet<string>,
   today: string,
+  workouts?: readonly DoneWorkout[],
 ): WeeksFulfilled {
-  let weeksFinished = 0;
-  let weeksFulfilled = 0;
-  const first = weekStart(plan.startDate);
-  for (let week = 0; week < phaseWeeks(plan); week++) {
-    const monday = shiftDate(first, week * 7);
-    const sunday = shiftDate(monday, 6);
-    if (sunday >= today) break;
-    weeksFinished++;
-    let fulfilled = true;
-    for (let i = 0; i < 7; i++) {
-      const date = shiftDate(monday, i);
-      if (date < plan.startDate || date > plan.endDate) continue;
-      if (isWorkoutCell(planDay(plan, date).cell) && !doneDates.has(date))
-        fulfilled = false;
-    }
-    if (fulfilled) weeksFulfilled++;
-  }
+  const { weeksFulfilled, weeksFinished } = planAdherence(
+    plan,
+    doneDates,
+    today,
+    { workouts },
+  );
   return { weeksFulfilled, weeksFinished };
 }

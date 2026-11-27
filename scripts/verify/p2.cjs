@@ -157,7 +157,7 @@ module.exports = async ({ page, check, shot, visit }) => {
   await shot("p2-kalender-drag");
 
   // ---- F1: the new plan's whole period, 2 px between rows.
-  await visit("/library/plan");
+  await visit("/library?tab=plans");
   await page.getByRole("button", { name: "Nytt schema" }).first().click();
   await page.waitForSelector(".plan-period-card .heatmap-grid", {
     timeout: 5000,

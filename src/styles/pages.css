@@ -2062,6 +2062,16 @@ span.sparkline {
   text-align: center;
   cursor: pointer;
 }
+/* At 360px seven days are 43px wide: the hit area reaches 2px into the
+   gaps, so every day is a 44px target (F1). */
+.day-cell.plan-cell::before {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  left: -2px;
+  content: "";
+}
 .plan-cell > svg,
 .plan-cell-icon {
   flex: none;
