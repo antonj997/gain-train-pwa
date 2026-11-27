@@ -353,6 +353,7 @@ test("a drop starts 20 % lighter, rounded to the exercise's step", async () => {
   assert.equal(dropMinus20(50, 5, 50), 40);
   assert.equal(dropMinus20(52.5, 2.5), 42.5);
   // Rounding back to the weight it came from goes a step lower.
-  assert.equal(dropMinus20(10, 5), 5);
-  assert.equal(dropMinus20(2, 2), 0);
+  assert.equal(dropMinus20(10, 5), 10);
+  assert.equal(dropMinus20(10, 5, 10), 5);
+  assert.equal(dropMinus20(2, 2, 2), 0);
 });

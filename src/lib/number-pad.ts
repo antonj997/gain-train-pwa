@@ -182,18 +182,8 @@ export function padHint(
   return null;
 }
 
-/**
- * A drop's weight: 20 % under `kg`, rounded to the exercise's step (v6 B5:
- * 60 → 50 on a 5 kg step, 52.5 → 42.5 on 2.5). When that rounds back to
- * the weight it drops from (`from`, else `kg`), it goes one step lower;
- * never under 0.
- */
-export function dropMinus20(kg: number, step: number, from = kg): number {
-  const size = step > 0 ? step : DEFAULT_KG_STEP;
-  let next = round(Math.round((kg * 0.8) / size) * size);
-  if (next >= from) next = round(from - size);
-  return Math.max(0, next);
-}
+// The drop's −20 % lives with the drops (data/drops.ts).
+export { dropMinus20 } from "../data/drops";
 
 /**
  * The fields of a set the pad types, in Next's order. A plain bodyweight set

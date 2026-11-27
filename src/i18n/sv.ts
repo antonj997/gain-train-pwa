@@ -2127,6 +2127,8 @@ export const sv = {
   "set.rirValueTop": "5 eller fler kvar i tanken",
   "set.rirChoose": "Välj",
   "set.deleteRow": "Radera set",
+  "exercise.addDrop": "Drop",
+  "exercise.addDropLabel": "Lägg till en drop till",
 
   // ---- v6 P2 Kalender ----
 

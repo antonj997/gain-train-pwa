@@ -2114,6 +2114,8 @@ export const en = {
   "set.rirValueTop": "5 or more in the tank",
   "set.rirChoose": "Choose",
   "set.deleteRow": "Delete set",
+  "exercise.addDrop": "Drop",
+  "exercise.addDropLabel": "Add one more drop",
 
   // ---- v6 P2 Kalender ----
 

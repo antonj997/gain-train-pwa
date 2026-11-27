@@ -1136,6 +1136,13 @@
   font-size: var(--gt-fs-3);
   font-weight: 600;
 }
+/* v6 B5: "+ Drop" sits just before Add set, both on the right. */
+.ex-add-drop {
+  padding: 0 12px 0 8px;
+}
+.ex-add-drop + .ex-add-set {
+  margin-left: 0;
+}
 .rest-chip {
   position: relative;
   display: inline-flex;

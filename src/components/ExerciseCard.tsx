@@ -21,6 +21,7 @@ import {
 } from "@/data/workouts";
 import {
   addDrop,
+  addNextDrop,
   changeSection,
   dropGroup,
   isDrop,
@@ -371,6 +372,13 @@ function ExerciseCard({
     setEntering(next.sets[next.sets.length - 1].id);
     onChange(next);
   };
+  // "+ Drop" (v6 B5): the next drop after the last, 20 % under it.
+  const addNextDropRow = () => {
+    const { sets: next, id } = addNextDrop(sets, weightStep);
+    if (!id) return;
+    setEntering(id);
+    changeSets(next);
+  };
   const latestSets = useRef(sets);
   latestSets.current = sets;
   const entered = useCallback(
@@ -378,7 +386,10 @@ function ExerciseCard({
       setEntering((current) => (current === setId ? null : current));
       const added = latestSets.current.find((s) => s.id === setId);
       const fields = added && mode === "log" ? padFields(added) : [];
-      if (pad && fields.length) pad.open(setId, fields[0]);
+      // A drop comes with its weight filled in: the pad opens on its reps.
+      const first =
+        added && isDrop(added) && fields.includes("reps") ? "reps" : fields[0];
+      if (pad && first) pad.open(setId, first);
       else
         document
           .querySelector(`[data-set-id="${CSS.escape(setId)}"]`)
@@ -683,6 +694,18 @@ function ExerciseCard({
             {restLabel(preferences.restSeconds)}
           </button>
         )}
+        {/* v6 B5: once the exercise has a drop, one tap adds the next. */}
+        {mode === "log" && sets.some(isDrop) && (
+          <button
+            type="button"
+            className="ex-add-set ex-add-drop"
+            aria-label={t("exercise.addDropLabel")}
+            onClick={addNextDropRow}
+          >
+            <Plus size={18} aria-hidden="true" />
+            {t("exercise.addDrop")}
+          </button>
+        )}
         <button type="button" className="ex-add-set" onClick={addSet}>
           <Plus size={18} aria-hidden="true" />
           {t("exercise.addSet")}
@@ -736,7 +759,15 @@ function ExerciseCard({
               : undefined
           }
           onAddDrop={() => {
-            changeSets(addDrop(sets, shown.id));
+            // v6 B5: −20 % to the step; the row grows in and the pad opens
+            // on its reps.
+            const next = addDrop(sets, shown.id, weightStep);
+            const added = next.find((s) => !sets.includes(s));
+            if (added) {
+              toPad.current = true;
+              setEntering(added.id);
+            }
+            changeSets(next);
             close();
           }}
           onDelete={() => {
