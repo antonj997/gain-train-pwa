@@ -52,10 +52,13 @@ type Target = { week: number; day: number } | { date: string };
 export default function PlanEditor({
   open,
   plan,
+  draft: prefill,
   onClose,
 }: {
   open: boolean;
   plan: PlanItem | null;
+  /** A prefilled new plan (v6: from a standard programme); with `plan` null. */
+  draft?: Plan;
   onClose: () => void;
 }) {
   const { state, save, deleteRecord } = useData();
@@ -71,7 +74,7 @@ export default function PlanEditor({
   const dayNames = weekdayNames();
 
   const [draft, setDraft] = useState<Plan>(() => {
-    if (!plan) return defaultNewPlan(plans, today);
+    if (!plan) return prefill ?? defaultNewPlan(plans, today);
     // The id names the record; it is not part of the saved plan.
     const { id: _id, ...saved } = plan;
     return saved;

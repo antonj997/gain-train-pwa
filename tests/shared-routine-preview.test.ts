@@ -126,4 +126,14 @@ test("the preview lists exercises in order, marks new custom ones and finds the 
   assert.equal(preview.sets, 4);
   assert.deepEqual(preview.categories, ["Legs", "Back"]);
   assert.ok(!JSON.stringify(preview).includes("120"));
+  // v6: in Swedish a built-in shows its Swedish name; the sharer's own as typed.
+  setCurrentLanguage("sv");
+  try {
+    assert.deepEqual(
+      sharedRoutinePreview(row, records).exercises.map((e) => e.name),
+      ["Knäböj", "Sled Push", "Band Thing"],
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
 });

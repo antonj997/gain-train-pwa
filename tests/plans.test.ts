@@ -20,6 +20,8 @@ import {
   typeCell,
   withPaused,
 } from "../src/data/plans";
+import { planRowStatus, weeksFulfilledOf } from "../src/lib/plan-rows.ts";
+import { setCurrentLanguage } from "../src/i18n/index.ts";
 
 const row = (...cells: (string | null)[]) =>
   Array.from({ length: 7 }, (_, i) => cells[i] ?? null);
@@ -331,4 +333,88 @@ test("plan editing helpers: new period, cycle, cells, overrides", () => {
     }),
     { "2026-11-12": REST },
   );
+});
+
+// ---- v6 §E2: Scheman's rows ----
+
+test("v6: a plan row's status line and word", () => {
+  setCurrentLanguage("sv");
+  try {
+    const three = row("a", null, "b", null, "c");
+    // Started 19 Oct, 8 weeks, a deload every fourth week; today is week 5.
+    const active = plan({
+      startDate: "2026-10-19",
+      endDate: "2026-12-13",
+      cycleWeeks: 4,
+      template: [three, three, three, three],
+      weekKinds: ["normal", "normal", "normal", "deload"],
+    });
+    assert.deepEqual(planRowStatus(active, "2026-11-19", null), {
+      line: "Vecka 5 av 8 · 3 pass i veckan · deload v. 8",
+      word: "Aktivt",
+      kind: "active",
+    });
+    const coming = plan({
+      startDate: "2026-12-21",
+      endDate: "2027-02-14",
+      cycleWeeks: 1,
+      template: [three],
+    });
+    assert.deepEqual(planRowStatus(coming, "2026-11-19", null), {
+      line: "Startar 21 dec · 8 veckor",
+      word: "Kommande",
+      kind: "upcoming",
+    });
+    const ended = plan({
+      startDate: "2026-06-01",
+      endDate: "2026-08-23",
+      cycleWeeks: 1,
+      template: [three],
+    });
+    assert.deepEqual(
+      planRowStatus(ended, "2026-11-19", {
+        weeksFulfilled: 11,
+        weeksFinished: 12,
+      }),
+      {
+        line: "Jun–aug · 11 av 12 veckor fullföljda",
+        word: "Avslutat",
+        kind: "ended",
+      },
+    );
+    // Without adherence the ended line is its months and length.
+    assert.equal(
+      planRowStatus(ended, "2026-11-19", null).line,
+      "Jun–aug · 12 veckor",
+    );
+    assert.equal(
+      planRowStatus({ ...active, paused: true }, "2026-11-19", null).word,
+      "Pausat",
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
+});
+
+test("v6: finished weeks count as fulfilled when every planned day was done", () => {
+  const three = row("a", null, "b", null, "c");
+  const p = plan({
+    startDate: "2026-11-02",
+    endDate: "2026-11-29",
+    cycleWeeks: 1,
+    template: [three],
+  });
+  const done = new Set([
+    "2026-11-02",
+    "2026-11-04",
+    "2026-11-06",
+    "2026-11-09",
+    "2026-11-11",
+    "2026-11-16",
+  ]);
+  // Weeks 1 and 2 have ended (week 2 misses Friday); week 3 is this week.
+  assert.deepEqual(weeksFulfilledOf(p, done, "2026-11-19"), {
+    weeksFulfilled: 1,
+    weeksFinished: 2,
+  });
 });

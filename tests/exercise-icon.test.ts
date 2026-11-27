@@ -8,6 +8,7 @@ import { MUSCLES_BY_NAME } from "../src/data/exercise-muscles.ts";
 import { categoryTone, exerciseIcon } from "../src/lib/exercise-icon.ts";
 import * as useData from "../src/contexts/useData.ts";
 import { loadComponent } from "./helpers/render";
+import { EQUIPMENT_SHAPES } from "../src/components/muscles/equipment-shapes.ts";
 
 const own = (id: string, payload: Record<string, unknown>): RecordDoc =>
   ({
@@ -95,6 +96,22 @@ test("shared and unknown exercises", () => {
     kind: "equipment",
     equipment: "dumbbell",
   });
+});
+
+test("v6: the machine glyph is the rails and the weight stack, without the lock pin", () => {
+  const machine = EQUIPMENT_SHAPES.machine;
+  const paths = machine.filter((s): s is string => typeof s === "string");
+  // The two rails, three plates in the stack and the cable over it.
+  assert.ok(paths.includes("M5 3V21") && paths.includes("M19 3V21"));
+  assert.equal(paths.filter((d) => /^M8 \d+H16V\d+H8Z$/.test(d)).length, 3);
+  assert.ok(paths.includes("M12 3V6"));
+  // No pin: nothing crosses a plate or reaches past the rails.
+  for (const d of paths) {
+    const xs = [...d.matchAll(/[MLH]\s*([\d.]+)/g)].map((m) => Number(m[1]));
+    for (const x of xs) assert.ok(x >= 5 && x <= 19, `${d} reaches x ${x}`);
+  }
+  assert.ok(!paths.some((d) => /^M8(\.5)? 1[0-9](\.5)?H1[56](\.5)?$/.test(d)));
+  assert.equal(machine.length, 6);
 });
 
 test("category tones", () => {

@@ -97,7 +97,8 @@ label {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 14px;
+  /* v6 H2: on the type scale (13/600, the mockup's field label). */
+  font-size: 13px;
   font-weight: 600;
 }
 input,
@@ -129,7 +130,7 @@ small {
 summary {
   cursor: pointer;
   padding: 12px 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 .app-shell {
@@ -154,7 +155,7 @@ summary {
   border-radius: 12px;
   padding: 10px 16px;
   font-size: 15px;
-  font-weight: 650;
+  font-weight: 600;
   transition: background var(--gt-dur-quick);
 }
 .text-button {

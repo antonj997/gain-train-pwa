@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Search } from "lucide-react";
+import { ChevronRight, Info, Search } from "lucide-react";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import type { RoutineRecord } from "@/data/model";
@@ -11,6 +11,17 @@ import RoutineTile from "@/components/library/RoutineTile";
 import RoutineGlyph from "@/components/library/RoutineGlyph";
 import SharedRoutinePreviewSheet from "@/components/library/SharedRoutinePreview";
 import SharedExerciseList from "@/components/library/SharedExerciseList";
+import ProgramList from "@/components/library/ProgramList";
+import ProgramSheet from "@/components/library/ProgramSheet";
+import Reveal from "@/components/motion/Reveal";
+import { musclesLookup } from "@/data/exercise-muscles";
+import { PROGRAMS, programById, type Program } from "@/data/programs";
+import {
+  isProgramAdded,
+  programRoutines,
+  routinesToRemove,
+} from "@/lib/program-actions";
+import type { ProgramChip } from "@/lib/program-view";
 import ShareRoutineSheet from "@/components/library/ShareRoutineSheet";
 import type { PanelRequest } from "@/components/library/ExercisesPanel";
 import { useRetainedDraft } from "@/hooks/useRetainedDraft";
@@ -29,7 +40,7 @@ import type { LibraryExercise } from "@/lib/library";
 import { notify } from "@/lib/message-store";
 import { routineAverageMinutes } from "@/lib/routine-preview";
 import { ownTileFacts, sharedTileFacts } from "@/lib/routine-tile-facts";
-import { routineEditPath } from "@/lib/routes";
+import { newPlanPath, routineEditPath } from "@/lib/routes";
 import { useT } from "@/i18n/useT";
 
 /** Shared exercises listed before "Show all". */
@@ -44,19 +55,22 @@ const FOCUS_LABEL = {
 } as const satisfies Record<Focus, string>;
 
 /**
- * Library → Upptäck: what people shared. A search and focus chips (Push,
- * Pull, Ben, Helkropp, Hemma) over "Delat av dig" (your shared routines, each
- * with Dela), other people's routines as tiles with + to save, and shared
- * exercises with Add. A tile opens the preview, with your own last results,
- * Spara and Prova en gång. `?shared=<id>` opens that routine's preview (the
- * Dela sheet's link).
+ * Library → Rutiner → Upptäck (v6 §E6): first the standard programmes (chips,
+ * a row per programme with + / ✓, the programme sheet with "Lägg till {n}
+ * rutiner" and "Gör det till ett schema"), which work without an account.
+ * Then what people shared: a search and focus chips (Push, Pull, Ben,
+ * Helkropp, Hemma) over "Delat av dig" (your shared routines, each with
+ * Dela), other people's routines as tiles with + to save, and shared
+ * exercises with Add; signed out, one row asks to sign in. A tile opens the
+ * preview, with your own last results, Spara and Prova en gång.
+ * `?shared=<id>` opens that routine's preview (the Dela sheet's link).
  */
 export default function DiscoverPanel({
   request = null,
 }: {
   request?: PanelRequest;
 }) {
-  const { state } = useData();
+  const { state, save, deleteRecord } = useData();
   const { account } = useAuth();
   const { t } = useT();
   const navigate = useNavigate();
@@ -106,6 +120,92 @@ export default function DiscoverPanel({
   }, [request]);
 
   const own = useMemo(() => routines(state.records), [state.records]);
+
+  // The standard programmes: "+" writes their routines, ✓ takes them back.
+  const [programChip, setProgramChip] = useState<ProgramChip>("all");
+  const [programId, setProgramId] = useState<string | null>(null);
+  const [programBusy, setProgramBusy] = useState(false);
+  const [othersInfo, setOthersInfo] = useState(false);
+  const musclesOf = useMemo(
+    () => musclesLookup(state.records),
+    [state.records],
+  );
+  /** Adds the programme's routines that are not in its folder yet; how many. */
+  const addProgram = async (p: Program) => {
+    const present = new Set(
+      own
+        .filter((r) => r.payload.folder === p.title)
+        .map((r) => r.payload.name),
+    );
+    const missing = programRoutines(p).filter((r) => !present.has(r.name));
+    for (const routine of missing)
+      await save(crypto.randomUUID(), "routine", routine);
+    return missing.length;
+  };
+  const toggleProgram = async (p: Program) => {
+    if (programBusy) return;
+    setProgramBusy(true);
+    try {
+      if (isProgramAdded(p, own)) {
+        const ids = routinesToRemove(p, own);
+        for (const id of ids) await deleteRecord(id);
+        const kept = own.filter(
+          (r) =>
+            r.payload.folder === p.title &&
+            p.routines.some((x) => x.name === r.payload.name) &&
+            !ids.includes(r.id),
+        ).length;
+        notify.success(
+          t("discover.programRemoved", { title: p.title }) +
+            (kept ? " " + t("discover.programKept", { count: kept }) : ""),
+        );
+      } else {
+        const count = await addProgram(p);
+        notify.success(t("discover.programAdded", { count, title: p.title }));
+      }
+    } catch {
+      notify.error(t("discover.programFailed", { title: p.title }));
+    } finally {
+      setProgramBusy(false);
+    }
+  };
+  // "Gör det till ett schema": the routines first, then Nytt schema with its weeks.
+  const programPlan = async (p: Program) => {
+    if (programBusy) return;
+    setProgramBusy(true);
+    try {
+      await addProgram(p);
+      setProgramId(null);
+      navigate(newPlanPath(p.id));
+    } catch {
+      notify.error(t("discover.programFailed", { title: p.title }));
+    } finally {
+      setProgramBusy(false);
+    }
+  };
+  const openProgram = programById(programId) ?? null;
+  const programs = (
+    <>
+      <ProgramList
+        programs={PROGRAMS}
+        chip={programChip}
+        onChip={setProgramChip}
+        isAdded={(p) => isProgramAdded(p, own)}
+        busy={programBusy}
+        onToggle={(p) => void toggleProgram(p)}
+        onOpen={(p) => setProgramId(p.id)}
+      />
+      <ProgramSheet
+        program={openProgram}
+        musclesOf={musclesOf}
+        added={!!openProgram && isProgramAdded(openProgram, own)}
+        busy={programBusy}
+        onClose={() => setProgramId(null)}
+        onToggle={(p) => void toggleProgram(p)}
+        onMakePlan={(p) => void programPlan(p)}
+      />
+    </>
+  );
   const sessions = useMemo(
     () => lastSessions(completedWorkouts(state.records)),
     [state.records],
@@ -234,18 +334,50 @@ export default function DiscoverPanel({
   if (!shared.ready)
     return (
       <div className="col-12 discover-panel">
-        <p className="empty" role="status">
-          {shared.canShare ? (
-            t("sharedRoutines.offline")
-          ) : (
-            <>
-              {t("sharedRoutines.signIn")}{" "}
-              <Link className="text-button" to="/auth">
-                {t("shared.signInLink")}
-              </Link>
-            </>
-          )}
-        </p>
+        {programs}
+        {shared.canShare ? (
+          <p className="empty" role="status">
+            {t("sharedRoutines.offline")}
+          </p>
+        ) : (
+          <div className="discover-others">
+            <div className="list">
+              <div className="row discover-others-row">
+                <Link
+                  className="row-main row-open discover-others-open"
+                  to="/auth"
+                >
+                  <span className="discover-others-text">
+                    <span className="row-title">{t("discover.others")}</span>
+                    <span className="row-sub">
+                      {t("discover.othersSignIn")}
+                    </span>
+                  </span>
+                  <span className="discover-others-go">
+                    {t("discover.signIn")}
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  className="icon-btn"
+                  aria-label={t("discover.othersInfoLabel")}
+                  aria-expanded={othersInfo}
+                  onClick={() => setOthersInfo((on) => !on)}
+                >
+                  <Info size={20} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+            <Reveal>
+              {othersInfo && (
+                <p className="program-note" role="note">
+                  {t("discover.othersInfo")}
+                </p>
+              )}
+            </Reveal>
+          </div>
+        )}
       </div>
     );
 
@@ -253,6 +385,7 @@ export default function DiscoverPanel({
   return (
     <div className="col-12 discover-panel">
       {workoutStart.confirmation}
+      {programs}
       <label className="search-field discover-search">
         <Search size={20} aria-hidden="true" />
         <input
