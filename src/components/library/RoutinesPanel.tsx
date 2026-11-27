@@ -40,6 +40,7 @@ import {
   type RoutineSort,
 } from "@/lib/routine-library";
 import { ownTileFacts } from "@/lib/routine-tile-facts";
+import { exerciseDisplayName } from "@/lib/exercise-name";
 import { local, storageKeys, writeStored } from "@/lib/storage";
 import RoutinePlan from "@/components/RoutinePlan";
 import { useCardioFields } from "@/hooks/useCardioFields";
@@ -347,8 +348,12 @@ export default function RoutinesPanel({
         (!activeFolder || r.payload.folder === activeFolder) &&
         (!needle ||
           r.payload.name.toLocaleLowerCase().includes(needle) ||
-          r.payload.exercises.some((ex) =>
-            ex.name.toLocaleLowerCase().includes(needle),
+          r.payload.exercises.some(
+            (ex) =>
+              ex.name.toLocaleLowerCase().includes(needle) ||
+              exerciseDisplayName(ex.exerciseId, ex.name)
+                .toLocaleLowerCase()
+                .includes(needle),
           )),
     );
     return sortRoutines(shown, lastDone, sort, pins, currentLocale());
