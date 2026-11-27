@@ -3,9 +3,12 @@
  * swaps the location with a replace before the page renders.
  *
  * - `/progress?tab=goals` → `/progress/goals` (Goals became a subscreen).
- * - `/library?tab=plan` → `/library/plan` (Plan became a subscreen).
- * - `/library/shared`, `/library?view=shared` or `?tab=shared` →
- *   `/library?tab=discover` (Shared routines became the Upptäck tab).
+ * - `/library/plan` and `/library?tab=plan` → `/library?tab=plans` (v6: the
+ *   plans are Library's Scheman tab; `/library/plan/<id>`, a plan's status
+ *   page, stays).
+ * - `/library?tab=discover`, `/library/shared`, `/library?view=shared` or
+ *   `?tab=shared` → `/library?view=discover` (v6: Upptäck is the "Mina |
+ *   Upptäck" segment inside Rutiner).
  * - `/routines` → `/library`, `/my-exercises` → `/library?tab=exercises`.
  * - `?tab=stats` and `?tab=routines` name the default and are dropped.
  *
@@ -36,11 +39,18 @@ export function legacyRedirect(
     return null;
   }
   if (path === "/library/shared")
-    return go("/library", ["tab", "view"], { tab: "discover" });
+    return go("/library", ["tab", "view"], { view: "discover" });
+  if (path === "/library/plan")
+    return go("/library", ["tab", "view"], { tab: "plans" });
   if (path === "/library") {
-    if (tab === "plan") return go("/library/plan", ["tab", "view"]);
-    if (tab === "shared" || (view === "shared" && tab !== "exercises"))
-      return go("/library", ["tab", "view"], { tab: "discover" });
+    if (tab === "plan")
+      return go("/library", ["tab", "view"], { tab: "plans" });
+    if (
+      tab === "discover" ||
+      tab === "shared" ||
+      (view === "shared" && tab !== "exercises")
+    )
+      return go("/library", ["tab", "view"], { view: "discover" });
     if (tab === "routines") return go("/library", ["tab"]);
     return null;
   }

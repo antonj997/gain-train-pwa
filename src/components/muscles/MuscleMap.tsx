@@ -20,6 +20,13 @@ type Props = {
   /** The spoken description; without one the map is decorative. */
   title?: string;
   className?: string;
+  /**
+   * One side only (v6 §E3: the editor's picker, 138 × 327 px); both side by
+   * side by default.
+   */
+  side?: "front" | "back";
+  /** A tap on a muscle shape, with the muscles it draws (a shortcut). */
+  onPick?: (muscles: readonly Muscle[]) => void;
 };
 
 const FIG = "var(--gt-map-fig)";
@@ -81,12 +88,14 @@ function Muscles({
   round,
   fills,
   rank,
+  onPick,
 }: {
   shapes: readonly MuscleShape[];
   clip: string;
   round: string;
   fills: Fills;
   rank?: Ranks;
+  onPick?: (muscles: readonly Muscle[]) => void;
 }) {
   return (
     <g filter={`url(#${round})`}>
@@ -103,6 +112,7 @@ function Muscles({
             d={d}
             fill={pickFill(muscles, fills, rank) ?? OFF}
             data-muscle={id}
+            onClick={onPick && (() => onPick(muscles))}
           />
         ))}
       </g>
@@ -117,12 +127,14 @@ function Figure({
   ids,
   fills,
   rank,
+  onPick,
 }: {
   geometry: FigureGeometry;
   side: "front" | "back";
   ids: Ids;
   fills: Fills;
   rank?: Ranks;
+  onPick?: (muscles: readonly Muscle[]) => void;
 }) {
   const torso = side === "front" ? geometry.torsoFront : geometry.torsoBack;
   const half = (
@@ -135,6 +147,7 @@ function Figure({
           round={ids.round}
           fills={fills}
           rank={rank}
+          onPick={onPick}
         />
         <path
           d={geometry.arm}
@@ -152,6 +165,7 @@ function Figure({
         round={ids.round}
         fills={fills}
         rank={rank}
+        onPick={onPick}
       />
       <path
         d={torso}
@@ -178,7 +192,15 @@ function Figure({
  * by side, each muscle in its fill (untrained ones grey) on a black figure.
  * Put it in a `.muscle-map` panel; it fills the panel's width.
  */
-function MuscleMap({ fills, rank, figure, title, className }: Props) {
+function MuscleMap({
+  fills,
+  rank,
+  figure,
+  title,
+  className,
+  side,
+  onPick,
+}: Props) {
   const uid = svgId(useId());
   const content = useMemo(() => {
     const geometry = FIGURES[figure];
@@ -202,31 +224,48 @@ function MuscleMap({ fills, rank, figure, title, className }: Props) {
             <path d={geometry.torsoBack} />
           </clipPath>
         </defs>
-        <g transform="translate(10 0)">
+        {side ? (
           <Figure
             geometry={geometry}
-            side="front"
+            side={side}
             ids={ids}
             fills={fills}
             rank={rank}
+            onPick={onPick}
           />
-        </g>
-        <g transform="translate(130 0)">
-          <Figure
-            geometry={geometry}
-            side="back"
-            ids={ids}
-            fills={fills}
-            rank={rank}
-          />
-        </g>
+        ) : (
+          <>
+            <g transform="translate(10 0)">
+              <Figure
+                geometry={geometry}
+                side="front"
+                ids={ids}
+                fills={fills}
+                rank={rank}
+                onPick={onPick}
+              />
+            </g>
+            <g transform="translate(130 0)">
+              <Figure
+                geometry={geometry}
+                side="back"
+                ids={ids}
+                fills={fills}
+                rank={rank}
+                onPick={onPick}
+              />
+            </g>
+          </>
+        )}
       </>
     );
-  }, [uid, figure, fills, rank]);
+  }, [uid, figure, fills, rank, side, onPick]);
   return (
     <svg
       className={"muscle-map-svg" + (className ? " " + className : "")}
-      viewBox="13 0 214 218"
+      // One side is the figure's own 100 units less the margin both share.
+      viewBox={side ? "3 0 94 218" : "13 0 214 218"}
+      data-side={side}
       focusable="false"
       data-figure={figure}
       {...(title

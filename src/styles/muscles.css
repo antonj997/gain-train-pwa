@@ -154,14 +154,102 @@
   gap: 0 var(--gt-space-3);
 }
 
-/* The editor's muscle picker: a small live map, Simple | Advanced, and a
-   row per group or muscle with – / Lite / Mycket at the right. */
+/* The editor's muscle picker (v6 §E3, E4): Simple | Advanced over two
+   columns. Left, one side of the figure at 138 × 327 px with Fram | Bak; the
+   column is sticky under the sheet's title while the levels scroll, with a
+   hairline under it once stuck. The two sides cross-fade. Right, a row per
+   group or muscle, its name over Ingen / Lite / Mycket. */
 .muscle-map-preview {
   padding: var(--gt-space-3);
 }
 .muscle-map-preview .muscle-map-svg {
   max-width: 190px;
   margin: 0 auto;
+}
+.muscle-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-3);
+}
+.muscle-picker-head .segmented {
+  flex: 0 1 200px;
+}
+.muscle-picker-grid {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: var(--gt-space-3);
+  align-items: start;
+}
+.muscle-picker-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+  padding-bottom: var(--gt-space-2);
+  border-bottom: 1px solid transparent;
+  background-color: var(--gt-surface);
+  transition: border-color var(--gt-motion);
+}
+.muscle-picker-map.is-sticky {
+  position: sticky;
+  top: var(--picker-top, 96px);
+  z-index: 1;
+}
+.muscle-picker-map.is-stuck {
+  border-bottom-color: var(--gt-line-strong);
+}
+.muscle-map-side {
+  display: grid;
+  padding: var(--gt-space-1) 6px;
+}
+.muscle-map-face {
+  grid-area: 1 / 1;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--gt-dur-morph-in) var(--gt-ease-out);
+}
+.muscle-map-face.is-shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+.muscle-map-side .muscle-map-svg {
+  width: 138px;
+  max-width: 100%;
+  height: 327px;
+  margin: 0 auto;
+}
+.muscle-map-side .muscle-map-muscles path {
+  cursor: pointer;
+}
+@media (prefers-reduced-motion: reduce) {
+  .muscle-map-face {
+    transition-duration: var(--gt-dur-fade);
+    transition-timing-function: linear;
+  }
+}
+.muscle-picker-hint {
+  margin: 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  line-height: 1.4;
+  text-align: center;
+}
+.muscle-picker-levels {
+  min-width: 0;
+}
+.muscle-picker-levels .level-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--gt-space-1);
+  min-height: 0;
+  padding-block: 6px var(--gt-space-2);
+}
+.muscle-picker-levels .level-row .segmented {
+  width: 100%;
+}
+.level-row-sub {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
 }
 .level-groups {
   display: flex;

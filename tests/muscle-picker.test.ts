@@ -5,6 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { customSchema, type CustomExercise } from "../src/data/model.ts";
 import { groupMuscles } from "../src/data/exercise-muscles.ts";
 import {
+  cycleChoice,
+  cycleLevel,
   groupChoice,
   levelChoice,
   muscleChoice,
@@ -88,27 +90,68 @@ const picker = (data: CustomExercise) =>
     createElement(MusclePicker, { data, onChange: () => {} }),
   );
 
-test("the picker: a map, the seven groups and the icon tiles", () => {
+test("the picker: a map, the seven groups and the line on the category", () => {
   const html = picker(exercise({ categories: ["Chest"] }));
-  assert.match(html, /class="muscle-map muscle-map-preview"/);
+  assert.match(html, /class="muscle-map muscle-map-preview muscle-map-side"/);
   assert.equal(html.split('class="level-row"').length - 1, 7);
-  // Eight icons; none chosen shows the dumbbell as chosen.
-  assert.equal(html.split('class="icon-choice"').length - 1, 8);
-  assert.equal(html.split('aria-pressed="true"').length - 1, 1);
-  assert.match(
-    html,
-    /aria-pressed="true"><span class="icon-choice-tile" data-tone="shoulders" aria-hidden="true"><svg[^>]*data-equipment="dumbbell"/,
-  );
-  // – is spoken as a word.
-  assert.match(html, /aria-label="(None|Ingen)"/);
+  // v6: no icon tiles; the equipment sets the icon (the editor's chips).
+  assert.doesNotMatch(html, /icon-choice/);
+  // The category the muscles give.
+  assert.match(html, /class="editor-derived"/);
+  assert.match(html, /<b>(Shoulders|Axlar)<\/b>/);
 });
 
-test("the body icon draws the chosen muscles; a mixed group says so", () => {
+test("with no muscles chosen the line says how the group is picked; a mixed group says so", () => {
+  const empty = picker(exercise({ category: "Other" }));
+  assert.match(empty, /(Choose muscles|Välj muskler)\. /);
   const data = withMuscleChoice(exercise(), "sideDelts", "some");
-  const html = picker({ ...data, icon: "body" });
+  assert.match(picker(data), /class="level-row-mixed"/);
+});
+
+// ---- v6 §E3, E4: the larger, flippable, sticky map beside the levels ----
+
+test("a tap on the map cycles Ingen → Mycket → Lite → Ingen", () => {
+  assert.equal(cycleLevel(undefined), 1);
+  assert.equal(cycleLevel(1), 0.5);
+  assert.equal(cycleLevel(0.5), undefined);
+  assert.equal(cycleChoice("none"), "much");
+  assert.equal(cycleChoice("much"), "some");
+  assert.equal(cycleChoice("some"), "none");
+  assert.equal(cycleChoice("mixed"), "none");
+});
+
+test("the picker: two columns, Fram | Bak over one side, Ingen | Lite | Mycket beside", () => {
+  const html = picker(exercise({ categories: ["Chest"] }));
+  assert.match(html, /class="muscle-picker-grid"/);
+  // The map column comes first and is sticky.
   assert.match(
     html,
-    /aria-pressed="true"><span class="icon-choice-tile" data-tone="shoulders" aria-hidden="true"><svg class="muscle-icon"/,
+    /class="muscle-picker-grid"><div class="muscle-picker-map is-sticky"/,
   );
-  assert.match(html, /class="level-row-mixed"/);
+  // One side at a time: both faces drawn, the front shown, each one side.
+  assert.equal(html.split('data-side="front"').length - 1, 1);
+  assert.equal(html.split('data-side="back"').length - 1, 1);
+  assert.match(
+    html,
+    /class="muscle-map-face is-shown"[^>]*><svg[^>]*viewBox="3 0 94 218"[^>]*data-side="front"/,
+  );
+  // Fram | Bak.
+  assert.match(html, />(Front|Fram)<\/button>/);
+  assert.match(html, />(Back|Bak)<\/button>/);
+  // Ingen is a word now, and it is neutral when chosen.
+  assert.match(html, />(None|Ingen)<\/button>/);
+  assert.match(html, /segmented-thumb is-neutral/);
+});
+
+test("Avancerad lists each muscle with its Latin name", () => {
+  const html = renderToStaticMarkup(
+    createElement(MusclePicker, {
+      data: exercise({ muscles: { obliques: 1, abs: 0.5 } }),
+      onChange: () => {},
+      defaultMode: "advanced",
+    }),
+  );
+  assert.match(html, /class="level-row-sub">rectus abdominis</);
+  assert.match(html, /class="level-row-sub">quadriceps femoris</);
+  assert.equal(html.split('class="level-row"').length - 1, 23);
 });

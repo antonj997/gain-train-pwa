@@ -3,6 +3,7 @@
 // workout. Pure, so it is tested (tests/routine-library.test.ts).
 import type { Exercise, Routine, Workout } from "../data/model";
 import { isDrop } from "../data/drops";
+import { initialSet, type ExerciseDefaults } from "../data/workouts";
 import { parseSharedSet, toSharedSet } from "./shared-routines";
 
 /** Icons a tile shows at most; more categories become a "+N" chip. */
@@ -215,4 +216,34 @@ export function plannedSetsByCategory(
   return [...counts]
     .map(([category, sets]) => ({ category, sets }))
     .sort((a, b) => b.sets - a.sets);
+}
+
+/** Working sets a new routine exercise starts with (v6 §E5; it was 1). */
+export const NEW_ROUTINE_SETS = 3;
+
+/**
+ * The routine with the picked exercises added at the end, in the order
+ * picked, each with three empty working sets (their targets come from
+ * history at the start). New ids throughout.
+ */
+export function addExercisesToRoutine(
+  routine: Routine,
+  items: readonly ({ id: string; name: string } & ExerciseDefaults)[],
+  newId: () => string = () => crypto.randomUUID(),
+): Routine {
+  return {
+    ...routine,
+    exercises: [
+      ...routine.exercises,
+      ...items.map((item) => ({
+        id: newId(),
+        exerciseId: item.id,
+        name: item.name,
+        sets: Array.from({ length: NEW_ROUTINE_SETS }, () => ({
+          ...initialSet(item.id, item),
+          id: newId(),
+        })),
+      })),
+    ],
+  };
 }

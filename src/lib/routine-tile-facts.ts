@@ -7,6 +7,7 @@ import { t } from "../i18n";
 import { sharedByLine } from "./display-name";
 import { countLabel, durationLabel } from "./labels";
 import { lastUsedLabel } from "./library";
+import { exerciseDisplayName } from "./exercise-name";
 import { estimatedMinutes, routineLength } from "./routine-preview";
 import { tileIcons } from "./routine-library";
 import {
@@ -90,6 +91,11 @@ export function sharedTileFacts(row: SharedRoutineRow) {
     foot: row.mine ? t("sharedPreview.byYou") : sharedByLine(row.by_name),
     minutes,
     facts,
-    names: parsed.map((exercise) => exercise.name),
+    // Search finds the stored and the shown (Swedish) name.
+    names: parsed.flatMap((exercise) =>
+      exercise.builtin
+        ? [exercise.name, exerciseDisplayName(exercise.builtin, exercise.name)]
+        : [exercise.name],
+    ),
   };
 }
