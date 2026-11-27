@@ -1138,7 +1138,7 @@ export const en = {
   "plan.saveFailed": "Could not save the plan. Try again.",
   "plan.edit": "Edit plan",
   "plan.name": "Name",
-  "plan.namePlaceholder": "Autumn block",
+  "plan.namePlaceholder": "e.g. Winter block",
   "plan.repeatsEvery": "Repeats every (weeks)",
   "plan.weeksInCycle": "Weeks in the cycle",
   "plan.delete": "Delete plan",

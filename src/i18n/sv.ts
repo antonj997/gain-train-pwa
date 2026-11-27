@@ -1150,7 +1150,7 @@ export const sv = {
   "plan.saveFailed": "Kunde inte spara schemat. Försök igen.",
   "plan.edit": "Redigera schema",
   "plan.name": "Namn",
-  "plan.namePlaceholder": "Höstblock",
+  "plan.namePlaceholder": "t.ex. Vinterblock",
   "plan.repeatsEvery": "Upprepas var (veckor)",
   "plan.weeksInCycle": "Veckor i cykeln",
   "plan.delete": "Radera schema",
