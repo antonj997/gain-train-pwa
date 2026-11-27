@@ -28,6 +28,7 @@ import {
   type RankedRecord,
 } from "@/data/record-rank";
 import { workoutTargets } from "@/data/targets";
+import { lowerTarget } from "@/data/fatigue";
 import { summarize } from "@/data/summary";
 import { loadKeyOf } from "@/lib/load-keys";
 import { targetRowText, targetSource } from "@/lib/set-target";
@@ -242,6 +243,7 @@ function Editor({
   const { unitFor } = weightUnits;
   // v6 §D5: each exercise's note, weight step and rest time.
   const exerciseSettings = useExerciseSettings();
+  const { stepFor } = exerciseSettings;
   // Each set's target (double progression, targets.ts), worked out again
   // only when the other finished workouts or the shape of this one change:
   // not on every typed value.
@@ -252,7 +254,7 @@ function Editor({
   const shape = w.exercises
     .map(
       (ex) =>
-        `${ex.exerciseId}:` +
+        `${ex.exerciseId}:${ex.repRange ? `${ex.repRange.min}-${ex.repRange.max}` : ""}:${ex.fatigue ?? ""}:` +
         ex.sets
           .map((s) =>
             [s.id, s.section, s.drop ? 1 : 0, loadKeyOf(s), s.measure].join(
@@ -270,29 +272,34 @@ function Editor({
         latestRecords.current,
         { id, payload: workout },
         unitFor,
+        stepFor,
       );
       const exerciseOf = new Map(
         workout.exercises.flatMap((ex) =>
-          ex.sets.map((s) => [s.id, ex.exerciseId]),
+          ex.sets.map((s) => [s.id, ex] as const),
         ),
       );
       return new Map(
-        [...found].map(([setId, { target, last }]) => [
-          setId,
-          {
-            text: targetRowText(
-              target,
-              last,
-              unitFor(exerciseOf.get(setId) ?? ""),
-            ),
-            source: targetSource(target, last),
-          },
-        ]),
+        [...found].map(([setId, { target, last }]) => {
+          const ex = exerciseOf.get(setId);
+          // v6 §D10: a target lowered for fatigue is a step lighter today.
+          const shown =
+            ex?.fatigue === "lowered"
+              ? lowerTarget(target, stepFor(ex.exerciseId))
+              : target;
+          return [
+            setId,
+            {
+              text: targetRowText(shown, last, unitFor(ex?.exerciseId ?? "")),
+              source: targetSource(shown, last),
+            },
+          ];
+        }),
       );
     },
     // shape, historyKey and planKey stand in for the records they summarise.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [historyKey, shape, planKey, unitFor, w.date, id],
+    [historyKey, shape, planKey, unitFor, stepFor, w.date, id],
   );
   // Lift goals: a mark by the exercise's name, and a check-in or the goal's
   // own lift as a set's target.

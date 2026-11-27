@@ -424,3 +424,96 @@ test("workoutTargets gives each working set its target, lighter in a deload week
   // 10 % lighter than last time's 80 kg, the same reps.
   assert.deepEqual(deload.get(sets[1].id)!.target, { weight: 72.5, reps: 6 });
 });
+
+// ---- v6 P1: the exercise's step, its range, and a lowered session ----
+
+test("step 2 for dumbbells: the top of 8–10 at 20 kg gives 22 × 8", () => {
+  assert.deepEqual(
+    suggestTarget(
+      [set({ weight: 20, reps: 10 })],
+      { repRange: { min: 8, max: 10 }, step: 2 },
+      "kg",
+    ),
+    { weight: 22, reps: 8 },
+  );
+  // A machine's 5 kg step, and pounds keep 5 lb whatever the kg step.
+  assert.deepEqual(
+    suggestTarget(
+      [set({ weight: 60, reps: 15 })],
+      { repRange: { min: 10, max: 15 }, step: 5 },
+      "kg",
+    ),
+    { weight: 65, reps: 10 },
+  );
+  const lb = suggestTarget(
+    [set({ weight: 100 * KG_PER_LB, reps: 10 })],
+    { repRange: { min: 8, max: 10 }, step: 2 },
+    "lb",
+  );
+  assert.equal(Math.round(lb!.weight! / KG_PER_LB), 105);
+});
+
+test("a session whose target was lowered for fatigue is skipped as the basis (§D4)", () => {
+  const records = [
+    record("2026-11-01", [set({ weight: 22, reps: 8 })]),
+    record("2026-11-08", [set({ weight: 20, reps: 8 })]),
+  ];
+  // B, the newer one, was lowered.
+  const lowered = records[1].payload as Workout;
+  lowered.exercises[0] = { ...lowered.exercises[0], fatigue: "lowered" };
+  const current = {
+    id: crypto.randomUUID(),
+    payload: {
+      ...(records[0].payload as Workout),
+      date: "2026-11-12",
+      status: "draft" as const,
+      exercises: [
+        {
+          id: crypto.randomUUID(),
+          exerciseId: "builtin:bench-press",
+          name: "Bench Press",
+          sets: [set({ done: false })],
+        },
+      ],
+    },
+  };
+  const history = targetHistory(records, current, 0, 0);
+  assert.deepEqual(
+    history.map((s) => s.weight),
+    [22],
+  );
+  // The next target comes from A: one more rep at 22.
+  assert.deepEqual(
+    workoutTargets(records, current, "kg").get(
+      current.payload.exercises[0].sets[0].id,
+    )!.target,
+    {
+      weight: 22,
+      reps: 9,
+    },
+  );
+});
+
+test("workoutTargets uses each exercise's step and rep range", () => {
+  const records = [record("2026-11-08", [set({ weight: 20, reps: 10 })])];
+  const sets = [set({ done: false })];
+  const current = {
+    id: crypto.randomUUID(),
+    payload: {
+      ...(records[0].payload as Workout),
+      date: "2026-11-12",
+      status: "draft" as const,
+      exercises: [
+        {
+          id: crypto.randomUUID(),
+          exerciseId: "builtin:bench-press",
+          name: "Bench Press",
+          repRange: { min: 8, max: 10 },
+          sets,
+        },
+      ],
+    },
+  };
+  const targets = workoutTargets(records, current, "kg", () => 2);
+  assert.deepEqual(targets.get(sets[0].id)!.target, { weight: 22, reps: 8 });
+});
