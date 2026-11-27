@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Plus } from "lucide-react";
 import { useData } from "@/contexts/useData";
 import PlanEditor, { PLANS_SCOPE } from "@/components/plan/PlanEditor";
@@ -8,8 +9,11 @@ import MotionList from "@/components/motion/MotionList";
 import ListRow from "@/components/ui/ListRow";
 import type { PanelRequest } from "@/components/library/ExercisesPanel";
 import { useWithUndo } from "@/hooks/useMessages";
-import { today as todayDate } from "@/data/model";
-import { activePlans } from "@/data/plans";
+import { today as todayDate, type Plan } from "@/data/model";
+import { activePlans, defaultNewPlan } from "@/data/plans";
+import { programById } from "@/data/programs";
+import { routines as routineRecords } from "@/data/selectors";
+import { programPlanDraft } from "@/lib/program-actions";
 import { doneDatesOf } from "@/data/plan-status";
 import { planRowStatus, weeksFulfilledOf } from "@/lib/plan-rows";
 import { planStatusPath } from "@/lib/routes";
@@ -36,10 +40,45 @@ export default function PlansTab({
   const [open, setOpen] = useState(false);
   // A new key each time, so a reopened editor starts afresh.
   const [session, setSession] = useState(0);
+  // A new plan prefilled from a standard programme, if any.
+  const [prefill, setPrefill] = useState<Plan | undefined>();
   const create = () => {
+    setPrefill(undefined);
     setSession((n) => n + 1);
     setOpen(true);
   };
+
+  // `?new=plan` (newPlanPath) opens Nytt schema once; with `&program=<id>`
+  // (Upptäck's "Gör det till ett schema") its weeks hold that programme's
+  // routines, found by the programme's folder and their names.
+  const [params, setParams] = useSearchParams();
+  const wantsNew = params.get("new") === "plan";
+  const programParam = params.get("program");
+  useEffect(() => {
+    if (!wantsNew) return;
+    const program = programById(programParam);
+    let draft: Plan | undefined;
+    if (program) {
+      const ids: Record<string, string> = {};
+      for (const r of routineRecords(state.records))
+        if (r.payload.folder === program.title) ids[r.payload.name] ??= r.id;
+      draft = programPlanDraft(
+        program,
+        ids,
+        today,
+        defaultNewPlan(plans, today),
+      );
+    }
+    const next = new URLSearchParams(params);
+    next.delete("new");
+    next.delete("program");
+    setParams(next, { replace: true });
+    setPrefill(draft);
+    setSession((n) => n + 1);
+    setOpen(true);
+    // Runs once per link: the records and plans are read as they are then.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantsNew, programParam]);
 
   // Library's header: + makes a plan.
   const handled = useRef(request?.n ?? 0);
@@ -47,6 +86,7 @@ export default function PlansTab({
     if (!request || request.n === handled.current) return;
     handled.current = request.n;
     if (request.kind !== "new") return;
+    setPrefill(undefined);
     setSession((n) => n + 1);
     setOpen(true);
   }, [request]);
@@ -114,6 +154,7 @@ export default function PlansTab({
           key={session}
           open={open}
           plan={null}
+          draft={prefill}
           onClose={() => setOpen(false)}
         />
       )}
