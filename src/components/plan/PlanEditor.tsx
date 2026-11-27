@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Pause, Play } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { ChevronRight, Pause, Play } from "lucide-react";
 import { notify, offerUndo } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -16,11 +16,21 @@ import { activeGoals, goalTitle } from "@/data/goals";
 import { type Goal, type Plan, today as todayDate } from "@/data/model";
 import {
   MAX_PHASE_WEEKS,
+  cyclePreset,
+  defaultDeload,
+  deloadWeeks,
+  periodSummary,
+  periodText,
+  phaseWeek,
   phaseWeeks,
   trimProgression,
+  withCyclePreset,
   withWeekKind,
   withWeekOneCopied,
 } from "@/data/phase";
+import PlanPeriodCalendar from "@/components/plan/PlanPeriodCalendar";
+import { periodLabels } from "@/lib/period-calendar";
+import { shiftDate } from "@/lib/dates";
 import {
   type PlanItem,
   activePlans,
@@ -30,6 +40,7 @@ import {
   groupsOf,
   overlapMessage,
   planDay,
+  resolveCell,
   trimOverrides,
   withOverride,
   withPaused,
@@ -48,16 +59,37 @@ export const PLANS_SCOPE = "plans";
 /** The cell being chosen: a template day, or one dated override. */
 type Target = { week: number; day: number } | { date: string };
 
+const periodValid = (p: Plan) =>
+  /^\d{4}-\d{2}-\d{2}$/.test(p.startDate) &&
+  /^\d{4}-\d{2}-\d{2}$/.test(p.endDate) &&
+  p.startDate <= p.endDate;
+
+/**
+ * The plan after its period changed (F1): a deload that was the length's
+ * default follows the new length's default (8 → 12 weeks: 7 + 1 becomes 5 + 1
+ * twice); another preset keeps its rhythm; deload weeks marked in the cycle
+ * stay as they are.
+ */
+function followLength(before: Plan, next: Plan): Plan {
+  if (!periodValid(next)) return next;
+  if (!next.deloadWeeks && next.weekKinds) return next;
+  const was = periodValid(before) ? cyclePreset(before) : null;
+  const wasDefault =
+    !periodValid(before) || was === defaultDeload(phaseWeeks(before));
+  if (wasDefault) return withCyclePreset(next, defaultDeload(phaseWeeks(next)));
+  return was ? withCyclePreset(next, was) : next;
+}
+
 /** Creates or edits one plan in a full sheet. `plan` is null for a new one. */
 export default function PlanEditor({
   open,
   plan,
-  draft: prefill,
+  draft: prefilled,
   onClose,
 }: {
   open: boolean;
   plan: PlanItem | null;
-  /** A prefilled new plan (v6: from a standard programme); with `plan` null. */
+  /** A new plan prefilled (P4: a plan made from a standard programme). */
   draft?: Plan;
   onClose: () => void;
 }) {
@@ -74,7 +106,12 @@ export default function PlanEditor({
   const dayNames = weekdayNames();
 
   const [draft, setDraft] = useState<Plan>(() => {
-    if (!plan) return prefill ?? defaultNewPlan(plans, today);
+    if (!plan) {
+      if (prefilled) return prefilled;
+      // A new plan gets the deload its length suggests (8 weeks: 7 + 1).
+      const fresh = defaultNewPlan(plans, today);
+      return withCyclePreset(fresh, defaultDeload(phaseWeeks(fresh)));
+    }
     // The id names the record; it is not part of the saved plan.
     const { id: _id, ...saved } = plan;
     return saved;
@@ -89,6 +126,20 @@ export default function PlanEditor({
   // Progression rows to make a lift goal from when the plan is saved.
   const [goalFor, setGoalFor] = useState<ReadonlySet<string>>(new Set());
   const set = (change: Partial<Plan>) => setDraft((d) => ({ ...d, ...change }));
+  // F1: the period row's sheet, and the plan as it was when it opened, so
+  // the deload follows the new length (see followLength).
+  const [periodOpen, setPeriodOpen] = useState(false);
+  const periodBase = useRef<Plan | null>(null);
+  // A cell that is a workout to train, routines and groups that still exist.
+  const isWorkout = (cell: string | null | undefined) => {
+    const day = resolveCell(cell, names);
+    return !!day && day.kind !== "rest";
+  };
+  // "Börjar dagen efter att Styrkeblock slutar."
+  const follows =
+    plans.find(
+      (p) => p.id !== plan?.id && shiftDate(p.endDate, 1) === draft.startDate,
+    ) ?? null;
   const goalTitleOf = (goalId: string | undefined) => {
     const goal = goalId ? goals.find((g) => g.id === goalId) : undefined;
     return goal ? goalTitle(goal) : null;
@@ -278,12 +329,34 @@ export default function PlanEditor({
             </p>
           )}
         </Reveal>
-        <PlanPeriodPicker
-          startDate={draft.startDate}
-          endDate={draft.endDate}
-          today={today}
-          onChange={set}
-        />
+        {/* F1: the period is one row that opens the period picker. */}
+        <div className="plan-field">
+          <span className="group-title" id="period-label">
+            {t("plan.periodLabel")}
+          </span>
+          <button
+            type="button"
+            className="plan-period-row"
+            aria-labelledby="period-label period-value"
+            aria-haspopup="dialog"
+            onClick={() => {
+              periodBase.current = draft;
+              setPeriodOpen(true);
+            }}
+          >
+            <span id="period-value">
+              {validPeriod
+                ? periodText(draft.startDate, draft.endDate)
+                : t("plan.needPeriod")}
+            </span>
+            <ChevronRight size={20} aria-hidden="true" />
+          </button>
+          {follows && (
+            <p className="row-sub plan-field-note">
+              {t("plan.periodAfter", { plan: follows.name })}
+            </p>
+          )}
+        </div>
         <Reveal>
           {problem && draft.name.trim() && (
             <p className="field-error" role="alert">
@@ -301,6 +374,44 @@ export default function PlanEditor({
           }
           onCopyWeekOne={() => setDraft(withWeekOneCopied)}
         />
+        {/* F1: the whole period in the compact calendar's squares. */}
+        {validPeriod && weeks <= MAX_PHASE_WEEKS && (
+          <section className="plan-field" aria-labelledby="whole-period">
+            <span className="group-title" id="whole-period">
+              {t("plan.wholePeriod")}
+            </span>
+            <div className="card plan-period-card">
+              <PlanPeriodCalendar
+                start={draft.startDate}
+                end={draft.endDate}
+                label={t("plan.periodCalendar", {
+                  name: draft.name.trim() || t("plan.new"),
+                  period: periodSummary(draft, isWorkout),
+                })}
+                cell={(date) => {
+                  const inside =
+                    date >= draft.startDate && date <= draft.endDate;
+                  return {
+                    planned: inside && isWorkout(planDay(draft, date).cell),
+                    deload: inside && !!phaseWeek(draft, date)?.deload,
+                    today: date === today,
+                  };
+                }}
+                labels={periodLabels(draft, today)}
+                legend={
+                  deloadWeeks(draft).length
+                    ? ["planned", "deload"]
+                    : ["planned"]
+                }
+                rowGap={2}
+              />
+              <p className="row-sub plan-period-line">
+                {periodSummary(draft, isWorkout)}
+              </p>
+            </div>
+          </section>
+        )}
+        {/* P3: Planerad vecka (Task 3.7) */}
         {validPeriod && weeks <= MAX_PHASE_WEEKS && (
           <PlanProgression
             plan={draft}
@@ -375,6 +486,38 @@ export default function PlanEditor({
             onClick={() => void submit()}
           >
             {busy ? t("common.saving") : t("plan.save")}
+          </button>
+        </div>
+      </Sheet>
+      <Sheet
+        open={periodOpen}
+        size="full"
+        onClose={() => setPeriodOpen(false)}
+        title={t("plan.periodLabel")}
+        description={
+          validPeriod ? periodText(draft.startDate, draft.endDate) : undefined
+        }
+      >
+        <PlanPeriodPicker
+          startDate={draft.startDate}
+          endDate={draft.endDate}
+          today={today}
+          onChange={(change) =>
+            setDraft((d) =>
+              followLength(periodBase.current ?? d, {
+                ...d,
+                ...change,
+              }),
+            )
+          }
+        />
+        <div className="sheet-footer">
+          <button
+            type="button"
+            className="btn-primary btn-block"
+            onClick={() => setPeriodOpen(false)}
+          >
+            {t("common.done")}
           </button>
         </div>
       </Sheet>

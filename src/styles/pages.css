@@ -275,13 +275,35 @@ label.row {
   padding: 14px var(--gt-space-4);
   border-radius: var(--gt-radius-lg);
 }
+/* "Pass pågår · 4 min" is a status, so accent (v6 H1: green is done only). */
 .home-page .resume-card small {
-  color: var(--gt-done);
-  font-size: var(--gt-fs-2);
-  font-weight: 600;
-}
-.home-page .resume-card:not(.is-running) small {
   color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+}
+/* The start dialog while a workout runs (A3): the text, then three buttons;
+   the last is danger text and asks for a second tap. */
+.start-running-text {
+  margin: 0 0 var(--gt-space-2);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-3);
+}
+.btn-quiet.start-discard {
+  color: var(--gt-danger-fg);
+}
+.btn-quiet.start-discard.is-armed {
+  background-color: var(--gt-danger-bg);
+}
+/* The running card's "Fortsätt passet" (A3): drawn as the primary button;
+   the whole card is the link. */
+.home-page .resume-card span.resume-go {
+  display: flex;
+  flex-direction: row;
+  gap: var(--gt-space-2);
+  margin-top: 4px;
+  color: var(--gt-on-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 600;
 }
 .home-page .resume-card strong {
   font-size: var(--gt-fs-4);
@@ -465,6 +487,11 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   color: var(--gt-ink);
 }
 .week-card-link {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  min-height: 44px;
   color: inherit;
   text-decoration: none;
 }
@@ -488,8 +515,49 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   flex-direction: column;
   gap: 6px;
 }
+/* v6 A2: 44 px days, 3 px apart (the mockup's strip); a movable day's hit
+   area reaches 2 px into the gaps, so it is at least 44 px wide at 360 px. */
 .week-card .week {
+  gap: 3px;
+}
+.day-cell.week-move::before {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  left: -2px;
+  content: "";
+}
+/* The legend under the strip: Gjort · Planerat · I dag, and "Flyttat hit
+   från mån" with the moved badge when the week holds a moved workout. */
+.week-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 10px 0 0;
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-1);
+  line-height: 1.4;
+}
+.week-legend > span {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
+}
+.week-legend .legend-mark {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+}
+.week-legend .legend-mark.is-trained {
+  background-color: var(--gt-done);
+}
+.week-legend .legend-mark.is-planned {
+  box-shadow: inset 0 0 0 2px var(--gt-line-control);
+}
+.week-legend .legend-mark.is-today {
+  box-shadow: inset 0 0 0 2px var(--gt-accent);
 }
 .week-days .day {
   position: relative;
@@ -512,12 +580,6 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   outline: 3px solid var(--gt-accent);
   outline-offset: 2px;
 }
-/* Today with a planned workout keeps its green outline inside the accent ring. */
-.week-card .day-cell.is-planned.is-today {
-  box-shadow:
-    inset 0 0 0 2px var(--gt-done),
-    0 0 0 2px var(--gt-accent);
-}
 /* While its ring is lifted or sliding, the day shows no outline of its own
    (today keeps its accent ring). */
 .week-card .week-days .day-cell.is-ghosted {
@@ -538,7 +600,7 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 /* The day the sheet is about: its outline gets an accent halo. */
 .week-card .week-days .day-cell.is-selected-day {
   box-shadow:
-    inset 0 0 0 2px var(--gt-done),
+    inset 0 0 0 2px var(--gt-line-control),
     0 0 0 2px var(--gt-surface),
     0 0 0 4px var(--gt-accent);
 }
@@ -557,7 +619,7 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   z-index: 3;
   display: none;
   border-radius: var(--gt-radius-day);
-  box-shadow: inset 0 0 0 2px var(--gt-done);
+  box-shadow: inset 0 0 0 2px var(--gt-line-control);
   pointer-events: none;
 }
 .week-ring[data-on] {
@@ -742,9 +804,6 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
   border-radius: var(--gt-radius-item);
   background-color: var(--gt-routine-fill);
 }
-.day-sheet-item .routine-badge-count {
-  border-color: var(--gt-routine-fill);
-}
 .day-sheet-tile {
   display: grid;
   flex: none;
@@ -901,6 +960,26 @@ html[data-nav-dir="morph"]::view-transition-new(root) {
 }
 .today-card .btn-quiet {
   align-self: center;
+}
+/* First start (v6 A1): the card's label is plain text, and the Kom igång
+   rows lead with a Lucide glyph on surface-2. */
+.first-start-label {
+  margin: 0;
+}
+.get-started {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-2);
+}
+.get-started-glyph {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: var(--gt-surface-2);
+  color: var(--gt-ink-2);
 }
 .home-log-past {
   align-self: center;
@@ -1905,6 +1984,45 @@ span.sparkline {
   flex-direction: column;
   gap: var(--gt-space-2);
 }
+/* F1: the period as one row ("8 veckor · 21 dec – 14 feb") that opens the
+   picker, a field's muted note, and the whole period's card with its lines
+   close under the squares (R8-14). */
+.plan-period-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--gt-space-3);
+  border: 1px solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-surface);
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-3);
+  text-align: left;
+  cursor: pointer;
+}
+.plan-period-row svg {
+  flex: none;
+  color: var(--gt-ink-3);
+}
+.plan-period-row:focus-visible {
+  outline: 3px solid var(--gt-accent);
+  outline-offset: 2px;
+}
+.plan-field-note {
+  margin: 0;
+}
+.plan-period-card {
+  padding: 12px 14px;
+}
+.plan-period-card .period-legend {
+  padding-top: 4px;
+}
+.plan-period-line {
+  margin: 2px 0 0;
+}
 /* The template: a row of seven day buttons for each week of the cycle. */
 .plan-grid {
   display: flex;
@@ -1943,6 +2061,16 @@ span.sparkline {
   line-height: 1.15;
   text-align: center;
   cursor: pointer;
+}
+/* At 360px seven days are 43px wide: the hit area reaches 2px into the
+   gaps, so every day is a 44px target (F1). */
+.day-cell.plan-cell::before {
+  position: absolute;
+  top: 0;
+  right: -2px;
+  bottom: 0;
+  left: -2px;
+  content: "";
 }
 .plan-cell > svg,
 .plan-cell-icon {
@@ -3205,6 +3333,10 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   flex-direction: column;
   gap: var(--gt-space-3);
 }
+/* Row titles in the status cards stay on the type scale (15/600). */
+.status-card .row-title {
+  font-size: var(--gt-fs-3);
+}
 .status-head {
   display: flex;
   flex-wrap: wrap;
@@ -3352,6 +3484,71 @@ html[data-nav-dir="pop"]::view-transition-new(root) {
   display: flex;
   align-items: center;
   gap: var(--gt-space-3);
+}
+.status-next .status-lift-text {
+  flex: 1;
+  min-width: 0;
+}
+/* F2: "Nästa pass · i dag" on the soft accent, higher up the page. */
+.status-next-card {
+  border-color: transparent;
+  background-color: var(--gt-accent-soft);
+}
+.status-next-when {
+  margin: 0;
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-2);
+  font-weight: 700;
+}
+/* F2: the top card, the period calendar and the adherence by week. */
+.plan-period-top .status-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.plan-period-top .status-head .row-sub {
+  margin: 0;
+}
+.plan-period-top-cal {
+  min-width: 0;
+}
+.plan-adherence {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--gt-space-2);
+  padding-top: var(--gt-space-2);
+  border-top: 1px solid var(--gt-line);
+}
+.plan-adherence-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gt-space-2);
+}
+.plan-adherence-count {
+  font-size: var(--gt-fs-4);
+  font-weight: 600;
+}
+.plan-adherence-status {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-right: -10px;
+}
+.plan-status-word {
+  color: var(--gt-accent);
+  font-size: var(--gt-fs-3);
+  font-weight: 700;
+}
+.plan-adherence-line {
+  margin: 0;
+}
+.plan-info-text {
+  margin: 0 0 var(--gt-space-4);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-3);
 }
 .status-play {
   display: grid;

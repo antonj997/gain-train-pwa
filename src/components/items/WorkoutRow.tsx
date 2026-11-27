@@ -11,6 +11,8 @@ type Props = {
   badge?: ReactNode;
   onClick: () => void;
   selected?: boolean;
+  /** A planned day to come: the tile's band is an outline. */
+  planned?: boolean;
 };
 
 /**
@@ -24,6 +26,7 @@ export default function WorkoutRow({
   badge,
   onClick,
   selected,
+  planned,
 }: Props) {
   return (
     <button
@@ -31,7 +34,7 @@ export default function WorkoutRow({
       className={"workout-row" + (selected ? " is-selected" : "")}
       onClick={onClick}
     >
-      <DateTile date={date} />
+      <DateTile date={date} planned={planned} />
       <span className="workout-row-text">
         <span className="workout-row-title">{title}</span>
         {(meta || badge) && (

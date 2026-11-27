@@ -9,12 +9,12 @@ import { type RecordDoc, type Workout } from "../src/data/model";
 import * as calendar from "../src/lib/history-calendar";
 import { weekdayIndex } from "../src/lib/dates";
 
-test("history defaults to the heatmap, filtering to the last year until a day is chosen", () => {
+test("history defaults to the compact grid, filtering to the last half year until a day is chosen", () => {
   const now = "2026-10-26";
   let state = calendar.createHistoryCalendar(now);
   assert.equal(state.display, "simple");
   assert.deepEqual(calendar.historyCalendarBounds(state, now), {
-    start: "2025-10-27",
+    start: "2026-05-04",
     end: now,
   });
   state = calendar.changeHistoryCalendar(
@@ -386,4 +386,72 @@ test("browsing goes forward as far as a running plan reaches", () => {
   // Without a limit, or with one in the past, it stops at this month as before.
   assert.equal(go("2026-12"), "2026-11");
   assert.equal(go("2026-12", "2026-01"), "2026-11");
+});
+
+// ---- v6 C1: the compact calendar (Task 2.6)
+
+test("a compact square is no button and no tap target; today is a dot", async () => {
+  const { createElement } = await import("react");
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const { loadComponent } = await import("./helpers/render");
+  const ActivityHeatmap = await loadComponent(
+    "@/components/ActivityHeatmap.tsx",
+  );
+  const now = "2026-11-19";
+  const html = renderToStaticMarkup(
+    createElement(ActivityHeatmap, {
+      value: calendar.createHistoryCalendar(now),
+      now,
+      counts: new Map([
+        ["2026-11-17", 1],
+        ["2026-11-19", 1],
+      ]),
+      instructionsId: "i",
+      headingId: "h",
+      planned: (date: string) => date === "2026-11-21",
+      change: () => {},
+    }),
+  );
+  // No square is a button or a link; the grid is one tab stop.
+  assert.doesNotMatch(html, /<button/);
+  assert.equal(html.match(/tabindex="0"/g)?.length, 1);
+  assert.doesNotMatch(html, /tryck/i);
+  const today = html.match(/<span class="([^"]*)" data-date="2026-11-19"/);
+  assert.ok(today, "today's square");
+  assert.match(today[1], /\bis-today-dot\b/);
+  assert.doesNotMatch(today[1], /(^| )is-today( |$)/);
+  // 26 week columns of squares, and Saturday's planned ring ahead.
+  assert.match(html, /--hm-cols:26/);
+  assert.match(html, /day-cell is-grid is-planned/);
+});
+
+test("the compact card reads Senaste halvåret with the workouts in the map", async () => {
+  const { workoutsInWindow } = await import("../src/lib/heatmap");
+  const { translate } = await import("../src/i18n");
+  const counts = new Map([
+    ["2026-04-01", 3], // before the half year
+    ["2026-06-01", 1], // the first day of the half year
+    ["2026-11-17", 2],
+    ["2026-11-20", 1], // after today
+  ]);
+  assert.equal(workoutsInWindow(counts, "2026-11-19"), 3);
+  assert.equal(translate("sv", "history.halfYear"), "Senaste halvåret");
+});
+
+test("the plan's line under the grid counts its workouts since the start", async () => {
+  const { planSinceLine } = await import("../src/lib/history-caption");
+  const { setCurrentLanguage } = await import("../src/i18n");
+  setCurrentLanguage("sv");
+  try {
+    assert.equal(
+      planSinceLine(
+        { name: "Styrkeblock", startDate: "2026-10-19" },
+        ["2026-10-12", "2026-10-19", "2026-11-17", "2026-11-20"],
+        "2026-11-19",
+      ),
+      "Styrkeblock: 2 pass sedan 19 okt",
+    );
+  } finally {
+    setCurrentLanguage("en");
+  }
 });

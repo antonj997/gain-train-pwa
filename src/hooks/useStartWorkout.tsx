@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { notify } from "@/lib/message-store";
 import { useData } from "@/contexts/useData";
@@ -7,10 +7,19 @@ import {
   WorkoutInProgressError,
   type StartedWorkout,
 } from "@/data/workout-start";
-import ConfirmDialog from "@/components/ConfirmDialog";
+import { customCategories, doneSetCount } from "@/data/selectors";
+import Sheet from "@/components/ui/Sheet";
 import { errorMessage } from "@/lib/errors";
+import { routineFromWorkout } from "@/lib/routine-library";
 import { workoutPath } from "@/lib/routes";
+import { finishWorkout } from "@/lib/workout-editor";
 import { useT } from "@/i18n/useT";
+import {
+  DISCARD_ARM_MS,
+  discardTap,
+  runningDialogText,
+} from "@/lib/running-workout";
+import RunningWorkoutChoices from "@/components/home/RunningWorkoutChoices";
 import { workoutTitle } from "@/lib/workout-name";
 
 type PendingStart = {
@@ -24,12 +33,19 @@ type PendingStart = {
 };
 
 export function useStartWorkout() {
-  const { startWorkout, deleteRecord, restoreWorkout } = useData();
+  const { state, save, startWorkout, deleteRecord, restoreWorkout } = useData();
   const navigate = useNavigate();
   const { t } = useT();
   const lock = useRef(false);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<PendingStart | null>(null);
+  const [armedAt, setArmedAt] = useState<number | null>(null);
+  // The armed discard falls back after its window.
+  useEffect(() => {
+    if (armedAt === null) return;
+    const timer = window.setTimeout(() => setArmedAt(null), DISCARD_ARM_MS);
+    return () => window.clearTimeout(timer);
+  }, [armedAt]);
   const attempt = async (request: PendingStart) => {
     if (lock.current) return;
     lock.current = true;
@@ -46,6 +62,7 @@ export function useStartWorkout() {
         request.replacing,
       );
       setPending(null);
+      setArmedAt(null);
       // A past workout opens on its details sheet, to pick the date first.
       const past = request.workout.startedAt === null;
       navigate(
@@ -110,28 +127,93 @@ export function useStartWorkout() {
       exercises: repeatExercises(workout.exercises),
     });
   };
+
   const replacing = pending?.replacing ?? [];
-  const confirmation = (
-    <ConfirmDialog
-      open={!!pending}
-      title={t("start.inProgressTitle")}
-      description={
-        replacing.length === 1
-          ? t("start.replaceOne", {
-              name: workoutTitle(replacing[0].name),
-              next: workoutTitle(pending?.workout.name ?? ""),
-            })
-          : t("start.replaceMany", {
-              count: replacing.length,
-              next: workoutTitle(pending?.workout.name ?? ""),
-            })
+  const runningId = replacing[0]?.id;
+  const runningRecord = runningId ? state.records[runningId] : undefined;
+  const running =
+    runningRecord?.kind === "workout" ? runningRecord.payload : null;
+  const dialog = running
+    ? runningDialogText(running, t)
+    : {
+        name: workoutTitle(replacing[0]?.name ?? ""),
+        title: t("start.runningTitle"),
+        sub: workoutTitle(replacing[0]?.name ?? ""),
+        text: t("start.runningText", {
+          name: workoutTitle(replacing[0]?.name ?? ""),
+        }),
+      };
+  const close = () => {
+    if (busy) return;
+    setPending(null);
+    setArmedAt(null);
+  };
+  /** Back to the running workout. */
+  const resume = () => {
+    if (!runningId) return;
+    setPending(null);
+    setArmedAt(null);
+    navigate(workoutPath(runningId));
+  };
+  /**
+   * The running workout's exercises become a routine, and it ends: kept in
+   * the log when it has checked sets, discarded (with Undo) when it has none,
+   * since a workout with nothing checked cannot be saved. Then the new
+   * workout starts.
+   */
+  const saveRoutineAndEnd = async () => {
+    if (!pending || !running || !runningId || lock.current) return;
+    lock.current = true;
+    setBusy(true);
+    let next: PendingStart = pending;
+    try {
+      await save(crypto.randomUUID(), "routine", routineFromWorkout(running));
+      if (doneSetCount(running) > 0) {
+        await save(
+          runningId,
+          "workout",
+          finishWorkout(running, Date.now(), customCategories(state.records)),
+        );
+        next = {
+          ...pending,
+          replacing: pending.replacing?.filter((w) => w.id !== runningId),
+        };
       }
-      cancelLabel={t("start.keep")}
-      confirmLabel={busy ? t("home.starting") : t("start.abandonAndStart")}
-      busy={busy}
-      onCancel={() => setPending(null)}
-      onConfirm={() => pending && void attempt(pending)}
-    />
+    } catch (error) {
+      notify.error(errorMessage(error, t("actions.routineFailed")));
+      return;
+    } finally {
+      lock.current = false;
+      setBusy(false);
+    }
+    await attempt(next);
+  };
+  const discard = () => {
+    if (!pending) return;
+    const now = Date.now();
+    if (discardTap(armedAt, now) === "arm") {
+      setArmedAt(now);
+      return;
+    }
+    void attempt(pending);
+  };
+  const confirmation = (
+    <Sheet
+      open={!!pending}
+      title={dialog.title}
+      description={dialog.sub}
+      onClose={close}
+    >
+      <RunningWorkoutChoices
+        name={dialog.name}
+        text={dialog.text}
+        armed={armedAt !== null}
+        busy={busy}
+        onContinue={resume}
+        onSaveRoutine={() => void saveRoutineAndEnd()}
+        onDiscard={discard}
+      />
+    </Sheet>
   );
   return { start, repeat, busy, confirmation };
 }

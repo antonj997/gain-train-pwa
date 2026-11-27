@@ -86,9 +86,20 @@ export default function TodayCard({
   const routine = pick.kind === "planned" ? routineById(pick.routineId) : null;
   const categories = planned?.categories ?? [];
   const rest = pick.kind !== "planned" && pick.rest;
+  // "I dag · Styrkeblock, vecka 3 av 12" inside a plan (v6 A2).
   const label = [
-    t("home.today"),
-    phase && t("plan.weekOf", { week: phase.week, weeks: phase.weeks }),
+    plan && phase
+      ? t("home.todayPlan", {
+          plan: plan.name,
+          week: phase.week,
+          weeks: phase.weeks,
+        })
+      : phase
+        ? [
+            t("home.today"),
+            t("plan.weekOf", { week: phase.week, weeks: phase.weeks }),
+          ].join(" · ")
+        : t("home.today"),
     phase?.deload && t("plan.deload"),
     rest ? t("home.todayRest") : !planned ? t("home.todayNothing") : null,
   ]
