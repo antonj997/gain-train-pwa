@@ -106,7 +106,7 @@ export const en = {
   "settings.perWeekUnit": { one: "workout a week", other: "workouts a week" },
   "settings.restTime": "Rest time",
   "settings.restSound": "Sound when rest ends",
-  "settings.vibrate": "Vibrate when a set is done",
+  "settings.vibrate": "Vibrate",
   "settings.lightAppearance": "Light appearance",
 
   // Train
@@ -1678,7 +1678,7 @@ export const en = {
   "tips.calendarDay": "Hold and drag to pick a period",
   "tips.swipeSet": "Swipe left to delete",
   "settings.mapFigure": "Muscle map",
-  "settings.mapFigureNote": "The figure on the exercise and plan maps.",
+  "settings.mapFigureNote": "The figure on the exercise and plan maps",
   "mapFigure.m": "Man",
   "mapFigure.f": "Woman",
   "settings.showTips": "Show tips again",
@@ -1757,7 +1757,7 @@ export const en = {
   "workout.noteLabel": "Note",
   "finish.recordsLabel": "Records in this workout",
   "settings.askRir": "Ask for RIR",
-  "settings.askRirNote": "Reps in reserve, after each checked set.",
+  "settings.askRirNote": "The pad gets an RIR mode after reps",
   // The plan's status page (/library/plan/:id)
   "planStatus.edit": "Edit",
   "planStatus.editLabel": "Edit {name}",
@@ -2142,6 +2142,29 @@ export const en = {
   "routines.closeSaves": "Close the sheet and a draft is kept.",
 
   // ---- v6 P5 Inställningar ----
+  "settings.groupAppearance": "Appearance",
+  "settings.groupLogging": "Logging",
+  "settings.groupCoach": "Coach",
+  "settings.groupGeneral": "General",
+  "settings.restTimerNote":
+    "Off to start. Switch it on here or per exercise in the workout. Defaults: barbell compound 2:30 · other compound 2:00 · isolation 1:30",
+  "settings.weightUnitNote": "The default for every exercise",
+  "settings.workoutTips": "Tips in the workout",
+  "settings.workoutTipsNote": "Warm-up and drop sets in the Set sheet",
+  "settings.fatigue": "Tired muscle late in the workout",
+  "settings.fatigueNote":
+    "A line under the exercise, never a change on its own",
+  "settings.fatigueOff": "Off",
+  "settings.fatigueSuggest": "Suggest",
+  "settings.fatigueAuto": "Automatic",
+  "settings.themeSwitch": "Theme: light appearance",
+  "settings.themeFollowsLight": "Follows the phone (light now)",
+  "settings.themeFollowsDark": "Follows the phone (dark now)",
+  "settings.themeChosen": "Chosen by hand.",
+  "settings.themeFollowAgain": "Follow the phone again",
+  "settings.languageRow": "Language · Språk",
+  "settings.languagePhone": "{language}, like the phone",
+  "settings.languageFollowsNote": "Follows the phone until you choose.",
 
   // ---- v6 P6 Sport ----
 };

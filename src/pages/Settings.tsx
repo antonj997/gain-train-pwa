@@ -4,7 +4,6 @@ import { notify } from "@/lib/message-store";
 import { useAuth } from "@/contexts/useAuth";
 import { useData } from "@/contexts/useData";
 import { useProfile } from "@/contexts/useProfile";
-import { useTheme } from "@/contexts/useTheme";
 import PageHeader from "@/components/PageHeader";
 import BackButton from "@/components/ui/BackButton";
 import ProfileForm from "@/components/ProfileForm";
@@ -22,11 +21,11 @@ import { useAdmin } from "@/hooks/useAdmin";
 import { useDisplayName } from "@/hooks/useDisplayName";
 import {
   GoalSheet,
-  VibrateSetting,
+  CoachSettings,
   AskRirSetting,
   LanguageSheet,
   MapFigureSetting,
-  ThemeSheet,
+  ThemeSetting,
 } from "@/components/settings/PreferenceSheets";
 import SyncIssues from "@/components/settings/SyncIssues";
 import { LANGUAGE_NAMES } from "@/i18n";
@@ -41,21 +40,13 @@ import { usePageBack } from "@/hooks/usePageTransitions";
 import Reveal from "@/components/motion/Reveal";
 
 type SheetName =
-  | "bodyweight"
-  | "goal"
-  | "theme"
-  | "language"
-  | "unit"
-  | "account"
-  | "name"
-  | "feedback";
+  "bodyweight" | "goal" | "language" | "unit" | "account" | "name" | "feedback";
 
 export default function Settings() {
   const { user, account, signOut } = useAuth(),
     { state, syncing, error, online } = useData(),
-    { theme } = useTheme(),
     { bodyWeightKg } = useProfile(),
-    { t, language } = useT(),
+    { t, language, followsPhone } = useT(),
     displayName = useDisplayName(),
     admin = useAdmin({ withCount: true });
   const [sheet, setSheet] = useState<SheetName | null>(null);
@@ -132,6 +123,53 @@ export default function Settings() {
         />
       </div>
 
+      {/* v6 §G1: grouped by what belongs together. */}
+      <section>
+        <h2 className="group-title">{t("settings.groupAppearance")}</h2>
+        <div className="list">
+          <ThemeSetting />
+          <MapFigureSetting />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.restTimer")}</h2>
+        <div className="list">
+          {/* The switch; sound and vibrate show only while it is on. */}
+          <RestSettings
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.groupLogging")}</h2>
+        <div className="list">
+          <ListRow
+            title={t("unit.title")}
+            sub={t("settings.weightUnitNote")}
+            value={preferences.weightUnit}
+            chevron
+            onClick={() => setSheet("unit")}
+          />
+          <AskRirSetting
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.groupCoach")}</h2>
+        <div className="list">
+          <CoachSettings
+            preferences={preferences}
+            onChange={updatePreferences}
+          />
+        </div>
+      </section>
+
       <section>
         <h2 className="group-title">{t("settings.training")}</h2>
         <div className="list">
@@ -153,35 +191,21 @@ export default function Settings() {
             chevron
             onClick={() => setSheet("goal")}
           />
-          {/* A plain on/off switch; the time shows only while it is on. */}
-          <RestSettings
-            preferences={preferences}
-            onChange={updatePreferences}
-          />
-          <VibrateSetting
-            preferences={preferences}
-            onChange={updatePreferences}
-          />
-          <AskRirSetting
-            preferences={preferences}
-            onChange={updatePreferences}
-          />
+        </div>
+      </section>
+
+      <section>
+        <h2 className="group-title">{t("settings.groupGeneral")}</h2>
+        <div className="list">
           <ListRow
-            title={t("unit.title")}
-            value={preferences.weightUnit}
-            chevron
-            onClick={() => setSheet("unit")}
-          />
-          <ListRow
-            title={t("settings.theme")}
-            value={theme === "dark" ? t("settings.dark") : t("settings.light")}
-            chevron
-            onClick={() => setSheet("theme")}
-          />
-          <MapFigureSetting />
-          <ListRow
-            title={t("language.title")}
-            value={LANGUAGE_NAMES[language]}
+            title={t("settings.languageRow")}
+            value={
+              followsPhone
+                ? t("settings.languagePhone", {
+                    language: LANGUAGE_NAMES[language],
+                  })
+                : LANGUAGE_NAMES[language]
+            }
             chevron
             onClick={() => setSheet("language")}
           />
@@ -308,7 +332,6 @@ export default function Settings() {
         hint={t("unit.defaultNote")}
         onChoose={(weightUnit) => updatePreferences({ weightUnit })}
       />
-      <ThemeSheet open={sheet === "theme"} onClose={closeSheet} />
       <LanguageSheet open={sheet === "language"} onClose={closeSheet} />
       <AccountSheet
         open={sheet === "account"}
