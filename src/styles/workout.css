@@ -2156,3 +2156,128 @@
   font-size: var(--gt-fs-3);
   font-weight: 600;
 }
+
+/* ---- v6 P1: finishing and the reward (B9, B10) ---- */
+
+.finish-empty-text {
+  margin: 0 0 var(--gt-space-4);
+}
+.finish-record {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--gt-space-3);
+  margin-bottom: var(--gt-space-3);
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.finish-record-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--gt-surface);
+}
+.finish-record-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--gt-fs-3);
+  line-height: 1.35;
+}
+.finish-record-text strong {
+  font-weight: 700;
+}
+.finish-record-text span {
+  font-size: var(--gt-fs-2);
+}
+.finish-stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gt-space-2);
+  margin-bottom: var(--gt-space-3);
+  overflow: hidden;
+}
+.finish-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--gt-space-3);
+  border-radius: var(--gt-radius-md);
+  background-color: var(--gt-surface-2);
+}
+.finish-stat strong {
+  color: var(--gt-ink);
+  font-size: var(--gt-fs-5);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.finish-stat strong span {
+  font-size: inherit;
+  font-weight: inherit;
+}
+.finish-stat > span {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+}
+/* The reward's one light sweep across the numbers. */
+.finish-stats-sheen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 25%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    var(--gt-sheen),
+    transparent
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.finish-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 var(--gt-space-3);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  line-height: 1.4;
+}
+.finish-info svg {
+  flex: none;
+  margin-top: 1px;
+}
+.finish-note-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gt-space-1);
+  margin-bottom: var(--gt-space-3);
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 600;
+}
+.reward-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--gt-space-4);
+  border-radius: 50%;
+  background-color: var(--gt-warm-bg);
+  color: var(--gt-warm-fg);
+}
+.reward-icon.is-first {
+  background-color: var(--gt-accent-soft);
+  color: var(--gt-accent);
+}
+.reward-sheet .btn-block + .btn-block {
+  margin-top: var(--gt-space-2);
+}

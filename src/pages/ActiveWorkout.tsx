@@ -18,15 +18,14 @@ import {
   validSet,
   isFromNewerApp,
 } from "@/data/model";
-import { doneSetCount, setCount } from "@/data/selectors";
+import { completedWorkouts, doneSetCount, setCount } from "@/data/selectors";
 import { hasLoggedExercise, priorWorkouts } from "@/data/workouts";
 import {
+  RECORD_KINDS,
   liveRankedRecords,
-  quietRecord,
-  rankedKindsLabel,
   recordSetKinds,
-  type RankedRecord,
 } from "@/data/record-rank";
+import { finishSummary, weekWorkoutNumber } from "@/lib/finish-summary";
 import { workoutTargets } from "@/data/targets";
 import {
   fatigueNote,
@@ -55,7 +54,7 @@ import { effectiveRest, trainingHaptic } from "@/lib/preferences";
 import { restTier } from "@/data/rest-tiers";
 import { catalogueById } from "@/data/catalogue";
 import { musclesLookup } from "@/data/exercise-muscles";
-import { historyPath } from "@/lib/routes";
+import { historyPath, planStatusPath } from "@/lib/routes";
 import { usePreviousResults } from "@/hooks/usePreviousResults";
 import { useRestTimer } from "@/hooks/useRestTimer";
 import { useCardioFields } from "@/hooks/useCardioFields";
@@ -74,9 +73,8 @@ import ReorderExercisesSheet from "@/components/workout/ReorderExercisesSheet";
 import { reorderByIds } from "@/lib/exercise-order";
 import { notify } from "@/lib/message-store";
 import EditSaveDialog from "@/components/workout/EditSaveDialog";
-import FinishSheet, {
-  type FinishRecord,
-} from "@/components/workout/FinishSheet";
+import FinishSheet from "@/components/workout/FinishSheet";
+import RewardSheet from "@/components/workout/RewardSheet";
 import NextSetChip from "@/components/workout/NextSetChip";
 import WorkoutDock from "@/components/workout/WorkoutDock";
 import { NumberPadContext } from "@/components/workout/number-pad-context";
@@ -135,17 +133,6 @@ export default function ActiveWorkout() {
     />
   );
 }
-
-/** A record as the Finish sheet's pill reads it: "Bench Press 90 kg × 5". */
-const finishRecord = (
-  record: RankedRecord,
-  unitFor: (exerciseId: string) => WeightUnit,
-): FinishRecord => ({
-  id: record.set.id,
-  text: `${exerciseDisplayName(record.exerciseId, record.name)} ${labelSet(record.set, false, unitFor(record.exerciseId))}`,
-  label: rankedKindsLabel(record.kinds),
-  quiet: quietRecord(record.kinds),
-});
 
 /** A workout that cannot open here: the shared page header and a way back. */
 function WorkoutUnavailable({
@@ -212,14 +199,13 @@ function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [finish, setFinish] = useState(false);
-  const [routine, setRoutine] = useState(false);
   const [details, setDetails] = useState(() => !!startState?.details);
   const [choosing, setChoosing] = useState(() => !!startState?.choose);
   const [discardChanges, setDiscardChanges] = useState(false);
   const [removeExercise, setRemoveExercise] = useState<Exercise | null>(null);
   const [changing, setChanging] = useState<Exercise | null>(null);
   const rest = useRestTimer(account, id);
-  const { busy, complete, abandon, discardEmpty } = useWorkoutActions(
+  const { busy, complete, abandon, saveRoutineAndEnd } = useWorkoutActions(
     id,
     autosave,
     rest,
@@ -648,9 +634,41 @@ function Editor({
     }
     return null;
   }, [w.exercises, unitFor, targets]);
-  // The Finish sheet's numbers, as it opens.
-  const finishVolume = useMemo(
-    () => (finish ? summarize([w], 1, w.date).volume : 0),
+  // The Finish sheet's numbers, as it opens (v6 B9): the strongest record
+  // with last time's best, the sets and the volume.
+  const finishData = useMemo(
+    () => {
+      const ranked = [...liveRecords].sort(
+        (a, b) => RECORD_KINDS.indexOf(a.top) - RECORD_KINDS.indexOf(b.top),
+      );
+      const lines = ranked.map((record) => {
+        const unit = unitFor(record.exerciseId);
+        // The heaviest working set of the exercise before today.
+        let best: WorkoutSet | null = null;
+        for (const r of earlier)
+          for (const ex of r.payload.exercises) {
+            if (ex.exerciseId !== record.exerciseId) continue;
+            for (const s of ex.sets)
+              if (
+                s.done &&
+                s.section === "working" &&
+                !s.drop &&
+                validSet(s) &&
+                s.weight !== null &&
+                (!best ||
+                  s.weight > (best.weight ?? 0) ||
+                  (s.weight === best.weight &&
+                    (s.reps ?? 0) > (best.reps ?? 0)))
+              )
+                best = s;
+          }
+        return {
+          text: `${exerciseDisplayName(record.exerciseId, record.name)} ${labelSet(record.set, false, unit)}`,
+          previous: best ? labelSet(best, false, unit) : null,
+        };
+      });
+      return finishSummary(w, lines);
+    },
     // Read as the sheet opens; typing the note must not recount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [finish],
@@ -664,16 +682,50 @@ function Editor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [finish],
   );
-  const finishRecords = useMemo(
-    () => liveRecords.map((record) => finishRecord(record, unitFor)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recordsKey, unitFor],
-  );
   const leave = () => {
     if (editing && dirty) setDiscardChanges(true);
     else navigate(editing ? historyPath(id) : "/");
   };
-  const save = () => void complete(routine && !fromRoutine);
+  // v6 B9, B10: a finished workout shows the reward before Train.
+  const [reward, setReward] = useState<{
+    first: boolean;
+    records: number;
+    weekNumber: number;
+    done: number;
+    volumeKg: number;
+    minutes: number | null;
+    plan?: { id: string; name: string };
+  } | null>(null);
+  const save = () => {
+    if (editing) return void complete(false);
+    const others = completedWorkouts(state.records).filter((r) => r.id !== id);
+    const planRecord = w.plan ? state.records[w.plan.planId] : undefined;
+    const snapshot = {
+      first: others.length === 0,
+      records: liveRecords.length,
+      weekNumber: weekWorkoutNumber(
+        others.map((r) => r.payload.date),
+        w.date,
+      ),
+      done: finishData.done,
+      volumeKg: finishData.volumeKg,
+      minutes: finishMinutes,
+      plan:
+        planRecord?.kind === "plan" && !planRecord.deleted
+          ? { id: planRecord.id, name: planRecord.payload.name }
+          : undefined,
+    };
+    void complete(false, { stay: true }).then((saved) => {
+      if (!saved) return;
+      setFinish(false);
+      setReward(snapshot);
+    });
+  };
+  const rewardDone = () => {
+    setReward(null);
+    navigate("/");
+    notify.success(t("finish.savedInCalendar"));
+  };
 
   // Checked values are editable while editing, so say why Save is off.
   const saveStatus = editing
@@ -703,11 +755,8 @@ function Editor({
         }
         onLeave={leave}
         onDetails={() => setDetails(true)}
-        // A workout with nothing checked has nothing to save: it goes at
-        // once, like a deleted one, and Train says so.
-        onFinish={() =>
-          !editing && completed === 0 ? void discardEmpty() : setFinish(true)
-        }
+        // v6 B9: with nothing checked the sheet asks what to do.
+        onFinish={() => setFinish(true)}
       />
       <WorkoutBanners
         changedElsewhere={autosave.changedElsewhere}
@@ -918,21 +967,38 @@ function Editor({
         <FinishSheet
           open={finish}
           onClose={() => setFinish(false)}
-          completed={completed}
-          unchecked={total - completed}
-          volumeKg={finishVolume}
+          name={workoutTitle(w.name)}
+          exercises={w.exercises.length}
+          summary={finishData}
           minutes={finishMinutes}
-          records={finishRecords}
-          loudRecords={liveRecords.some((record) => record.top !== "e1rm")}
           note={w.note ?? ""}
           onNote={(note) => change({ ...w, note })}
-          showRoutineSwitch={!fromRoutine}
-          saveRoutine={routine}
           busy={busy}
-          onSaveRoutine={setRoutine}
           onSave={save}
-          onKeepLogging={() => setFinish(false)}
+          onSaveRoutine={() => void saveRoutineAndEnd()}
           onAbandon={() => void abandon()}
+        />
+      )}
+      {reward && (
+        <RewardSheet
+          open
+          first={reward.first}
+          records={reward.records}
+          weekNumber={reward.weekNumber}
+          done={reward.done}
+          volumeKg={reward.volumeKg}
+          minutes={reward.minutes}
+          plan={reward.plan?.name}
+          onPlan={
+            reward.plan
+              ? () => {
+                  const planId = reward.plan!.id;
+                  setReward(null);
+                  navigate(planStatusPath(planId));
+                }
+              : undefined
+          }
+          onDone={rewardDone}
         />
       )}
     </div>

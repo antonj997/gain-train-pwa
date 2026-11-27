@@ -652,3 +652,137 @@ test("the fatigue row folds on row-out and the collapse curve", () => {
   );
   assert.match(source, /duration: MOTION\.rowOut, easing: EASE\.collapse/);
 });
+
+// ---- v6 B9, B10: finishing ----
+
+/** A Sheet that renders in place, so the server renderer shows its content. */
+const InlineSheet = ({
+  open,
+  title,
+  description,
+  children,
+}: {
+  open: boolean;
+  title: unknown;
+  description?: unknown;
+  children: unknown;
+}) =>
+  open
+    ? createElement(
+        "section",
+        null,
+        createElement("h2", null, title as string),
+        description ? createElement("p", null, description as string) : null,
+        children as string,
+      )
+    : null;
+
+async function finishSheet(props: Record<string, unknown>) {
+  const FinishSheet = await loadComponent(
+    "../src/components/workout/FinishSheet.tsx",
+    { "@/components/ui/Sheet": { default: InlineSheet } },
+  );
+  // In English: the hooks translate with the module default.
+  return renderToStaticMarkup(
+    createElement(FinishSheet, {
+      open: true,
+      onClose: () => {},
+      name: "Benpass",
+      exercises: 3,
+      minutes: 18,
+      note: "",
+      onNote: () => {},
+      busy: false,
+      onSave: () => {},
+      onSaveRoutine: () => {},
+      onAbandon: () => {},
+      ...props,
+    }),
+  );
+}
+
+const buttonTexts = (html: string) =>
+  (html.match(/<button[^>]*>[\s\S]*?<\/button>/g) ?? []).map((b) =>
+    b.replace(/<[^>]+>/g, "").trim(),
+  );
+
+test("finishing with nothing checked asks what to do, in three buttons", async () => {
+  const html = await finishSheet({
+    summary: { done: 0, total: 9, unchecked: 9, volumeKg: 0, record: null },
+  });
+  assert.match(html, /<h2>No sets are checked<\/h2>/);
+  assert.match(html, /Benpass · 3 exercises · 0 of 9 sets/);
+  assert.match(html, /Check the sets you have done to save them\./);
+  assert.deepEqual(buttonTexts(html), [
+    "Continue the workout",
+    "Save as a routine and finish",
+    "Discard workout",
+  ]);
+});
+
+test("finishing with checked sets: the record, three numbers and what is left out", async () => {
+  const html = await finishSheet({
+    summary: {
+      done: 3,
+      total: 9,
+      unchecked: 6,
+      volumeKg: 6252,
+      record: {
+        text: "Knäböj 100 kg × 6",
+        previous: "97,5 kg × 6",
+        more: 0,
+      },
+    },
+  });
+  assert.match(html, /<h2>Finish Benpass\?<\/h2>/);
+  assert.match(html, /18 min · 3 of 9 sets done/);
+  assert.match(html, /New record · Knäböj 100 kg × 6/);
+  assert.match(html, /Previous best 97,5 kg × 6/);
+  assert.equal((html.match(/class="finish-stat"/g) ?? []).length, 3);
+  assert.match(html, /kg Volume/);
+  assert.match(html, /6 sets are not checked and are not saved\./);
+  assert.match(html, /Note \(optional\)/);
+  assert.match(html, /placeholder="How did it feel\?"/);
+  // No muscle lines, routine switch or "Fortsätt logga" any more.
+  assert.doesNotMatch(html, /role="switch"|Keep logging|muscle/);
+  assert.deepEqual(buttonTexts(html), ["Save workout", "Discard workout"]);
+});
+
+test("the top bar's Avsluta is ready (the slow fill) once every set is checked", async () => {
+  const TopBar = await loadComponent(
+    "../src/components/workout/WorkoutTopBar.tsx",
+    {
+      "@/components/messages/MessageSlot": { default: () => null },
+      "@/contexts/useData": { useData: () => ({ state: { records: {} } }) },
+    },
+  );
+  const bar = (completed: number) =>
+    renderToStaticMarkup(
+      createElement(TopBar, {
+        workout: {
+          name: "Benpass",
+          date: "2026-11-19",
+          duration: null,
+          startedAt: null,
+          status: "draft",
+          exercises: [],
+        },
+        editing: false,
+        busy: false,
+        completed,
+        total: 9,
+        saveStatus: "Sparat",
+        saveError: false,
+        finishDisabled: false,
+        onLeave: () => {},
+        onDetails: () => {},
+        onFinish: () => {},
+      }),
+    );
+  const finish = (html: string) =>
+    html.match(/<button[^>]*class="btn-[^"]*finish-[^"]*"[^>]*>/)![0];
+  assert.match(finish(bar(9)), /finish-ready/);
+  assert.match(finish(bar(9)), /data-ready=""/);
+  assert.match(finish(bar(3)), /finish-pending/);
+  assert.doesNotMatch(finish(bar(3)), /data-ready/);
+});
