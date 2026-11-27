@@ -102,3 +102,31 @@ test("the check's spring starts pressed in, overshoots a little and ends on 1", 
   assert.ok(Math.max(...values) > 1, "a little overshoot");
   assert.ok(duration > 150 && duration < 600, String(duration));
 });
+
+test("v6 B1: the dock names the next set with its target and range", async () => {
+  const { nextLine } = await import("../src/lib/rest-dock");
+  const { setCurrentLanguage } = await import("../src/i18n");
+  setCurrentLanguage("sv");
+  try {
+    assert.equal(
+      nextLine("Knäböj", 2, "100 × 6", { min: 5, max: 7 }),
+      "Nästa: Knäböj · set 2 · Mål 100 × 6 (5–7)",
+    );
+    assert.equal(
+      nextLine("Knäböj", 2, "100 × 6", null),
+      "Nästa: Knäböj · set 2 · Mål 100 × 6",
+    );
+    assert.equal(nextLine("Knäböj", 3, null, null), "Nästa: Knäböj · set 3");
+  } finally {
+    setCurrentLanguage("en");
+  }
+});
+
+test("v6 §D7: a rest starts with the exercise's own seconds; 0 starts nothing", async () => {
+  const { restStart } = await import("../src/lib/rest-dock");
+  assert.deepEqual(restStart(1_000, 90), { end: 91_000, total: 90 });
+  assert.deepEqual(restStart(1_000, 150), { end: 151_000, total: 150 });
+  assert.equal(restStart(1_000, 0), null);
+  assert.equal(restStart(1_000, -5), null);
+  assert.equal(restStart(1_000, Number.NaN), null);
+});

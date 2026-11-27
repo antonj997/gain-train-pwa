@@ -92,7 +92,7 @@ import RepRangeSheet from "@/components/workout/RepRangeSheet";
 import WarmupSheet from "@/components/workout/WarmupSheet";
 import { warmupSets } from "@/lib/warmup";
 import ChoiceSheet from "@/components/ui/ChoiceSheet";
-import { RestSheet } from "@/components/settings/PreferenceSheets";
+import { RestSheet } from "@/components/settings/RestControl";
 import { restLabel } from "@/lib/preferences";
 import { useTrainingPreferences } from "@/hooks/useTrainingPreferences";
 import type { WeightUnit } from "@/lib/units";
@@ -181,13 +181,24 @@ export type ExerciseCardProps = {
   weightStep?: number;
   /** v6 §D5: the exercise's note, shown under the heading. */
   note?: string;
+  /** Saves the exercise's note (its ⋯, v6 B7). */
+  onNote?: (exerciseId: string, text: string) => void;
+  /** Saves the exercise's weight step in kg (its ⋯, v6 B7). */
+  onWeightStep?: (exerciseId: string, step: number) => void;
+  /** v6 §D7: the exercise's effective rest in seconds (0 = no timer). */
+  restSeconds?: number;
+  /** The exercise's own rest (0 = off), or undefined: it follows Settings. */
+  restOwn?: number;
+  /** The exercise's tier (rest-tiers.ts), for the sheet's first time. */
+  restTier?: number;
+  /** Sets the exercise's own rest, or clears it with null (v6 B8). */
+  onRestOwn?: (exerciseId: string, seconds: number | null) => void;
 };
 
 /** The one sheet this card has open: a set's, or the exercise's own. */
 type OpenSheet =
   | { kind: "set"; setId: string }
   | { kind: "unit" }
-  | { kind: "count" }
   | { kind: "menu" }
   | { kind: "reorder" }
   | { kind: "fields" }
@@ -262,6 +273,12 @@ function ExerciseCard({
   equipment,
   weightStep = 2.5,
   note,
+  onNote,
+  onWeightStep,
+  restSeconds = 0,
+  restOwn,
+  restTier = 120,
+  onRestOwn,
 }: ExerciseCardProps) {
   const ex = mode === "plan" ? withoutChecks(planned) : planned;
   const { sets } = ex;
@@ -611,7 +628,7 @@ function ExerciseCard({
             className="set-heading-btn"
             aria-haspopup="dialog"
             aria-label={`${countHeading(sets, hold)}, ${t("load.count")}`}
-            onClick={() => setSheet({ kind: "count" })}
+            onClick={() => setSheet({ kind: "range" })}
           >
             {countHeading(sets, hold)}
             <ChevronDown size={14} aria-hidden="true" />
@@ -683,15 +700,15 @@ function ExerciseCard({
           <button
             type="button"
             className="rest-chip"
-            data-off={preferences.restSeconds > 0 ? undefined : ""}
+            data-off={restSeconds > 0 ? undefined : ""}
             aria-haspopup="dialog"
             aria-label={t("exercise.restChip", {
-              time: restLabel(preferences.restSeconds),
+              time: restSeconds > 0 ? restLabel(restSeconds) : t("rest.off"),
             })}
             onClick={() => setSheet({ kind: "rest" })}
           >
             <Timer size={16} aria-hidden="true" />
-            {restLabel(preferences.restSeconds)}
+            {restSeconds > 0 ? restLabel(restSeconds) : t("rest.off")}
           </button>
         )}
         {/* v6 B5: once the exercise has a drop, one tap adds the next. */}
@@ -805,23 +822,6 @@ function ExerciseCard({
           }
         />
       )}
-      {!cardio && (
-        <ChoiceSheet<CountChoice>
-          open={sheet?.kind === "count"}
-          onClose={close}
-          title={t("load.count")}
-          value={countChoice(exerciseMeasure(sets), hold)}
-          options={[
-            { value: "reps", label: t("load.reps") },
-            ...(onRepHold
-              ? [{ value: "repsHold" as const, label: t("load.repsHold") }]
-              : []),
-            { value: "seconds", label: t("load.hold") },
-          ]}
-          hint={t("load.appliesUnchecked")}
-          onChoose={chooseCount}
-        />
-      )}
       <ExerciseMenuSheet
         open={sheet?.kind === "menu"}
         onClose={close}
@@ -834,15 +834,30 @@ function ExerciseCard({
             ? () => setSheet({ kind: "fields" })
             : undefined
         }
-        onRepRange={
-          mode === "plan" && !cardio
-            ? () => setSheet({ kind: "range" })
-            : undefined
-        }
+        onRepRange={!cardio ? () => setSheet({ kind: "range" }) : undefined}
         repRangeHint={repRangeLabel(
           ex.repRange,
           exerciseMeasure(sets) === "seconds",
         )}
+        // v6 B7: the note, the weight step and the rest time, in a workout.
+        note={note}
+        onNote={
+          mode === "log" && onNote
+            ? (text) => onNote(ex.exerciseId, text)
+            : undefined
+        }
+        weightStep={weightStep}
+        onWeightStep={
+          mode === "log" && !cardio && onWeightStep
+            ? (step) => onWeightStep(ex.exerciseId, step)
+            : undefined
+        }
+        restHint={restLabel(restSeconds)}
+        onRest={
+          restChip && mode === "log"
+            ? () => setSheet({ kind: "rest" })
+            : undefined
+        }
         onChangeExercise={() => {
           close();
           onChangeExercise(planned);
@@ -875,10 +890,15 @@ function ExerciseCard({
           open={sheet?.kind === "rest"}
           onClose={close}
           preferences={preferences}
-          onChange={setPreferences}
+          onPreferences={setPreferences}
+          name={exerciseName}
+          seconds={restSeconds}
+          own={restOwn}
+          tier={restTier}
+          onOwn={(seconds) => onRestOwn?.(ex.exerciseId, seconds)}
         />
       )}
-      {mode === "plan" && (
+      {!cardio && (
         <RepRangeSheet
           open={sheet?.kind === "range"}
           name={exerciseName}
@@ -887,6 +907,18 @@ function ExerciseCard({
           onChange={(range) => {
             const { repRange: _old, ...rest } = ex;
             onChange(range ? { ...rest, repRange: range } : rest);
+          }}
+          // "Reps ⌄" opens this sheet: what the count measures is here too.
+          count={{
+            value: countChoice(exerciseMeasure(sets), hold),
+            options: [
+              { value: "reps", label: t("load.reps") },
+              ...(onRepHold
+                ? [{ value: "repsHold" as const, label: t("load.repsHold") }]
+                : []),
+              { value: "seconds", label: t("load.hold") },
+            ],
+            onChange: chooseCount,
           }}
         />
       )}

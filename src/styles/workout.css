@@ -1327,10 +1327,15 @@
 .rest-dock[data-phase="finish"] {
   padding-top: var(--gt-space-3);
 }
+/* v6 B1 (R6-9): the time left is a 3px bar along the dock's top edge, not a
+   fill behind the text, so no edge runs through it. */
 .rest-dock-fill {
   position: absolute;
-  inset: 0;
-  background-color: var(--gt-accent-soft);
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background-color: var(--gt-accent);
   transform-origin: left center;
   pointer-events: none;
 }
@@ -1372,7 +1377,8 @@
 }
 .rest-dock-value {
   display: inline-block;
-  font-size: 30px;
+  /* On the type scale (v6 H2). */
+  font-size: var(--gt-fs-6);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   letter-spacing: -0.5px;
@@ -1381,7 +1387,7 @@
 }
 .rest-dock[data-phase="done"] .rest-dock-value {
   color: var(--gt-done);
-  font-size: 24px;
+  font-size: var(--gt-fs-5);
 }
 .rest-dock-plus {
   display: flex;
@@ -2071,4 +2077,46 @@
   flex-wrap: wrap;
   gap: var(--gt-space-1);
   margin-bottom: var(--gt-space-3);
+}
+
+/* ---- v6 P1: the exercise menu and the rest sheet (B7, B8) ---- */
+
+.exercise-note-input {
+  width: 100%;
+  min-height: 64px;
+  padding: var(--gt-space-2) var(--gt-space-3);
+  border: 1px solid var(--gt-line-strong);
+  border-radius: var(--gt-radius-sm);
+  background-color: var(--gt-ground);
+  color: var(--gt-ink);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  resize: vertical;
+}
+.sheet-menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: left;
+}
+.sheet-menu-sub {
+  color: var(--gt-ink-2);
+  font-size: var(--gt-fs-2);
+  font-weight: 400;
+}
+.rest-sheet-group {
+  margin-bottom: var(--gt-space-3);
+}
+.rest-sheet-group .rest-setting {
+  padding-inline: var(--gt-space-4);
+}
+.rest-sheet-group .chev.is-open {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rest-sheet-group .chev {
+    transition: transform var(--gt-dur-quick) var(--gt-ease-out);
+  }
 }

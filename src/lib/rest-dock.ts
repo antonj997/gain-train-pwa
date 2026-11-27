@@ -4,8 +4,46 @@
  * Pure, so it is tested; the dock is components/workout/RestDock.tsx and the
  * timer hooks/useRestTimer.ts.
  */
+import { t } from "../i18n";
 
 export type DockPhase = "hidden" | "rest" | "done" | "finish";
+
+/**
+ * A rest of `seconds` started at `now` (v6 §D7: the exercise's effective
+ * rest): when it ends and how long it is. 0 (the timer off for that
+ * exercise) starts nothing.
+ */
+export function restStart(
+  now: number,
+  seconds: number,
+): { end: number; total: number } | null {
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  const total = Math.round(seconds);
+  return { end: now + total * 1000, total };
+}
+
+/**
+ * The dock's line about the next set (v6 B1): "Nästa: Knäböj · set 2 · Mål
+ * 100 × 6 (5–7)"; the target and its range only when there are any.
+ */
+export function nextLine(
+  name: string,
+  /** A working set's number, or the set's own name ("uppvärmningsset 1"). */
+  setNumber: number | string,
+  target: string | null | undefined,
+  range: { min: number; max: number } | null | undefined,
+): string {
+  const set =
+    typeof setNumber === "number"
+      ? t("badge.setName", { n: setNumber })
+      : setNumber;
+  const head = t("rest.nextLine", { name, set });
+  if (!target) return head;
+  const goal = range
+    ? `${target} (${range.min === range.max ? range.min : `${range.min}–${range.max}`})`
+    : target;
+  return `${head} · ${t("rest.nextTarget", { target: goal })}`;
+}
 
 /** How long "Rest done" stays before the dock leaves. */
 export const REST_DONE_MS = 4000;

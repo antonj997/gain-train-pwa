@@ -31,10 +31,14 @@ import { workoutTargets } from "@/data/targets";
 import { lowerTarget } from "@/data/fatigue";
 import { summarize } from "@/data/summary";
 import { loadKeyOf } from "@/lib/load-keys";
-import { targetRowText, targetSource } from "@/lib/set-target";
+import { targetRowText, targetSource, targetValueText } from "@/lib/set-target";
+import { nextLine } from "@/lib/rest-dock";
 import { useWorkoutGoals } from "@/hooks/useWorkoutGoals";
 import { addExercises, type ExerciseTarget } from "@/lib/workout-editor";
-import { trainingHaptic } from "@/lib/preferences";
+import { effectiveRest, trainingHaptic } from "@/lib/preferences";
+import { restTier } from "@/data/rest-tiers";
+import { catalogueById } from "@/data/catalogue";
+import { musclesLookup } from "@/data/exercise-muscles";
 import { historyPath } from "@/lib/routes";
 import { usePreviousResults } from "@/hooks/usePreviousResults";
 import { useRestTimer } from "@/hooks/useRestTimer";
@@ -237,13 +241,40 @@ function Editor({
     initial,
     w.date,
   );
-  const [{ askRir }] = useTrainingPreferences();
+  const [trainingPrefs] = useTrainingPreferences();
+  const { askRir } = trainingPrefs;
   // Each exercise's weight unit: its own, else the default from Settings.
   const weightUnits = useWeightUnits();
   const { unitFor } = weightUnits;
   // v6 §D5: each exercise's note, weight step and rest time.
   const exerciseSettings = useExerciseSettings();
   const { stepFor } = exerciseSettings;
+  // v6 §D7: each exercise's rest: its own, else the timer's time or its tier.
+  const musclesKey = Object.values(state.records)
+    .filter((r) => r.kind === "exercise")
+    .map((r) => `${r.id}:${r.revision}:${r.localVersion}`)
+    .join("|");
+  const musclesOf = useMemo(
+    () => musclesLookup(state.records),
+    // musclesKey stands in for the custom exercises it summarises.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [musclesKey],
+  );
+  const restFor = useCallback(
+    (exerciseId: string) => {
+      const own = exerciseSettings.restFor(exerciseId);
+      const builtin = catalogueById.get(exerciseId);
+      const tier = restTier({
+        id: exerciseId,
+        name: builtin?.name ?? "",
+        equipment: exerciseSettings.equipmentFor(exerciseId),
+        muscles: musclesOf(exerciseId),
+        custom: !builtin,
+      });
+      return { own, tier, seconds: effectiveRest(trainingPrefs, own, tier) };
+    },
+    [exerciseSettings, musclesOf, trainingPrefs],
+  );
   // Each set's target (double progression, targets.ts), worked out again
   // only when the other finished workouts or the shape of this one change:
   // not on every typed value.
@@ -291,6 +322,12 @@ function Editor({
             setId,
             {
               text: targetRowText(shown, last, unitFor(ex?.exerciseId ?? "")),
+              // "100 × 6", for the dock's line (v6 B1).
+              value: targetValueText(
+                shown,
+                last,
+                unitFor(ex?.exerciseId ?? ""),
+              ),
               source: targetSource(shown, last),
             },
           ];
@@ -368,16 +405,14 @@ function Editor({
   const requestRemove = useStableCallback((ex: Exercise) =>
     hasLoggedExercise(ex) ? setRemoveExercise(ex) : remove(ex),
   );
-  // The exercise of the set checked last: the dock names the next set's
-  // exercise only when it is another one.
-  const [lastChecked, setLastChecked] = useState<string | null>(null);
   const setDone = useStableCallback((exerciseId: string) => {
     if (editing) return;
     // The tap that checks a set lets the rest's tone play later.
     primeRestSound();
-    rest.start();
+    // v6 §D7: the checked exercise's own rest, its tier, or none.
+    const checked = w.exercises.find((ex) => ex.id === exerciseId);
+    rest.start(checked ? restFor(checked.exerciseId).seconds : 0);
     trainingHaptic(rest.preferences.haptics);
-    setLastChecked(exerciseId);
   });
   // Every set checked: no rest, the dock is Finish workout.
   const allChecked = total > 0 && completed === total;
@@ -441,21 +476,28 @@ function Editor({
       const index = ex.sets.findIndex((s) => !s.done);
       if (index < 0) continue;
       const set = ex.sets[index];
-      const title = setBadge(ex.sets, index).name;
-      const what = validSet(set)
-        ? `${title} · ${labelSet(set, true, unitFor(ex.exerciseId))}`
-        : title;
+      const badge = setBadge(ex.sets, index);
+      const title = badge.name;
+      // v6 B1: "Nästa: Knäböj · set 2 · Mål 100 × 6 (5–7)", else what the
+      // set holds.
+      const goal = targets.get(set.id)?.value;
+      const value = validSet(set)
+        ? labelSet(set, true, unitFor(ex.exerciseId))
+        : null;
+      const label = nextLine(
+        exerciseDisplayName(ex.exerciseId, ex.name),
+        badge.tone === "working" ? Number(badge.text) : title,
+        goal ?? null,
+        goal ? ex.repRange : null,
+      );
       return {
         setId: set.id,
         title,
-        label:
-          lastChecked && lastChecked !== ex.id
-            ? `${exerciseDisplayName(ex.exerciseId, ex.name)} · ${what}`
-            : what,
+        label: goal || !value ? label : `${label} · ${value}`,
       };
     }
     return null;
-  }, [w.exercises, lastChecked, unitFor]);
+  }, [w.exercises, unitFor, targets]);
   // The Finish sheet's numbers, as it opens.
   const finishVolume = useMemo(
     () => (finish ? summarize([w], 1, w.date).volume : 0),
@@ -573,6 +615,12 @@ function Editor({
               equipment={exerciseSettings.equipmentFor(ex.exerciseId)}
               weightStep={exerciseSettings.stepFor(ex.exerciseId)}
               note={exerciseSettings.noteFor(ex.exerciseId)}
+              onNote={exerciseSettings.setNote}
+              onWeightStep={exerciseSettings.setStep}
+              restSeconds={restFor(ex.exerciseId).seconds}
+              restOwn={restFor(ex.exerciseId).own}
+              restTier={restFor(ex.exerciseId).tier}
+              onRestOwn={exerciseSettings.setRest}
             />
           ))}
         </NumberPadContext.Provider>

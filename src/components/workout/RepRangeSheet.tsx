@@ -1,19 +1,30 @@
-import { useEffect, useState } from "react";
 import type { Exercise } from "@/data/model";
 import Sheet from "@/components/ui/Sheet";
-import Reveal from "@/components/motion/Reveal";
+import Segmented from "@/components/ui/Segmented";
 import { useT } from "@/i18n/useT";
+import type { CountChoice } from "@/lib/rep-hold";
 
 type Range = NonNullable<Exercise["repRange"]>;
 
-/** A whole number from typed text, or null. */
-const whole = (text: string) =>
-  /^\d{1,4}$/.test(text.trim()) ? Number(text.trim()) : null;
+/** The ranges the sheet offers (v6 B7). */
+const REP_RANGES: readonly Range[] = [
+  { min: 3, max: 5 },
+  { min: 5, max: 7 },
+  { min: 6, max: 8 },
+  { min: 8, max: 10 },
+  { min: 8, max: 12 },
+  { min: 10, max: 15 },
+];
+
+const key = (range: Range) => `${range.min}-${range.max}`;
+const label = (range: Range) =>
+  range.min === range.max ? String(range.min) : `${range.min}–${range.max}`;
 
 /**
- * A routine exercise's rep range, such as 8–12: two whole numbers, the first
- * no larger than the second. It is shown in the routine and its preview;
- * weights and reps still come from history.
+ * An exercise's rep range for double progression (v6 B7): one segment of
+ * six ranges. Reps go up to the top in every set, then the weight steps up.
+ * In a workout the sheet also chooses what the count measures (reps, reps +
+ * hold, or a hold in seconds), which "Reps ⌄" opened before.
  */
 export default function RepRangeSheet({
   open,
@@ -21,6 +32,7 @@ export default function RepRangeSheet({
   value,
   onClose,
   onChange,
+  count,
 }: {
   open: boolean;
   name: string;
@@ -28,83 +40,66 @@ export default function RepRangeSheet({
   onClose: () => void;
   /** The new range, or null to remove it. */
   onChange: (range: Range | null) => void;
+  /** A workout's count: what it measures, and the choices it has. */
+  count?: {
+    value: CountChoice;
+    options: { value: CountChoice; label: string }[];
+    onChange: (choice: CountChoice) => void;
+  };
 }) {
   const { t } = useT();
-  const [min, setMin] = useState("");
-  const [max, setMax] = useState("");
-  const [invalid, setInvalid] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    setMin(value ? String(value.min) : "");
-    setMax(value ? String(value.max) : "");
-    setInvalid(false);
-    // The fields start from the range each time the sheet opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-  const save = () => {
-    const low = whole(min);
-    const high = whole(max === "" ? min : max);
-    if (low === null || high === null || low < 1 || high < low) {
-      setInvalid(true);
-      return;
-    }
-    onChange({ min: low, max: high });
-    onClose();
-  };
+  // A range typed before v6 that is not one of the six stays offered.
+  const options =
+    value && !REP_RANGES.some((r) => key(r) === key(value))
+      ? [...REP_RANGES, value]
+      : REP_RANGES;
   return (
     <Sheet
       open={open}
       onClose={onClose}
-      title={t("repRange.title", { name })}
-      description={t("repRange.hint")}
+      title={t("exercise.rangeTitle")}
+      description={t("exercise.rangeSub", { name })}
     >
-      <div className="rep-range-fields">
-        <label>
-          {t("repRange.min")}
-          <input
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder="8"
-            value={min}
-            aria-invalid={invalid || undefined}
-            onChange={(e) => setMin(e.target.value)}
-          />
-        </label>
-        <span aria-hidden="true">–</span>
-        <label>
-          {t("repRange.max")}
-          <input
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder="12"
-            value={max}
-            aria-invalid={invalid || undefined}
-            onChange={(e) => setMax(e.target.value)}
-          />
-        </label>
+      <div className="sheet-field rep-range-choice">
+        <Segmented<string>
+          label={t("exercise.rangeTitle")}
+          value={value ? key(value) : ""}
+          options={options.map((range) => ({
+            value: key(range),
+            label: label(range),
+          }))}
+          onChange={(chosen) =>
+            onChange(options.find((range) => key(range) === chosen) ?? null)
+          }
+        />
       </div>
-      <Reveal>
-        {invalid && (
-          <p className="field-error" role="alert">
-            {t("repRange.invalid")}
-          </p>
-        )}
-      </Reveal>
-      <button type="button" className="btn-primary btn-block" onClick={save}>
-        {t("common.save")}
-      </button>
+      <p className="sheet-hint">{t("exercise.rangeNote")}</p>
       {value && (
         <button
           type="button"
           className="text-button danger"
-          onClick={() => {
-            onChange(null);
-            onClose();
-          }}
+          onClick={() => onChange(null)}
         >
-          {t("repRange.clear")}
+          {t("exercise.rangeClear")}
         </button>
       )}
+      {count && (
+        <div className="sheet-field">
+          <span className="sheet-label" aria-hidden="true">
+            {t("load.count")}
+          </span>
+          <Segmented<CountChoice>
+            label={t("load.count")}
+            value={count.value}
+            options={count.options}
+            onChange={count.onChange}
+          />
+          <p className="sheet-hint">{t("load.appliesUnchecked")}</p>
+        </div>
+      )}
+      <button type="button" className="btn-primary btn-block" onClick={onClose}>
+        {t("exercise.rangeDone")}
+      </button>
     </Sheet>
   );
 }
